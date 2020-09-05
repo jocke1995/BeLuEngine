@@ -12,22 +12,24 @@ The Engine project is where the game engine is developed. Rendering features and
 This project creates a static library which is linked to other projects in this solution.
 
 ##### Game
-This project is where the game itself is developed. It is staticly linked to the library that Engine creates.
+This project is where a future game itself should be developed. It is staticly linked to the library that Engine creates.
 
 ##### Sandbox
-This project is a playground for testing out visual features developed in the engine.
+This project is a playground for testing out features developed in the engine.
 It is staticly linked to the library that Engine creates.
 
 ---
 ## API
-Currently the only API supported is DirectX12. In the future I will add support for other API's such as Vulkan.
+Currently the only API supported is DirectX12. In the future I will add support for other API's such as DirectX11 and Vulkan.
 
 ---
 ## Feature List
-Currently the only API supported is DirectX12. In the future I will add support for other API's such as Vulkan.
-
-##### Multithreading
-test123
+Here I will list all the features (that is worth mentioning) implemented in my engine.
+##### Entity Component System
+##### Multi-threading
+##### Shadow Mapping (Spotlights and DirectionalLights)
+##### FPS-Picking (with Boundingboxes)
+##### Stencil-buffer outlining
 
 ---
 ## Setting up the project, welcome to premake!
