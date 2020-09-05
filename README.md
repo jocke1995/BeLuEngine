@@ -19,6 +19,17 @@ This project is a playground for testing out visual features developed in the en
 It is staticly linked to the library that Engine creates.
 
 ---
+## API
+Currently the only API supported is DirectX12. In the future I will add support for other API's such as Vulkan.
+
+---
+## Feature List
+Currently the only API supported is DirectX12. In the future I will add support for other API's such as Vulkan.
+
+##### Multithreading
+test123
+
+---
 ## Setting up the project, welcome to premake!
 This project uses premake5 to create any necessary files for the Visual Studio IDE.
 Note that the setup only is aimed for contributors who use Visual Studio 2019 on Windows.
