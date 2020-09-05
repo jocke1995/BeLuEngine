@@ -4,7 +4,7 @@ The project is developed on windows platform where I use Visual Studio 2019 (Com
 
 ---
 ## The structure of the VS solution
-The solution is, as of the date of writing this document, divided into five(3) projects.
+The solution is, as of the date of writing this document, divided into three(3) projects.
 The projects are: Engine, Game and Sandbox.
 
 ##### Engine
