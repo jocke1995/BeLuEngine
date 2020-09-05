@@ -1,31 +1,35 @@
-# Large Game Project
-This project is created by students at Blekinge Institute of Technology (BTH). 
-It is part of a course (PA2526) where the students aim to create a game. The project is developed on windows platform where most, 
-if not all, contributors use Visual Studio 2019 (Community edition).
+# BeLuEngine
+This project is created by me (Joakim Sjöberg) as a way to learn how to create a game engine. 
+The project is developed on windows platform where I use Visual Studio 2019 (Community edition) as platform.
 
 ---
 ## The structure of the VS solution
-The solution is, as of the date of writing this document, divided into five(5) projects.
-The projects are: Engine, EngineTest, Game, Gtest and Sandbox.
+The solution is, as of the date of writing this document, divided into three(3) projects.
+The projects are: Engine, Game and Sandbox.
 
 ##### Engine
 The Engine project is where the game engine is developed. Rendering features and whatnot.
 This project creates a static library which is linked to other projects in this solution.
 
-##### EngineTests
-The EngineTests project is used for unit tests of the engine.
-Although this game is not intended to use Test driven development it is a testing ground nonetheless.
-This project is staticly linked to the library that Engine generates and the library that GTest generates.
-
 ##### Game
-This project is where the game itself is developed. It is staticly linked to the library that Engine creates.
-
-##### GTest
-This project is used to generate a static library of the google test framework. It is linked to the EngineTests project.
+This project is where a future game itself should be developed. It is staticly linked to the library that Engine creates.
 
 ##### Sandbox
-This project is a playground for testing out visual features developed in the engine.
+This project is a playground for testing out features developed in the engine.
 It is staticly linked to the library that Engine creates.
+
+---
+## API
+Currently the only API supported is DirectX12. In the future I will add support for other API's such as DirectX11 and Vulkan.
+
+---
+## Feature List
+Here I will list all the features (that is worth mentioning) implemented in my engine.
+##### Entity Component System
+##### Multi-threading
+##### Shadow Mapping (Spotlights and DirectionalLights)
+##### FPS-Picking (with Boundingboxes)
+##### Stencil-buffer outlining
 
 ---
 ## Setting up the project, welcome to premake!
