@@ -1,0 +1,14 @@
+\.git
+
+BeLuEngine/build/
+BeLuEngine/bin/
+BeLuEngine/*.bat
+
+**.sln
+**.vcxproj
+**.user
+**.filters
+**.Tlog
+**.vs
+**bin/
+**bin-int/
