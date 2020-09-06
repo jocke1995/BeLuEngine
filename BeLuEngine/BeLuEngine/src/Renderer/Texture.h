@@ -30,11 +30,6 @@ private:
 	Resource* m_pResourceUploadHeap = nullptr;
 
 	bool createTexture(std::wstring filePath, ID3D12Device5* device, UINT descriptorHeapIndex_SRV);
-
-
-
-	// Temp until scene is properly loaded when a change of scene happens
-	bool m_HasBeenUploadedToDefault = false;
 };
 
 #endif
