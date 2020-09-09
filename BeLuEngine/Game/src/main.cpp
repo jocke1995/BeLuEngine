@@ -1,4 +1,4 @@
-#include "Engine.h"
+#include "BeLuEngine.h"
 
 // Helps intellisense to understand that stdafx is included
 //#include "Headers/stdafx.h"
@@ -8,15 +8,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
     /* ------ Engine  ------ */
-    BeLuEngine engine = BeLuEngine();
-    engine.Init(hInstance, nCmdShow);
+    BeLuEngine beluEngine = BeLuEngine();
+    beluEngine.Init(hInstance, nCmdShow);
 
 	/*  ------ Get references from engine  ------ */
-	Window* const window = engine.GetWindow();
-	Timer* const timer = engine.GetTimer();
-	ThreadPool* const threadPool = engine.GetThreadPool();
-	SceneManager* const sceneManager = engine.GetSceneHandler();
-	Renderer* const renderer = engine.GetRenderer();
+	Window* const window = beluEngine.GetWindow();
+	Timer* const timer = beluEngine.GetTimer();
+	ThreadPool* const threadPool = beluEngine.GetThreadPool();
+	SceneManager* const sceneManager = beluEngine.GetSceneHandler();
+	Renderer* const renderer = beluEngine.GetRenderer();
 
     /*------ AssetLoader to load models / textures ------*/
     AssetLoader* al = AssetLoader::Get();
