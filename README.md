@@ -32,7 +32,7 @@ Here I will list all the features (that is worth mentioning) implemented in my e
 ##### Stencil-buffer outlining
 
 ---
-## Setting up the project, welcome to premake!
+## Setting up the project, welcome to premake! (Thanks to Tim Johansson for setting up and making this guide)
 This project uses premake5 to create any necessary files for the Visual Studio IDE.
 Note that the setup only is aimed for contributors who use Visual Studio 2019 on Windows.
 
