@@ -21,11 +21,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
     /*------ AssetLoader to load models / textures ------*/
     AssetLoader* al = AssetLoader::Get();
 
-    Scene* jockeScene = TestScene(sceneManager);
-    Scene* activeScene = jockeScene;
+    Scene* testScene = TestScene(sceneManager);
 
     // Set scene
-    sceneManager->SetScene(activeScene);
+    sceneManager->SetScene(testScene);
 
     while (!window->ExitWindow())
     {
@@ -47,7 +46,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
 Scene* TestScene(SceneManager* sm)
 {
     // Create Scene
-    Scene* scene = sm->CreateScene("jockesScene");
+    Scene* scene = sm->CreateScene("TestScene");
 
     component::CameraComponent* cc = nullptr;
     component::ModelComponent* mc = nullptr;
@@ -108,10 +107,10 @@ Scene* TestScene(SceneManager* sm)
     /* ---------------------- Poster ---------------------- */
 
     /* ---------------------- SpotLightDynamic ---------------------- */
-    entity = scene->AddEntity("pointLightDynamic");
+    entity = scene->AddEntity("spotLightDynamic");
     mc = entity->AddComponent<component::ModelComponent>();
     tc = entity->AddComponent<component::TransformComponent>();
-    slc = entity->AddComponent<component::SpotLightComponent>(FLAG_LIGHT::CAST_SHADOW | FLAG_LIGHT::STATIC);
+    slc = entity->AddComponent<component::SpotLightComponent>(FLAG_LIGHT::CAST_SHADOW);
     
     float3 pos = { 5.0f, 20.0f, 5.0f };
     mc->SetModel(sphereModel);
@@ -144,10 +143,10 @@ Scene* TestScene(SceneManager* sm)
 
 void TestUpdateScene(SceneManager* sm, double dt)
 {
-    //static float intensity = 0.0f;
-    //component::PointLightComponent* plc = sm->GetScene("jockesScene")->GetEntity("pointLightDynamic")->GetComponent<component::PointLightComponent>();
-    //float col = abs(sinf(intensity)) * 10;
-    //plc->SetColor({ col, col, 0.0f });
-    //
-    //intensity += 0.005f;
+    static float intensity = 0.0f;
+    component::SpotLightComponent* slc = sm->GetScene("TestScene")->GetEntity("spotLightDynamic")->GetComponent<component::SpotLightComponent>();
+    float col = abs(sinf(intensity)) * 10;
+    slc->SetColor({ col, col, 0.0f });
+    
+    intensity += 0.005f;
 }

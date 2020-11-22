@@ -14,7 +14,6 @@ namespace component
         virtual ~TransformComponent();
 
         void Update(double dt);
-        void RenderUpdate(double dt);
         void OnInitScene();
         void OnUnInitScene();
         

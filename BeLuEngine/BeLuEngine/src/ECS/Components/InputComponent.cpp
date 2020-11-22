@@ -17,10 +17,6 @@ void component::InputComponent::Update(double dt)
 {
 }
 
-void component::InputComponent::RenderUpdate(double dt)
-{
-}
-
 void component::InputComponent::OnInitScene()
 {
 }

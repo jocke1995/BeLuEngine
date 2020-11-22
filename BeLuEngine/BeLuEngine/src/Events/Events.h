@@ -11,10 +11,9 @@ public:
 
 struct MovementInput : public Event
 {
-	MovementInput(SCAN_CODES key, bool pressed, bool doubleTap) : key{ key }, pressed{ pressed }, doubleTap{ doubleTap } {};
+	MovementInput(SCAN_CODES key, bool pressed) : key{ key }, pressed{ pressed } {};
 	SCAN_CODES key;
 	bool pressed;
-	bool doubleTap;
 };
 
 struct MouseMovement : public Event
@@ -59,13 +58,4 @@ struct ButtonPressed : public Event
 {
 	ButtonPressed(std::string name) : name{ name } {};
 	std::string name;
-};
-
-struct SceneChange : public Event
-{
-	SceneChange(std::string newSceneName)
-		:m_NewSceneName(newSceneName)
-	{};
-
-	std::string m_NewSceneName;
 };

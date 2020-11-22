@@ -222,10 +222,6 @@ private:
 	void waitForFrame(unsigned int framesToBeAhead = NUM_SWAP_BUFFERS - 1);
 	void waitForGPU();
 
-	// WaitForFrame but with the copyqueue only. Is used when executing per scene data on SetScene
-	//void waitForCopyOnDemand();
-	//void executeCopyOnDemand();
-
 	// Setup the whole scene
 	void prepareScene(Scene* activeScene);
 

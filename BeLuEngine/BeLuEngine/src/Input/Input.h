@@ -128,52 +128,25 @@ enum class MOUSE_BUTTON
 
 class Input {
 public:
-	/// <summary>
-	/// Get an instance of the class.
-	/// </summary>
-	/// <returns>an instance of the class</returns>
+
 	static Input& GetInstance();
 
-	/// <summary>
-	/// Register the input devices to be used.
-	/// </summary>
-	/// <param name="hWnd">: The handle of the input window</param>
+	// Register the input devices to be used.
 	void RegisterDevices(const HWND* hWnd);
 
-	/// <summary>
-	/// Sets the state of a keyboard key, either pressed or not pressed.
-	/// </summary>
-	/// <param name="key">: The scan code of the key</param>
-	/// <param name="pressed"> : The state of the key. True means pressed, false means not pressed</param>
 	void SetKeyState(SCAN_CODES key, bool pressed);
-	/// <summary>
-	/// Sets the state of a mouse button, either pressed or not pressed.
-	/// </summary>
-	/// <param name="button">: The scan code of the button</param>
-	/// <param name="pressed">: The state of the button. True means pressed, false means not pressed</param>
 	void SetMouseButtonState(MOUSE_BUTTON button, bool pressed);
-	/// <summary>
-	/// Sets the scroll state of the mouse wheel, either positive (when scrolling forward) or negative (when scrolling backwards).
-	/// </summary>
-	/// <param name="scroll">: The amount of scroll</param>
-	void SetMouseScroll(SHORT scroll);
-	/// <summary>
-	/// Set the position of the mouse cursor relative to the center of the window.
-	/// </summary>
-	/// <param name="x">: The x-coordinate of the cursor relative to the center of the window</param>
-	/// <param name="y">: The y-coordinate of the cursor relative to the center of the window</param>
+
+	// Sets the scroll state of the mouse wheel, either positive (when scrolling forward) or negative (when scrolling backwards).
+	void SetMouseScroll(short scrollAmount);
+
+	// Set the position of the mouse cursor relative to the center of the window.
 	void SetMouseMovement(int x, int y);
-	/// <summary>
-	/// Get the state of a keyboard key.
-	/// </summary>
-	/// <param name="key">: The scan code of the key</param>
-	/// <returns>true if key is pressed, false if key is not pressed</returns>
+
+	// True if key is pressed, false if key is not pressed
 	bool GetKeyState(SCAN_CODES key);
-	/// <summary>
-	/// Get the state of a mouse button.
-	/// </summary>
-	/// <param name="button">: The scan code of the button</param>
-	/// <returns>true if button is pressed, false if button is not pressed</returns>
+
+	// True if button is pressed, false if button is not pressed
 	bool GetMouseButtonState(MOUSE_BUTTON button);
 
 private:
@@ -181,7 +154,6 @@ private:
 
 	std::unordered_map<SCAN_CODES, bool> m_KeyState;
 	std::unordered_map<MOUSE_BUTTON, bool> m_MouseButtonState;
-	std::unordered_map<SCAN_CODES, std::chrono::system_clock::time_point> m_KeyTimer;
 };
 
 #endif // !INPUT_H

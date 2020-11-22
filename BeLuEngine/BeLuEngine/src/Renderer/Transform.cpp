@@ -84,20 +84,6 @@ void Transform::NormalizedMove(float dt)
 	m_RenderPosition = m_Position;
 }
 
-void Transform::NormalizedMoveRender(float dt)
-{
-	DirectX::XMFLOAT3 normalizedMovement;
-	// Normalize movement
-	DirectX::XMVECTOR movementVector = DirectX::XMLoadFloat3(&m_Movement);
-	movementVector = DirectX::XMVector3Normalize(movementVector);
-	DirectX::XMStoreFloat3(&normalizedMovement, movementVector);
-	float moveX = m_RenderPosition.x + (normalizedMovement.x * m_Velocity * dt);
-	float moveY = m_RenderPosition.y + (normalizedMovement.y * m_Velocity * dt);
-	float moveZ = m_RenderPosition.z + (normalizedMovement.z * m_Velocity * dt);
-
-	m_RenderPosition = DirectX::XMFLOAT3(moveX, moveY, moveZ);
-}
-
 void Transform::SetRotationX(float radians)
 {
 	m_RotXMat = DirectX::XMMatrixRotationX(radians);

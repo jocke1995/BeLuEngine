@@ -108,10 +108,10 @@ Scene* TestScene(SceneManager* sm)
     /* ---------------------- Poster ---------------------- */
 
     /* ---------------------- SpotLightDynamic ---------------------- */
-    entity = scene->AddEntity("pointLightDynamic");
+    entity = scene->AddEntity("spotLightDynamic");
     mc = entity->AddComponent<component::ModelComponent>();
     tc = entity->AddComponent<component::TransformComponent>();
-    slc = entity->AddComponent<component::SpotLightComponent>(FLAG_LIGHT::CAST_SHADOW | FLAG_LIGHT::STATIC);
+    slc = entity->AddComponent<component::SpotLightComponent>(FLAG_LIGHT::CAST_SHADOW);
 
     float3 pos = { 5.0f, 20.0f, 5.0f };
     mc->SetModel(sphereModel);
@@ -131,10 +131,10 @@ Scene* TestScene(SceneManager* sm)
     dlc = entity->AddComponent<component::DirectionalLightComponent>(FLAG_LIGHT::CAST_SHADOW);
     dlc->SetColor({ 0.8f, 0.8f, 0.8f });
     dlc->SetDirection({ -2.0f, -1.0f, -1.0f });
-    dlc->SetCameraTop(30.0f);
-    dlc->SetCameraBot(-30.0f);
-    dlc->SetCameraLeft(-70.0f);
-    dlc->SetCameraRight(70.0f);
+    //dlc->SetCameraTop(30.0f);
+    //dlc->SetCameraBot(-30.0f);
+    //dlc->SetCameraLeft(-70.0f);
+    //dlc->SetCameraRight(70.0f);
     /* ---------------------- dirLight ---------------------- */
 
     /* ---------------------- Update Function ---------------------- */

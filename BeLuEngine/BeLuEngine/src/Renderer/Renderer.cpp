@@ -1833,31 +1833,6 @@ void Renderer::waitForFrame(unsigned int framesToBeAhead)
 	}
 }
 
-// Saving these incase we for some reason want to go back
-//void Renderer::waitForCopyOnDemand()
-//{
-//	//Signal and increment the fence value.
-//	const UINT64 oldFenceValue = m_FenceFrameValue;
-//	m_CommandQueues[COMMAND_INTERFACE_TYPE::COPY_TYPE]->Signal(m_pFenceFrame, oldFenceValue);
-//	m_FenceFrameValue++;
-//
-//	//Wait until command queue is done.
-//	if (m_pFenceFrame->GetCompletedValue() < oldFenceValue)
-//	{
-//		m_pFenceFrame->SetEventOnCompletion(oldFenceValue, m_EventHandle);
-//		WaitForSingleObject(m_EventHandle, INFINITE);
-//	}
-//}
-//
-//void Renderer::executeCopyOnDemand()
-//{
-//	m_CopyTasks[COPY_TASK_TYPE::COPY_ON_DEMAND]->SetCommandInterfaceIndex(0);
-//	m_CopyTasks[COPY_TASK_TYPE::COPY_ON_DEMAND]->Execute();
-//	m_CommandQueues[COMMAND_INTERFACE_TYPE::COPY_TYPE]->ExecuteCommandLists(1, &m_CopyOnDemandCmdList[0]);
-//	waitForCopyOnDemand();
-//	m_CopyTasks[COPY_TASK_TYPE::COPY_ON_DEMAND]->Clear();
-//}
-
 void Renderer::prepareScene(Scene* activeScene)
 {
 	submitUploadPerFrameData();
@@ -1868,6 +1843,7 @@ void Renderer::prepareScene(Scene* activeScene)
 	//auto& tuple = m_Lights[LIGHT_TYPE::DIRECTIONAL_LIGHT].at(0);
 	//BaseCamera* tempCam = std::get<0>(tuple)->GetCamera();
 	//m_pScenePrimaryCamera = tempCam;
+
 	if (m_pScenePrimaryCamera == nullptr)
 	{
 		Log::PrintSeverity(Log::Severity::CRITICAL, "No primary camera was set in scenes\n");
