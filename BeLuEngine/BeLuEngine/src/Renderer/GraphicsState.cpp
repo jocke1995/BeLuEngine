@@ -4,7 +4,7 @@
 #include "RootSignature.h"
 #include "Shader.h"
 
-GraphicsState::GraphicsState(ID3D12Device5* device, RootSignature* rootSignature, LPCWSTR VSName, LPCWSTR PSName, D3D12_GRAPHICS_PIPELINE_STATE_DESC* gpsd, LPCTSTR psoName)
+GraphicsState::GraphicsState(ID3D12Device5* device, RootSignature* rootSignature, const std::wstring& VSName, const std::wstring& PSName, D3D12_GRAPHICS_PIPELINE_STATE_DESC* gpsd, const std::wstring& psoName)
 	:PipelineState(psoName)
 {
 	// Set the rootSignature in the pipeline state object descriptor
@@ -28,9 +28,9 @@ GraphicsState::GraphicsState(ID3D12Device5* device, RootSignature* rootSignature
 
 	if (FAILED(hr))
 	{
-		Log::PrintSeverity(Log::Severity::CRITICAL, "Failed to create %S\n", m_PsoName);
+		Log::PrintSeverity(Log::Severity::CRITICAL, "Failed to create %S\n", psoName);
 	}
-	m_pPSO->SetName(m_PsoName);
+	m_pPSO->SetName(psoName.c_str());
 }
 
 GraphicsState::~GraphicsState()

@@ -4,15 +4,15 @@
 #include "../Misc/AssetLoader.h"
 
 #include "../Renderer/Renderer.h"
+#include "../Events/EventBus.h"
 
 // Renderer
 #include "../Renderer/CommandInterface.h"
-#include "../Renderer/ShaderResourceView.h"
-#include "../Renderer/ConstantBufferView.h"
-#include "../Renderer/Material.h"
+#include "../Renderer/GPUMemory/ShaderResourceView.h"
+#include "../Renderer/GPUMemory/ConstantBuffer.h"
 #include "../Renderer/ShadowInfo.h"
 #include "../Renderer/ViewPool.h"
-#include "../Renderer/Texture.h"
+#include "../Renderer/Texture/Texture.h"
 #include "../Renderer/Mesh.h"
 
 // CopyTasks
@@ -31,18 +31,37 @@
 #include "../ECS/Components/Lights/SpotLightComponent.h"
 #include "../ECS/Entity.h"
 
-SceneManager::SceneManager(Renderer* r)
+SceneManager::SceneManager()
 {
-	m_pRenderer = r;
+	
+}
+
+SceneManager& SceneManager::GetInstance()
+{
+	static SceneManager instance;
+	return instance;
 }
 
 SceneManager::~SceneManager()
 {
-    for (auto pair : m_pScenes)
-    {
-        delete pair.second;
-    }
-    m_pScenes.clear();
+}
+
+void SceneManager::deleteSceneManager()
+{
+	for (auto pair : m_Scenes)
+	{
+		delete pair.second;
+	}
+
+	m_Scenes.clear();
+}
+
+void SceneManager::Update(double dt)
+{
+	// Update scene
+	m_pActiveScene->Update(this, dt);
+
+	Renderer::GetInstance().Update(dt);
 }
 
 Scene* SceneManager::CreateScene(std::string sceneName)
@@ -54,77 +73,124 @@ Scene* SceneManager::CreateScene(std::string sceneName)
     }
 
     // Create Scene and return it
-    m_pScenes[sceneName] = new Scene(sceneName);
-    return m_pScenes[sceneName];
+    m_Scenes[sceneName] = new Scene(sceneName);
+    return m_Scenes[sceneName];
+}
+
+Scene* SceneManager::GetActiveScene()
+{
+	return m_pActiveScene;
 }
 
 Scene* SceneManager::GetScene(std::string sceneName) const
 {
     if (sceneExists(sceneName))
     {
-        return m_pScenes.at(sceneName);
+        return m_Scenes.at(sceneName);
     }
 	
     Log::PrintSeverity(Log::Severity::CRITICAL, "No Scene with name: \'%s\' was found.\n", sceneName.c_str());
     return nullptr;
 }
 
-void SceneManager::RemoveEntity(Entity* entity)
+void SceneManager::RemoveEntity(Entity* entity, Scene* scene)
 {
-	// Removing renderer component
-	m_pRenderer->removeComponents(entity);
+	entity->OnUnInitScene();
 
-	// Remove sound component
-
-	// Remove game component
-
-	// Remove physic component
-
-	executeCopyOnDemand();
+	// Remove from the scene
+	scene->RemoveEntity(entity->GetName());
 }
 
-void SceneManager::AddEntity(Entity* entity)
+void SceneManager::AddEntity(Entity* entity, Scene* scene)
 {
-	// Add renderer component
-	m_pRenderer->addComponents(entity);
-
-	// Add sound component
-
-	// Add game component
-
-	// Add physic component
-
-	executeCopyOnDemand();
+	entity->OnInitScene();
 }
 
-void SceneManager::SetSceneToDraw(Scene* scene)
+void SceneManager::RemoveEntities()
 {
-	resetScene();
+	unsigned int removeSize = m_ToRemove.size() - 1;
+	for (int i = removeSize; i >= 0; --i)
+	{
+		RemoveEntity(m_ToRemove[i].ent, m_ToRemove[i].scene);
+	}
+	m_ToRemove.clear();
+}
 
+void SceneManager::SetGameOverScene(Scene* scene)
+{
+	if (scene != nullptr)
+	{
+		m_pGameOverScene = scene;
+	}
+	else
+	{
+		Log::PrintSeverity(Log::Severity::CRITICAL, "SetGameOverScene:: scene was nullptr");
+	}
+}
+
+void SceneManager::SetScene(Scene* scene)
+{
+	if (scene == m_pActiveScene)
+	{
+		Log::PrintSeverity(Log::Severity::WARNING, "SetScene on same scene %s\n", scene->GetName().c_str());
+		return;
+	}
+
+	ResetScene();
+
+	if (m_pActiveScene != nullptr)
+	{
+		std::map<std::string, Entity*> oldEntities = *m_pActiveScene->GetEntities();
+
+		for (auto const& [entityName, entity] : oldEntities)
+		{
+			entity->OnUnInitScene();
+		}
+
+		for (auto pair : oldEntities)
+		{
+			Entity* ent = pair.second;
+			if (ent->IsEntityDynamic() == true)
+			{
+				m_pActiveScene->RemoveEntity(ent->GetName());
+			}
+		}
+	}
+	
+	// init the active scenes
 	std::map<std::string, Entity*> entities = *scene->GetEntities();
 	for (auto const& [entityName, entity] : entities)
 	{
-		// Add renderer component returns 0
-		m_pRenderer->addComponents(entity);
-
-		// Add sound component
-
-		// Add game component
-
-		// Add physic component
-
+		entity->SetEntityState(false);
+		entity->OnInitScene();
 	}
-	
-	m_pRenderer->prepareScene(scene);
 
-	executeCopyOnDemand();
-	return;
+	m_pActiveScene = scene;
+
+	Renderer* renderer = &Renderer::GetInstance();
+	renderer->prepareScene(m_pActiveScene);
+
+	if (m_pActiveScene->GetMainCamera() == nullptr)
+	{
+		m_pActiveScene->SetPrimaryCamera(renderer->m_pScenePrimaryCamera);
+	}
+	scene->OnInit();
 }
 
+void SceneManager::ResetScene()
+{
+	Renderer::GetInstance().waitForGPU();
+
+	/* ------------------------- GPU -------------------------*/
+	
+	Renderer::GetInstance().OnResetScene();
+
+	/* ------------------------- GPU -------------------------*/
+}
 
 bool SceneManager::sceneExists(std::string sceneName) const
 {
-    for (auto pair : m_pScenes)
+    for (auto pair : m_Scenes)
     {
         // A Scene with this m_Name already exists
         if (pair.first == sceneName)
@@ -134,29 +200,4 @@ bool SceneManager::sceneExists(std::string sceneName) const
     }
 
     return false;
-}
-
-void SceneManager::executeCopyOnDemand()
-{
-	m_pRenderer->m_CopyTasks[COPY_TASK_TYPE::COPY_ON_DEMAND]->SetCommandInterfaceIndex(0);
-	m_pRenderer->m_CopyTasks[COPY_TASK_TYPE::COPY_ON_DEMAND]->Execute();
-	m_pRenderer->m_CommandQueues[COMMAND_INTERFACE_TYPE::COPY_TYPE]->ExecuteCommandLists(1, &m_pRenderer->m_CopyOnDemandCmdList[0]);
-	m_pRenderer->m_CopyTasks[COPY_TASK_TYPE::COPY_ON_DEMAND]->Clear();
-	m_pRenderer->waitForCopyOnDemand();
-}
-
-void SceneManager::resetScene()
-{
-	// Reset
-	m_pRenderer->m_RenderComponents.clear();
-	for (auto& light : m_pRenderer->m_Lights)
-	{
-		light.second.clear();
-	}
-	m_pRenderer->m_pViewPool->ClearAll();
-	m_pRenderer->m_CopyTasks[COPY_TASK_TYPE::COPY_PER_FRAME]->Clear();
-	static_cast<ShadowRenderTask*>(m_pRenderer->m_RenderTasks[RENDER_TASK_TYPE::SHADOW])->Clear();
-	m_pRenderer->m_pScenePrimaryCamera = nullptr;
-	m_pRenderer->m_pWireFrameTask->Clear();
-	m_pRenderer->m_BoundingBoxesToBePicked.clear();
 }

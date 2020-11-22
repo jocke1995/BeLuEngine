@@ -13,6 +13,8 @@ namespace component
 		virtual ~PointLightComponent();
 
 		void Update(double dt);
+		void OnInitScene();
+		void OnUnInitScene();
 
 		void SetPosition(float3 position);
 		void SetAttenuation(float3 attenuation);
@@ -20,7 +22,7 @@ namespace component
 		void* GetLightData() const;
 
 	protected:
-		void UpdateLightData(COLOR_TYPE type);
+		void UpdateLightColor();
 
 	private:
 		PointLight* m_pPointLight = nullptr;

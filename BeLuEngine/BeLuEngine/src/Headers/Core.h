@@ -2,9 +2,11 @@
 #define VECTORFLOATS_H
 
 #include <string>
-// For wstring convertion
 #include <locale>
 #include <codecvt>
+#include <vector>
+#include <Windows.h>
+
 static std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> strconverter;
 inline std::string to_string(std::wstring wstr)
 {
@@ -36,22 +38,40 @@ inline T Max(T a, T b)
 	return b;
 }
 
-enum class COLOR_TYPE
+inline std::string GetFileExtension(const std::string& FileName)
 {
-	LIGHT_AMBIENT,
-	LIGHT_DIFFUSE,
-	LIGHT_SPECULAR,
-	NUM_COLOR_TYPES
+	if (FileName.find_last_of(".") != std::string::npos)
+	{
+		return FileName.substr(FileName.find_last_of(".") + 1);
+	}
+	return "";
+}
+
+enum class WINDOW_MODE
+{
+	WINDOWED,
+	WINDOWED_FULLSCREEN,
+	FULLSCREEN
 };
 
-enum TEXTURE_TYPE
+enum class TEXTURE_TYPE
 {
-	AMBIENT,
-	DIFFUSE,
-	SPECULAR,
+	UNKNOWN,
+	TEXTURE2D,
+	TEXTURE2DGUI,
+	TEXTURECUBEMAP,
+	NUM_TYPES
+};
+
+enum class TEXTURE2D_TYPE
+{
+	ALBEDO,
+	ROUGHNESS,
+	METALLIC,
 	NORMAL,
 	EMISSIVE,
-	NUM_TEXTURE_TYPES
+	OPACITY,
+	NUM_TYPES
 };
 
 enum LIGHT_TYPE
@@ -67,7 +87,6 @@ enum SHADOW_RESOLUTION
 	LOW,
 	MEDIUM,
 	HIGH,
-	ULTRA,
 	NUM_SHADOW_RESOLUTIONS,
 	UNDEFINED
 };
@@ -101,14 +120,25 @@ enum class CAMERA_TYPE
 #define NUM_SWAP_BUFFERS 2
 #define BIT(x) (1 << x)
 #define MAXNUMBER 10000000.0f
-#define DRAWBOUNDINGBOX false
+#define DEVELOPERMODE_DRAWBOUNDINGBOX true
 
 enum FLAG_DRAW
 {
-	ForwardRendering = BIT(1),
-	Blend = BIT(2),
-	Shadow = BIT(3),
-	// animation = BIT(4),
+	NO_DEPTH = BIT(1),
+	DRAW_OPAQUE = BIT(2),
+	DRAW_TRANSPARENT_CONSTANT = BIT(3),
+	DRAW_TRANSPARENT_TEXTURE = BIT(4),
+	GIVE_SHADOW = BIT(5),
+	NUM_FLAG_DRAWS = 5,
+};
+
+enum FLAG_THREAD
+{
+	RENDER = BIT(1),
+	// CopyTextures,
+	// PrepareNextScene ..
+	// etc
+	ALL = BIT(2)
 	// etc..
 };
 

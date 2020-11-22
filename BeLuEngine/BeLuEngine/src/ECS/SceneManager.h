@@ -3,31 +3,61 @@
 
 #include "Scene.h"
 #include "../Renderer/MousePicker.h"
+#include <set>
+#include <unordered_map>
 
 class Entity;
 class Renderer;
 
+// Event
+struct SceneChange;
+
 class SceneManager 
 {
 public:
-	SceneManager(Renderer *r);
+	static SceneManager& GetInstance();
 	~SceneManager();
+	
+	// Update
+	void Update(double dt);
 
+	// Scene
 	Scene* CreateScene(std::string sceneName);
-
+	void SetScene(Scene* scene);
+	Scene* GetActiveScene();
 	Scene* GetScene(std::string sceneName) const;
 
-	void RemoveEntity(Entity* entity);
-	void AddEntity(Entity* entity);
-	void SetSceneToDraw(Scene* scene);
-private:
-	Renderer* m_pRenderer;
+	void ResetScene();
 
-	std::map<std::string, Scene*> m_pScenes;
+	// Special scenes
+	void SetGameOverScene(Scene* scene);
+
+	// Entity
+	void RemoveEntity(Entity* entity, Scene* scene);
+	void AddEntity(Entity* entity, Scene* scene);
+
+	void RemoveEntities();
+
+private:
+	friend class BeLuEngine;
+	SceneManager();
+	void deleteSceneManager();
+
+	std::map<std::string, Scene*> m_Scenes;
+	Scene* m_pActiveScene = nullptr;
+	Scene* m_pDefaultScene = nullptr;
+
+	struct EntityScene
+	{
+		Entity* ent;
+		Scene* scene;
+	};
+
+	std::vector<EntityScene> m_ToRemove;
+
+	Scene* m_pGameOverScene = nullptr;
 
 	bool sceneExists(std::string sceneName) const;
-	void executeCopyOnDemand();
-	void resetScene();
 };
 
 #endif

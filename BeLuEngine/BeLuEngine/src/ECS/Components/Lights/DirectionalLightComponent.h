@@ -13,17 +13,29 @@ namespace component
 		virtual ~DirectionalLightComponent();
 
 		void Update(double dt);
+		void OnInitScene();
+		void OnUnInitScene();
+
+		// Set functions which modifies the shadowCamera
+		void SetCameraDistance(float distance);
 		void SetDirection(float3 direction);
+		void SetCameraLeft(float left);
+		void SetCameraRight(float right);
+		void SetCameraBot(float bot);
+		void SetCameraTop(float top);
+		void SetCameraNearZ(float nearPlaneDistance);
+		void SetCameraFarZ(float farPlaneDistance);
+
 		void* GetLightData() const;
 	
 	protected:
-		void UpdateLightData(COLOR_TYPE type);
+		void UpdateLightColor();
 
 	private:
-		DirectionalLight* directionalLight = nullptr;
+		float m_Distance = 30.0f;
+		DirectionalLight* m_pDirectionalLight = nullptr;
 
 		void initFlagUsages();
-
 	};
 }
 #endif

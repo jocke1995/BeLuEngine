@@ -1,88 +1,127 @@
 #include "stdafx.h"
 #include "DirectionalLightComponent.h"
-#include "../Renderer/BaseCamera.h"
+#include "../Renderer/Camera/OrthographicCamera.h"
+#include "../Renderer/Renderer.h"
 
 namespace component
 {
 	DirectionalLightComponent::DirectionalLightComponent(Entity* parent, unsigned int lightFlags)
 		:Component(parent), Light(CAMERA_TYPE::ORTHOGRAPHIC, lightFlags)
 	{
-		directionalLight = new DirectionalLight();
-		directionalLight->direction = { -1.0f,  -0.5f,  0.0f, 0.0f };
-		directionalLight->baseLight = *m_pBaseLight;
+		m_pDirectionalLight = new DirectionalLight();
+		m_pDirectionalLight->direction = { -1.0f,  -0.5f,  0.0f, 0.0f };
+		m_pDirectionalLight->baseLight = *m_pBaseLight;
 
-		directionalLight->textureShadowMap = 0;
+		m_pDirectionalLight->textureShadowMap = 0;
 
 		initFlagUsages();
 	}
 
 	DirectionalLightComponent::~DirectionalLightComponent()
 	{
-		delete directionalLight;
+		delete m_pDirectionalLight;
 	}
-
 
 	void DirectionalLightComponent::Update(double dt)
 	{
 		if (m_pCamera != nullptr)
 		{
 			m_pCamera->Update(dt);
-			directionalLight->viewProj = *m_pCamera->GetViewProjectionTranposed();
+			m_pDirectionalLight->viewProj = *m_pCamera->GetViewProjectionTranposed();
 		}
+	}
+
+	void DirectionalLightComponent::OnInitScene()
+	{
+		this->Update(0);
+		Renderer::GetInstance().InitDirectionalLightComponent(this);
+	}
+
+	void DirectionalLightComponent::OnUnInitScene()
+	{
+		Renderer::GetInstance().UnInitDirectionalLightComponent(this);
+	}
+
+	void DirectionalLightComponent::SetCameraDistance(float distance)
+	{
+		m_Distance = distance;
 	}
 
 	void DirectionalLightComponent::SetDirection(float3 direction)
 	{
-		directionalLight->direction = { direction.x, direction.y, direction.z, 0.0f };
+		m_pDirectionalLight->direction = { direction.x, direction.y, direction.z, 0.0f };
 		
 		if (m_pCamera != nullptr)
 		{
-			m_pCamera->SetPosition(-direction.x * 10, -direction.y * 10, -direction.z * 10);
-			m_pCamera->SetLookAt(direction.x, direction.y, direction.z);
+			m_pCamera->SetPosition(-direction.x * m_Distance, -direction.y * m_Distance, -direction.z * m_Distance);
+			m_pCamera->SetDirection(direction.x, direction.y, direction.z);
 		}
+	}
+
+	void DirectionalLightComponent::SetCameraLeft(float left)
+	{
+		OrthographicCamera* ogCamera = static_cast<OrthographicCamera*>(m_pCamera);
+		ogCamera->SetLeft(left);
+	}
+
+	void DirectionalLightComponent::SetCameraRight(float right)
+	{
+		OrthographicCamera* ogCamera = static_cast<OrthographicCamera*>(m_pCamera);
+		ogCamera->SetRight(right);
+	}
+
+	void DirectionalLightComponent::SetCameraBot(float bot)
+	{
+		OrthographicCamera* ogCamera = static_cast<OrthographicCamera*>(m_pCamera);
+		ogCamera->SetBot(bot);
+	}
+
+	void DirectionalLightComponent::SetCameraTop(float top)
+	{
+		OrthographicCamera* ogCamera = static_cast<OrthographicCamera*>(m_pCamera);
+		ogCamera->SetTop(top);
+	}
+
+	void DirectionalLightComponent::SetCameraNearZ(float nearPlaneDistance)
+	{
+		OrthographicCamera* ogCamera = static_cast<OrthographicCamera*>(m_pCamera);
+		ogCamera->SetNearZ(nearPlaneDistance);
+	}
+
+	void DirectionalLightComponent::SetCameraFarZ(float farPlaneDistance)
+	{
+		OrthographicCamera* ogCamera = static_cast<OrthographicCamera*>(m_pCamera);
+		ogCamera->SetFarZ(farPlaneDistance);
 	}
 
 	void* DirectionalLightComponent::GetLightData() const
 	{
-		return directionalLight;
+		return m_pDirectionalLight;
+	}
+
+	void DirectionalLightComponent::UpdateLightColor()
+	{
+		m_pDirectionalLight->baseLight.color = m_pBaseLight->color;
 	}
 
 	void DirectionalLightComponent::initFlagUsages()
 	{
-		if (m_LightFlags & FLAG_LIGHT::CAST_SHADOW_LOW_RESOLUTION ||
-			m_LightFlags & FLAG_LIGHT::CAST_SHADOW_MEDIUM_RESOLUTION ||
-			m_LightFlags & FLAG_LIGHT::CAST_SHADOW_HIGH_RESOLUTION ||
-			m_LightFlags & FLAG_LIGHT::CAST_SHADOW_ULTRA_RESOLUTION)
+		if (m_LightFlags & FLAG_LIGHT::CAST_SHADOW)
 		{
-			CreateCamera(
+			CreateOrthographicCamera(
 				{
-				-directionalLight->direction.x * 10,
-				-directionalLight->direction.y * 10,
-				-directionalLight->direction.z * 10 },
+				-m_pDirectionalLight->direction.x * 10,
+				-m_pDirectionalLight->direction.y * 10,
+				-m_pDirectionalLight->direction.z * 10 },
 				{
-				directionalLight->direction.x,
-				directionalLight->direction.y,
-				directionalLight->direction.z });
+				m_pDirectionalLight->direction.x,
+				m_pDirectionalLight->direction.y,
+				m_pDirectionalLight->direction.z });
 
-			directionalLight->baseLight.castShadow = true;
+			
+			m_pDirectionalLight->baseLight.castShadow = true;
 
-			directionalLight->viewProj = *m_pCamera->GetViewProjectionTranposed();
-		}
-	}
-
-	void DirectionalLightComponent::UpdateLightData(COLOR_TYPE type)
-	{
-		switch (type)
-		{
-		case COLOR_TYPE::LIGHT_AMBIENT:
-			directionalLight->baseLight.ambient = m_pBaseLight->ambient;
-			break;
-		case COLOR_TYPE::LIGHT_DIFFUSE:
-			directionalLight->baseLight.diffuse = m_pBaseLight->diffuse;
-			break;
-		case COLOR_TYPE::LIGHT_SPECULAR:
-			directionalLight->baseLight.specular = m_pBaseLight->specular;
-			break;
+			m_pDirectionalLight->viewProj = *m_pCamera->GetViewProjectionTranposed();
 		}
 	}
 }

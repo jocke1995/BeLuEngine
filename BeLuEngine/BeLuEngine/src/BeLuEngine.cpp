@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "BeLuEngine.h"
-#include "Misc/Thread.h"
+#include "Misc/MultiThreading/Thread.h"
 
 BeLuEngine::BeLuEngine()
 {
@@ -9,57 +9,70 @@ BeLuEngine::BeLuEngine()
 
 BeLuEngine::~BeLuEngine()
 {
-	delete m_Window;
-	delete m_Timer;
+	// Gpu will crash if we delete stuff while commandQueues are running
+	m_pRenderer->waitForGPU();
 
-	m_ThreadPool->WaitForThreads(FLAG_THREAD::ALL);
-	m_ThreadPool->ExitThreads();
-	delete m_ThreadPool;
+	delete m_pWindow;
+	delete m_pTimer;
 
-	delete m_SceneManager;
-	delete m_Renderer;
+	m_pSceneManager->deleteSceneManager();
+	m_pRenderer->deleteRenderer();
 }
 
 void BeLuEngine::Init(HINSTANCE hInstance, int nCmdShow)
 {
+	// Window values
+	bool windowedFullscreen = false;
+	int windowWidth = 800;
+	int windowHeight = 600;
+
 	// Misc
-	m_Window = new Window(hInstance, nCmdShow, false);
-	m_Timer = new Timer(m_Window);
+	m_pWindow = new Window(hInstance, nCmdShow, windowedFullscreen, windowWidth, windowHeight);
+	m_pTimer = new Timer(m_pWindow);
 
 	// ThreadPool
-	int numCores = std::thread::hardware_concurrency();
-	if (numCores == 0) numCores = 1; // function not supported
-	m_ThreadPool = new ThreadPool(numCores); // Set num m_Threads to number of cores of the cpu
+	int numThreads = std::thread::hardware_concurrency();
+	if (numThreads == 0) // function not supported
+	{
+		numThreads = 1;
+	}
+	else if (numThreads > m_ThreadLimit) // Limiting the number of threads to the threadLimit
+	{
+		numThreads = m_ThreadLimit;
+	}
+	m_pThreadPool = &ThreadPool::GetInstance(numThreads);
 
 	// Sub-engines
-	m_Renderer = new Renderer();
-	m_Renderer->InitD3D12(m_Window->GetHwnd(), hInstance, m_ThreadPool);
+	m_pRenderer = &Renderer::GetInstance();
+	m_pRenderer->InitD3D12(m_pWindow, hInstance, m_pThreadPool);
 
 	// ECS
-	m_SceneManager = new SceneManager(m_Renderer);
+	m_pSceneManager = &SceneManager::GetInstance();
+
+	Input::GetInstance().RegisterDevices(m_pWindow->GetHwnd());
 }
 
 Window* const BeLuEngine::GetWindow() const
 {
-	return m_Window;
+	return m_pWindow;
 }
 
 Timer* const BeLuEngine::GetTimer() const
 {
-	return m_Timer;
+	return m_pTimer;
 }
 
 ThreadPool* const BeLuEngine::GetThreadPool() const
 {
-	return m_ThreadPool;
+	return m_pThreadPool;
 }
 
 SceneManager* const BeLuEngine::GetSceneHandler() const
 {
-	return m_SceneManager;
+	return m_pSceneManager;
 }
 
 Renderer* const BeLuEngine::GetRenderer() const
 {
-	return m_Renderer;
+	return m_pRenderer;
 }

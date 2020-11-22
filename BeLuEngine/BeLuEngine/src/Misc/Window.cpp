@@ -1,17 +1,39 @@
+
 #include "stdafx.h"
 #include "Window.h"
+
+#include "../Input/Input.h"
+#include "../Events/EventBus.h"
+
+struct WindowChange;
 
 // callback function for windows messages
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+	static bool programRunning = true;
+
 	switch (msg)
 	{
+	case WM_SYSKEYDOWN: // alt+enter
+		if (wParam == VK_RETURN && (lParam & 0x60000000) == 0x20000000)
+		{
+			EventBus::GetInstance().Publish(&WindowChange());
+		}
+		return 0;
+	case WM_ACTIVATEAPP: // alt+tab, windows key and more
+		if (!wParam && programRunning)
+		{
+			EventBus::GetInstance().Publish(&WindowChange());
+		}
+		return 0;
+
 	case WM_KEYDOWN:
 		if (wParam == VK_ESCAPE)
 		{
 			//if (MessageBox(0, L"Are you sure you want to exit?", L"Exit", MB_YESNO | MB_ICONQUESTION) == IDYES)
 			//{
-				DestroyWindow(hWnd);
+			programRunning = false;
+			DestroyWindow(hWnd);
 			//}
 		}
 		// Temp to create objects during runtime
@@ -29,24 +51,48 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		return 0;
+
+	case WM_INPUT:
+		UINT dwSize;
+
+		GetRawInputData((HRAWINPUT)lParam, RID_INPUT, NULL, &dwSize, sizeof(RAWINPUTHEADER));
+		LPBYTE lpb = new BYTE[dwSize];
+		if (lpb == NULL)
+		{
+			return 0;
+		}
+
+		if (GetRawInputData((HRAWINPUT)lParam, RID_INPUT, lpb, &dwSize, sizeof(RAWINPUTHEADER)) != dwSize)
+		{
+			OutputDebugString(TEXT("GetRawInputData does not return correct size !\n"));
+		}
+
+		RAWINPUT* raw = reinterpret_cast<RAWINPUT*>(lpb);
+
+		delete[] lpb;
+
+		return 0;
 	}
+
 	return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
 Window::Window(
 	HINSTANCE hInstance,
 	int nCmdShow,
-	bool fullScreen,
+	bool windowedFullScreen,
 	int screenWidth, int screenHeight,
 	LPCTSTR windowName, LPCTSTR windowTitle)
 {
 	m_ScreenWidth = screenWidth;
 	m_ScreenHeight = screenHeight;
-	m_FullScreen = fullScreen;
+	m_WindowedFullScreen = windowedFullScreen;
 	m_WindowName = windowName;
 	m_WindowTitle = windowTitle;
 
 	initWindow(hInstance, nCmdShow);
+
+	m_ShutDown = false;
 }
 
 
@@ -62,7 +108,7 @@ void Window::SetWindowTitle(std::wstring newTitle)
 
 bool Window::IsFullScreen() const
 {
-	return m_FullScreen;
+	return m_WindowedFullScreen;
 }
 
 int Window::GetScreenWidth() const
@@ -80,23 +126,47 @@ const HWND* Window::GetHwnd() const
 	return &m_Hwnd;
 }
 
+void Window::SetScreenWidth(int width)
+{
+	m_ScreenWidth = width;
+}
+
+void Window::SetScreenHeight(int height)
+{
+	m_ScreenHeight = height;
+}
+
 bool Window::ExitWindow()
 {
-	bool closeWindow = false;
+	bool closeWindow = m_ShutDown;
 	MSG msg = { 0 };
 
-	if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+	while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 	{
 
 		TranslateMessage(&msg);
-		DispatchMessage(&msg);	// Går in i "CALLBACK" funktionen
+		DispatchMessage(&msg);
 
 		if (msg.message == WM_QUIT)
 		{
-			closeWindow = true;
+			m_ShutDown = true;
 		}
 	}
 	return closeWindow;
+}
+
+void Window::MouseInClipspace(float* x, float* y) const
+{
+	// Get the mouse position from your screenspace
+	POINT p;
+	GetCursorPos(&p);
+	
+	// Transform the position from your screenspace to the clientspace (space of the window)
+	ScreenToClient(m_Hwnd, &p);
+
+	// Transform the clientspace to the DirectX coordinates (0, 0) = (-1, 1)
+	*x = (static_cast<float>(p.x) / (m_ScreenWidth / 2)) - 1;
+	*y = -((static_cast<float>(p.y) / (m_ScreenHeight / 2)) - 1);
 }
 
 bool Window::WasSpacePressed()
@@ -121,14 +191,17 @@ bool Window::WasTabPressed()
 
 bool Window::initWindow(HINSTANCE hInstance, int nCmdShow)
 {
-	if (m_FullScreen)
-	{
-		HMONITOR hmon = MonitorFromWindow(m_Hwnd, MONITOR_DEFAULTTONEAREST);
-		MONITORINFO mi = { sizeof(mi) };
-		GetMonitorInfo(hmon, &mi);
+	HMONITOR hmon = MonitorFromWindow(m_Hwnd, MONITOR_DEFAULTTONEAREST);
+	MONITORINFO mi = { sizeof(mi) };
+	GetMonitorInfo(hmon, &mi);
 
-		m_ScreenWidth = mi.rcMonitor.right - mi.rcMonitor.left;
-		m_ScreenHeight = mi.rcMonitor.bottom - mi.rcMonitor.top;
+	int width = mi.rcMonitor.right - mi.rcMonitor.left;
+	int height = mi.rcMonitor.bottom - mi.rcMonitor.top;
+
+	if (m_WindowedFullScreen || (width < m_ScreenWidth || height < m_ScreenHeight))
+	{
+		m_ScreenWidth = width;
+		m_ScreenHeight = height;
 	}
 
 	WNDCLASSEX wc;
@@ -171,10 +244,7 @@ bool Window::initWindow(HINSTANCE hInstance, int nCmdShow)
 	}
 
 	// Remove the topbar of the window if we are in fullscreen
-	if (m_FullScreen)
-	{
-		SetWindowLong(m_Hwnd, GWL_STYLE, 0);
-	}
+	SetWindowLong(m_Hwnd, GWL_STYLE, 0);
 
 	ShowWindow(m_Hwnd, nCmdShow);
 	UpdateWindow(m_Hwnd);

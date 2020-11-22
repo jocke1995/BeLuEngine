@@ -1,42 +1,94 @@
+
 #include "stdafx.h"
 #include "AssetLoader.h"
 
-#include "../Renderer/Material.h"
+#include "../ECS/Scene.h"
+#include "../ECS/Entity.h"
 
+#include "Window.h"
 #include "../Renderer/DescriptorHeap.h"
-
 #include "../Renderer/Mesh.h"
+#include "../Renderer/Model.h"
 #include "../Renderer/Shader.h"
-#include "../Renderer/Texture.h"
+#include "../Renderer/Material.h"
+#include "../Renderer/Transform.h"
 
 #include "assimp/Importer.hpp"
 #include "assimp/postprocess.h"
 #include "assimp/scene.h"
+#include "assimp/postprocess.h"
 
-AssetLoader::AssetLoader(ID3D12Device5* device, DescriptorHeap* descriptorHeap_CBV_UAV_SRV)
+#include "../Renderer/Texture/Texture2D.h"
+#include "../Renderer/Texture/Texture2DGUI.h"
+#include "../Renderer/Texture/TextureCubeMap.h"
+
+#include "MultiThreading/ThreadPool.h"
+
+#include "EngineMath.h"
+
+AssetLoader::AssetLoader(ID3D12Device5* device, DescriptorHeap* descriptorHeap_CBV_UAV_SRV, const Window* window)
 {
 	m_pDevice = device;
 	m_pDescriptorHeap_CBV_UAV_SRV = descriptorHeap_CBV_UAV_SRV;
+	m_pWindow = const_cast<Window*>(window);
 
 	// Load default textures
-	LoadTexture(m_FilePathDefaultTextures + L"default_ambient.png");
-	LoadTexture(m_FilePathDefaultTextures + L"default_diffuse.jpg");
-	LoadTexture(m_FilePathDefaultTextures + L"default_specular.png");
-	LoadTexture(m_FilePathDefaultTextures + L"default_normal.png");
-	LoadTexture(m_FilePathDefaultTextures + L"default_emissive.png");
+	loadDefaultMaterial();
+}
+
+bool AssetLoader::IsModelLoadedOnGpu(const std::wstring& name) const
+{
+	return m_LoadedModels.at(name).first;
+}
+
+bool AssetLoader::IsModelLoadedOnGpu(const Model* model) const
+{
+	return m_LoadedModels.at(model->GetPath()).first;
+}
+
+bool AssetLoader::IsMaterialLoadedOnGpu(const std::wstring& name) const
+{
+	return m_LoadedMaterials.at(name).first;
+}
+
+bool AssetLoader::IsMaterialLoadedOnGpu(const Material* material) const
+{
+	return m_LoadedMaterials.at(material->GetPath()).first;
+}
+
+bool AssetLoader::IsTextureLoadedOnGpu(const std::wstring& name) const
+{
+	return m_LoadedTextures.at(name).first;
+}
+
+bool AssetLoader::IsTextureLoadedOnGpu(const Texture* texture) const
+{
+	return m_LoadedTextures.at(texture->GetPath()).first;
+}
+
+void AssetLoader::loadDefaultMaterial()
+{
+	// Load default textures
+	std::map<TEXTURE2D_TYPE, Texture*> matTextures;
+	matTextures[TEXTURE2D_TYPE::ALBEDO] = LoadTexture2D(m_FilePathDefaultTextures + L"default_albedo.dds");
+	matTextures[TEXTURE2D_TYPE::ROUGHNESS] = LoadTexture2D(m_FilePathDefaultTextures + L"default_roughness.dds");
+	matTextures[TEXTURE2D_TYPE::METALLIC] = LoadTexture2D(m_FilePathDefaultTextures + L"default_metallic.dds");
+	matTextures[TEXTURE2D_TYPE::NORMAL] = LoadTexture2D(m_FilePathDefaultTextures + L"default_normal.dds");
+	matTextures[TEXTURE2D_TYPE::EMISSIVE] = LoadTexture2D(m_FilePathDefaultTextures + L"default_emissive.dds");
+	matTextures[TEXTURE2D_TYPE::OPACITY] = LoadTexture2D(m_FilePathDefaultTextures + L"default_opacity.dds");
+
+	std::wstring matName = L"DefaultMaterial";
+	Material* material = new Material(&matName, &matTextures);
+	m_LoadedMaterials[matName].first = false;
+	m_LoadedMaterials[matName].second = material;
 }
 
 AssetLoader::~AssetLoader()
 {
-	// For every model
-	for (auto pair : m_LoadedModels)
+	// For every Mesh
+	for (auto mesh : m_LoadedMeshes)
 	{
-		// For every m_pMesh the model has
-		for (unsigned int i = 0; i < pair.second.second->size(); i++)
-		{
-			delete pair.second.second->at(i);
-		}
-		delete pair.second.second;
+		delete mesh;
 	}
 
 	// For every texture
@@ -45,19 +97,33 @@ AssetLoader::~AssetLoader()
 		delete pair.second.second;
 	}
 
+	// For every Material
+	for (auto material : m_LoadedMaterials)
+	{
+		delete material.second.second;
+	}
+
+	// For every model
+	for (auto pair : m_LoadedModels)
+	{
+		delete pair.second.second;
+	}
+
 	// For every shader
 	for (auto shader : m_LoadedShaders)
+	{
 		delete shader.second;
+	}
 }
 
-AssetLoader* AssetLoader::Get(ID3D12Device5* device, DescriptorHeap* descriptorHeap_CBV_UAV_SRV)
+AssetLoader* AssetLoader::Get(ID3D12Device5* device, DescriptorHeap* descriptorHeap_CBV_UAV_SRV, const Window* window)
 {
-	static AssetLoader instance(device, descriptorHeap_CBV_UAV_SRV);
+	static AssetLoader instance(device, descriptorHeap_CBV_UAV_SRV, window);
 
 	return &instance;
 }
 
-std::vector<Mesh*>* AssetLoader::LoadModel(const std::wstring path)
+Model* AssetLoader::LoadModel(const std::wstring& path)
 {
 	// Check if the model already exists
 	if (m_LoadedModels.count(path) != 0)
@@ -67,27 +133,32 @@ std::vector<Mesh*>* AssetLoader::LoadModel(const std::wstring path)
 
 	// Else load the model
 	const std::string filePath(path.begin(), path.end());
-	Assimp::Importer importer;
 
-	const aiScene* assimpScene = importer.ReadFile(filePath, aiProcess_JoinIdenticalVertices | aiProcess_Triangulate | aiProcess_GenNormals | aiProcess_GenUVCoords | aiProcess_CalcTangentSpace);
+	Assimp::Importer importer;
+	importer.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, true);
+	const aiScene* assimpScene = importer.ReadFile(filePath, aiProcess_Triangulate | aiProcess_GenNormals | aiProcess_GenUVCoords | aiProcess_CalcTangentSpace | aiProcess_ConvertToLeftHanded | aiProcess_OptimizeMeshes | aiProcess_JoinIdenticalVertices | aiProcess_OptimizeGraph);
 
 	if (assimpScene == nullptr)
 	{
-		Log::PrintSeverity(Log::Severity::CRITICAL, "Failed to load model with path: \'%s\'\n", filePath.c_str());
+		Log::PrintSeverity(Log::Severity::CRITICAL, "Failed to load model with path: \'%S\'\n", path.c_str());
 		return nullptr;
 	}
-	
-	std::vector<Mesh*> *meshes = new std::vector<Mesh*>;
-	meshes->reserve(assimpScene->mNumMeshes);
-	m_LoadedModels[path].first = false;
-	m_LoadedModels[path].second = meshes;
 
-	processNode(assimpScene->mRootNode, assimpScene, meshes, &filePath);
+	std::vector<Mesh*> meshes;
+	std::vector<std::map<TEXTURE2D_TYPE, Texture*>> textures;
+	std::vector<Material*> materials;
+
+	meshes.reserve(assimpScene->mNumMeshes);
+	materials.reserve(assimpScene->mNumMeshes);
+	m_LoadedModels[path].first = false;
+
+	processModel(assimpScene, &meshes, &materials, path);
+	m_LoadedModels[path].second = new Model(&path, &meshes, &materials);
 
 	return m_LoadedModels[path].second;
 }
 
-Texture* AssetLoader::LoadTexture(std::wstring path)
+Texture* AssetLoader::LoadTexture2D(const std::wstring& path)
 {
 	// Check if the texture already exists
 	if (m_LoadedTextures.count(path) != 0)
@@ -95,19 +166,28 @@ Texture* AssetLoader::LoadTexture(std::wstring path)
 		return m_LoadedTextures[path].second;
 	}
 
-	Texture* texture = new Texture();
-	if (texture->Init(path, m_pDevice, m_pDescriptorHeap_CBV_UAV_SRV) == false)
+	// Check if the texture is DDS or of other commonType
+	std::string fileEnding = GetFileExtension(to_string(path));
+	Texture* texture = nullptr;
+	if (fileEnding == "dds")
 	{
-		delete texture;
-		return nullptr;
+		texture = new Texture2D(path);
+	}
+	else
+	{
+		texture = new Texture2DGUI(path);
 	}
 
 	m_LoadedTextures[path].first = false;
 	m_LoadedTextures[path].second = texture;
+
+	// Create dx resources etc..
+	texture->Init(m_pDevice, m_pDescriptorHeap_CBV_UAV_SRV);
+
 	return texture;
 }
 
-Shader* AssetLoader::loadShader(std::wstring fileName, ShaderType type)
+Shader* AssetLoader::loadShader(const std::wstring& fileName, ShaderType type)
 {
 	// Check if the shader already exists
 	if (m_LoadedShaders.count(fileName) != 0)
@@ -123,34 +203,45 @@ Shader* AssetLoader::loadShader(std::wstring fileName, ShaderType type)
 	return m_LoadedShaders[fileName];
 }
 
-void AssetLoader::processNode(aiNode* node, const aiScene* assimpScene, std::vector<Mesh*>* meshes, const std::string* filePath)
+void AssetLoader::processModel(const aiScene* assimpScene, std::vector<Mesh*>* meshes, std::vector<Material*>* materials, const std::wstring& filePath)
 {
-	// Go through all the m_Meshes
-	for (unsigned int i = 0; i < node->mNumMeshes; i++)
+	for (unsigned int i = 0; i < assimpScene->mNumMeshes; i++)
 	{
-		aiMesh* mesh = assimpScene->mMeshes[node->mMeshes[i]];
-		meshes->push_back(processMesh(mesh, assimpScene, filePath));
-	}
-	
-	// If the node has more node children
-	for (unsigned int i = 0; i < node->mNumChildren; i++)
-	{
-		processNode(node->mChildren[i], assimpScene, meshes, filePath);
+		aiMesh* assimpMesh = assimpScene->mMeshes[i];
+		Mesh* mesh = processMesh(assimpMesh, assimpScene, meshes, materials, filePath);
+		meshes->push_back(mesh);
 	}
 }
 
-Mesh* AssetLoader::processMesh(aiMesh* assimpMesh, const aiScene* assimpScene, const std::string* filePath)
+Mesh* AssetLoader::processMesh(aiMesh* assimpMesh, const aiScene* assimpScene, std::vector<Mesh*>* meshes, std::vector<Material*>* materials, const std::wstring& filePath)
 {
 	// Fill this data
 	std::vector<Vertex> vertices;
 	std::vector<unsigned int> indices;
-	std::map<TEXTURE_TYPE, Texture*> textures;
 
+	processMeshData(assimpScene, assimpMesh, &vertices, &indices);
+
+	// Create Mesh
+	Mesh* mesh = new Mesh(
+		&vertices, &indices,
+		filePath);
+
+	mesh->Init(m_pDevice, m_pDescriptorHeap_CBV_UAV_SRV);
+	// save mesh
+	m_LoadedMeshes.push_back(mesh);
+
+	// add the texture to the correct mesh (later for models slotinfo)
+	materials->push_back(processMaterial(filePath, assimpScene, assimpMesh));
+
+	return mesh;
+}
+
+void AssetLoader::processMeshData(const aiScene* assimpScene, const aiMesh* assimpMesh, std::vector<Vertex>* vertices, std::vector<unsigned int>* indices)
+{	
 	// Get data from assimpMesh and store it
 	for (unsigned int i = 0; i < assimpMesh->mNumVertices; i++)
 	{
 		Vertex vTemp = {};
-
 		// Get positions
 		if (assimpMesh->HasPositions())
 		{
@@ -160,7 +251,7 @@ Mesh* AssetLoader::processMesh(aiMesh* assimpMesh, const aiScene* assimpScene, c
 		}
 		else
 		{
-			Log::PrintSeverity(Log::Severity::CRITICAL, "Mesh has no positions");
+			Log::PrintSeverity(Log::Severity::CRITICAL, "Mesh has no positions\n");
 		}
 
 		// Get Normals
@@ -172,9 +263,10 @@ Mesh* AssetLoader::processMesh(aiMesh* assimpMesh, const aiScene* assimpScene, c
 		}
 		else
 		{
-			Log::PrintSeverity(Log::Severity::CRITICAL, "Mesh has no normals");
+			Log::PrintSeverity(Log::Severity::CRITICAL, "Mesh has no normals\n");
 		}
 
+		// Get tangents
 		if (assimpMesh->HasTangentsAndBitangents())
 		{
 			vTemp.tangent.x = assimpMesh->mTangents[i].x;
@@ -183,10 +275,9 @@ Mesh* AssetLoader::processMesh(aiMesh* assimpMesh, const aiScene* assimpScene, c
 		}
 		else
 		{
-			Log::PrintSeverity(Log::Severity::CRITICAL, "Mesh has no tangents");
+			Log::PrintSeverity(Log::Severity::CRITICAL, "Mesh has no tangents\n");
 		}
-		
-		
+
 		// Get texture coordinates if there are any
 		if (assimpMesh->HasTextureCoords(0))
 		{
@@ -195,65 +286,79 @@ Mesh* AssetLoader::processMesh(aiMesh* assimpMesh, const aiScene* assimpScene, c
 		}
 		else
 		{
-			Log::PrintSeverity(Log::Severity::CRITICAL, "Mesh has no textureCoords");
+			Log::PrintSeverity(Log::Severity::CRITICAL, "Mesh has no textureCoords\n");
 		}
 
-		vertices.push_back(vTemp);
+		vertices->push_back(vTemp);
 	}
 
 	// Get indices
 	for (unsigned int i = 0; i < assimpMesh->mNumFaces; i++)
 	{
 		aiFace face = assimpMesh->mFaces[i];
-	
+
 		for (unsigned int j = 0; j < face.mNumIndices; j++)
 		{
-			indices.push_back(face.mIndices[j]);
+			indices->push_back(face.mIndices[j]);
 		}
 	}
-
-	// Create Mesh
-	Mesh* mesh = new Mesh(
-		m_pDevice,
-		vertices, indices,
-		m_pDescriptorHeap_CBV_UAV_SRV,
-		*filePath);
-
-	// ---------- Get Textures and set them to the m_pMesh START----------
-	aiMaterial* mat = assimpScene->mMaterials[assimpMesh->mMaterialIndex];
-	
-	// Split filepath
-	std::string filePathWithoutTexture = *filePath;
-	std::size_t indicesInPath = filePathWithoutTexture.find_last_of("/\\");
-	filePathWithoutTexture = filePathWithoutTexture.substr(0, indicesInPath + 1);
-
-	// Add the textures to the m_pMesh
-	Texture* texture = nullptr;
-	for (int i = 0; i < TEXTURE_TYPE::NUM_TEXTURE_TYPES; i++)
-	{
-		TEXTURE_TYPE type = static_cast<TEXTURE_TYPE>(i);
-		texture = processTexture(mat, type, &filePathWithoutTexture);
-		mesh->GetMaterial()->SetTexture(type, texture);
-	}
-	// ---------- Get Textures and set them to the m_pMesh END----------
-
-	// Set shininess
-	float shininess = 100;
-	// Todo: looks to bright with these values, bad models or bad scene?
-	// if (AI_SUCCESS != aiGetMaterialFloat(mat, AI_MATKEY_SHININESS, &shininess))
-	// {
-	// 	// if unsuccessful set a default
-	// 	shininess = 20.0f;
-	// }
-
-	mesh->GetMaterial()->SetShininess(shininess);
-
-	return mesh;
 }
 
-Texture* AssetLoader::processTexture(aiMaterial* mat,
-	TEXTURE_TYPE texture_type,
-	const std::string* filePathWithoutTexture)
+Material* AssetLoader::processMaterial(std::wstring path, const aiScene* assimpScene, const aiMesh* assimpMesh)
+{
+	// Split filepath
+	std::wstring filePathWithoutTexture = path;
+	std::size_t indicesInPath = filePathWithoutTexture.find_last_of(L"/\\");
+	filePathWithoutTexture = filePathWithoutTexture.substr(0, indicesInPath + 1);
+
+	// Get material from assimp
+	aiMaterial* mat = assimpScene->mMaterials[assimpMesh->mMaterialIndex];
+	Material* material;
+	// Create our material
+	material = loadMaterial(mat, filePathWithoutTexture);
+
+	return material;			// MAY DESTRUCT CAUSE OUT OF SCOPE
+}
+
+Material* AssetLoader::loadMaterial(aiMaterial* mat, const std::wstring& folderPath)
+{
+	// Get material name
+	aiString tempName;
+	mat->Get(AI_MATKEY_NAME, tempName);
+	std::wstring matName = to_wstring(tempName.C_Str());
+
+	// Check if material don't exists
+	if (m_LoadedMaterials.count(matName) == 0)
+	{
+		// Load material
+		std::map<TEXTURE2D_TYPE, Texture*> matTextures;
+
+		// Add the textures to the m_pMesh
+		for (unsigned int i = 0; i < static_cast<unsigned int>(TEXTURE2D_TYPE::NUM_TYPES); i++)
+		{
+			TEXTURE2D_TYPE type = static_cast<TEXTURE2D_TYPE>(i);
+			Texture* texture = processTexture(mat, type, folderPath);
+			matTextures[type] = texture;
+		}
+
+		Material* material = new Material(&matName, &matTextures);
+		m_LoadedMaterials[matName].first = false;
+		m_LoadedMaterials[matName].second = material;
+
+		return material;
+	}
+	else
+	{
+		// Don't print for default material
+		if (matName != L"DefaultMaterial")
+		{
+			//Log::PrintSeverity(Log::Severity::WARNING, "AssetLoader: Loaded same material name more than once, first loaded material will be used <%S>\n", matName.c_str());
+		}
+		return m_LoadedMaterials[matName].second;
+	}
+}
+
+Texture* AssetLoader::processTexture(aiMaterial* mat, TEXTURE2D_TYPE texture_type, const std::wstring& filePathWithoutTexture)
 {
 	aiTextureType type;
 	aiString str;
@@ -266,38 +371,43 @@ Texture* AssetLoader::processTexture(aiMaterial* mat,
 	// Find the textureType
 	switch (texture_type)
 	{
-	case::TEXTURE_TYPE::AMBIENT:
-		type = aiTextureType_AMBIENT;
-		defaultPath = m_FilePathDefaultTextures + L"default_ambient.png";
-		warningMessageTextureType = "Ambient";
-		break;
-	case::TEXTURE_TYPE::DIFFUSE:
+	case::TEXTURE2D_TYPE::ALBEDO:
 		type = aiTextureType_DIFFUSE;
-		defaultPath = m_FilePathDefaultTextures + L"default_diffuse.jpg";
-		warningMessageTextureType = "Diffuse";
+		defaultPath = m_FilePathDefaultTextures + L"default_albedo.dds";
+		warningMessageTextureType = "Albedo";
 		break;
-	case::TEXTURE_TYPE::SPECULAR:
+	case::TEXTURE2D_TYPE::ROUGHNESS:
 		type = aiTextureType_SPECULAR;
-		defaultPath = m_FilePathDefaultTextures + L"default_specular.png";
-		warningMessageTextureType = "Specular";
+		defaultPath = m_FilePathDefaultTextures + L"default_roughness.dds";
+		warningMessageTextureType = "Roughness";
 		break;
-	case::TEXTURE_TYPE::NORMAL:
+	case::TEXTURE2D_TYPE::METALLIC:
+		type = aiTextureType_AMBIENT;
+		defaultPath = m_FilePathDefaultTextures + L"default_metallic.dds";
+		warningMessageTextureType = "Metallic";
+		break;
+	case::TEXTURE2D_TYPE::NORMAL:
 		type = aiTextureType_NORMALS;
-		defaultPath = m_FilePathDefaultTextures + L"default_normal.png";
+		defaultPath = m_FilePathDefaultTextures + L"default_normal.dds";
 		warningMessageTextureType = "Normal";
 		break;
-	case::TEXTURE_TYPE::EMISSIVE:
+	case::TEXTURE2D_TYPE::EMISSIVE:
 		type = aiTextureType_EMISSIVE;
-		defaultPath = m_FilePathDefaultTextures + L"default_emissive.png";
+		defaultPath = m_FilePathDefaultTextures + L"default_emissive.dds";
 		warningMessageTextureType = "Emissive";
+		break;
+	case::TEXTURE2D_TYPE::OPACITY:
+		type = aiTextureType_OPACITY;
+		defaultPath = m_FilePathDefaultTextures + L"default_opacity.dds";
+		warningMessageTextureType = "Opacity";
 		break;
 	}
 
 	mat->GetTexture(type, 0, &str);
-	std::string textureFile = str.C_Str();
+	std::wstring textureFile = to_wstring(str.C_Str());
 	if (textureFile.size() != 0)
 	{
-		texture = LoadTexture(to_wstring(*filePathWithoutTexture + textureFile).c_str());
+		texture = LoadTexture2D(filePathWithoutTexture + textureFile);
 	}
 
 	if (texture != nullptr)
@@ -306,9 +416,10 @@ Texture* AssetLoader::processTexture(aiMaterial* mat,
 	}
 	else
 	{
+		std::string tempString = std::string(filePathWithoutTexture.begin(), filePathWithoutTexture.end());
 		// No texture, warn and apply default Texture
-		Log::PrintSeverity(Log::Severity::WARNING, "Applying default texture: " + warningMessageTextureType + 
-			" on mesh with path: \'%s\'\n", filePathWithoutTexture->c_str());
+		Log::PrintSeverity(Log::Severity::WARNING, "Applying default texture: " + warningMessageTextureType +
+			" on mesh with path: \'%s\'\n", tempString.c_str());
 		return m_LoadedTextures[defaultPath].second;
 	}
 

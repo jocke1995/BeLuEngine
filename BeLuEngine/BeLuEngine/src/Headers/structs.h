@@ -1,43 +1,43 @@
 #ifndef STRUCTS_H
 #define STRUCTS_H
 
+// Light defines
 #define MAX_DIR_LIGHTS   10
 #define MAX_POINT_LIGHTS 10
 #define MAX_SPOT_LIGHTS  10
+
+// Animation defines
+#define MAX_BONES_PER_VERTEX 10
+#define MAX_ANIMATION_MATRICES 100
+
+// This struct can be used to send specific indices as a root constant to the GPU.
+// Example usage is when the indices for pp-effects are sent to gpu.
+struct DescriptorHeapIndices
+{
+	unsigned int index0;
+	unsigned int index1;
+	unsigned int index2;
+	unsigned int index3;
+};
 
 // Indicies of where the descriptors are stored in the descriptorHeap
 struct SlotInfo
 {
 	unsigned int vertexDataIndex;
 	// TextureIndices
-	unsigned int textureAmbient;
-	unsigned int textureDiffuse;
-	unsigned int textureSpecular;
+	unsigned int textureAlbedo;
+	unsigned int textureRoughness;
+	unsigned int textureMetallic;
 	unsigned int textureNormal;
 	unsigned int textureEmissive;
+	unsigned int textureOpacity;
 
-	unsigned int pad1[1];
+	unsigned int pad[1];
 };
 
-struct MaterialAttributes
+struct ANIMATION_MATRICES_STRUCT
 {
-	// shininess
-	float shininess;
-	float3 pad1;
-
-	// These colors will be used with "addition" in the shaders
-	float4 ambientAdd;
-	float4 diffuseAdd;
-	float4 specularAdd;
-	
-	// These colors will be used with "multiplication" in the shaders.
-	// They can be used to tint the colors in different ways
-	float4 ambientMul;
-	float4 diffuseMul;
-	float4 specularMul;
-
-	float2 uvScale;
-	float2 pad2;
+	float4x4 matrices[MAX_ANIMATION_MATRICES];
 };
 
 struct CB_PER_OBJECT_STRUCT
@@ -50,7 +50,15 @@ struct CB_PER_OBJECT_STRUCT
 struct CB_PER_FRAME_STRUCT
 {
 	float3 camPos;
+	float pad0;
+	float3 camRight;
 	float pad1;
+	float3 camUp;
+	float pad2;
+	float3 camForward;
+	float pad3;
+
+
 	// deltaTime ..
 	// etc ..
 };
@@ -69,12 +77,11 @@ struct CB_PER_SCENE_STRUCT
 
 struct BaseLight
 {
-	float4 ambient;
-	float4 diffuse;
-	float4 specular;
+	float3 color;
+	float pad1;
 
 	float castShadow;
-	float3 pad1;
+	float3 pad2;
 };
 
 struct DirectionalLight
@@ -109,4 +116,26 @@ struct SpotLight
 	unsigned int pad1[3];
 };
 
+struct PARTICLE_DATA
+{
+	float3 position;
+	float size;
+
+	float rotation;
+};
+
+struct PROGRESS_BAR_DATA
+{
+	float3 position;
+	// Value between 0-1, how much of the progress bar that is shown
+	float activePercent;
+
+	// maximum width and height of quad
+	float maxHeight;
+	float maxWidth;
+
+	float id;
+
+	float pad1;
+};
 #endif
