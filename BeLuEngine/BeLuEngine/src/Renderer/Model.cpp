@@ -14,8 +14,6 @@ Model::Model(const std::wstring* path, std::vector<Mesh*>* meshes, std::vector<M
 	m_Meshes = (*meshes);
 	m_Materials = (*materials);
 
-	m_ModelDim = { 0.0, 0.0, 0.0 };
-
 	// Fill slotinfo with empty slotinfos
 	m_SlotInfos.resize(m_Size);
 	updateSlotInfo();
@@ -86,26 +84,3 @@ void Model::updateSlotInfo()
 	}
 }
 
-double3 Model::GetModelDim()
-{
-	if (m_ModelDim == double3({ 0.0, 0.0, 0.0 }))
-	{
-		double3 minVertex = { 100.0, 100.0, 100.0 }, maxVertex = { -100.0, -100.0, -100.0 };
-		for (unsigned int i = 0; i < m_Size; i++)
-		{
-			std::vector<Vertex> modelVertices = *m_Meshes[i]->GetVertices();
-			for (unsigned int i = 0; i < modelVertices.size(); i++)
-			{
-				minVertex.x = Min(minVertex.x, static_cast<double>(modelVertices[i].pos.x));
-				minVertex.y = Min(minVertex.y, static_cast<double>(modelVertices[i].pos.y));
-				minVertex.z = Min(minVertex.z, static_cast<double>(modelVertices[i].pos.z));
-
-				maxVertex.x = Max(maxVertex.x, static_cast<double>(modelVertices[i].pos.x));
-				maxVertex.y = Max(maxVertex.y, static_cast<double>(modelVertices[i].pos.y));
-				maxVertex.z = Max(maxVertex.z, static_cast<double>(modelVertices[i].pos.z));
-			}
-		}
-		m_ModelDim = { maxVertex.x - minVertex.x, maxVertex.y - minVertex.y, maxVertex.z - minVertex.z };
-	}
-	return m_ModelDim;
-}

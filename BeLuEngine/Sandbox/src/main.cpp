@@ -76,7 +76,7 @@ Scene* TestScene(SceneManager* sm)
     mc->SetModel(sphereModel);
     mc->SetDrawFlag(FLAG_DRAW::DRAW_OPAQUE | FLAG_DRAW::GIVE_SHADOW);
     tc->GetTransform()->SetScale(1.0f);
-    tc->GetTransform()->SetPosition(0, 1, -30);
+    tc->GetTransform()->SetPosition(0, 4, 30);
     /* ---------------------- Player ---------------------- */
 
     /* ---------------------- Floor ---------------------- */
@@ -145,8 +145,8 @@ void TestUpdateScene(SceneManager* sm, double dt)
 {
     static float intensity = 0.0f;
     component::SpotLightComponent* slc = sm->GetScene("TestScene")->GetEntity("spotLightDynamic")->GetComponent<component::SpotLightComponent>();
-    float col = abs(sinf(intensity)) * 10;
-    slc->SetColor({ col, col, 0.0f });
+    float col = abs(sinf(intensity)) * 20;
+    slc->SetColor({ col / 2, 0, col / 3 });
     
     intensity += 0.005f;
 }

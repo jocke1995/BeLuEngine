@@ -15,12 +15,20 @@ component::InputComponent::~InputComponent()
 
 void component::InputComponent::Update(double dt)
 {
+	
 }
 
 void component::InputComponent::OnInitScene()
 {
+	EventBus::GetInstance().Subscribe(this, &InputComponent::move);
 }
 
 void component::InputComponent::OnUnInitScene()
 {
+	EventBus::GetInstance().Unsubscribe(this, &InputComponent::move);
+}
+
+void component::InputComponent::move(MovementInput* evnt)
+{
+	
 }

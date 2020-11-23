@@ -6,10 +6,6 @@
 #define MAX_POINT_LIGHTS 10
 #define MAX_SPOT_LIGHTS  10
 
-// Animation defines
-#define MAX_BONES_PER_VERTEX 10
-#define MAX_ANIMATION_MATRICES 100
-
 // This struct can be used to send specific indices as a root constant to the GPU.
 // Example usage is when the indices for pp-effects are sent to gpu.
 struct DescriptorHeapIndices
@@ -33,11 +29,6 @@ struct SlotInfo
 	unsigned int textureOpacity;
 
 	unsigned int pad[1];
-};
-
-struct ANIMATION_MATRICES_STRUCT
-{
-	float4x4 matrices[MAX_ANIMATION_MATRICES];
 };
 
 struct CB_PER_OBJECT_STRUCT
@@ -116,26 +107,4 @@ struct SpotLight
 	unsigned int pad1[3];
 };
 
-struct PARTICLE_DATA
-{
-	float3 position;
-	float size;
-
-	float rotation;
-};
-
-struct PROGRESS_BAR_DATA
-{
-	float3 position;
-	// Value between 0-1, how much of the progress bar that is shown
-	float activePercent;
-
-	// maximum width and height of quad
-	float maxHeight;
-	float maxWidth;
-
-	float id;
-
-	float pad1;
-};
 #endif

@@ -115,64 +115,6 @@ typedef union float2
 	}
 } float2;
 
-typedef union
-{
-	struct { double x; double y; double z; double w; };
-	struct { double r; double g; double b; double a; };
-} double4;
-
-typedef union double3
-{
-	struct { double x; double y; double z; };
-	struct { double r; double g; double b; };
-
-	double length()
-	{
-		return sqrt(x * x + y * y + z * z);
-	};
-	void normalize()
-	{
-		double length = this->length();
-		if (length > EPSILON)
-		{
-			x /= length;
-			y /= length;
-			z /= length;
-		}
-	};
-
-	void operator /= (double denom)
-	{
-		x /= denom;
-		y /= denom;
-		z /= denom;
-	};
-	void operator *= (double factor)
-	{
-		x *= factor;
-		y *= factor;
-		z *= factor;
-	};
-	bool operator == (double3 other)
-	{
-		return (x == other.x && y == other.y && z == other.z);
-	}
-	double3 cross(double3* that)
-	{
-		return
-		{
-			this->y * that->z - this->z * that->y,
-			this->z * that->x - this->x * that->z,
-			this->x * that->y - this->y * that->x,
-		};
-	};
-} double3;
-
-typedef union
-{
-	struct { double x; double y; };
-	struct { double u; double v; };
-} double2;
 
 class EngineMath
 {

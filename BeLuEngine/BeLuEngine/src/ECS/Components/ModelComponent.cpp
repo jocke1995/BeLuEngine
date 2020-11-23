@@ -66,18 +66,17 @@ namespace component
 	{
 		return m_pModel->GetSize();
 	}
+
 	const std::wstring& ModelComponent::GetModelPath() const
 	{
 		return m_pModel->GetPath();
 	}
+
 	bool ModelComponent::IsPickedThisFrame() const
 	{
 		return m_IsPickedThisFrame;
 	}
-	double3 ModelComponent::GetModelDim() const
-	{
-		return m_pModel->GetModelDim();
-	}
+
 	Model* ModelComponent::GetModel() const
 	{
 		return m_pModel;

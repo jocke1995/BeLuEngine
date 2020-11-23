@@ -37,8 +37,6 @@ public:
     // SlotInfo
     const SlotInfo* GetSlotInfoAt(unsigned int index) const;
 
-    double3 GetModelDim();
-
 protected:
     friend class Renderer;
     friend class AssetLoader;
@@ -51,8 +49,6 @@ protected:
     std::vector<Mesh*> m_Meshes;
     std::vector<Material*> m_Materials;
     std::vector<SlotInfo> m_SlotInfos; 
-
-    double3 m_ModelDim;
 };
 
 #endif

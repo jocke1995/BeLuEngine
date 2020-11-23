@@ -20,12 +20,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			EventBus::GetInstance().Publish(&WindowChange());
 		}
 		return 0;
-	case WM_ACTIVATEAPP: // alt+tab, windows key and more
-		if (!wParam && programRunning)
-		{
-			EventBus::GetInstance().Publish(&WindowChange());
-		}
-		return 0;
+	//case WM_ACTIVATEAPP: // alt+tab, windows key and more
+	//	if (!wParam && programRunning)
+	//	{
+	//		EventBus::GetInstance().Publish(&WindowChange());
+	//	}
+	//	return 0;
 
 	case WM_KEYDOWN:
 		if (wParam == VK_ESCAPE)
@@ -143,7 +143,6 @@ bool Window::ExitWindow()
 
 	while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 	{
-
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 
@@ -244,7 +243,7 @@ bool Window::initWindow(HINSTANCE hInstance, int nCmdShow)
 	}
 
 	// Remove the topbar of the window if we are in fullscreen
-	SetWindowLong(m_Hwnd, GWL_STYLE, 0);
+	//SetWindowLong(m_Hwnd, GWL_STYLE, 0);
 
 	ShowWindow(m_Hwnd, nCmdShow);
 	UpdateWindow(m_Hwnd);

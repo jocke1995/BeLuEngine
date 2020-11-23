@@ -3,6 +3,7 @@
 #include "EngineMath.h"
 #include "Component.h"
 #include "Core.h"
+
 class BaseCamera;
 class ModifierInput;
 class MouseScroll;
@@ -16,15 +17,14 @@ namespace component
 	public:
 		// Default Settings
 		InputComponent(Entity* parent);
-
 		virtual ~InputComponent();
-
-		virtual void Init() = 0;
 
 		virtual void Update(double dt);
 
 		void OnInitScene();
 		void OnUnInitScene();
+	private:
+		void move(MovementInput* evnt);
 
 	};
 }
