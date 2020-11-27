@@ -214,10 +214,10 @@ void Renderer::InitD3D12(Window *window, HINSTANCE hInstance, ThreadPool* thread
 
 void Renderer::Update(double dt)
 {
-	float3 right = m_pScenePrimaryCamera->GetRightVectorFloat3();
+	float3 right = reinterpret_cast<float3&>(m_pScenePrimaryCamera->GetRightVector());
 	right.normalize();
 
-	float3 forward = m_pScenePrimaryCamera->GetDirectionFloat3();
+	float3 forward = reinterpret_cast<float3&>(m_pScenePrimaryCamera->GetDirection());
 	forward.normalize();
 
 	// TODO: fix camera up vector
@@ -225,7 +225,7 @@ void Renderer::Update(double dt)
 	up.normalize();
 
 	// Update CB_PER_FRAME data
-	m_pCbPerFrameData->camPos = m_pScenePrimaryCamera->GetPositionFloat3();
+	m_pCbPerFrameData->camPos = reinterpret_cast<float3&>(m_pScenePrimaryCamera->GetPosition());
 	m_pCbPerFrameData->camRight = right;
 	m_pCbPerFrameData->camUp = up;
 	m_pCbPerFrameData->camForward = forward;

@@ -20,22 +20,28 @@ public:
     const DirectX::XMMATRIX* GetViewProjection() const;
     const DirectX::XMMATRIX* GetViewProjectionTranposed() const;
 
-    // Sets
+    // Sets on projection
     void SetFov(float fov);
     void SetAspectRatio(float aspectRatio);
     void SetNearZ(float nearPlaneDistance);
     void SetFarZ(float farPlaneDistance);
 
-    // Used by freelook Camera (when pressing ctrl in the scene, the camera detaches from the player)
+    // Sets on view
+    void SetYaw(const float yaw);
+    void SetPitch(const float pitch);
+
+    // Gets from view
+    const float GetYaw() const;
+    const float GetPitch() const;
+
     void UpdateMovement(float x, float y, float z);
-    void SetMovement(float x, float y, float z);
 
 private:
     float m_MoveLeftRight = 0.0f;
     float m_MoveForwardBackward = 0.0f;
     float m_MoveUpDown = 0.0f;
-    float m_CamYaw = 0.0f;
-    float m_CamPitch = 0.0f;
+    float m_Yaw = 0.0f;
+    float m_Pitch = 0.0f;
 
     DirectX::XMMATRIX m_ProjMatrix;
     DirectX::XMMATRIX m_ViewProjMatrix;

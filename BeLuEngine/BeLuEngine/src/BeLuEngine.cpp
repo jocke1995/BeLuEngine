@@ -34,12 +34,10 @@ void BeLuEngine::Init(HINSTANCE hInstance, int nCmdShow)
 	int numThreads = std::thread::hardware_concurrency();
 	if (numThreads == 0) // function not supported
 	{
+		Log::PrintSeverity(Log::Severity::WARNING, "Only 1 core on CPU, might be very laggy!\n");
 		numThreads = 1;
 	}
-	else if (numThreads > m_ThreadLimit) // Limiting the number of threads to the threadLimit
-	{
-		numThreads = m_ThreadLimit;
-	}
+
 	m_pThreadPool = &ThreadPool::GetInstance(numThreads);
 
 	// Sub-engines

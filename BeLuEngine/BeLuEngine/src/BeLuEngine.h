@@ -58,8 +58,6 @@ private:
 
 	Renderer* m_pRenderer = nullptr;
 	SceneManager* m_pSceneManager = nullptr;
-
-	int m_ThreadLimit = 4;
 };
 
 #endif

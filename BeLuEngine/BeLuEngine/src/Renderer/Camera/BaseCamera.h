@@ -16,13 +16,11 @@ public:
 	void SetDirection(float x, float y, float z);
 
 	DirectX::XMFLOAT3 GetPosition() const;
-	float3 GetPositionFloat3() const;
 	DirectX::XMFLOAT3 GetDirection() const;
 	DirectX::XMFLOAT3 GetUpVector() const;
-	float3 GetUpVectorFloat3() const;
-	float3 GetDirectionFloat3() const;
 	DirectX::XMFLOAT3 GetRightVector() const;
-	float3 GetRightVectorFloat3() const;
+
+	// Matrices
 	const DirectX::XMMATRIX* GetViewMatrix() const;
 	const DirectX::XMMATRIX* GetViewMatrixInverse() const;
 	virtual const DirectX::XMMATRIX* GetViewProjection() const = 0;

@@ -19,12 +19,6 @@ BaseCamera::~BaseCamera()
 
 void BaseCamera::Update(double dt)
 {
-	m_ViewMatrix = DirectX::XMMatrixLookAtLH(m_EyeVector, DirectX::XMVectorAdd(m_DirectionVector, m_EyeVector), m_UpVector);
-
-	// Inverse
-	DirectX::XMVECTOR matInvDeter;	// Not used, but the function doesn't allow null params :)))
-	m_ViewMatrixInverse = XMMatrixInverse(&matInvDeter, m_ViewMatrix);
-
 	updateSpecific(dt);
 }
 
@@ -47,19 +41,6 @@ DirectX::XMFLOAT3 BaseCamera::GetPosition() const
 	return DXfloat3;
 }
 
-float3 BaseCamera::GetPositionFloat3() const
-{
-	DirectX::XMFLOAT3 DXfloat3;
-	DirectX::XMStoreFloat3(&DXfloat3, m_EyeVector);
-
-	float3 temp = {};
-	temp.x = DXfloat3.x;
-	temp.y = DXfloat3.y;
-	temp.z = DXfloat3.z;
-
-	return temp;
-}
-
 DirectX::XMFLOAT3 BaseCamera::GetDirection() const
 {
 	DirectX::XMFLOAT3 DXfloat3;
@@ -76,51 +57,12 @@ DirectX::XMFLOAT3 BaseCamera::GetUpVector() const
 	return DXfloat3;
 }
 
-float3 BaseCamera::GetUpVectorFloat3() const
-{
-	DirectX::XMFLOAT3 DXfloat3;
-	DirectX::XMStoreFloat3(&DXfloat3, m_UpVector);
-
-	float3 toReturn = {};
-	toReturn.x = DXfloat3.x;
-	toReturn.y = DXfloat3.y;
-	toReturn.z = DXfloat3.z;
-
-	return toReturn;
-}
-
-float3 BaseCamera::GetDirectionFloat3() const
-{
-	DirectX::XMFLOAT3 DXfloat3;
-	DirectX::XMStoreFloat3(&DXfloat3, m_DirectionVector);
-
-	float3 temp = {};
-	temp.x = DXfloat3.x;
-	temp.y = DXfloat3.y;
-	temp.z = DXfloat3.z;
-
-	return temp;
-}
-
 DirectX::XMFLOAT3 BaseCamera::GetRightVector() const
 {
 	DirectX::XMFLOAT3 DXfloat3;
 	DirectX::XMStoreFloat3(&DXfloat3, m_RightVector);
 
 	return DXfloat3;
-}
-
-float3 BaseCamera::GetRightVectorFloat3() const
-{
-	DirectX::XMFLOAT3 DXfloat3;
-	DirectX::XMStoreFloat3(&DXfloat3, m_RightVector);
-
-	float3 toReturn = {};
-	toReturn.x = DXfloat3.x;
-	toReturn.y = DXfloat3.y;
-	toReturn.z = DXfloat3.z;
-
-	return toReturn;
 }
 
 const DirectX::XMMATRIX* BaseCamera::GetViewMatrix() const

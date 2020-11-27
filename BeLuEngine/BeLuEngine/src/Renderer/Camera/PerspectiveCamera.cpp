@@ -22,19 +22,6 @@ PerspectiveCamera::~PerspectiveCamera()
 
 }
 
-void PerspectiveCamera::updateProjectionMatrix()
-{
-	m_ProjMatrix = DirectX::XMMatrixPerspectiveFovLH(m_Fov, m_AspectRatio, m_NearZ, m_FarZ);
-}
-
-void PerspectiveCamera::updateSpecific(double dt)
-{
-	updateCameraMovement(dt);
-
-	m_ViewProjMatrix = m_ViewMatrix * m_ProjMatrix;
-	m_ViewProjTranposedMatrix = DirectX::XMMatrixTranspose(m_ViewProjMatrix);
-}
-
 const DirectX::XMMATRIX* PerspectiveCamera::GetViewProjection() const
 {
 	return &m_ViewProjMatrix;
@@ -69,6 +56,26 @@ void PerspectiveCamera::SetFarZ(float farPlaneDistance)
 	updateProjectionMatrix();
 }
 
+void PerspectiveCamera::SetYaw(const float yaw)
+{
+	m_Yaw = yaw;
+}
+
+void PerspectiveCamera::SetPitch(const float pitch)
+{
+	m_Pitch = pitch;
+}
+
+const float PerspectiveCamera::GetYaw() const
+{
+	return m_Yaw;
+}
+
+const float PerspectiveCamera::GetPitch() const
+{
+	return m_Pitch;
+}
+
 void PerspectiveCamera::UpdateMovement(float x, float y, float z)
 {
 	m_MoveLeftRight += x;
@@ -76,11 +83,17 @@ void PerspectiveCamera::UpdateMovement(float x, float y, float z)
 	m_MoveUpDown += y;
 }
 
-void PerspectiveCamera::SetMovement(float x, float y, float z)
+void PerspectiveCamera::updateProjectionMatrix()
 {
-	m_MoveLeftRight = 0.0f;
-	m_MoveForwardBackward = 0.0f;
-	m_MoveUpDown = 0.0f;
+	m_ProjMatrix = DirectX::XMMatrixPerspectiveFovLH(m_Fov, m_AspectRatio, m_NearZ, m_FarZ);
+}
+
+void PerspectiveCamera::updateSpecific(double dt)
+{
+	updateCameraMovement(dt);
+
+	m_ViewProjMatrix = m_ViewMatrix * m_ProjMatrix;
+	m_ViewProjTranposedMatrix = DirectX::XMMatrixTranspose(m_ViewProjMatrix);
 }
 
 void PerspectiveCamera::updateCameraMovement(double dt)

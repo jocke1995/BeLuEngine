@@ -5,7 +5,6 @@
 #include "Core.h"
 
 class BaseCamera;
-class ModifierInput;
 class MouseScroll;
 class MovementInput;
 class MouseMovement;
@@ -24,8 +23,11 @@ namespace component
 		void OnInitScene();
 		void OnUnInitScene();
 	private:
-		void move(MovementInput* event);
 
+		// Move camera
+		void move(MovementInput* event);
+		// Rotate camera
+		void rotate(MouseMovement* event);
 	};
 }
 
