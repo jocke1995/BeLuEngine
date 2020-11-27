@@ -2,9 +2,6 @@
 #define INPUT_H
 
 #include <unordered_map>
-//#include <utility>
-//#include <Windows.h>
-//#include <chrono>
 
 enum class SCAN_CODES
 {

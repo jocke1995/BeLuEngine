@@ -41,8 +41,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
         /* ------ Draw ------ */
         renderer->Execute();
     }
-
-    return 0;
+    
+    return EXIT_SUCCESS;
 }
 
 Scene* TestScene(SceneManager* sm)
