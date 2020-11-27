@@ -416,10 +416,11 @@ Texture* AssetLoader::processTexture(aiMaterial* mat, TEXTURE2D_TYPE texture_typ
 	}
 	else
 	{
-		std::string tempString = std::string(filePathWithoutTexture.begin(), filePathWithoutTexture.end());
-		// No texture, warn and apply default Texture
-		Log::PrintSeverity(Log::Severity::WARNING, "Applying default texture: " + warningMessageTextureType +
-			" on mesh with path: \'%s\'\n", tempString.c_str());
+		// Logging
+		//std::string tempString = std::string(filePathWithoutTexture.begin(), filePathWithoutTexture.end());
+		//// No texture, warn and apply default Texture
+		//Log::PrintSeverity(Log::Severity::WARNING, "Applying default texture: " + warningMessageTextureType +
+		//	" on mesh with path: \'%s\'\n", tempString.c_str());
 		return m_LoadedTextures[defaultPath].second;
 	}
 

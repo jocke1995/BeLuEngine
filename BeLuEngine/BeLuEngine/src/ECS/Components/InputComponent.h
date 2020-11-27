@@ -24,7 +24,7 @@ namespace component
 		void OnInitScene();
 		void OnUnInitScene();
 	private:
-		void move(MovementInput* evnt);
+		void move(MovementInput* event);
 
 	};
 }

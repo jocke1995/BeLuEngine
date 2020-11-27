@@ -28,7 +28,7 @@ void component::InputComponent::OnUnInitScene()
 	EventBus::GetInstance().Unsubscribe(this, &InputComponent::move);
 }
 
-void component::InputComponent::move(MovementInput* evnt)
+void component::InputComponent::move(MovementInput* event)
 {
-	
+	Log::Print("asd\n");
 }

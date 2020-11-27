@@ -1909,7 +1909,7 @@ void Renderer::submitUploadPerFrameData()
 	}
 }
 
-void Renderer::toggleFullscreen(WindowChange* evnt)
+void Renderer::toggleFullscreen(WindowChange* event)
 {
 	m_FenceFrameValue++;
 	m_CommandQueues[COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->Signal(m_pFenceFrame, m_FenceFrameValue);

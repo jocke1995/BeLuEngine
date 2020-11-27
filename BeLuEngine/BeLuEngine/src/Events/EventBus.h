@@ -1,16 +1,17 @@
-#pragma once
-#include <list>
+#ifndef EVENTBUS_H
+#define EVENTBUS_H
+
 #include <map>
 #include <typeindex>
 #include "MemberFunctionWrapper.h"
-#include "Events.h"
 
 typedef std::vector<HandlerFunctionBase*> HandlerList;
+
 class EventBus 
 {
 public:
 	template<typename EventType>
-	void Publish(EventType* evnt);
+	void Publish(EventType* event);
 
 	template<class T, class EventType>
 	void Subscribe(T* classInstance, void (T::* memberFunction)(EventType*));
@@ -27,13 +28,13 @@ public:
 	~EventBus();
 private:
 	template<class T, class EventType>
-	static unsigned getID(T* instance);
+	static unsigned int getID(T* instance);
 	std::map<std::type_index, HandlerList*> m_Subscribers;
 };
 
 // Publish to the EventBus using an event from Events.h
 template<typename EventType>
-inline void EventBus::Publish(EventType* evnt)
+inline void EventBus::Publish(EventType* event)
 {
 	//Get all subscribed handlers associated with the current event
 	HandlerList* handlers = m_Subscribers[typeid(EventType)];
@@ -49,7 +50,7 @@ inline void EventBus::Publish(EventType* evnt)
 	{
 		if (handler != nullptr) 
 		{
-			handler->Exec(evnt);
+			handler->ExecuteMemberFunction(event);
 		}
 	}
 }
@@ -93,7 +94,7 @@ inline void EventBus::Unsubscribe(T* classInstance, void(T::* memberFunction)(Ev
 			return;
 		}
 
-		unsigned id = getID<T, EventType>(classInstance);
+		unsigned int id = getID<T, EventType>(classInstance);
 		std::vector<HandlerFunctionBase*>::iterator it;
 		for (it = handlers->begin(); it != handlers->end(); ++it)
 		{
@@ -108,10 +109,11 @@ inline void EventBus::Unsubscribe(T* classInstance, void(T::* memberFunction)(Ev
 }
 
 template<class T, class EventType>
-inline unsigned EventBus::getID(T* instance)
+inline unsigned int EventBus::getID(T* instance)
 {
 	size_t index = typeid(EventType).hash_code();
-	return (unsigned)(index - (size_t)instance);
+	unsigned int a = (index - (size_t)instance);
+	return a;
 }
 
 // Get the single instance of the EventBus in order to subscribe/publish
@@ -131,7 +133,7 @@ inline void EventBus::UnsubscribeAll()
 			std::vector<HandlerFunctionBase*>::iterator iter;
 			for (iter = handlers->begin(); iter != handlers->end(); iter++)
 			{
-				delete* iter;
+				delete *iter;
 			}
 			delete handlers;
 		}
@@ -143,3 +145,5 @@ inline EventBus::~EventBus()
 {
 	UnsubscribeAll();
 }
+
+#endif

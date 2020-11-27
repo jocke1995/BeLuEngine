@@ -34,8 +34,6 @@ public:
 
 	bool ExitWindow();
 
-	void MouseInClipspace(float* x, float* y) const;
-
 	// Temp
 	bool WasSpacePressed();
 	bool WasTabPressed();

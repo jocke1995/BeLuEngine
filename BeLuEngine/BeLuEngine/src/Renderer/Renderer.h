@@ -230,7 +230,7 @@ private:
 	// Submit cbPerFrameData to the copyQueue that updates each frame
 	void submitUploadPerFrameData();
 
-	void toggleFullscreen(WindowChange* evnt);
+	void toggleFullscreen(WindowChange* event);
 
 	SwapChain* getSwapChain() const;
 };

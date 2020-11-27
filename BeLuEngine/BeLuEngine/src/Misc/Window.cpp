@@ -1,14 +1,10 @@
-
 #include "stdafx.h"
 #include "Window.h"
 
 #include "../Input/Input.h"
-#include "../Events/EventBus.h"
-
-struct WindowChange;
 
 // callback function for windows messages
-LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK WndProc(HWND hWnd, unsigned int msg, WPARAM wParam, LPARAM lParam)
 {
 	static bool programRunning = true;
 
@@ -17,16 +13,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_SYSKEYDOWN: // alt+enter
 		if (wParam == VK_RETURN && (lParam & 0x60000000) == 0x20000000)
 		{
-			EventBus::GetInstance().Publish(&WindowChange());
+			//EventBus::GetInstance().Publish(&WindowChange());
 		}
 		return 0;
-	//case WM_ACTIVATEAPP: // alt+tab, windows key and more
-	//	if (!wParam && programRunning)
-	//	{
-	//		EventBus::GetInstance().Publish(&WindowChange());
-	//	}
-	//	return 0;
-
 	case WM_KEYDOWN:
 		if (wParam == VK_ESCAPE)
 		{
@@ -53,23 +42,74 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		return 0;
 
 	case WM_INPUT:
-		UINT dwSize;
+		unsigned int dwSize = 0;
 
 		GetRawInputData((HRAWINPUT)lParam, RID_INPUT, NULL, &dwSize, sizeof(RAWINPUTHEADER));
-		LPBYTE lpb = new BYTE[dwSize];
-		if (lpb == NULL)
+		unsigned char* charArr = new unsigned char[dwSize];
+		if (charArr == nullptr)
 		{
 			return 0;
 		}
 
-		if (GetRawInputData((HRAWINPUT)lParam, RID_INPUT, lpb, &dwSize, sizeof(RAWINPUTHEADER)) != dwSize)
+		if (GetRawInputData((HRAWINPUT)lParam, RID_INPUT, charArr, &dwSize, sizeof(RAWINPUTHEADER)) != dwSize)
 		{
-			OutputDebugString(TEXT("GetRawInputData does not return correct size !\n"));
+			Log::PrintSeverity(Log::Severity::CRITICAL, "GetRawInputData does not return correct size !\n");
 		}
 
-		RAWINPUT* raw = reinterpret_cast<RAWINPUT*>(lpb);
+#pragma region HandleInput
+		// Check for input and set states in the Input class
+		RAWINPUT* raw = reinterpret_cast<RAWINPUT*>(charArr);
+		if (raw->header.dwType == RIM_TYPEKEYBOARD)
+		{
+			RAWKEYBOARD inputData = raw->data.keyboard;
 
-		delete[] lpb;
+			int modifier = (inputData.Flags / 2 + 1) * 0x100;
+			SCAN_CODES key = static_cast<SCAN_CODES>(inputData.MakeCode + modifier);
+
+			Input::GetInstance().SetKeyState(key, !(inputData.Flags % 2));
+		}
+		else if (raw->header.dwType == RIM_TYPEMOUSE)
+		{
+			if (!Input::GetInstance().GetKeyState(SCAN_CODES::ALT))
+			{
+				auto inputData = raw->data.mouse;
+				MOUSE_BUTTON button = static_cast<MOUSE_BUTTON>(inputData.usButtonFlags);
+
+				switch (button)
+				{
+				case MOUSE_BUTTON::WHEEL:
+					Input::GetInstance().SetMouseScroll(inputData.usButtonData);
+					break;
+				case MOUSE_BUTTON::LEFT_DOWN:
+					Input::GetInstance().SetMouseButtonState(button, true);
+					break;
+				case MOUSE_BUTTON::MIDDLE_DOWN:
+				case MOUSE_BUTTON::RIGHT_DOWN:
+					Input::GetInstance().SetMouseButtonState(button, true);
+					break;
+				case MOUSE_BUTTON::LEFT_UP:
+					button = static_cast<MOUSE_BUTTON>(static_cast<int>(button) / 2);
+					Input::GetInstance().SetMouseButtonState(button, false);
+					break;
+				case MOUSE_BUTTON::MIDDLE_UP:
+				case MOUSE_BUTTON::RIGHT_UP:
+					button = static_cast<MOUSE_BUTTON>(static_cast<int>(button) / 2);
+					Input::GetInstance().SetMouseButtonState(button, false);
+					break;
+				default:
+					break;
+				}
+
+				Input::GetInstance().SetMouseMovement(inputData.lLastX, inputData.lLastY);
+
+				// Enable this to lock mouse inside window
+				// RECT win;
+				// GetWindowRect(hWnd, &win);
+				// ClipCursor(&win);
+			}
+		}
+#pragma endregion HandleInput
+		delete[] charArr;
 
 		return 0;
 	}
@@ -152,20 +192,6 @@ bool Window::ExitWindow()
 		}
 	}
 	return closeWindow;
-}
-
-void Window::MouseInClipspace(float* x, float* y) const
-{
-	// Get the mouse position from your screenspace
-	POINT p;
-	GetCursorPos(&p);
-	
-	// Transform the position from your screenspace to the clientspace (space of the window)
-	ScreenToClient(m_Hwnd, &p);
-
-	// Transform the clientspace to the DirectX coordinates (0, 0) = (-1, 1)
-	*x = (static_cast<float>(p.x) / (m_ScreenWidth / 2)) - 1;
-	*y = -((static_cast<float>(p.y) / (m_ScreenHeight / 2)) - 1);
 }
 
 bool Window::WasSpacePressed()

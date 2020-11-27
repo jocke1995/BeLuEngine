@@ -1,9 +1,5 @@
 #include "Input.h"
 #include "..\Events\EventBus.h"
-#include "..\Misc\Timer.h"
-
-
-#include "../ECS/SceneManager.h"
 
 Input& Input::GetInstance()
 {
@@ -32,23 +28,20 @@ void Input::RegisterDevices(const HWND* hWnd)
 	{
 		Log::PrintSeverity(Log::Severity::CRITICAL,"Device registration error: %f\n", GetLastError());
 	}
-	else
-	{
-		Log::Print("Input devices registered!\n");
-	}
 }
 
 void Input::SetKeyState(SCAN_CODES key, bool pressed)
 {
 	m_KeyState[key] = pressed;
-	if (key == SCAN_CODES::W || key == SCAN_CODES::A || key == SCAN_CODES::S || key == SCAN_CODES::D || key == SCAN_CODES::Q || key == SCAN_CODES::E || key == SCAN_CODES::SPACE)
+	if (key == SCAN_CODES::W ||
+		key == SCAN_CODES::A ||
+		key == SCAN_CODES::S ||
+		key == SCAN_CODES::D ||
+		key == SCAN_CODES::R ||
+		key == SCAN_CODES::F)
 	{
 		// Publish movement events
 		EventBus::GetInstance().Publish(&MovementInput(key, pressed));
-	}
-	else if (key == SCAN_CODES::LEFT_CTRL || key == SCAN_CODES::LEFT_SHIFT ||key == SCAN_CODES::TAB)
-	{
-		EventBus::GetInstance().Publish(&ModifierInput(key, pressed));
 	}
 }
 
@@ -56,10 +49,10 @@ void Input::SetMouseButtonState(MOUSE_BUTTON button, bool pressed)
 {
 	m_MouseButtonState[button] = pressed;
 	switch (pressed) {
-	case true:
+	case true:	// Pressed
 		EventBus::GetInstance().Publish(&MouseClick(button, pressed));
 		break;
-	case false:
+	case false:	// Released
 		EventBus::GetInstance().Publish(&MouseRelease(button, pressed));
 		break;
 	}

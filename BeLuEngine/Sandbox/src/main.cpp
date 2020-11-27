@@ -1,5 +1,7 @@
 #include "BeLuEngine.h"
 
+#include "Renderer/Camera/PerspectiveCamera.h"
+
 Scene* TestScene(SceneManager* sm);
 void TestUpdateScene(SceneManager* sm, double dt);
 
@@ -110,7 +112,7 @@ Scene* TestScene(SceneManager* sm)
     entity = scene->AddEntity("spotLightDynamic");
     mc = entity->AddComponent<component::ModelComponent>();
     tc = entity->AddComponent<component::TransformComponent>();
-    slc = entity->AddComponent<component::SpotLightComponent>(FLAG_LIGHT::CAST_SHADOW);
+    slc = entity->AddComponent<component::SpotLightComponent>();
     
     float3 pos = { 5.0f, 20.0f, 5.0f };
     mc->SetModel(sphereModel);
@@ -127,13 +129,13 @@ Scene* TestScene(SceneManager* sm)
 
     /* ---------------------- dirLight ---------------------- */
     entity = scene->AddEntity("dirLight");
-    dlc = entity->AddComponent<component::DirectionalLightComponent>(FLAG_LIGHT::CAST_SHADOW);
+    dlc = entity->AddComponent<component::DirectionalLightComponent>();
     dlc->SetColor({ 0.8f, 0.8f, 0.8f });
     dlc->SetDirection({ -2.0f, -1.0f, -1.0f });
-    dlc->SetCameraTop(30.0f);
-    dlc->SetCameraBot(-30.0f);
-    dlc->SetCameraLeft(-70.0f);
-    dlc->SetCameraRight(70.0f);
+    //dlc->SetCameraTop(30.0f);
+    //dlc->SetCameraBot(-30.0f);
+    //dlc->SetCameraLeft(-70.0f);
+    //dlc->SetCameraRight(70.0f);
     /* ---------------------- dirLight ---------------------- */
 
     /* ---------------------- Update Function ---------------------- */
@@ -149,4 +151,9 @@ void TestUpdateScene(SceneManager* sm, double dt)
     slc->SetColor({ col / 2, 0, col / 3 });
     
     intensity += 0.005f;
+
+    component::CameraComponent* cc = sm->GetScene("TestScene")->GetEntity("player")->GetComponent<component::CameraComponent>();
+    PerspectiveCamera* pc = static_cast<PerspectiveCamera*>(cc->GetCamera());
+
+    pc->UpdateMovement(0.0000005f, 0.0f, 0.0f);
 }

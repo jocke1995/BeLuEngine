@@ -1,8 +1,8 @@
-#pragma once
-#include "../Input/Input.h"
-#include "../ECS/Scene.h"
+#ifndef EVENT_H
+#define EVENT_H
 
-class Entity;
+#include "../Input/Input.h"
+
 class Event
 {
 public:
@@ -42,20 +42,9 @@ struct MouseScroll : public Event
 	int scroll;
 };
 
-struct ModifierInput : public Event
-{
-	ModifierInput(SCAN_CODES key, bool pressed) : key{ key }, pressed{ pressed } {};
-	SCAN_CODES key;
-	bool pressed;
-};
-
 struct WindowChange : public Event
 {
 	WindowChange() {};
 };
 
-struct ButtonPressed : public Event
-{
-	ButtonPressed(std::string name) : name{ name } {};
-	std::string name;
-};
+#endif
