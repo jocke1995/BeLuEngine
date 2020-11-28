@@ -9,7 +9,7 @@ public:
     PerspectiveCamera(
         DirectX::XMVECTOR position,
         DirectX::XMVECTOR direction,
-        float fov = 45.0f,
+        float fov = 60.0f,
         float aspectRatio = 16.0f / 9.0f,
         float nearZ = 0.1f,
         float farZ = 3000.0f);
@@ -26,17 +26,12 @@ public:
     void SetNearZ(float nearPlaneDistance);
     void SetFarZ(float farPlaneDistance);
 
-    // Sets on view
-    void SetYaw(const float yaw);
-    void SetPitch(const float pitch);
-
-    // Gets from view
-    const float GetYaw() const;
-    const float GetPitch() const;
-
-    void UpdateMovement(float x, float y, float z);
+    // Will be called from inputEvent in inputComponent
+    void MoveCamera(float3 direction);
+    void RotateCamera(float yaw, float pitch);
 
 private:
+    DirectX::XMMATRIX m_CamRotationMatrix;
     float m_MoveLeftRight = 0.0f;
     float m_MoveForwardBackward = 0.0f;
     float m_MoveUpDown = 0.0f;

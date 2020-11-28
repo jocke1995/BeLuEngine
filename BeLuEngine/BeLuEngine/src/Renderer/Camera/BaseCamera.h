@@ -32,6 +32,10 @@ protected:
 	DirectX::XMVECTOR m_DirectionVector;
 	DirectX::XMVECTOR m_UpVector;
 
+	inline static const DirectX::XMVECTOR s_DefaultRightVector	 = { 1.0f, 0.0f, 0.0f, 0.0f };
+	inline static const DirectX::XMVECTOR s_DefaultUpVector		 = { 0.0f, 1.0f, 0.0f, 0.0f };
+	inline static const DirectX::XMVECTOR s_DefaultForwardVector = { 0.0f, 0.0f, 1.0f, 0.0f };
+
 	DirectX::XMMATRIX m_ViewMatrix;
 	DirectX::XMMATRIX m_ViewMatrixInverse;
 

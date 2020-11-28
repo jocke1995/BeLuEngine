@@ -152,8 +152,6 @@ void TestUpdateScene(SceneManager* sm, double dt)
     
     intensity += 0.005f;
 
-    component::CameraComponent* cc = sm->GetScene("TestScene")->GetEntity("player")->GetComponent<component::CameraComponent>();
-    PerspectiveCamera* pc = static_cast<PerspectiveCamera*>(cc->GetCamera());
-
-    pc->UpdateMovement(0.0000005f, 0.0f, 0.0f);
+    //component::CameraComponent* cc = sm->GetScene("TestScene")->GetEntity("player")->GetComponent<component::CameraComponent>();
+    //PerspectiveCamera* pc = static_cast<PerspectiveCamera*>(cc->GetCamera());
 }
