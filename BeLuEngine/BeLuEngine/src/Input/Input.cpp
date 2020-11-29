@@ -32,6 +32,10 @@ void Input::RegisterDevices(const HWND* hWnd)
 
 void Input::SetKeyState(SCAN_CODES key, bool pressed)
 {
+	// If this is true, the key is not currently being pressed. Meaning that its the first time we start to move the camera
+	// If this is false, the keyState is currently true. Which means that it is already being pressed, and an event should not be published.
+	bool justPressed = !m_KeyState[key];
+
 	m_KeyState[key] = pressed;
 	if (key == SCAN_CODES::W ||
 		key == SCAN_CODES::A ||
@@ -40,8 +44,16 @@ void Input::SetKeyState(SCAN_CODES key, bool pressed)
 		key == SCAN_CODES::R ||
 		key == SCAN_CODES::F)
 	{
-		// Publish movement events
-		EventBus::GetInstance().Publish(&MovementInput(key, pressed));
+		// Move Camera (when pressing buttons)
+		if (justPressed == true)
+		{
+			EventBus::GetInstance().Publish(&MovementInput(key, true));
+		}
+		// Stop moving (when releasing buttons)
+		else if (pressed == false)
+		{
+			EventBus::GetInstance().Publish(&MovementInput(key, false));
+		}
 	}
 }
 

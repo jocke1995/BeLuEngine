@@ -12,7 +12,8 @@ public:
         float fov = 60.0f,
         float aspectRatio = 16.0f / 9.0f,
         float nearZ = 0.1f,
-        float farZ = 3000.0f);
+        float farZ = 3000.0f,
+        bool isPrimary = false);
 
 	virtual ~PerspectiveCamera();
 
@@ -27,8 +28,8 @@ public:
     void SetFarZ(float farPlaneDistance);
 
     // Will be called from inputEvent in inputComponent
-    void MoveCamera(float3 direction);
     void RotateCamera(float yaw, float pitch);
+    void UpdateMovement(float3 newMovement);
 
 private:
     DirectX::XMMATRIX m_CamRotationMatrix;

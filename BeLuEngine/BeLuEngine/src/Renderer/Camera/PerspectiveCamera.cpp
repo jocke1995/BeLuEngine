@@ -3,8 +3,9 @@
 
 PerspectiveCamera::PerspectiveCamera(
 	DirectX::XMVECTOR position, DirectX::XMVECTOR direction,
-	float fov, float aspectRatio, float nearZ, float farZ)
-	:BaseCamera(position, direction)
+	float fov, float aspectRatio, float nearZ, float farZ,
+	bool isPrimary)
+	:BaseCamera(position, direction, isPrimary)
 {
 	m_Fov = fov * DirectX::XM_PI / 180.0f;
 	m_AspectRatio = aspectRatio;
@@ -56,18 +57,18 @@ void PerspectiveCamera::SetFarZ(float farPlaneDistance)
 	updateProjectionMatrix();
 }
 
-void PerspectiveCamera::MoveCamera(float3 direction)
-{
-	m_MoveLeftRight = direction.x;
-	m_MoveUpDown = direction.y;
-	m_MoveForwardBackward = direction.z;
-}
-
 void PerspectiveCamera::RotateCamera(float yaw, float pitch)
 {
 	static const float rotationSpeed = 0.001f;
 	m_Yaw += yaw * rotationSpeed;
 	m_Pitch += pitch * rotationSpeed;
+}
+
+void PerspectiveCamera::UpdateMovement(float3 newMovement)
+{
+	m_MoveLeftRight += newMovement.x;
+	m_MoveForwardBackward += newMovement.z;
+	m_MoveUpDown += newMovement.y;
 }
 
 void PerspectiveCamera::updateProjectionMatrix()
@@ -77,7 +78,12 @@ void PerspectiveCamera::updateProjectionMatrix()
 
 void PerspectiveCamera::updateSpecific(double dt)
 {
-	updateCameraMovement(dt);
+	if (m_IsPrimary == true)
+	{
+		updateCameraMovement(dt);
+	}
+
+	m_ViewMatrix = DirectX::XMMatrixLookAtLH(m_EyeVector, DirectX::XMVectorAdd(m_EyeVector, m_DirectionVector), m_UpVector);
 
 	m_ViewProjMatrix = m_ViewMatrix * m_ProjMatrix;
 	m_ViewProjTranposedMatrix = DirectX::XMMatrixTranspose(m_ViewProjMatrix);
@@ -87,19 +93,21 @@ void PerspectiveCamera::updateCameraMovement(double dt)
 {
 	// Todo, use quaternions
 	m_CamRotationMatrix = DirectX::XMMatrixRotationRollPitchYaw(m_Pitch, m_Yaw, 0.0f);
+
+	// Calculate Direction Vector
 	m_DirectionVector = DirectX::XMVector3TransformCoord(s_DefaultForwardVector, m_CamRotationMatrix);
 	m_DirectionVector = DirectX::XMVector3Normalize(m_DirectionVector);
 
+	// Calculate Right Vector
 	m_RightVector = DirectX::XMVector3TransformCoord(s_DefaultRightVector, m_CamRotationMatrix);
-	m_DirectionVector = DirectX::XMVector3TransformCoord(s_DefaultForwardVector, m_CamRotationMatrix);
-	m_UpVector = DirectX::XMVector3Cross(m_DirectionVector, m_RightVector);
+	m_RightVector = DirectX::XMVector3Normalize(m_RightVector);
 
-	static unsigned int ms = 500;
+	// Calculate Up Vector
+	m_UpVector = DirectX::XMVector3Cross(m_DirectionVector, m_RightVector);
+	m_UpVector = DirectX::XMVector3Normalize(m_UpVector);
+
+	static unsigned int ms = 50;
 	m_EyeVector = DirectX::XMVectorAdd(m_EyeVector, DirectX::operator*(m_MoveLeftRight * dt * ms, m_RightVector));
 	m_EyeVector = DirectX::XMVectorAdd(m_EyeVector, DirectX::operator*(m_MoveForwardBackward * dt * ms, m_DirectionVector));
 	m_EyeVector = DirectX::XMVectorAdd(m_EyeVector, DirectX::operator*(m_MoveUpDown * dt * ms, s_DefaultUpVector));
-
-	m_MoveLeftRight = m_MoveForwardBackward = m_MoveUpDown = 0.0f;
-
-	m_ViewMatrix = DirectX::XMMatrixLookAtLH(m_EyeVector, DirectX::XMVectorAdd(m_EyeVector, m_DirectionVector), m_UpVector);
 }

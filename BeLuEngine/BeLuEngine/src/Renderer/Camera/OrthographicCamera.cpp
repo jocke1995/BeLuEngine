@@ -5,8 +5,9 @@ OrthographicCamera::OrthographicCamera(
 	DirectX::XMVECTOR position, DirectX::XMVECTOR direction,
 	float left, float right,
 	float bot, float top,
-	float nearZ, float farZ)
-	:BaseCamera(position, direction)
+	float nearZ, float farZ,
+	bool isPrimary)
+	:BaseCamera(position, direction, isPrimary)
 {
 	m_Left = left;
 	m_Right = right;

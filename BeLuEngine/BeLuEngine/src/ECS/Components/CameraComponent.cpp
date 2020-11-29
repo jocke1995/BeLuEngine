@@ -63,7 +63,8 @@ namespace component
 		return new PerspectiveCamera(
 			position, direction,
 			fov, aspectRatio,
-			nearZ, farZ);
+			nearZ, farZ,
+			m_PrimaryCamera);
 	}
 
 	BaseCamera* CameraComponent::createOrthographic(DirectX::XMVECTOR position, DirectX::XMVECTOR direction, float left, float right, float bot, float top, float nearZ, float farZ)
@@ -73,6 +74,7 @@ namespace component
 			position, direction,
 			left, right,
 			bot, top,
-			nearZ, farZ);
+			nearZ, farZ,
+			m_PrimaryCamera);
 	}
 }

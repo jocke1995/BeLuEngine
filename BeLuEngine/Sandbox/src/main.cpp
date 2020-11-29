@@ -112,7 +112,7 @@ Scene* TestScene(SceneManager* sm)
     entity = scene->AddEntity("spotLightDynamic");
     mc = entity->AddComponent<component::ModelComponent>();
     tc = entity->AddComponent<component::TransformComponent>();
-    slc = entity->AddComponent<component::SpotLightComponent>();
+    slc = entity->AddComponent<component::SpotLightComponent>(FLAG_LIGHT::CAST_SHADOW);
     
     float3 pos = { 5.0f, 20.0f, 5.0f };
     mc->SetModel(sphereModel);
@@ -120,22 +120,22 @@ Scene* TestScene(SceneManager* sm)
     tc->GetTransform()->SetScale(0.3f);
     tc->GetTransform()->SetPosition(pos.x, pos.y, pos.z);
     
-    slc->SetColor({ 5.0f, 0.0f, 0.0f });
+    //slc->SetColor({ 0.0f, 1.0f, 0.0f });
     slc->SetAttenuation({ 1.0, 0.09f, 0.032f });
     slc->SetPosition(pos);
-    slc->SetDirection({ 1.0f, -1.0f, 1.0f });
+    slc->SetDirection({ 0.0f, -1.0f, 0.5f });
     slc->SetOuterCutOff(50.0f);
     /* ---------------------- SpotLightDynamic ---------------------- */
 
     /* ---------------------- dirLight ---------------------- */
     entity = scene->AddEntity("dirLight");
-    dlc = entity->AddComponent<component::DirectionalLightComponent>();
-    dlc->SetColor({ 0.8f, 0.8f, 0.8f });
-    dlc->SetDirection({ -2.0f, -1.0f, -1.0f });
-    //dlc->SetCameraTop(30.0f);
-    //dlc->SetCameraBot(-30.0f);
-    //dlc->SetCameraLeft(-70.0f);
-    //dlc->SetCameraRight(70.0f);
+    dlc = entity->AddComponent<component::DirectionalLightComponent>(FLAG_LIGHT::CAST_SHADOW);
+    dlc->SetColor({ 0.2f, 0.2f, 0.2f });
+    dlc->SetDirection({ -0.5f, -1.0f, 0.0f });
+    dlc->SetCameraTop(30.0f);
+    dlc->SetCameraBot(-30.0f);
+    dlc->SetCameraLeft(-70.0f);
+    dlc->SetCameraRight(70.0f);
     /* ---------------------- dirLight ---------------------- */
 
     /* ---------------------- Update Function ---------------------- */
@@ -147,11 +147,9 @@ void TestUpdateScene(SceneManager* sm, double dt)
 {
     static float intensity = 0.0f;
     component::SpotLightComponent* slc = sm->GetScene("TestScene")->GetEntity("spotLightDynamic")->GetComponent<component::SpotLightComponent>();
-    float col = abs(sinf(intensity)) * 20;
-    slc->SetColor({ col / 2, 0, col / 3 });
-    
-    intensity += 0.005f;
+    float col = abs(sinf(intensity)) * 30;
 
-    //component::CameraComponent* cc = sm->GetScene("TestScene")->GetEntity("player")->GetComponent<component::CameraComponent>();
-    //PerspectiveCamera* pc = static_cast<PerspectiveCamera*>(cc->GetCamera());
+    slc->SetColor({ col * 0.2f, 0.0f, col });
+    
+    intensity += 0.5f * dt;
 }

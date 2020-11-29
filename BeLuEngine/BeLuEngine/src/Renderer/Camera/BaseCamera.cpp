@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "BaseCamera.h"
 
-BaseCamera::BaseCamera(DirectX::XMVECTOR position, DirectX::XMVECTOR direction)
+BaseCamera::BaseCamera(DirectX::XMVECTOR position, DirectX::XMVECTOR direction, bool isPrimary)
 {
 	// Create View Matrix
 	m_EyeVector = position;
@@ -10,6 +10,8 @@ BaseCamera::BaseCamera(DirectX::XMVECTOR position, DirectX::XMVECTOR direction)
 	m_RightVector = DirectX::XMVector3Cross(m_UpVector, m_DirectionVector);
 
 	m_ViewMatrix = DirectX::XMMatrixLookAtLH(m_EyeVector, DirectX::XMVectorAdd(m_DirectionVector, m_EyeVector), m_UpVector);
+
+	m_IsPrimary = isPrimary;
 }
 
 BaseCamera::~BaseCamera()

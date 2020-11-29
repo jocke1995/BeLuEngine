@@ -14,7 +14,8 @@ public:
         float bot = -30.0f,
         float top = 30.0f,
         float nearZ = 0.01f,
-        float farZ = 1000.0f);
+        float farZ = 1000.0f,
+        bool isPrimary = false);
     virtual ~OrthographicCamera();
 
     // Gets
