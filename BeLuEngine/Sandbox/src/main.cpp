@@ -3,7 +3,10 @@
 #include "Renderer/Camera/PerspectiveCamera.h"
 
 Scene* TestScene(SceneManager* sm);
+Scene* SponzaScene(SceneManager* sm);
+
 void TestUpdateScene(SceneManager* sm, double dt);
+void SponzaUpdateScene(SceneManager* sm, double dt);
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
 {
@@ -23,10 +26,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
     /*------ AssetLoader to load models / textures ------*/
     AssetLoader* al = AssetLoader::Get();
 
-    Scene* testScene = TestScene(sceneManager);
+    //Scene* scene = TestScene(sceneManager);
+    Scene* scene = SponzaScene(sceneManager);
 
     // Set scene
-    sceneManager->SetScene(testScene);
+    sceneManager->SetScene(scene);
 
     while (!window->ExitWindow())
     {
@@ -109,29 +113,29 @@ Scene* TestScene(SceneManager* sm)
     /* ---------------------- Poster ---------------------- */
 
     /* ---------------------- SpotLightDynamic ---------------------- */
-    entity = scene->AddEntity("spotLightDynamic");
-    mc = entity->AddComponent<component::ModelComponent>();
-    tc = entity->AddComponent<component::TransformComponent>();
-    slc = entity->AddComponent<component::SpotLightComponent>(FLAG_LIGHT::CAST_SHADOW);
-    
-    float3 pos = { 5.0f, 20.0f, 5.0f };
-    mc->SetModel(sphereModel);
-    mc->SetDrawFlag(FLAG_DRAW::DRAW_OPAQUE | FLAG_DRAW::GIVE_SHADOW);
-    tc->GetTransform()->SetScale(0.3f);
-    tc->GetTransform()->SetPosition(pos.x, pos.y, pos.z);
-    
-    //slc->SetColor({ 0.0f, 1.0f, 0.0f });
-    slc->SetAttenuation({ 1.0, 0.09f, 0.032f });
-    slc->SetPosition(pos);
-    slc->SetDirection({ 0.0f, -1.0f, 0.5f });
-    slc->SetOuterCutOff(50.0f);
+    //entity = scene->AddEntity("spotLightDynamic");
+    //mc = entity->AddComponent<component::ModelComponent>();
+    //tc = entity->AddComponent<component::TransformComponent>();
+    //slc = entity->AddComponent<component::SpotLightComponent>(FLAG_LIGHT::CAST_SHADOW);
+    //
+    //float3 pos = { 5.0f, 20.0f, 5.0f };
+    //mc->SetModel(sphereModel);
+    //mc->SetDrawFlag(FLAG_DRAW::DRAW_OPAQUE | FLAG_DRAW::GIVE_SHADOW);
+    //tc->GetTransform()->SetScale(0.3f);
+    //tc->GetTransform()->SetPosition(pos.x, pos.y, pos.z);
+    //
+    ////slc->SetColor({ 0.0f, 1.0f, 0.0f });
+    //slc->SetAttenuation({ 1.0, 0.09f, 0.032f });
+    //slc->SetPosition(pos);
+    //slc->SetDirection({ 0.0f, -1.0f, 0.5f });
+    //slc->SetOuterCutOff(50.0f);
     /* ---------------------- SpotLightDynamic ---------------------- */
 
     /* ---------------------- dirLight ---------------------- */
     entity = scene->AddEntity("dirLight");
     dlc = entity->AddComponent<component::DirectionalLightComponent>(FLAG_LIGHT::CAST_SHADOW);
-    dlc->SetColor({ 0.2f, 0.2f, 0.2f });
-    dlc->SetDirection({ -0.5f, -1.0f, 0.0f });
+    dlc->SetColor({ 2.0f, 0.2f, 0.2f });
+    dlc->SetDirection({ 1.0f, -1.0f, 0.0f });
     dlc->SetCameraTop(30.0f);
     dlc->SetCameraBot(-30.0f);
     dlc->SetCameraLeft(-70.0f);
@@ -143,13 +147,93 @@ Scene* TestScene(SceneManager* sm)
     return scene;
 }
 
+Scene* SponzaScene(SceneManager* sm)
+{
+    // Create Scene
+    Scene* scene = sm->CreateScene("SponzaScene");
+
+    component::CameraComponent* cc = nullptr;
+    component::ModelComponent* mc = nullptr;
+    component::TransformComponent* tc = nullptr;
+    component::InputComponent* ic = nullptr;
+    component::BoundingBoxComponent* bbc = nullptr;
+    component::PointLightComponent* plc = nullptr;
+    component::DirectionalLightComponent* dlc = nullptr;
+    component::SpotLightComponent* slc = nullptr;
+
+    AssetLoader* al = AssetLoader::Get();
+
+    // Get the models needed
+    Model* sponza = al->LoadModel(L"../Vendor/Resources/Scenes/Sponza/source/glTF/Sponza.gltf");
+    Model* sphereModel = al->LoadModel(L"../Vendor/Resources/Models/SpherePBR/ball.obj");
+
+    /* ---------------------- Player ---------------------- */
+    Entity* entity = (scene->AddEntity("player"));
+    tc = entity->AddComponent<component::TransformComponent>();
+    cc = entity->AddComponent<component::CameraComponent>(CAMERA_TYPE::PERSPECTIVE, true);
+    ic = entity->AddComponent<component::InputComponent>();
+    scene->SetPrimaryCamera(cc->GetCamera());
+
+    tc->GetTransform()->SetScale(1.0f);
+    tc->GetTransform()->SetPosition(0, 4, 30);
+    /* ---------------------- Player ---------------------- */
+
+    /* ---------------------- Sponza ---------------------- */
+    entity = scene->AddEntity("poster");
+    mc = entity->AddComponent<component::ModelComponent>();
+    tc = entity->AddComponent<component::TransformComponent>();
+
+    mc->SetModel(sponza);
+    mc->SetDrawFlag(FLAG_DRAW::DRAW_OPAQUE | FLAG_DRAW::GIVE_SHADOW);
+    tc->GetTransform()->SetScale(0.3f, 0.3f, 0.3f);
+    /* ---------------------- Sponza ---------------------- */
+
+    /* ---------------------- SpotLightDynamic ---------------------- */
+    entity = scene->AddEntity("pointLight1");
+    mc = entity->AddComponent<component::ModelComponent>();
+    tc = entity->AddComponent<component::TransformComponent>();
+    plc = entity->AddComponent<component::PointLightComponent>(FLAG_LIGHT::USE_TRANSFORM_POSITION);
+
+    mc->SetModel(sphereModel);
+    mc->SetDrawFlag(FLAG_DRAW::DRAW_OPAQUE | FLAG_DRAW::GIVE_SHADOW);
+    tc->GetTransform()->SetScale(0.3f);
+    tc->GetTransform()->SetPosition({ 0.0f, 10.0f, 0.0f });
+
+    plc->SetColor({ 5.0f, 5.0f, 5.0f });
+    /* ---------------------- SpotLightDynamic ---------------------- */
+
+    /* ---------------------- dirLight ---------------------- */
+    entity = scene->AddEntity("dirLight");
+    dlc = entity->AddComponent<component::DirectionalLightComponent>(FLAG_LIGHT::CAST_SHADOW);
+    dlc->SetColor({ 0.2f, 0.2f, 0.2f });
+    dlc->SetCameraDistance(300);
+    dlc->SetDirection({ -1.0f, -2.0f, 0.03f });
+    dlc->SetCameraTop(900.0f);
+    dlc->SetCameraBot(-500.0f);
+    dlc->SetCameraLeft(-500.0f);
+    dlc->SetCameraRight(500.0f);
+    dlc->SetCameraFarZ(5000);
+    /* ---------------------- dirLight ---------------------- */
+
+    /* ---------------------- Update Function ---------------------- */
+    scene->SetUpdateScene(&SponzaUpdateScene);
+    return scene;
+}
+
 void TestUpdateScene(SceneManager* sm, double dt)
 {
-    static float intensity = 0.0f;
-    component::SpotLightComponent* slc = sm->GetScene("TestScene")->GetEntity("spotLightDynamic")->GetComponent<component::SpotLightComponent>();
-    float col = abs(sinf(intensity)) * 30;
+    //static float intensity = 0.0f;
+    //component::SpotLightComponent* slc = sm->GetScene("TestScene")->GetEntity("spotLightDynamic")->GetComponent<component::SpotLightComponent>();
+    //float col = abs(sinf(intensity)) * 30;
+    //
+    //slc->SetColor({ col * 0.2f, 0.0f, col });
+    //
+    //intensity += 0.5f * dt;
+}
 
-    slc->SetColor({ col * 0.2f, 0.0f, col });
-    
-    intensity += 0.5f * dt;
+
+
+void SponzaUpdateScene(SceneManager* sm, double dt)
+{
+
 }

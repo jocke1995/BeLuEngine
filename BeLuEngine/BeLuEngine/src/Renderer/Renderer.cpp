@@ -1840,7 +1840,7 @@ void Renderer::prepareScene(Scene* activeScene)
 
 	// -------------------- DEBUG STUFF --------------------
 	// Test to change m_pCamera to the shadow casting m_lights cameras
-	//auto& tuple = m_Lights[LIGHT_TYPE::SPOT_LIGHT].at(0);
+	//auto& tuple = m_Lights[LIGHT_TYPE::DIRECTIONAL_LIGHT].at(0);
 	//BaseCamera* tempCam = std::get<0>(tuple)->GetCamera();
 	//m_pScenePrimaryCamera = tempCam;
 

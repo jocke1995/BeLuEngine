@@ -110,9 +110,9 @@ namespace component
 		{
 			CreateOrthographicCamera(
 				{
-				-m_pDirectionalLight->direction.x * 10,
-				-m_pDirectionalLight->direction.y * 10,
-				-m_pDirectionalLight->direction.z * 10 },
+				-m_pDirectionalLight->direction.x * 30,
+				-m_pDirectionalLight->direction.y * 30,
+				-m_pDirectionalLight->direction.z * 30 },
 				{
 				m_pDirectionalLight->direction.x,
 				m_pDirectionalLight->direction.y,

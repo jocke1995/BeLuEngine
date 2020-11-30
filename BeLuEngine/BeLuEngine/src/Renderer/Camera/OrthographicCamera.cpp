@@ -37,6 +37,7 @@ void OrthographicCamera::updateProjectionMatrix()
 
 void OrthographicCamera::updateSpecific(double dt)
 {
+	updateProjectionMatrix();
 	m_ViewProjMatrix = m_ViewMatrix * m_ProjMatrix;
 	m_ViewProjTranposedMatrix = DirectX::XMMatrixTranspose(m_ViewProjMatrix);
 }
