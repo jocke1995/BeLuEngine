@@ -3,7 +3,7 @@
 
 // Light defines
 #define MAX_DIR_LIGHTS   10
-#define MAX_POINT_LIGHTS 10
+#define MAX_POINT_LIGHTS 100
 #define MAX_SPOT_LIGHTS  10
 
 // This struct can be used to send specific indices as a root constant to the GPU.

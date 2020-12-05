@@ -101,7 +101,7 @@ void SceneManager::RemoveEntity(Entity* entity, Scene* scene)
 	scene->RemoveEntity(entity->GetName());
 }
 
-void SceneManager::AddEntity(Entity* entity, Scene* scene)
+void SceneManager::AddEntity(Entity* entity)
 {
 	entity->OnInitScene();
 }

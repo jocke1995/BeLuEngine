@@ -17,6 +17,7 @@
 #include "assimp/postprocess.h"
 #include "assimp/scene.h"
 #include "assimp/postprocess.h"
+#include "assimp/pbrmaterial.h"
 
 #include "../Renderer/Texture/Texture2D.h"
 #include "../Renderer/Texture/Texture2DGUI.h"
@@ -416,11 +417,19 @@ Texture* AssetLoader::processTexture(aiMaterial* mat, TEXTURE2D_TYPE texture_typ
 	}
 	else
 	{
-		// Logging
-		std::string tempString = std::string(filePathWithoutTexture.begin(), filePathWithoutTexture.end());
-		// No texture, warn and apply default Texture
-		Log::PrintSeverity(Log::Severity::WARNING, "Applying default texture: " + warningMessageTextureType +
-			" on mesh with path: \'%s\'\n", tempString.c_str());
+		// Logging, avoid logging emissive and opacity
+		if (texture_type == TEXTURE2D_TYPE::EMISSIVE || texture_type == TEXTURE2D_TYPE::OPACITY)
+		{
+			
+		}
+		else
+		{
+			std::string tempString = std::string(filePathWithoutTexture.begin(), filePathWithoutTexture.end());
+			// No texture, warn and apply default Texture
+			Log::PrintSeverity(Log::Severity::WARNING, "Applying default texture: " + warningMessageTextureType +
+				" on mesh with path: \'%s\'\n", tempString.c_str());
+		}
+
 		return m_LoadedTextures[defaultPath].second;
 	}
 
