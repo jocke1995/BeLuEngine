@@ -21,7 +21,7 @@ public:
 
 	void Clear();
 
-	void Execute();
+	void Execute() override final;
 private:
 	std::vector<std::pair<Light*, ShadowInfo*>> m_lights;
 };

@@ -32,7 +32,7 @@ public:
         m_MemberFunction{ memberFunction } {};
 
 private:
-    void call(Event* event)
+    void call(Event* event) override
     {
         // Cast event to the correct type and call member function
         (m_pInstance->*m_MemberFunction)(static_cast<EventType*>(event));

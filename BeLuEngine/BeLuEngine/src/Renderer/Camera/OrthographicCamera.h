@@ -19,8 +19,8 @@ public:
     virtual ~OrthographicCamera();
 
     // Gets
-    const DirectX::XMMATRIX* GetViewProjection() const;
-    const DirectX::XMMATRIX* GetViewProjectionTranposed() const;
+    const DirectX::XMMATRIX* GetViewProjection() const override;
+    const DirectX::XMMATRIX* GetViewProjectionTranposed() const override;
     
     const float GetLeft() const;
     const float GetRight() const;
@@ -50,7 +50,7 @@ private:
     DirectX::XMMATRIX m_ViewProjTranposedMatrix;
 
     void updateProjectionMatrix();
-    void updateSpecific(double dt);
+    void updateSpecific(double dt) override;
 };
 
 #endif

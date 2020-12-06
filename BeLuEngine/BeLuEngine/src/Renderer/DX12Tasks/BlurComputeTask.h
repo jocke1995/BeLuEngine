@@ -21,7 +21,7 @@ public:
 		);
 	virtual ~BlurComputeTask();
 
-	void Execute();
+	void Execute() override final;
 private:
 	ShaderResourceView* m_pSRV = nullptr;
 

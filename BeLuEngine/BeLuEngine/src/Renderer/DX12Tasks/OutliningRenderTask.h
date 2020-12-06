@@ -17,7 +17,7 @@ public:
 		unsigned int FLAG_THREAD);
 	~OutliningRenderTask();
 
-	void Execute();
+	void Execute() override final;
 
 	void SetObjectToOutline(std::pair<component::ModelComponent*, component::TransformComponent*>* objectToOutline);
 	void Clear();

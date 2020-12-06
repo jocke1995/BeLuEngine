@@ -19,7 +19,7 @@ public:
 	virtual ~GraphicsState();
 
 	const D3D12_GRAPHICS_PIPELINE_STATE_DESC* GetGpsd() const;
-	Shader* GetShader(ShaderType type) const;
+	Shader* GetShader(ShaderType type) const override;
 private:
 	Shader* m_pVS = nullptr;
 	Shader* m_pPS = nullptr;

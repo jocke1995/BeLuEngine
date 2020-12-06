@@ -14,7 +14,7 @@ public:
 		unsigned int FLAG_THREAD);
 	~FowardRenderTask();
 
-	void Execute();
+	void Execute() override final;
 
 private:
 	void drawRenderComponent(

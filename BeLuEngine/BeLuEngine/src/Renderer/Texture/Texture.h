@@ -28,12 +28,11 @@ protected:
 	// CopyOnDemandTask & Renderer uses the private members of the texture class to upload data to the gpu
 	friend class CopyOnDemandTask;
 	friend class Renderer;
-	friend class Text;
 	friend class Model;
 
 	TEXTURE_TYPE m_Type = TEXTURE_TYPE::UNKNOWN;
 
-	BYTE* m_pImageData = nullptr;
+	unsigned char* m_pImageData = nullptr;
 	int m_ImageBytesPerRow = 0;
 	std::wstring m_FilePath = L"";
 	ShaderResourceView* m_pSRV = nullptr;

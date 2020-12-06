@@ -17,7 +17,7 @@ public:
 	virtual ~ComputeState();
 
 	const D3D12_COMPUTE_PIPELINE_STATE_DESC* GetCpsd() const;
-	Shader* GetShader(ShaderType type = ShaderType::CS) const;
+	Shader* GetShader(ShaderType type = ShaderType::CS) const override;
 private:
 	Shader* m_pCS = nullptr;
 	D3D12_COMPUTE_PIPELINE_STATE_DESC m_Cpsd = {};

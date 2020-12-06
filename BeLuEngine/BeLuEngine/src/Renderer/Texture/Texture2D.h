@@ -18,7 +18,7 @@ public:
 	Texture2D(const std::wstring& filePath);
 	virtual ~Texture2D();
 
-	bool Init(ID3D12Device5* device, DescriptorHeap* descriptorHeap);
+	bool Init(ID3D12Device5* device, DescriptorHeap* descriptorHeap) override;
 
 private:
 };

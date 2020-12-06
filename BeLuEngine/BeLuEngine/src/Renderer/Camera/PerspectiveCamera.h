@@ -18,8 +18,8 @@ public:
 	virtual ~PerspectiveCamera();
 
     // Gets
-    const DirectX::XMMATRIX* GetViewProjection() const;
-    const DirectX::XMMATRIX* GetViewProjectionTranposed() const;
+    const DirectX::XMMATRIX* GetViewProjection() const override;
+    const DirectX::XMMATRIX* GetViewProjectionTranposed() const override;
 
     // Sets on projection
     void SetFov(float fov);
@@ -49,7 +49,7 @@ private:
     double m_FarZ = 0.0f;
 
     void updateProjectionMatrix();
-    void updateSpecific(double dt);
+    void updateSpecific(double dt) override;
     void updateCameraMovement(double dt);
 };
 

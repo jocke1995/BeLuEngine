@@ -9,7 +9,7 @@ public:
 	Texture2DGUI(const std::wstring& filePath);
 	virtual ~Texture2DGUI();
 
-	bool Init(ID3D12Device5* device, DescriptorHeap* descriptorHeap);
+	bool Init(ID3D12Device5* device, DescriptorHeap* descriptorHeap) override;
 
 private:
 };

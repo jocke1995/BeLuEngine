@@ -24,7 +24,7 @@ public:
 	void Clear();
 	void ClearSpecific(component::BoundingBoxComponent* bbc);
 
-	void Execute();
+	void Execute() override final;
 
 private:
 	std::vector<component::BoundingBoxComponent*> m_ObjectsToDraw;

@@ -14,9 +14,9 @@ public:
 	void SubmitTexture(Texture* texture);
 
 	// Removal
-	void Clear();
+	void Clear() override;
 
-	void Execute();
+	void Execute() override final;
 
 private:
 	std::vector<Texture*> m_Textures;

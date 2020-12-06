@@ -16,7 +16,7 @@ public:
 		unsigned int FLAG_THREAD);
 	~TransparentRenderTask();
 
-	void Execute();
+	void Execute() override final;
 
 private:
 };

@@ -13,7 +13,7 @@ public:
 
 	// Removal
 	void ClearSpecific(const Resource* uploadResource);
-	void Clear();
+	void Clear() override;
 
 	void Execute();
 };

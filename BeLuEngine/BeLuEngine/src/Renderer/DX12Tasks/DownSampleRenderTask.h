@@ -24,7 +24,7 @@ public:
 	void SetFullScreenQuad(Mesh* mesh);
 	void SetFullScreenQuadInSlotInfo();
 
-	void Execute();
+	void Execute() override final;
 private:
 	ShaderResourceView* m_pSourceSRV = nullptr;
 	const RenderTargetView* m_pDestinationRTV = nullptr;

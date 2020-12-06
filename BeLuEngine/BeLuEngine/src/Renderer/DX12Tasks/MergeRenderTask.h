@@ -20,7 +20,7 @@ public:
 	void SetFullScreenQuad(Mesh* mesh);
 	void CreateSlotInfo();
 
-	void Execute();
+	void Execute() override final;
 private:
 	Mesh* m_pFullScreenQuadMesh = nullptr;
 	std::vector<unsigned int> m_SRVIndices;
