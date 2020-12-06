@@ -17,6 +17,9 @@ public:
 	Scene(std::string sceneName);
 	virtual ~Scene();
 
+	bool operator == (const Scene& other);
+	bool operator != (const Scene& other);
+
 	Entity* AddEntityFromOther(Entity* other);
 	Entity* AddEntity(std::string entityName);
 

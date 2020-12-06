@@ -73,6 +73,11 @@ bool Resource::operator==(const Resource& other)
 	return m_Id == other.m_Id;
 }
 
+bool Resource::operator!=(const Resource& other)
+{
+	return !(operator==(other));
+}
+
 Resource::~Resource()
 {
 	SAFE_RELEASE(&m_pResource);
@@ -109,9 +114,8 @@ void Resource::SetData(const void* data, unsigned int subResourceIndex) const
 	void* dataBegin = nullptr;
 
 	// Set up the heap data
-	D3D12_RANGE range = { 0, 0 }; // We do not intend to read this resource on the CPU.
 
-	m_pResource->Map(subResourceIndex, &range, &dataBegin); // Get a dataBegin pointer where we can copy data to
+	m_pResource->Map(subResourceIndex, nullptr, &dataBegin); // Get a dataBegin pointer where we can copy data to
 	memcpy(dataBegin, data, m_EntrySize);
 	m_pResource->Unmap(subResourceIndex, nullptr);
 }

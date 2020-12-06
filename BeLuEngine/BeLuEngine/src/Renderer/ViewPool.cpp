@@ -68,11 +68,13 @@ ShadowInfo* ViewPool::GetFreeShadowInfo(LIGHT_TYPE lightType, SHADOW_RESOLUTION 
 	// If there are a free shadowInfo, use it
 	for (auto& tuple : m_ShadowPools[lightType])
 	{
+		auto&[free, resolution, shadowInfo] = tuple;
+
 		// The resource is free and the resolutions match
-		if (std::get<0>(tuple) == true && std::get<1>(tuple) == shadowResolution)
+		if (free == true && resolution == shadowResolution)
 		{
-			std::get<0>(tuple) = false;
-			return std::get<2>(tuple);
+			free = false;
+			return shadowInfo;
 		}
 	}
 	
@@ -99,7 +101,7 @@ void ViewPool::ClearAll()
 		// shadowInfos
 		for (auto& tuple : m_ShadowPools[typeIndex])
 		{
-			std::get<0>(tuple) = true;;
+			std::get<0>(tuple) = true;
 		}
 	}
 }
@@ -225,7 +227,6 @@ ShadowInfo* ViewPool::createShadowInfo(LIGHT_TYPE lightType, SHADOW_RESOLUTION s
 	ShadowInfo* shadowInfo = new ShadowInfo(
 		depthTextureWidth,
 		depthTextureHeight,
-		m_ShadowInfoIdCounter++,
 		shadowResolution,
 		m_pDevice,
 		m_pDescriptorHeap_DSV,

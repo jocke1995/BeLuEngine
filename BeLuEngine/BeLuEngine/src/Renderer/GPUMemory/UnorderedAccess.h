@@ -16,9 +16,10 @@ public:
 		D3D12_UNORDERED_ACCESS_VIEW_DESC* uavDesc,
 		DescriptorHeap* descriptorHeap_CBV_UAV_SRV);
 
-	bool operator == (const UnorderedAccess& other);
-
 	virtual ~UnorderedAccess();
+
+	bool operator == (const UnorderedAccess& other);
+	bool operator != (const UnorderedAccess& other);
 
 	Resource* const GetUploadResource() const;
 	const Resource* const GetDefaultResource() const;

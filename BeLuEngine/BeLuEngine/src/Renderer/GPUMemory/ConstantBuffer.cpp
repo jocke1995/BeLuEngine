@@ -29,6 +29,11 @@ bool ConstantBuffer::operator==(const ConstantBuffer& other)
 	return m_Id == other.m_Id;
 }
 
+bool ConstantBuffer::operator!=(const ConstantBuffer& other)
+{
+	return !(operator==(other));
+}
+
 ConstantBuffer::~ConstantBuffer()
 {
 	delete m_pUploadResource;

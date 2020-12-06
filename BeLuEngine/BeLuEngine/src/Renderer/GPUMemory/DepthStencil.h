@@ -17,9 +17,10 @@ public:
 		D3D12_DEPTH_STENCIL_VIEW_DESC* dsvDesc,
 		DescriptorHeap* descriptorHeap_DSV);
 
-	bool operator == (const DepthStencil& other);
-
 	virtual ~DepthStencil();
+
+	bool operator == (const DepthStencil& other);
+	bool operator != (const DepthStencil& other);
 
 	const Resource* const GetDefaultResource() const;
 	const DepthStencilView* const GetDSV() const;

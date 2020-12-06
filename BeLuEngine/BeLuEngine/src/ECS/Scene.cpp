@@ -32,6 +32,16 @@ Scene::~Scene()
     }
 }
 
+bool Scene::operator==(const Scene& other)
+{
+    return m_SceneName == other.m_SceneName;
+}
+
+bool Scene::operator!=(const Scene& other)
+{
+    return !(operator==(other));
+}
+
 Entity* Scene::AddEntityFromOther(Entity* other)
 {
     if (EntityExists(other->GetName()) == true)

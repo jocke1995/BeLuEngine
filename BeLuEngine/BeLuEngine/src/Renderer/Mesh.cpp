@@ -8,7 +8,9 @@
 
 Mesh::Mesh(std::vector<Vertex>* vertices, std::vector<unsigned int>* indices, const std::wstring& path)
 {
-	m_Path = path;
+	m_Id = s_IdCounter++;
+
+	m_Path = path + L"_Mesh_ID_" + std::to_wstring(m_Id);
 	m_Vertices = *vertices;
 	m_Indices = *indices;
 }
@@ -47,6 +49,16 @@ Mesh::~Mesh()
 	{
 		delete m_pIndexBufferView;
 	}
+}
+
+bool Mesh::operator==(const Mesh& other)
+{
+	return m_Id == other.m_Id;
+}
+
+bool Mesh::operator!=(const Mesh& other)
+{
+	return !(operator==(other));
 }
 
 void Mesh::Init(ID3D12Device5* m_pDevice5, DescriptorHeap* CBV_UAV_SRV_heap)

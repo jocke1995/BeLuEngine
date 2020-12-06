@@ -19,16 +19,21 @@ UnorderedAccess::UnorderedAccess(
 	m_Id = s_UaCounter++;
 }
 
-bool UnorderedAccess::operator==(const UnorderedAccess& other)
-{
-	return m_Id == other.m_Id;
-}
-
 UnorderedAccess::~UnorderedAccess()
 {
 	delete m_pUploadResource;
 	delete m_pDefaultResource;
 	delete m_pUAV;
+}
+
+bool UnorderedAccess::operator==(const UnorderedAccess& other)
+{
+	return m_Id == other.m_Id;
+}
+
+bool UnorderedAccess::operator!=(const UnorderedAccess& other)
+{
+	return !(operator==(other));
 }
 
 Resource* const UnorderedAccess::GetUploadResource() const

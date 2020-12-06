@@ -24,6 +24,11 @@ bool ShaderResource::operator==(const ShaderResource& other)
     return m_Id == other.m_Id;
 }
 
+bool ShaderResource::operator!=(const ShaderResource& other)
+{
+    return !(operator==(other));
+}
+
 ShaderResource::~ShaderResource()
 {
     delete m_pUploadResource;

@@ -24,6 +24,8 @@ struct Vertex
     DirectX::XMFLOAT3 tangent;
 };
 
+static unsigned int s_IdCounter = 0;
+
 class Mesh
 {
 public:
@@ -31,6 +33,9 @@ public:
             std::vector<unsigned int>* indices,
             const std::wstring& path = L"NOPATH");
     virtual ~Mesh();
+
+    bool operator == (const Mesh& other);
+    bool operator != (const Mesh& other);
 
     // Virtual so that animatedMesh can override this
     virtual void Init(ID3D12Device5* m_pDevice5, DescriptorHeap* CBV_UAV_SRV_heap);
@@ -72,6 +77,8 @@ protected:
 
     ShaderResourceView* m_pSRV = nullptr;
     D3D12_INDEX_BUFFER_VIEW* m_pIndexBufferView = nullptr;
+
+    unsigned int m_Id = 0;
 };
 
 #endif

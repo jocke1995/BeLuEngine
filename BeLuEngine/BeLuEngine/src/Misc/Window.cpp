@@ -104,7 +104,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, unsigned int msg, WPARAM wParam, LPARAM lPar
 			RECT win;
 			GetWindowRect(hWnd, &win);
 			ClipCursor(&win);
-			ShowCursor(false);
 		}
 #pragma endregion HandleInput
 		delete[] charArr;
@@ -131,6 +130,10 @@ Window::Window(
 	initWindow(hInstance, nCmdShow);
 
 	m_ShutDown = false;
+
+	// Set this to true to Show cursor, dont forget to unlock cursor in ExitWindow()
+	ShowCursor(false);
+	SetCursorPos(m_ScreenWidth / 2, m_ScreenHeight / 2);
 }
 
 
@@ -176,6 +179,8 @@ void Window::SetScreenHeight(int height)
 
 bool Window::ExitWindow()
 {
+	SetCursorPos(m_ScreenWidth / 2, m_ScreenHeight / 2);
+
 	bool closeWindow = m_ShutDown;
 	MSG msg = { 0 };
 

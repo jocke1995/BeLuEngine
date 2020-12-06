@@ -25,6 +25,11 @@ bool DepthStencil::operator==(const DepthStencil& other)
     return m_Id == other.m_Id;
 }
 
+bool DepthStencil::operator!=(const DepthStencil& other)
+{
+	return !(operator==(other));
+}
+
 DepthStencil::~DepthStencil()
 {
     delete m_pDefaultResource;

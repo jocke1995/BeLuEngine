@@ -9,13 +9,12 @@
 
 ShadowInfo::ShadowInfo(
 	unsigned int textureWidth, unsigned int textureHeight,
-	unsigned int shadowInfoId,
 	SHADOW_RESOLUTION shadowResolution,
 	ID3D12Device5* device,
 	DescriptorHeap* dh_DSV,
 	DescriptorHeap* dh_SRV)
 {
-	m_Id = shadowInfoId;
+	m_Id = s_IdCounter++;
 	m_ShadowResolution = shadowResolution;
 
 	createResource(device, textureWidth, textureHeight);
@@ -27,11 +26,6 @@ ShadowInfo::ShadowInfo(
 
 }
 
-bool ShadowInfo::operator==(const ShadowInfo& other)
-{
-	return m_Id == other.m_Id;
-}
-
 ShadowInfo::~ShadowInfo()
 {
 	delete m_pResource;
@@ -40,6 +34,16 @@ ShadowInfo::~ShadowInfo()
 	delete m_pSRV;
 
 	delete m_pRenderView;
+}
+
+bool ShadowInfo::operator==(const ShadowInfo& other)
+{
+	return m_Id == other.m_Id;
+}
+
+bool ShadowInfo::operator!=(const ShadowInfo& other)
+{
+	return !(operator==(other));
 }
 
 unsigned int ShadowInfo::GetId() const

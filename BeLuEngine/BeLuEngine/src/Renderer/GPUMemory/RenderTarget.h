@@ -14,9 +14,10 @@ public:
 		std::wstring resourceName,
 		DescriptorHeap* descriptorHeap_RTV);
 
-	bool operator == (const RenderTarget& other);
-
 	virtual ~RenderTarget();
+
+	bool operator == (const RenderTarget& other);
+	bool operator != (const RenderTarget& other);
 
 	const Resource* const GetDefaultResource() const;
 

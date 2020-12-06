@@ -15,9 +15,10 @@ public:
 		D3D12_SHADER_RESOURCE_VIEW_DESC* desc,
 		DescriptorHeap* descriptorHeap_CBV_UAV_SRV);
 
-	bool operator == (const ShaderResource& other);
-
 	virtual ~ShaderResource();
+
+	bool operator == (const ShaderResource& other);
+	bool operator != (const ShaderResource& other);
 
 	Resource* const GetUploadResource() const;
 	const Resource* const GetDefaultResource() const;

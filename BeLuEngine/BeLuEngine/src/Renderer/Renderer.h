@@ -22,9 +22,6 @@ class Mesh;
 class Texture;
 class Model;
 class Resource;
-class Text;
-
-// Views
 
 // GPU Resources
 class ConstantBuffer;

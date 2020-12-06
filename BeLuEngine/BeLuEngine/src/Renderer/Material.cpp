@@ -14,6 +14,16 @@ Material::~Material()
 
 }
 
+bool Material::operator==(const Material& other)
+{
+	return m_Name == other.m_Name;
+}
+
+bool Material::operator!=(const Material& other)
+{
+	return !(operator==(other));
+}
+
 const std::wstring& Material::GetPath() const
 {
 	return m_Name;

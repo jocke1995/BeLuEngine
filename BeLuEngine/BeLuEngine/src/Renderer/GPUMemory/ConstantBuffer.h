@@ -14,9 +14,10 @@ public:
 		std::wstring resourceName,
 		DescriptorHeap* descriptorHeap_CBV_UAV_SRV);
 
-	bool operator == (const ConstantBuffer& other);
-
 	virtual ~ConstantBuffer();
+
+	bool operator == (const ConstantBuffer& other);
+	bool operator != (const ConstantBuffer& other);
 
 	Resource* GetUploadResource() const;
 	Resource* GetDefaultResource() const;

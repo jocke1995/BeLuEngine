@@ -23,6 +23,16 @@ Model::~Model()
 {
 }
 
+bool Model::operator==(const Model& other)
+{
+	return m_Path == other.m_Path;
+}
+
+bool Model::operator!=(const Model& other)
+{
+	return !(operator==(other));
+}
+
 const std::wstring& Model::GetPath() const
 {
 	return m_Path;

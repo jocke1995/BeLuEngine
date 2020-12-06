@@ -23,6 +23,9 @@ public:
         std::vector<Material*>* materials);
     virtual ~Model();
 
+    bool operator == (const Model& other);
+    bool operator != (const Model& other);
+
     const std::wstring& GetPath() const;
     unsigned int GetSize() const;
 

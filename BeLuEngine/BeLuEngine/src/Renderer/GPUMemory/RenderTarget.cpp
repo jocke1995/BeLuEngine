@@ -25,6 +25,11 @@ bool RenderTarget::operator==(const RenderTarget& other)
 	return m_Id == other.m_Id;
 }
 
+bool RenderTarget::operator!=(const RenderTarget& other)
+{
+	return !(operator==(other));
+}
+
 RenderTarget::~RenderTarget()
 {
 	delete m_pResource;

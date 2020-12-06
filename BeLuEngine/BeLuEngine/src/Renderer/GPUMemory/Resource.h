@@ -8,7 +8,6 @@ enum RESOURCE_TYPE
     NUM_RESOURCE_TYPES
 };
 
-static unsigned int s_IdCounter = 0;
 class Resource
 {
 public:
@@ -30,9 +29,10 @@ public:
 
     // Default Constructor
     Resource();
+    virtual ~Resource();
 
     bool operator==(const Resource& other);
-    virtual ~Resource();
+    bool operator!=(const Resource& other);
 
     virtual unsigned int GetSize() const;
     ID3D12Resource1* GetID3D12Resource1() const;
@@ -42,6 +42,7 @@ public:
     // Only to be used if the resource is of type: UPLOAD
     void SetData(const void* data, unsigned int subResourceIndex = 0) const;
 protected:
+    inline static unsigned int s_IdCounter = 0;
     unsigned int m_Id = 0;
     unsigned long long m_EntrySize = 0;
     std::wstring m_Name;

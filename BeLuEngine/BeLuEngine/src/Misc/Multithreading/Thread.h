@@ -18,7 +18,7 @@ private:
 	HANDLE m_ThreadHandle;
 	HANDLE m_EventHandle;
 
-	static unsigned int __stdcall threadFunc(LPVOID lpParameter);
+	static unsigned int __stdcall threadFunc(void* lpParameter);
 
 	std::deque<MultiThreadedTask*> m_TaskDeque;
 	std::mutex m_Mutex;

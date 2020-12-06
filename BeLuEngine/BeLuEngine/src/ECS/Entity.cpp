@@ -7,21 +7,22 @@ Entity::Entity(std::string entityName)
 	m_Name = entityName;
 }
 
-bool Entity::operator==(const Entity* rhs) const
-{
-	if (m_Id == rhs->m_Id)
-	{
-		return true;
-	}
-	return false;
-}
-
 Entity::~Entity()
 {
 	for (Component* component : m_Components)
 	{
 		delete component;
 	}
+}
+
+bool Entity::operator==(const Entity& other) const
+{
+	return m_Id == other.m_Id;
+}
+
+bool Entity::operator!=(const Entity& other) const
+{
+	return !(operator==(other));
 }
 
 unsigned int Entity::GetID() const

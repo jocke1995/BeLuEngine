@@ -14,14 +14,15 @@ class ShadowInfo
 public:
 	ShadowInfo(
 		unsigned int textureWidth, unsigned int textureHeight,
-		unsigned int shadowInfoId,
 		SHADOW_RESOLUTION shadowResolution,
 		ID3D12Device5* device,
 		DescriptorHeap* dh_DSV,
 		DescriptorHeap* dh_SRV);
 
-	bool operator == (const ShadowInfo& other);
 	virtual ~ShadowInfo();
+
+	bool operator == (const ShadowInfo& other);
+	bool operator != (const ShadowInfo& other);
 
 	unsigned int GetId() const;
 	SHADOW_RESOLUTION GetShadowResolution() const;
@@ -31,6 +32,7 @@ public:
 	RenderView* GetRenderView() const;
 
 private:
+	inline static unsigned int s_IdCounter = 0;
 	unsigned int m_Id = 0;
 	SHADOW_RESOLUTION m_ShadowResolution = SHADOW_RESOLUTION::UNDEFINED;
 

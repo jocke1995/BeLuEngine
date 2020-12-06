@@ -18,6 +18,9 @@ public:
     Material(const std::wstring* path, std::map<TEXTURE2D_TYPE, Texture*>* textures);
     virtual ~Material();
 
+    bool operator == (const Material& other);
+    bool operator != (const Material& other);
+
     const std::wstring& GetPath() const;
 
     // Material

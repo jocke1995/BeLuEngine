@@ -18,8 +18,11 @@ class Entity
 {
 public:
 	Entity(std::string entityName);
-	bool operator == (const Entity* rhs) const;
 	virtual ~Entity();
+
+	// Compared using a unique ID
+	bool operator == (const Entity& other) const;
+	bool operator != (const Entity& other) const;
 
 	template <class T, typename... Args>
 	T* AddComponent(Args... args);
