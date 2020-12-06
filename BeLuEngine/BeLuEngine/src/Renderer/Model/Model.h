@@ -1,9 +1,6 @@
 #ifndef MODEL_H
 #define MODEL_H
 
-#include "Core.h"
-
-
 class Mesh;
 class Material;
 class Resource;

@@ -1,9 +1,6 @@
 #ifndef BASECAMERA_H
 #define BASECAMERA_H
 
-#include "Core.h"
-#include "EngineMath.h"
-
 class BaseCamera
 {
 public:

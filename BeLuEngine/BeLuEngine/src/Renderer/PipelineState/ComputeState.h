@@ -2,7 +2,6 @@
 #define COMPUTESTATE_H
 
 #include "PipelineState.h"
-#include "Core.h"
 
 class Shader;
 

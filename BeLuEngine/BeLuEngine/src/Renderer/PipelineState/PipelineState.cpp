@@ -1,8 +1,8 @@
 #include "stdafx.h"
 #include "PipelineState.h"
 
-#include "Shader.h"
-#include "RootSignature.h"
+#include "../Shader.h"
+#include "../RootSignature.h"
 #include "../Misc/AssetLoader.h"
 
 PipelineState::PipelineState(const std::wstring& psoName)

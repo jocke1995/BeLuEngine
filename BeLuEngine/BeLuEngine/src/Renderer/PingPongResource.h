@@ -8,8 +8,6 @@ class RenderTargetView;
 
 class DescriptorHeap;
 
-#include "GPUMemory/View.h"
-
 // DX forward declarations
 struct ID3D12Device5;
 struct D3D12_SHADER_RESOURCE_VIEW_DESC;

@@ -1,12 +1,6 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
-#include <vector>
-#include <map>
-
-#include "structs.h"
-#include "core.h"
-
 // Misc
 class ThreadPool;
 class Window;

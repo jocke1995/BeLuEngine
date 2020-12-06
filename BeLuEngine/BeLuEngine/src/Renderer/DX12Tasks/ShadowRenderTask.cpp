@@ -7,10 +7,10 @@
 #include "../GPUMemory/DepthStencilView.h"
 #include "../RootSignature.h"
 #include "../CommandInterface.h"
-#include "../PipelineState.h"
+#include "../PipelineState/PipelineState.h"
 #include "../ShadowInfo.h"
-#include "../Renderer/Transform.h"
-#include "../Renderer/Mesh.h"
+#include "../Renderer/Model/Transform.h"
+#include "../Renderer/Model/Mesh.h"
 #include "../Renderer/Camera/BaseCamera.h"
 
 ShadowRenderTask::ShadowRenderTask(

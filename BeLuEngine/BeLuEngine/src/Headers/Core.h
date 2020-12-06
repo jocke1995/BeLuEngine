@@ -1,5 +1,5 @@
-#ifndef VECTORFLOATS_H
-#define VECTORFLOATS_H
+#ifndef CORE_H
+#define CORE_H
 
 #include <string>
 #include <locale>
@@ -113,7 +113,7 @@ enum class CAMERA_TYPE
 	if ((*p))					\
 	{							\
 		(*p)->Release();		\
-		(*p) = NULL;			\
+		(*p) = nullptr;			\
 	}							\
 }
 

@@ -3,7 +3,7 @@
 
 #include "../CommandInterface.h"
 #include"../RootSignature.h"
-#include "../ComputeState.h"
+#include "../PipelineState/ComputeState.h"
 
 #include "../PingPongResource.h"
 #include "../GPUMemory/ShaderResourceView.h"

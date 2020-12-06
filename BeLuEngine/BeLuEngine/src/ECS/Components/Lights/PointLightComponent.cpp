@@ -2,7 +2,7 @@
 #include "PointLightComponent.h"
 
 // Renderer
-#include "../Renderer/Transform.h"
+#include "../Renderer/Model/Transform.h"
 #include "../Renderer/Camera/BaseCamera.h"
 #include "../Renderer/Renderer.h"
 

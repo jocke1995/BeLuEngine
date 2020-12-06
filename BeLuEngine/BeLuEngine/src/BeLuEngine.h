@@ -9,6 +9,7 @@
 
 // Entity Component System
 #include "ECS/SceneManager.h"
+#include "ECS/Scene.h"
 #include "ECS/Entity.h"
 #include "ECS/Components/ModelComponent.h"
 #include "ECS/Components/TransformComponent.h"
@@ -19,12 +20,12 @@
 
 // Sub-engines
 #include "Renderer/Renderer.h"
-#include "Renderer/Transform.h"
-#include "Renderer/Mesh.h"
+#include "Renderer/Model/Transform.h"
+#include "Renderer/Model/Mesh.h"
 #include "Renderer/Camera/BaseCamera.h"
 
 // Textures
-#include "Renderer/Material.h"
+#include "Renderer/Model/Material.h"
 #include "Renderer/Texture/TextureCubeMap.h"
 #include "Renderer/Texture/Texture2DGUI.h"
 
@@ -50,8 +51,6 @@ public:
 	SceneManager* const GetSceneHandler() const;
 
 private:
-	friend class ModelComponent;
-
 	Window* m_pWindow = nullptr;
 	Timer* m_pTimer = nullptr;
 	ThreadPool* m_pThreadPool = nullptr;

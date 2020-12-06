@@ -13,7 +13,7 @@
 #include "../Renderer/ShadowInfo.h"
 #include "../Renderer/ViewPool.h"
 #include "../Renderer/Texture/Texture.h"
-#include "../Renderer/Mesh.h"
+#include "../Renderer/Model/Mesh.h"
 
 // CopyTasks
 #include "../Renderer/DX12Tasks/CopyOnDemandTask.h"
@@ -25,11 +25,14 @@
 #include "../Renderer/DX12Tasks/ShadowRenderTask.h"
 #include "../Renderer/BoundingBoxPool.h"
 
+// ECS
+#include "../ECS/Entity.h"
+#include "../ECS/Scene.h"
+
 // Components
 #include "../ECS/Components/Lights/DirectionalLightComponent.h"
 #include "../ECS/Components/Lights/PointLightComponent.h"
 #include "../ECS/Components/Lights/SpotLightComponent.h"
-#include "../ECS/Entity.h"
 
 SceneManager::SceneManager()
 {

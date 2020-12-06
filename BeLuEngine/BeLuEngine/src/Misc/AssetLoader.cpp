@@ -7,11 +7,11 @@
 
 #include "Window.h"
 #include "../Renderer/DescriptorHeap.h"
-#include "../Renderer/Mesh.h"
-#include "../Renderer/Model.h"
+#include "../Renderer/Model/Mesh.h"
+#include "../Renderer/Model/Model.h"
 #include "../Renderer/Shader.h"
-#include "../Renderer/Material.h"
-#include "../Renderer/Transform.h"
+#include "../Renderer/Model/Material.h"
+#include "../Renderer/Model/Transform.h"
 
 #include "assimp/Importer.hpp"
 #include "assimp/postprocess.h"

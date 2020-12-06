@@ -1,11 +1,7 @@
 #ifndef SCENEMANAGER_H
 #define SCENEMANAGER_H
 
-#include "Scene.h"
-#include "../Renderer/MousePicker.h"
-#include <set>
-#include <unordered_map>
-
+class Scene;
 class Entity;
 class Renderer;
 

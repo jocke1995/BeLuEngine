@@ -1,7 +1,5 @@
 #include "BeLuEngine.h"
 
-#include "Renderer/Camera/PerspectiveCamera.h"
-
 Scene* TestScene(SceneManager* sm);
 Scene* SponzaScene(SceneManager* sm);
 
@@ -236,7 +234,7 @@ Scene* SponzaScene(SceneManager* sm)
     mc->SetDrawFlag(FLAG_DRAW::DRAW_OPAQUE | FLAG_DRAW::GIVE_SHADOW);
     tc->GetTransform()->SetScale(0.3f);
     tc->GetTransform()->SetPosition({ -185.0f, 40.0f, 66.0f });
-    plc->SetColor({ 0.0f, 10.0f, 10.0f });
+    plc->SetColor({ 0.0f, 0.0f, 15.0f });
 
     entity = scene->AddEntity("Brazier1");
     mc = entity->AddComponent<component::ModelComponent>();
@@ -258,7 +256,7 @@ Scene* SponzaScene(SceneManager* sm)
     mc->SetDrawFlag(FLAG_DRAW::DRAW_OPAQUE | FLAG_DRAW::GIVE_SHADOW);
     tc->GetTransform()->SetScale(0.3f);
     tc->GetTransform()->SetPosition({ 146.0f, 40.0f, 66.0f });
-    plc->SetColor({ 10.0f, 10.0f, 0.0f });
+    plc->SetColor({ 0.0f, 15.0f, 0.0f });
 
     entity = scene->AddEntity("Brazier3");
     mc = entity->AddComponent<component::ModelComponent>();

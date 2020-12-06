@@ -1,8 +1,8 @@
 #include "stdafx.h"
 #include "ComputeState.h"
 
-#include "RootSignature.h"
-#include "Shader.h"
+#include "../RootSignature.h"
+#include "../Shader.h"
 
 ComputeState::ComputeState(ID3D12Device5* device, RootSignature* rootSignature, std::wstring& CSName, std::wstring& psoName)
 	:PipelineState(psoName)

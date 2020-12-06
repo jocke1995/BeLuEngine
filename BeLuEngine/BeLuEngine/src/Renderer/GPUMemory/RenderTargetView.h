@@ -4,8 +4,6 @@
 #include "View.h"
 class RenderView;
 
-#include <vector>
-
 class RenderTargetView : public View
 {
 public:

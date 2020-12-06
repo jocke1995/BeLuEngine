@@ -1,8 +1,6 @@
 #ifndef BOUNDINGBOXPOOL_H
 #define BOUNDINGBOXPOOL_H
 
-#include "Core.h"
-
 class DescriptorHeap;
 class Mesh;
 struct Vertex;

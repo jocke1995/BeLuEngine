@@ -7,8 +7,6 @@ class RenderView;
 class DescriptorHeap;
 class Resource;
 
-#include "Core.h"
-
 class ShadowInfo
 {
 public:

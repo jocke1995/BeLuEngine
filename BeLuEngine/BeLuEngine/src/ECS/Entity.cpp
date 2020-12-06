@@ -3,7 +3,7 @@
 
 Entity::Entity(std::string entityName)
 {
-	m_Id = staticID++;
+	m_Id = s_IdCounter++;
 	m_Name = entityName;
 }
 

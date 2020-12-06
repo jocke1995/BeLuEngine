@@ -1,9 +1,6 @@
 #ifndef MESH_H
 #define MESH_H
 
-#include "EngineMath.h"
-#include "Core.h"
-
 #include "../ECS/Components/BoundingBoxComponent.h"
 
 class Texture;

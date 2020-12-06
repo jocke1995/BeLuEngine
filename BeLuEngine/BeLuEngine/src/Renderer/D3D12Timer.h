@@ -1,4 +1,5 @@
-#pragma once
+#ifndef D3D12TIMER_H
+#define D3D12TIMER_H
 
 namespace D3D12
 {
@@ -58,3 +59,5 @@ namespace D3D12
 		UINT m_TimerCount = 0;
 	};
 }
+
+#endif

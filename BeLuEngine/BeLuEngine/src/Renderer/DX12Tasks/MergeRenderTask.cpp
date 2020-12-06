@@ -11,9 +11,9 @@
 
 #include "../DescriptorHeap.h"
 #include "../RootSignature.h"
-#include "../PipelineState.h"
+#include "../PipelineState/PipelineState.h"
 
-#include "../Mesh.h"
+#include "../Model/Mesh.h"
 
 MergeRenderTask::MergeRenderTask(
 	ID3D12Device5* device,

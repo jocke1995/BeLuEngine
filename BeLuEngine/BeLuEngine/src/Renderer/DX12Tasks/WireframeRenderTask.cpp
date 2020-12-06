@@ -7,9 +7,9 @@
 #include "../DescriptorHeap.h"
 #include "../SwapChain.h"
 #include "../GPUMemory/Resource.h"
-#include "../PipelineState.h"
-#include "../Renderer/Transform.h"
-#include "../Renderer/Mesh.h"
+#include "../PipelineState/PipelineState.h"
+#include "../Renderer/Model/Transform.h"
+#include "../Renderer/Model/Mesh.h"
 #include "../Renderer/Camera/BaseCamera.h"
 #include "../GPUMemory/RenderTargetView.h"
 

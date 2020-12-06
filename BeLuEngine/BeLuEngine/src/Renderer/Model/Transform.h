@@ -1,8 +1,6 @@
 #ifndef TRANSFORM_H
 #define TRANSFORM_H
 
-#include "EngineMath.h"
-
 class Transform
 {
 public:

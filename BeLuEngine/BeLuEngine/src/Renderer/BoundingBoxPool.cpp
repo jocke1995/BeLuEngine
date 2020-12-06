@@ -2,7 +2,7 @@
 #include "BoundingBoxPool.h"
 
 #include "DescriptorHeap.h"
-#include "Mesh.h"
+#include "Model/Mesh.h"
 
 BoundingBoxPool::BoundingBoxPool(ID3D12Device5* device, DescriptorHeap* descriptorHeap_CBV_UAV_SRV)
 {

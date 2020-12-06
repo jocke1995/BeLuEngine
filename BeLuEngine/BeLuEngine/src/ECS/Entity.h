@@ -13,7 +13,6 @@
 #include "Components/Lights/DirectionalLightComponent.h"
 #include "Components/Lights/SpotLightComponent.h"
 
-static unsigned int staticID = 0;
 class Entity
 {
 public:
@@ -49,7 +48,8 @@ public:
 private:
 	friend class SceneManager;
 
-	unsigned int m_Id = -1;
+	unsigned int m_Id = 0;
+	inline static unsigned int s_IdCounter = 0;
 	std::string m_Name = "";
 	
 	// Multiple m_pScenes can use the same entity (player for example) and only init/uninit once.

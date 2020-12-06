@@ -1,8 +1,6 @@
 #ifndef COMMANDINTERFACE_H
 #define COMMANDINTERFACE_H
 
-#include "Core.h"
-
 // DX12 Forward Declarations
 struct ID3D12GraphicsCommandList5;
 struct ID3D12CommandAllocator;

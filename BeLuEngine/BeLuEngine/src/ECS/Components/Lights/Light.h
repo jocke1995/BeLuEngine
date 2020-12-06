@@ -1,9 +1,10 @@
 #ifndef LIGHT_H
 #define LIGHT_H
-#include "Core.h"
-#include "structs.h"
+
+#include "EngineMath.h"
 
 class BaseCamera;
+
 enum FLAG_LIGHT
 {
 	// Set flag to make the light position inherit the position of the corresponding m_pMesh

@@ -24,9 +24,9 @@ public:
 	unsigned int GetNextDescriptorHeapIndex(unsigned int increment = 0);
 	const D3D12_DESCRIPTOR_HEAP_DESC* GetDesc() const;
 	ID3D12DescriptorHeap* GetID3D12DescriptorHeap() const;
-	D3D12_CPU_DESCRIPTOR_HANDLE GetCPUHeapAt(UINT descriptorIndex);
-	D3D12_GPU_DESCRIPTOR_HANDLE GetGPUHeapAt(UINT descriptorIndex);
-	const UINT GetHandleIncrementSize() const;
+	D3D12_CPU_DESCRIPTOR_HANDLE GetCPUHeapAt(unsigned int descriptorIndex);
+	D3D12_GPU_DESCRIPTOR_HANDLE GetGPUHeapAt(unsigned int descriptorIndex);
+	const unsigned int GetHandleIncrementSize() const;
 
 private:
 	ID3D12DescriptorHeap* m_pDescriptorHeap = nullptr;
@@ -40,7 +40,7 @@ private:
 	D3D12_CPU_DESCRIPTOR_HANDLE m_CPUHeapAt;
 	D3D12_GPU_DESCRIPTOR_HANDLE m_GPUHeapAt;
 
-	UINT m_HandleIncrementSize;
+	unsigned int m_HandleIncrementSize;
 };
 
 #endif

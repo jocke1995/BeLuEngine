@@ -1,8 +1,8 @@
 #include "stdafx.h"
 #include "ModelComponent.h"
 
-#include "../Renderer/Model.h"
-#include "../Renderer/Material.h"
+#include "../Renderer/Model/Model.h"
+#include "../Renderer/Model/Material.h"
 #include "../Renderer/Renderer.h"
 #include "../Entity.h"
 

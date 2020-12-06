@@ -6,8 +6,6 @@ class DescriptorHeap;
 class ShadowInfo;
 class Light;
 
-#include "Core.h"
-
 class ViewPool
 {
 public:

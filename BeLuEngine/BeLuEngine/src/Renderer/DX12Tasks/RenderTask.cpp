@@ -3,7 +3,7 @@
 
 #include "../RootSignature.h"
 #include "../CommandInterface.h"
-#include "../GraphicsState.h"
+#include "../PipelineState/GraphicsState.h"
 #include "../GPUMemory/Resource.h"
 #include "../SwapChain.h"
 #include "../GPUMemory/DepthStencil.h"

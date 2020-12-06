@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "TransformComponent.h"
-#include "../../Renderer/Transform.h"
+#include "../../Renderer/Model/Transform.h"
 #include "../ECS/Entity.h"
 
 namespace component
