@@ -39,18 +39,18 @@ void component::InputComponent::move(MovementInput* event)
 	component::CameraComponent* cc = m_pParent->GetComponent<component::CameraComponent>();
 	PerspectiveCamera* pc = static_cast<PerspectiveCamera*>(cc->GetCamera());
 
-	// Check if the key has just been pressed or jsut been released and convert to a float. Multiply by two and subtract one to get 1 for true and -1 for false. If
+	// Check if the key has just been pressed or just been released and convert to a float. Multiply by two and subtract one to get 1 for true and -1 for false. If
 	// the key has been pressed, the player should start moving in the direction specified by the key -- hence the value 1. If the key has been released, the player's
 	// movement should be negated in the direction specified by the key -- hence the value -1
-	double pressed = (static_cast<double>(event->pressed) * 2 - 1);
+	int pressed = (static_cast<int>(event->pressed) * 2 - 1);
 
 	// Find out which key has been pressed. Convert to float to get the value 1 if the key pressed should move the player in the positive
 	// direction and the value -1 if the key pressed should move the player in the negative direction
-	float3 moveCam =
+	int3 moveCam =
 	{
-		(float(event->key == SCAN_CODES::D) - float(event->key == SCAN_CODES::A)) * pressed,
-		(float(event->key == SCAN_CODES::R) - float(event->key == SCAN_CODES::F)) * pressed,
-		(float(event->key == SCAN_CODES::W) - float(event->key == SCAN_CODES::S)) * pressed,
+		((event->key == SCAN_CODES::D) - (event->key == SCAN_CODES::A)) * pressed,
+		((event->key == SCAN_CODES::R) - (event->key == SCAN_CODES::F)) * pressed,
+		((event->key == SCAN_CODES::W) - (event->key == SCAN_CODES::S)) * pressed,
 	};
 
 	pc->UpdateMovement(moveCam);

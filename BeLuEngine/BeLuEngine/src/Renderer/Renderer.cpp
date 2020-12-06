@@ -245,13 +245,13 @@ void Renderer::SortObjects()
 
 	for (auto& renderComponents : m_RenderComponents)
 	{
-		int numRenderComponents = renderComponents.second.size();
+		unsigned int numRenderComponents = static_cast<unsigned int>(renderComponents.second.size());
 
 		DistFromCamera* distFromCamArr = new DistFromCamera[numRenderComponents];
 
 		// Get all the distances of each objects and store them by ID and distance
 		DirectX::XMFLOAT3 camPos = m_pScenePrimaryCamera->GetPosition();
-		for (int i = 0; i < numRenderComponents; i++)
+		for (unsigned int i = 0; i < numRenderComponents; i++)
 		{
 			DirectX::XMFLOAT3 objectPos = renderComponents.second.at(i).second->GetTransform()->GetPositionXMFLOAT3();
 
@@ -267,9 +267,9 @@ void Renderer::SortObjects()
 
 		// InsertionSort (because its best case is O(N)), 
 		// and since this is sorted ((((((EVERY FRAME)))))) this is a good choice of sorting algorithm
-		int j = 0;
+		unsigned int j = 0;
 		DistFromCamera distFromCamArrTemp = {};
-		for (int i = 1; i < numRenderComponents; i++)
+		for (unsigned int i = 1; i < numRenderComponents; i++)
 		{
 			j = i;
 			while (j > 0 && (distFromCamArr[j - 1].distance > distFromCamArr[j].distance))
@@ -284,7 +284,7 @@ void Renderer::SortObjects()
 
 		// Fill the vector with sorted array
 		renderComponents.second.clear();
-		for (int i = 0; i < numRenderComponents; i++)
+		for (unsigned int i = 0; i < numRenderComponents; i++)
 		{
 			renderComponents.second.push_back(std::make_pair(distFromCamArr[i].mc, distFromCamArr[i].tc));
 		}
@@ -458,7 +458,7 @@ void Renderer::InitDirectionalLightComponent(component::DirectionalLightComponen
 	SHADOW_RESOLUTION resolution = SHADOW_RESOLUTION::UNDEFINED;
 
 	int shadowRes = -1;
-	if (component->GetLightFlags() & FLAG_LIGHT::CAST_SHADOW)
+	if (component->GetLightFlags() & static_cast<unsigned int>(FLAG_LIGHT::CAST_SHADOW))
 	{
 		// Max resolution
 		shadowRes = 2;
@@ -495,7 +495,7 @@ void Renderer::InitDirectionalLightComponent(component::DirectionalLightComponen
 	// Submit to gpu
 	CopyTask* copyTask = nullptr;
 
-	if (component->GetLightFlags() & FLAG_LIGHT::STATIC)
+	if (component->GetLightFlags() & static_cast<unsigned int>(FLAG_LIGHT::STATIC))
 	{
 		copyTask = m_CopyTasks[COPY_TASK_TYPE::COPY_ON_DEMAND];
 	}
@@ -526,7 +526,7 @@ void Renderer::InitPointLightComponent(component::PointLightComponent* component
 
 	// Submit to gpu
 	CopyTask* copyTask = nullptr;
-	if (component->GetLightFlags() & FLAG_LIGHT::STATIC)
+	if (component->GetLightFlags() & static_cast<unsigned int>(FLAG_LIGHT::STATIC))
 	{
 		copyTask = m_CopyTasks[COPY_TASK_TYPE::COPY_ON_DEMAND];
 	}
@@ -553,7 +553,7 @@ void Renderer::InitSpotLightComponent(component::SpotLightComponent* component)
 	SHADOW_RESOLUTION resolution = SHADOW_RESOLUTION::UNDEFINED;
 
 	int shadowRes = -1;
-	if (component->GetLightFlags() & FLAG_LIGHT::CAST_SHADOW)
+	if (component->GetLightFlags() & static_cast<unsigned int>(FLAG_LIGHT::CAST_SHADOW))
 	{
 		// Max resolution
 		shadowRes = 2;
@@ -587,7 +587,7 @@ void Renderer::InitSpotLightComponent(component::SpotLightComponent* component)
 
 	// Submit to gpu
 	CopyTask* copyTask = nullptr;
-	if (component->GetLightFlags() & FLAG_LIGHT::STATIC)
+	if (component->GetLightFlags() & static_cast<unsigned int>(FLAG_LIGHT::STATIC))
 	{
 		copyTask = m_CopyTasks[COPY_TASK_TYPE::COPY_ON_DEMAND];
 	}
@@ -969,6 +969,11 @@ bool Renderer::createDevice()
 		// Check to see if the adapter supports Direct3D 12, but don't create the actual m_pDevice yet.
 		if (SUCCEEDED(D3D12CreateDevice(adapter, D3D_FEATURE_LEVEL_12_1, __uuidof(ID3D12Device5), nullptr)))
 		{
+			DXGI_ADAPTER_DESC adapterDesc = {};
+			adapter->GetDesc(&adapterDesc);
+
+			Log::Print("Adapter: %S\n", adapterDesc.Description);
+
 			break;
 		}
 	
@@ -1038,8 +1043,8 @@ void Renderer::createCommandQueues()
 
 void Renderer::createSwapChain()
 {
-	UINT resolutionWidth = 800;
-	UINT resolutionHeight = 600;
+	UINT resolutionWidth = 1920;
+	UINT resolutionHeight = 1080;
 
 	m_pSwapChain = new SwapChain(
 		m_pDevice5,
@@ -1861,31 +1866,31 @@ void Renderer::submitUploadPerSceneData()
 {
 	*m_pCbPerSceneData = {};
 	// ----- directional lights -----
-	m_pCbPerSceneData->Num_Dir_Lights = m_Lights[LIGHT_TYPE::DIRECTIONAL_LIGHT].size();
+	m_pCbPerSceneData->Num_Dir_Lights = static_cast<unsigned int>(m_Lights[LIGHT_TYPE::DIRECTIONAL_LIGHT].size());
 	unsigned int index = 0;
 	for (auto& tuple : m_Lights[LIGHT_TYPE::DIRECTIONAL_LIGHT])
 	{
-		m_pCbPerSceneData->dirLightIndices[index].x = std::get<1>(tuple)->GetCBV()->GetDescriptorHeapIndex();
+		m_pCbPerSceneData->dirLightIndices[index].x = static_cast<float>(std::get<1>(tuple)->GetCBV()->GetDescriptorHeapIndex());
 		index++;
 	}
 	// ----- directional m_lights -----
 
 	// ----- point lights -----
-	m_pCbPerSceneData->Num_Point_Lights = m_Lights[LIGHT_TYPE::POINT_LIGHT].size();
+	m_pCbPerSceneData->Num_Point_Lights = static_cast<unsigned int>(m_Lights[LIGHT_TYPE::POINT_LIGHT].size());
 	index = 0;
 	for (auto& tuple : m_Lights[LIGHT_TYPE::POINT_LIGHT])
 	{
-		m_pCbPerSceneData->pointLightIndices[index].x = std::get<1>(tuple)->GetCBV()->GetDescriptorHeapIndex();
+		m_pCbPerSceneData->pointLightIndices[index].x = static_cast<float>(std::get<1>(tuple)->GetCBV()->GetDescriptorHeapIndex());
 		index++;
 	}
 	// ----- point m_lights -----
 
 	// ----- spot lights -----
-	m_pCbPerSceneData->Num_Spot_Lights = m_Lights[LIGHT_TYPE::SPOT_LIGHT].size();
+	m_pCbPerSceneData->Num_Spot_Lights = static_cast<unsigned int>(m_Lights[LIGHT_TYPE::SPOT_LIGHT].size());
 	index = 0;
 	for (auto& tuple : m_Lights[LIGHT_TYPE::SPOT_LIGHT])
 	{
-		m_pCbPerSceneData->spotLightIndices[index].x = std::get<1>(tuple)->GetCBV()->GetDescriptorHeapIndex();
+		m_pCbPerSceneData->spotLightIndices[index].x = static_cast<float>(std::get<1>(tuple)->GetCBV()->GetDescriptorHeapIndex());
 		index++;
 	}
 	// ----- spot m_lights -----

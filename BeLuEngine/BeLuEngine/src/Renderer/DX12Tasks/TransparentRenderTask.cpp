@@ -92,7 +92,7 @@ void TransparentRenderTask::Execute()
 			for (unsigned int j = 0; j < mc->GetNrOfMeshes(); j++)
 			{
 				Mesh* m = mc->GetMeshAt(j);
-				size_t num_Indices = m->GetNumIndices();
+				unsigned int num_Indices = m->GetNumIndices();
 				const SlotInfo* info = mc->GetSlotInfoAt(j);
 
 				Transform* transform = tc->GetTransform();

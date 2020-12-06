@@ -106,7 +106,7 @@ namespace component
 
 	void DirectionalLightComponent::initFlagUsages()
 	{
-		if (m_LightFlags & FLAG_LIGHT::CAST_SHADOW)
+		if (m_LightFlags & static_cast<unsigned int>(FLAG_LIGHT::CAST_SHADOW))
 		{
 			CreateOrthographicCamera(
 				{

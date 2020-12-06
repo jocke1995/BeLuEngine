@@ -101,7 +101,7 @@ void ShadowRenderTask::Execute()
 			// Draw for every m_pMesh the meshComponent has
 			for (unsigned int i = 0; i < mc->GetNrOfMeshes(); i++)
 			{
-				size_t num_Indices = mc->GetMeshAt(i)->GetNumIndices();
+				unsigned int num_Indices = mc->GetMeshAt(i)->GetNumIndices();
 				const SlotInfo* info = mc->GetSlotInfoAt(i);
 
 				Transform* transform = tc->GetTransform();

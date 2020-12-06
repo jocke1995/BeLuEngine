@@ -9,10 +9,10 @@ public:
     PerspectiveCamera(
         DirectX::XMVECTOR position,
         DirectX::XMVECTOR direction,
-        float fov = 60.0f,
-        float aspectRatio = 16.0f / 9.0f,
-        float nearZ = 0.1f,
-        float farZ = 3000.0f,
+        double fov = 60.0f,
+        double aspectRatio = 16.0f / 9.0f,
+        double nearZ = 0.1f,
+        double farZ = 3000.0f,
         bool isPrimary = false);
 
 	virtual ~PerspectiveCamera();
@@ -28,14 +28,14 @@ public:
     void SetFarZ(float farPlaneDistance);
 
     // Will be called from inputEvent in inputComponent
-    void RotateCamera(float yaw, float pitch);
-    void UpdateMovement(float3 newMovement);
+    void RotateCamera(int yaw, int pitch);
+    void UpdateMovement(int3 newMovement);
 
 private:
     DirectX::XMMATRIX m_CamRotationMatrix;
-    float m_MoveLeftRight = 0.0f;
-    float m_MoveForwardBackward = 0.0f;
-    float m_MoveUpDown = 0.0f;
+    int m_MoveLeftRight = 0;
+    int m_MoveForwardBackward = 0;
+    int m_MoveUpDown = 0;
     float m_Yaw = 0.0f;
     float m_Pitch = 0.0f;
 

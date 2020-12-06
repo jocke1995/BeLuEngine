@@ -12,9 +12,9 @@ namespace component
 		DirectionalLightComponent(Entity* parent, unsigned int lightFlags = 0);
 		virtual ~DirectionalLightComponent();
 
-		void Update(double dt);
-		void OnInitScene();
-		void OnUnInitScene();
+		void Update(double dt) override;
+		void OnInitScene() override;
+		void OnUnInitScene() override;
 
 		// Set functions which modifies the shadowCamera
 		void SetCameraDistance(float distance);
@@ -26,10 +26,10 @@ namespace component
 		void SetCameraNearZ(float nearPlaneDistance);
 		void SetCameraFarZ(float farPlaneDistance);
 
-		void* GetLightData() const;
+		void* GetLightData() const override;
 	
 	protected:
-		void UpdateLightColor();
+		void UpdateLightColor() override;
 
 	private:
 		float m_Distance = 30.0f;

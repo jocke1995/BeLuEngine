@@ -82,7 +82,7 @@ void DepthRenderTask::drawRenderComponent(component::ModelComponent* mc, compone
 	for (unsigned int i = 0; i < mc->GetNrOfMeshes(); i++)
 	{
 		Mesh* m = mc->GetMeshAt(i);
-		size_t num_Indices = m->GetNumIndices();
+		unsigned int num_Indices = m->GetNumIndices();
 		const SlotInfo* info = mc->GetSlotInfoAt(i);
 
 		Transform* transform = tc->GetTransform();

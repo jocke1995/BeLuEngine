@@ -108,7 +108,7 @@ void SceneManager::AddEntity(Entity* entity)
 
 void SceneManager::RemoveEntities()
 {
-	unsigned int removeSize = m_ToRemove.size() - 1;
+	unsigned int removeSize = static_cast<unsigned int>(m_ToRemove.size()) - 1;
 	for (int i = removeSize; i >= 0; --i)
 	{
 		RemoveEntity(m_ToRemove[i].ent, m_ToRemove[i].scene);

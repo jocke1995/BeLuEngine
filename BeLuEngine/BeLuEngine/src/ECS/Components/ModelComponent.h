@@ -17,9 +17,9 @@ namespace component
         ModelComponent(Entity* parent);
         virtual ~ModelComponent();
 
-        void Update(double dt);
-        void OnInitScene();
-        void OnUnInitScene();
+        void Update(double dt) override;
+        void OnInitScene() override;
+        void OnUnInitScene() override;
 
         // Sets
         void SetModel(Model* model);

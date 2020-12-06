@@ -102,7 +102,7 @@ void WireframeRenderTask::Execute()
 			const Mesh* m = m_ObjectsToDraw[i]->GetMeshAt(j);
 			Transform* t = m_ObjectsToDraw[i]->GetTransformAt(j);
 
-			size_t num_Indices = m->GetNumIndices();
+			unsigned int num_Indices = m->GetNumIndices();
 			const SlotInfo* info = m_ObjectsToDraw[i]->GetSlotInfo(j);
 
 			DirectX::XMMATRIX* WTransposed = t->GetWorldMatrixTransposed();

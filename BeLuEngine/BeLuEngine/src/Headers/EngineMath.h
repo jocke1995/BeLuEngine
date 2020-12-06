@@ -5,12 +5,49 @@
 #include <DirectXCollision.h>
 #include <algorithm>
 
-# define PI           3.14159265358979323846  /* pi */
+#define PI           3.14159265358979323846f
 #define EPSILON		  0.000001
 
 typedef DirectX::XMMATRIX float4x4;
 typedef DirectX::XMFLOAT3X3 float3x3;
 
+#pragma region XMFLOAT3_OPERATOR_OVERLOADS
+inline DirectX::XMFLOAT3 operator*(DirectX::XMFLOAT3 a, DirectX::XMFLOAT3 b)
+{
+	return { a.x * b.x, a.y * b.y, a.z * b.z };
+}
+
+inline DirectX::XMFLOAT3 operator*(DirectX::XMFLOAT3 a, float b)
+{
+	return { a.x * b, a.y * b, a.z * b };
+}
+
+inline DirectX::XMFLOAT3 operator/(DirectX::XMFLOAT3 a, float b)
+{
+	return { a.x / b, a.y / b, a.z / b };
+}
+
+inline DirectX::XMFLOAT3 operator+(DirectX::XMFLOAT3 a, float b)
+{
+	return { a.x + b, a.y + b, a.z + b };
+}
+
+inline DirectX::XMFLOAT3 operator-(DirectX::XMFLOAT3 a, float b)
+{
+	return { a.x - b, a.y - b, a.z - b };
+}
+
+inline DirectX::XMFLOAT3 operator+(DirectX::XMFLOAT3 a, DirectX::XMFLOAT3 b)
+{
+	return { a.x + b.x, a.y + b.y, a.z + b.z };
+}
+
+inline DirectX::XMFLOAT3 operator-(DirectX::XMFLOAT3 a, DirectX::XMFLOAT3 b)
+{
+	return { a.x - b.x, a.y - b.y, a.z - b.z };
+}
+#pragma endregion XMFLOAT3_OPERATOR_OVERLOADS
+#pragma region floatStructs
 typedef union
 {
 	struct { float x; float y; float z; float w; };
@@ -115,9 +152,31 @@ typedef union float2
 	}
 } float2;
 
+#pragma endregion floatStructs
+#pragma region intStructs
+typedef union
+{
+	struct { int x; int y; };
+	struct { int r; int g; };
+} int2;
+
+typedef union
+{
+	struct { int x; int y; int z; };
+	struct { int r; int g; int b; };
+} int3;
+
+
+typedef union
+{
+	struct { int x; int y; int z; int w; };
+	struct { int r; int g; int b; int a; };
+} int4;
+#pragma endregion intStructs
+
 struct Quaternion
 {
-	double w, x, y, z;
+	double x, y, z, w;
 };
 
 // https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
@@ -132,10 +191,10 @@ inline Quaternion ToQuaternion(double yaw, double pitch, double roll) // yaw (Z)
 	double sr = sin(roll * 0.5);
 
 	Quaternion q;
-	q.w = cr * cp * cy + sr * sp * sy;
 	q.x = sr * cp * cy - cr * sp * sy;
 	q.y = cr * sp * cy + sr * cp * sy;
 	q.z = cr * cp * sy - sr * sp * cy;
+	q.w = cr * cp * cy + sr * sp * sy;
 
 	return q;
 }

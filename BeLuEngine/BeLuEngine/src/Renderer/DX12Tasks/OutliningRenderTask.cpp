@@ -93,7 +93,7 @@ void OutliningRenderTask::Execute()
 
 		component::ModelComponent* mc = m_ObjectToOutline.first;
 
-		size_t num_Indices = m->GetNumIndices();
+		unsigned int num_Indices = m->GetNumIndices();
 		const SlotInfo* info = mc->GetSlotInfoAt(i);
 
 		DirectX::XMMATRIX* WTransposed = newScaledTransform.GetWorldMatrixTransposed();

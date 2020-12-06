@@ -32,7 +32,7 @@ private:
 	Mesh* m_pFullScreenQuadMesh = nullptr;
 
 	SlotInfo m_Info;
-	size_t m_NumIndices;
+	unsigned int m_NumIndices;
 };
 
 #endif

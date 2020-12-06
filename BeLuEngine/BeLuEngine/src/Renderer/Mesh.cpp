@@ -96,12 +96,12 @@ const std::vector<Vertex>* Mesh::GetVertices() const
 	return &m_Vertices;
 }
 
-const size_t Mesh::GetSizeOfVertices() const
+const unsigned int Mesh::GetSizeOfVertices() const
 {
 	return m_Vertices.size() * sizeof(Vertex);
 }
 
-const size_t Mesh::GetNumVertices() const
+const unsigned int Mesh::GetNumVertices() const
 {
 	return m_Vertices.size();
 }
@@ -116,12 +116,12 @@ const std::vector<unsigned int>* Mesh::GetIndices() const
 	return &m_Indices;
 }
 
-const size_t Mesh::GetSizeOfIndices() const
+const unsigned int Mesh::GetSizeOfIndices() const
 {
 	return m_Indices.size() * sizeof(unsigned int);
 }
 
-const size_t Mesh::GetNumIndices() const
+const unsigned int Mesh::GetNumIndices() const
 {
 	return m_Indices.size();
 }

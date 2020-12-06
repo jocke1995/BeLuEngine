@@ -26,7 +26,7 @@ private:
 	std::vector<unsigned int> m_SRVIndices;
 
 	SlotInfo m_Info;
-	size_t m_NumIndices;
+	unsigned int m_NumIndices;
 
 };
 

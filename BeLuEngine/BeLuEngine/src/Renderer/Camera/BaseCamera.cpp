@@ -10,6 +10,7 @@ BaseCamera::BaseCamera(DirectX::XMVECTOR position, DirectX::XMVECTOR direction, 
 	m_RightVector = DirectX::XMVector3Cross(m_UpVector, m_DirectionVector);
 
 	m_ViewMatrix = DirectX::XMMatrixLookAtLH(m_EyeVector, DirectX::XMVectorAdd(m_DirectionVector, m_EyeVector), m_UpVector);
+	m_ViewMatrixInverse = DirectX::XMMatrixInverse(nullptr, m_ViewMatrix);
 
 	m_IsPrimary = isPrimary;
 }

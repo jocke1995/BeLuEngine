@@ -69,7 +69,7 @@ void CopyOnDemandTask::copyTexture(ID3D12GraphicsCommandList5* commandList, Text
 	// Transfer the data
 	UpdateSubresources(commandList,
 		defaultHeap, uploadHeap,
-		0, 0, texture->m_SubresourceData.size(),
+		0, 0, static_cast<unsigned int>(texture->m_SubresourceData.size()),
 		texture->m_SubresourceData.data());
 
 	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(

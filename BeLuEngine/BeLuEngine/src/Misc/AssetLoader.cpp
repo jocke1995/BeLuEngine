@@ -361,7 +361,7 @@ Material* AssetLoader::loadMaterial(aiMaterial* mat, const std::wstring& folderP
 
 Texture* AssetLoader::processTexture(aiMaterial* mat, TEXTURE2D_TYPE texture_type, const std::wstring& filePathWithoutTexture)
 {
-	aiTextureType type;
+	aiTextureType type = aiTextureType::aiTextureType_NONE;
 	aiString str;
 	Texture* texture = nullptr;
 

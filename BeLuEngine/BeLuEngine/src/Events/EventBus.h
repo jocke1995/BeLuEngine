@@ -70,7 +70,7 @@ inline void EventBus::Subscribe(T* classInstance, void(T::* memberFunction)(Even
 	}
 
 	HandlerFunctionBase* temp = new MemberFunctionHandler<T, EventType>(classInstance, memberFunction);
-	temp->m_Id = getID<T, EventType>(classInstance);
+	temp->SetId(getID<T, EventType>(classInstance));
 	//Push function into list of handlers
 	handlers->push_back(temp);
 }
@@ -98,7 +98,7 @@ inline void EventBus::Unsubscribe(T* classInstance, void(T::* memberFunction)(Ev
 		std::vector<HandlerFunctionBase*>::iterator it;
 		for (it = handlers->begin(); it != handlers->end(); ++it)
 		{
-			if ((*it)->m_Id == id)
+			if ((*it)->GetId() == id)
 			{
 				delete* it;
 				handlers->erase(it);
@@ -111,8 +111,8 @@ inline void EventBus::Unsubscribe(T* classInstance, void(T::* memberFunction)(Ev
 template<class T, class EventType>
 inline unsigned int EventBus::getID(T* instance)
 {
-	size_t index = typeid(EventType).hash_code();
-	unsigned int a = (index - (size_t)instance);
+	unsigned int index = static_cast<unsigned int>(typeid(EventType).hash_code());
+	unsigned int a = (index - static_cast<unsigned int>((size_t)instance));
 	return a;
 }
 

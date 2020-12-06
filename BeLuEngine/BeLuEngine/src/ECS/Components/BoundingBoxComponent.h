@@ -9,13 +9,11 @@
 #include <vector>
 
 // used for enabling Collision and/or Picking.
-// Y_AXIS_UPP is only used if the "up" axis of the model is in the Y axis
 // write as "F_OBBFlags::COLLISION | F_OBBFlags::PICKING", without the "", if you want to have more than one
 enum F_OBBFlags
 {
 	COLLISION = BIT(1),
-	PICKING = BIT(2),
-	T_POSE = BIT(3),
+	PICKING = BIT(2)
 };
 
 struct BoundingBoxData;
@@ -23,7 +21,6 @@ class ShaderResourceView;
 class Mesh;
 class Transform;
 struct SlotInfo;
-class CollisionCategory;
 
 namespace component
 {
@@ -34,11 +31,11 @@ namespace component
 		virtual ~BoundingBoxComponent();
 
 		void Init();
-		void OnInitScene();
-		void OnUnInitScene();
 
-		//updates the position and rotation of m_OrientedBoundingBox
-		void Update(double dt);
+		void Update(double dt) override;
+		void OnInitScene() override;
+		void OnUnInitScene() override;
+
 
 		void AddMesh(Mesh* mesh);
 
@@ -72,7 +69,6 @@ namespace component
 		std::vector<Mesh*> m_Meshes;
 		std::vector<BoundingBoxData*> m_Bbds;
 		std::vector<SlotInfo*> m_SlotInfos;
-		CollisionCategory* m_pCategory = nullptr;
 
 		bool createOrientedBoundingBox();
 	};

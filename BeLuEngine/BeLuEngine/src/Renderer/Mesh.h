@@ -38,14 +38,14 @@ public:
     // Vertices
     Resource* GetDefaultResourceVertices() const;
     const std::vector<Vertex>* GetVertices() const;
-    virtual const size_t GetSizeOfVertices() const;
-    virtual const size_t GetNumVertices() const;
+    virtual const unsigned int GetSizeOfVertices() const;
+    virtual const unsigned int GetNumVertices() const;
 
     // Indices
     Resource* GetDefaultResourceIndices() const;
     const std::vector<unsigned int>* GetIndices() const;
-    virtual const size_t GetSizeOfIndices() const;
-    virtual const size_t GetNumIndices() const;
+    virtual const unsigned int GetSizeOfIndices() const;
+    virtual const unsigned int GetNumIndices() const;
     const D3D12_INDEX_BUFFER_VIEW* GetIndexBufferView() const;
 
     const std::wstring& GetPath() const;
@@ -54,11 +54,9 @@ public:
 protected:
     friend class MergeRenderTask;
     friend class DownSampleRenderTask;
-    friend class SkyboxRenderTask;
     friend class Renderer;
     friend class AssetLoader;
     friend class SceneManager;
-	friend class QuadManager;
 	friend class Model;
 	friend class component::BoundingBoxComponent;
 	friend class CopyOnDemandTask;

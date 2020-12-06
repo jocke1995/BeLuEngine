@@ -12,10 +12,13 @@ public:
     {
         call(event);
     }
-    unsigned int m_Id;
+
+    void SetId(unsigned int id) { m_Id = id; }
+    const unsigned int GetId() const { return m_Id; }
 private:
     // Implemented by MemberFunctionHandler
     virtual void call(Event* event) = 0;
+    unsigned int m_Id = 0;
 };
 
 template<class T, class EventType>

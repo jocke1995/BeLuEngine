@@ -18,9 +18,9 @@ namespace component
 		BaseCamera* GetCamera() const;
 		bool IsPrimary() const;
 
-		void Update(double dt);
-		void OnInitScene();
-		void OnUnInitScene();
+		void Update(double dt) override;
+		void OnInitScene() override;
+		void OnUnInitScene() override;
 
 	private:
 		BaseCamera* m_pCamera = nullptr;

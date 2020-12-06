@@ -2,7 +2,6 @@
 #define TRANSFORMCOMPONENT_H
 
 #include "Component.h"
-#include <assimp\types.h>
 class Transform;
 
 namespace component
@@ -13,12 +12,12 @@ namespace component
         TransformComponent(Entity* parent, bool invertDirection = false);
         virtual ~TransformComponent();
 
-        void Update(double dt);
-        void OnInitScene();
-        void OnUnInitScene();
-        
+        void Update(double dt) override;
+        void OnInitScene() override;
+        void OnUnInitScene() override;
         // Resets the transform to its original state
-        void Reset();
+        void Reset() override;
+
         void SetTransformOriginalState();
 
         Transform* GetTransform() const;

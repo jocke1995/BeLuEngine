@@ -10,7 +10,7 @@ BeLuEngine::BeLuEngine()
 BeLuEngine::~BeLuEngine()
 {
 	// Gpu will crash if we delete stuff while commandQueues are running
-	m_pRenderer->waitForGPU();
+	m_pRenderer->waitForFrame(0);
 
 	delete m_pWindow;
 	delete m_pTimer;
@@ -23,8 +23,8 @@ void BeLuEngine::Init(HINSTANCE hInstance, int nCmdShow)
 {
 	// Window values
 	bool windowedFullscreen = false;
-	int windowWidth = 800;
-	int windowHeight = 600;
+	int windowWidth = 1280;
+	int windowHeight = 720;
 
 	// Misc
 	m_pWindow = new Window(hInstance, nCmdShow, windowedFullscreen, windowWidth, windowHeight);
@@ -38,6 +38,7 @@ void BeLuEngine::Init(HINSTANCE hInstance, int nCmdShow)
 		numThreads = 1;
 	}
 
+	Log::Print("Total CPU Cores: %d\n", numThreads);
 	m_pThreadPool = &ThreadPool::GetInstance(numThreads);
 
 	// Sub-engines

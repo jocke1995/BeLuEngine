@@ -3,7 +3,7 @@
 
 PerspectiveCamera::PerspectiveCamera(
 	DirectX::XMVECTOR position, DirectX::XMVECTOR direction,
-	float fov, float aspectRatio, float nearZ, float farZ,
+	double fov, double aspectRatio, double nearZ, double farZ,
 	bool isPrimary)
 	:BaseCamera(position, direction, isPrimary)
 {
@@ -57,14 +57,14 @@ void PerspectiveCamera::SetFarZ(float farPlaneDistance)
 	updateProjectionMatrix();
 }
 
-void PerspectiveCamera::RotateCamera(float yaw, float pitch)
+void PerspectiveCamera::RotateCamera(int yaw, int pitch)
 {
 	static const float rotationSpeed = 0.001f;
 	m_Yaw += yaw * rotationSpeed;
 	m_Pitch += pitch * rotationSpeed;
 }
 
-void PerspectiveCamera::UpdateMovement(float3 newMovement)
+void PerspectiveCamera::UpdateMovement(int3 newMovement)
 {
 	m_MoveLeftRight += newMovement.x;
 	m_MoveForwardBackward += newMovement.z;
@@ -106,8 +106,8 @@ void PerspectiveCamera::updateCameraMovement(double dt)
 	m_UpVector = DirectX::XMVector3Cross(m_DirectionVector, m_RightVector);
 	m_UpVector = DirectX::XMVector3Normalize(m_UpVector);
 
-	static unsigned int ms = 50;
-	m_EyeVector = DirectX::XMVectorAdd(m_EyeVector, DirectX::operator*(m_MoveLeftRight * dt * ms, m_RightVector));
-	m_EyeVector = DirectX::XMVectorAdd(m_EyeVector, DirectX::operator*(m_MoveForwardBackward * dt * ms, m_DirectionVector));
-	m_EyeVector = DirectX::XMVectorAdd(m_EyeVector, DirectX::operator*(m_MoveUpDown * dt * ms, s_DefaultUpVector));
+	static int ms = 150;
+	m_EyeVector = DirectX::XMVectorAdd(m_EyeVector, DirectX::operator*((m_MoveLeftRight		  * ms)	* dt, m_RightVector));
+	m_EyeVector = DirectX::XMVectorAdd(m_EyeVector, DirectX::operator*((m_MoveForwardBackward * ms) * dt, m_DirectionVector));
+	m_EyeVector = DirectX::XMVectorAdd(m_EyeVector, DirectX::operator*((m_MoveUpDown		  * ms)	* dt, s_DefaultUpVector));
 }

@@ -19,7 +19,7 @@ namespace component
         m_pSpotLight = new SpotLight();
         m_pSpotLight->position_cutOff = { 0.0f, 0.0f, 0.0f, cos(DirectX::XMConvertToRadians(30.0f)) };
         m_pSpotLight->direction_outerCutoff = { 1.0f, 0.0f, 0.0f, cos(DirectX::XMConvertToRadians(45.0f)) };
-        m_pSpotLight->attenuation = { 1.0f, 0.009f, 0.0032f, 0.0f }; 
+        m_pSpotLight->attenuation = { 1.0f, 0.027f, 0.0028f, 0.0f };
         m_pSpotLight->baseLight = *m_pBaseLight;
 
         m_pSpotLight->textureShadowMap = 0;
@@ -34,7 +34,7 @@ namespace component
 
     void SpotLightComponent::Update(double dt)
     {
-        if (m_LightFlags & FLAG_LIGHT::USE_TRANSFORM_POSITION)
+        if (m_LightFlags & static_cast<unsigned int>(FLAG_LIGHT::USE_TRANSFORM_POSITION))
         {
             Transform* tc = m_pParent->GetComponent<TransformComponent>()->GetTransform();
             float3 position = tc->GetPositionFloat3();
@@ -158,7 +158,7 @@ namespace component
 
     void SpotLightComponent::initFlagUsages()
     {
-        if (m_LightFlags & FLAG_LIGHT::USE_TRANSFORM_POSITION)
+        if (m_LightFlags & static_cast<unsigned int>(FLAG_LIGHT::USE_TRANSFORM_POSITION))
         {
             Transform* tc = m_pParent->GetComponent<TransformComponent>()->GetTransform();
             float3 position = tc->GetPositionFloat3();
@@ -167,7 +167,7 @@ namespace component
             m_pSpotLight->position_cutOff.z = position.z;
         }
 
-        if (m_LightFlags & FLAG_LIGHT::CAST_SHADOW)
+        if (m_LightFlags & static_cast<unsigned int>(FLAG_LIGHT::CAST_SHADOW))
         {
             CreatePerspectiveCamera(
                 {

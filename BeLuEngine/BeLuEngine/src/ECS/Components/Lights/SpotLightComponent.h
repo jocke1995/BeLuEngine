@@ -12,9 +12,9 @@ namespace component
 		SpotLightComponent(Entity* parent, unsigned int lightFlags = 0);
 		virtual ~SpotLightComponent();
 
-		void Update(double dt);
-		void OnInitScene();
-		void OnUnInitScene();
+		void Update(double dt) override;
+		void OnInitScene() override;
+		void OnUnInitScene() override;
 
 		void SetCutOff(float degrees);
 		void SetAttenuation(float3 attenuation);
@@ -27,10 +27,10 @@ namespace component
 		void SetNearPlaneDistance(float nearZ);
 		void SetFarPlaneDistance(float farZ);
 
-		void* GetLightData() const;
+		void* GetLightData() const override;
 	
 	protected:
-		void UpdateLightColor();
+		void UpdateLightColor() override;
 
 	private:
 		SpotLight* m_pSpotLight = nullptr;

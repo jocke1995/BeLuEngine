@@ -5,9 +5,9 @@
 #include "Core.h"
 
 class BaseCamera;
-class MouseScroll;
-class MovementInput;
-class MouseMovement;
+struct MouseScroll;
+struct MovementInput;
+struct MouseMovement;
 
 namespace component
 {
@@ -18,10 +18,10 @@ namespace component
 		InputComponent(Entity* parent);
 		virtual ~InputComponent();
 
-		virtual void Update(double dt);
+		virtual void Update(double dt) override;
+		void OnInitScene() override;
+		void OnUnInitScene() override;
 
-		void OnInitScene();
-		void OnUnInitScene();
 	private:
 
 		// Move camera

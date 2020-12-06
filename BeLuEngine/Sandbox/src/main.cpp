@@ -8,18 +8,6 @@ Scene* SponzaScene(SceneManager* sm);
 void TestUpdateScene(SceneManager* sm, double dt);
 void SponzaUpdateScene(SceneManager* sm, double dt);
 
-DirectX::XMFLOAT3 operator*(DirectX::XMFLOAT3 a, DirectX::XMFLOAT3 b) {
-    return { a.x * b.x, a.y * b.y, a.z * b.z };
-}
-
-DirectX::XMFLOAT3 operator*(DirectX::XMFLOAT3 a, float b) {
-    return { a.x * b, a.y * b, a.z * b };
-}
-
-DirectX::XMFLOAT3 operator+(DirectX::XMFLOAT3 a, DirectX::XMFLOAT3 b) {
-    return { a.x + b.x, a.y + b.y, a.z + b.z };
-}
-
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
 {
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
@@ -44,12 +32,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
     // Set scene
     sceneManager->SetScene(scene);
 
+    Log::Print("Entering Game-Loop ...\n\n");
     while (!window->ExitWindow())
     {
+        // Temporary functions to test functionalities in the engine
         if (window->WasSpacePressed() == true)
         {
             // Get camera Pos
-
             component::CameraComponent* cc = scene->GetEntity("player")->GetComponent<component::CameraComponent>();
             DirectX::XMFLOAT3 position = cc->GetCamera()->GetPosition();
             DirectX::XMFLOAT3 lookAt = cc->GetCamera()->GetDirection();
@@ -76,6 +65,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
             sceneManager->AddEntity(entity);
             /* ---------------------- SpotLightDynamic ---------------------- */
         }
+        if (window->WasTabPressed() == true)
+        {
+            // Get camera Pos
+            component::CameraComponent* cc = scene->GetEntity("player")->GetComponent<component::CameraComponent>();
+            DirectX::XMFLOAT3 position = cc->GetCamera()->GetPosition();
+            Log::Print("CameraPos: %f, %f, %f\n", position.x, position.y, position.z);
+        }
+
         /* ------ Update ------ */
         timer->Update();
 
@@ -225,11 +222,12 @@ Scene* SponzaScene(SceneManager* sm)
 
     mc->SetModel(sponza);
     mc->SetDrawFlag(FLAG_DRAW::DRAW_OPAQUE | FLAG_DRAW::GIVE_SHADOW);
+    tc->GetTransform()->SetPosition({0.0f, 0.0f, 0.0f});
     tc->GetTransform()->SetScale(0.3f, 0.3f, 0.3f);
     /* ---------------------- Sponza ---------------------- */
 
-    /* ---------------------- PointLightDynamic ---------------------- */
-    entity = scene->AddEntity("pointLight0");
+    /* ---------------------- Braziers ---------------------- */
+    entity = scene->AddEntity("Brazier0");
     mc = entity->AddComponent<component::ModelComponent>();
     tc = entity->AddComponent<component::TransformComponent>();
     plc = entity->AddComponent<component::PointLightComponent>(FLAG_LIGHT::USE_TRANSFORM_POSITION);
@@ -237,17 +235,49 @@ Scene* SponzaScene(SceneManager* sm)
     mc->SetModel(sphereModel);
     mc->SetDrawFlag(FLAG_DRAW::DRAW_OPAQUE | FLAG_DRAW::GIVE_SHADOW);
     tc->GetTransform()->SetScale(0.3f);
-    tc->GetTransform()->SetPosition({ 0.0f, 10.0f, 55.0f });
+    tc->GetTransform()->SetPosition({ -185.0f, 40.0f, 66.0f });
+    plc->SetColor({ 0.0f, 10.0f, 10.0f });
 
-    plc->SetColor({ 10.0f, 0.0f, 20.0f });
-    /* ---------------------- SpotLightDynamic ---------------------- */
+    entity = scene->AddEntity("Brazier1");
+    mc = entity->AddComponent<component::ModelComponent>();
+    tc = entity->AddComponent<component::TransformComponent>();
+    plc = entity->AddComponent<component::PointLightComponent>(FLAG_LIGHT::USE_TRANSFORM_POSITION);
+
+    mc->SetModel(sphereModel);
+    mc->SetDrawFlag(FLAG_DRAW::DRAW_OPAQUE | FLAG_DRAW::GIVE_SHADOW);
+    tc->GetTransform()->SetScale(0.3f);
+    tc->GetTransform()->SetPosition({ -185.0f, 40.0f, -42.6f });
+    plc->SetColor({ 10.0f, 0.0f, 10.0f });
+
+    entity = scene->AddEntity("Brazier2");
+    mc = entity->AddComponent<component::ModelComponent>();
+    tc = entity->AddComponent<component::TransformComponent>();
+    plc = entity->AddComponent<component::PointLightComponent>(FLAG_LIGHT::USE_TRANSFORM_POSITION);
+
+    mc->SetModel(sphereModel);
+    mc->SetDrawFlag(FLAG_DRAW::DRAW_OPAQUE | FLAG_DRAW::GIVE_SHADOW);
+    tc->GetTransform()->SetScale(0.3f);
+    tc->GetTransform()->SetPosition({ 146.0f, 40.0f, 66.0f });
+    plc->SetColor({ 10.0f, 10.0f, 0.0f });
+
+    entity = scene->AddEntity("Brazier3");
+    mc = entity->AddComponent<component::ModelComponent>();
+    tc = entity->AddComponent<component::TransformComponent>();
+    plc = entity->AddComponent<component::PointLightComponent>(FLAG_LIGHT::USE_TRANSFORM_POSITION);
+
+    mc->SetModel(sphereModel);
+    mc->SetDrawFlag(FLAG_DRAW::DRAW_OPAQUE | FLAG_DRAW::GIVE_SHADOW);
+    tc->GetTransform()->SetScale(0.3f);
+    tc->GetTransform()->SetPosition({ 146.0f, 40.0f, -42.6f });
+    plc->SetColor({ 15.0f, 0.0f, 0.0f });
+    /* ---------------------- Braziers ---------------------- */
 
     /* ---------------------- dirLight ---------------------- */
     entity = scene->AddEntity("dirLight");
     dlc = entity->AddComponent<component::DirectionalLightComponent>(FLAG_LIGHT::CAST_SHADOW);
-    dlc->SetColor({ 0.2f, 0.2f, 0.2f });
+    dlc->SetColor({ 0.17, 0.25, 0.3f});
     dlc->SetCameraDistance(300);
-    dlc->SetDirection({ -1.0f, -2.0f, 0.50f });
+    dlc->SetDirection({ -1.0f, -2.0f, 0.03f });
     dlc->SetCameraTop(800.0f);
     dlc->SetCameraBot(-550.0f);
     dlc->SetCameraLeft(-550.0f);
@@ -270,8 +300,6 @@ void TestUpdateScene(SceneManager* sm, double dt)
     //
     //intensity += 0.5f * dt;
 }
-
-
 
 void SponzaUpdateScene(SceneManager* sm, double dt)
 {
