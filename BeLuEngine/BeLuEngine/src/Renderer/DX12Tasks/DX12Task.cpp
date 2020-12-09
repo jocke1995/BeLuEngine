@@ -1,9 +1,10 @@
 #include "stdafx.h"
 #include "DX12Task.h"
 
+// DX12 Specifics
 #include "../CommandInterface.h"
 #include "../DescriptorHeap.h"
-#include "../GPUMemory/Resource.h"
+#include "../GPUMemory/GPUMemory.h"
 
 DX12Task::DX12Task(ID3D12Device5* device, COMMAND_INTERFACE_TYPE interfaceType, unsigned int FLAG_THREAD)
 	:MultiThreadedTask(FLAG_THREAD)

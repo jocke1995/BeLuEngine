@@ -1,12 +1,12 @@
 #include "stdafx.h"
 #include "RenderTask.h"
 
-#include "../RootSignature.h"
+// DX12 Specifics
 #include "../CommandInterface.h"
+#include "../GPUMemory/GPUMemory.h"
 #include "../PipelineState/GraphicsState.h"
-#include "../GPUMemory/Resource.h"
+#include "../RootSignature.h"
 #include "../SwapChain.h"
-#include "../GPUMemory/DepthStencil.h"
 
 
 

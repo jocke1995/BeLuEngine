@@ -1,13 +1,10 @@
 #include "stdafx.h"
 #include "Bloom.h"
 
-#include "GPUMemory/ShaderResourceView.h"
-#include "GPUMemory/RenderTargetView.h"
-#include "GPUMemory/Resource.h"
-#include "PingPongResource.h"
+#include "../GPUMemory/GPUMemory.h"
 #include "../Misc/Window.h"
-#include "SwapChain.h"
-
+#include "PingPongResource.h"
+#include "../SwapChain.h"
 
 Bloom::Bloom(
 	ID3D12Device5* device,

@@ -1,4 +1,4 @@
-#include "../../Headers/structs.h"
+#include "../../Headers/GPU_Structs.h"
 #include "PBRMath.hlsl"
 
 Texture2D textures[]   : register (t0);

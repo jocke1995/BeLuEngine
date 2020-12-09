@@ -1,10 +1,10 @@
 #ifndef MODELCOMPONENT_H
 #define MODELCOMPONENT_H
 
-#include <map>
-#include "Component.h"
-#include "structs.h"
 #include "Core.h"
+#include "GPU_Structs.h"
+#include "Component.h"
+
 class Mesh;
 class Model;
 class Material;

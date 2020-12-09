@@ -2,7 +2,7 @@
 #include "ViewPool.h"
 
 #include "GPUMemory/ConstantBuffer.h"
-#include "ShadowInfo.h"
+#include "Techniques/ShadowInfo.h"
 #include "DescriptorHeap.h"
 #include "../ECS/Components/Lights/Light.h"
 

@@ -1,18 +1,16 @@
 #include "stdafx.h"
 #include "MergeRenderTask.h"
 
+// DX12 Specifics
 #include "../CommandInterface.h"
-
-#include "../SwapChain.h"
-#include "../GPUMemory/RenderTargetView.h"
-#include "../GPUMemory/ShaderResourceView.h"
-#include "../RenderView.h"
-#include "../GPUMemory/Resource.h"
-
 #include "../DescriptorHeap.h"
-#include "../RootSignature.h"
+#include "../GPUMemory/GPUMemory.h"
 #include "../PipelineState/PipelineState.h"
+#include "../RenderView.h"
+#include "../RootSignature.h"
+#include "../SwapChain.h"
 
+// Model info
 #include "../Model/Mesh.h"
 
 MergeRenderTask::MergeRenderTask(

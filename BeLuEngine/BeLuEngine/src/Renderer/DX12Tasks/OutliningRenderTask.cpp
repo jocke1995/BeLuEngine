@@ -1,20 +1,19 @@
 #include "stdafx.h"
 #include "OutliningRenderTask.h"
 
-#include "../RenderView.h"
-#include "../RootSignature.h"
+// DX12 Specifics
+#include "../Camera/BaseCamera.h"
 #include "../CommandInterface.h"
 #include "../DescriptorHeap.h"
-#include "../GPUMemory/Resource.h"
+#include "../GPUMemory/GPUMemory.h"
+#include "../RootSignature.h"
 #include "../PipelineState/GraphicsState.h"
+#include "../RenderView.h"
 #include "../SwapChain.h"
+
+// Model info
 #include "../Renderer/Model/Transform.h"
 #include "../Renderer/Model/Mesh.h"
-#include "../Renderer/Camera/BaseCamera.h"
-#include "../GPUMemory/RenderTargetView.h"
-#include "../GPUMemory/DepthStencil.h"
-#include "../GPUMemory/DepthStencilView.h"
-
 
 OutliningRenderTask::OutliningRenderTask(
 	ID3D12Device5* device,

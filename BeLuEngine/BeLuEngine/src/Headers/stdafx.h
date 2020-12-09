@@ -44,6 +44,6 @@
 typedef DirectX::XMMATRIX float4x4;
 
 #include "Core.h"
-#include "structs.h"
+#include "GPU_Structs.h"
 
 #endif

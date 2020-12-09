@@ -1,10 +1,9 @@
 #include "stdafx.h"
 #include "Mesh.h"
 
-#include "GPUMemory/Resource.h"
-#include "GPUMemory/ShaderResourceView.h"
-#include "DescriptorHeap.h"
-#include "Texture/Texture.h"
+#include "../GPUMemory/GPUMemory.h"
+#include "../DescriptorHeap.h"
+#include "../Texture/Texture.h"
 
 Mesh::Mesh(std::vector<Vertex>* vertices, std::vector<unsigned int>* indices, const std::wstring& path)
 {

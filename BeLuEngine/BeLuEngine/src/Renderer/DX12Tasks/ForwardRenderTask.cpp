@@ -1,22 +1,21 @@
 #include "stdafx.h"
 #include "ForwardRenderTask.h"
 
-#include "../RenderView.h"
-#include "../RootSignature.h"
+// DX12 Specifics
+#include "../Camera/BaseCamera.h"
 #include "../CommandInterface.h"
 #include "../DescriptorHeap.h"
-#include "../SwapChain.h"
-#include "../GPUMemory/Resource.h"
+#include "../GPUMemory/GPUMemory.h"
 #include "../PipelineState/PipelineState.h"
-#include "../Renderer/Transform.h"
-#include "../Renderer/Mesh.h"
-#include "../Camera/BaseCamera.h"
+#include "../RenderView.h"
+#include "../RootSignature.h"
 #include "../SwapChain.h"
-#include "../GPUMemory/RenderTargetView.h"
-#include "../GPUMemory/DepthStencil.h"
-#include "../GPUMemory/DepthStencilView.h"
 
-FowardRenderTask::FowardRenderTask(
+// Model info
+#include "../Renderer/Model/Transform.h"
+#include "../Renderer/Model/Mesh.h"
+
+ForwardRenderTask::ForwardRenderTask(
 	ID3D12Device5* device,
 	RootSignature* rootSignature,
 	const std::wstring& VSName, const std::wstring& PSName,
@@ -28,11 +27,11 @@ FowardRenderTask::FowardRenderTask(
 	
 }
 
-FowardRenderTask::~FowardRenderTask()
+ForwardRenderTask::~ForwardRenderTask()
 {
 }
 
-void FowardRenderTask::Execute()
+void ForwardRenderTask::Execute()
 {
 	ID3D12CommandAllocator* commandAllocator = m_pCommandInterface->GetCommandAllocator(m_CommandInterfaceIndex);
 	ID3D12GraphicsCommandList5* commandList = m_pCommandInterface->GetCommandList(m_CommandInterfaceIndex);
@@ -133,7 +132,7 @@ void FowardRenderTask::Execute()
 	commandList->Close();
 }
 
-void FowardRenderTask::drawRenderComponent(
+void ForwardRenderTask::drawRenderComponent(
 	component::ModelComponent* mc,
 	component::TransformComponent* tc,
 	const DirectX::XMMATRIX* viewProjTransposed,

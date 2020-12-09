@@ -1,17 +1,19 @@
 #include "stdafx.h"
 #include "WireframeRenderTask.h"
 
-#include "../RenderView.h"
-#include "../RootSignature.h"
+// DX12 Specifics
+#include "../Camera/BaseCamera.h"
 #include "../CommandInterface.h"
 #include "../DescriptorHeap.h"
-#include "../SwapChain.h"
-#include "../GPUMemory/Resource.h"
+#include "../GPUMemory/GPUMemory.h"
 #include "../PipelineState/PipelineState.h"
+#include "../RenderView.h"
+#include "../RootSignature.h"
+#include "../SwapChain.h"
+
+// Model info
 #include "../Renderer/Model/Transform.h"
 #include "../Renderer/Model/Mesh.h"
-#include "../Renderer/Camera/BaseCamera.h"
-#include "../GPUMemory/RenderTargetView.h"
 
 WireframeRenderTask::WireframeRenderTask(
 	ID3D12Device5* device,

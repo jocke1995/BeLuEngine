@@ -1,15 +1,15 @@
 #include "stdafx.h"
 #include "BlurComputeTask.h"
 
+// DX12 Specifics
 #include "../CommandInterface.h"
-#include"../RootSignature.h"
-#include "../PipelineState/ComputeState.h"
-
-#include "../PingPongResource.h"
-#include "../GPUMemory/ShaderResourceView.h"
-#include "../GPUMemory/UnorderedAccessView.h"
-#include "../GPUMemory/Resource.h"
 #include "../DescriptorHeap.h"
+#include "../GPUMemory/GPUMemory.h"
+#include "../PipelineState/ComputeState.h"
+#include "../RootSignature.h"
+
+// Techniques
+#include "../Techniques/PingPongResource.h"
 
 BlurComputeTask::BlurComputeTask(
 	ID3D12Device5* device,

@@ -1,19 +1,16 @@
 #include "stdafx.h"
 #include "DownSampleRenderTask.h"
 
+// DX12 Specifics
 #include "../CommandInterface.h"
-
-#include "../SwapChain.h"
-#include "../GPUMemory/RenderTargetView.h"
-#include "../GPUMemory/ShaderResourceView.h"
-#include "../GPUMemory/UnorderedAccessView.h"
-#include "../RenderView.h"
-#include "../GPUMemory/Resource.h"
-
 #include "../DescriptorHeap.h"
-#include "../RootSignature.h"
+#include "../GPUMemory/GPUMemory.h"
 #include "../PipelineState/PipelineState.h"
+#include "../RenderView.h"
+#include "../RootSignature.h"
+#include "../SwapChain.h"
 
+// Model info
 #include "../Model/Mesh.h"
 
 DownSampleRenderTask::DownSampleRenderTask(

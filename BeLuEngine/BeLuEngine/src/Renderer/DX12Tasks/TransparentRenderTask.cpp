@@ -1,22 +1,19 @@
 #include "stdafx.h"
 #include "TransparentRenderTask.h"
 
+// DX12 Specifics
+#include "../Camera/BaseCamera.h"
+#include "../CommandInterface.h"
+#include "../DescriptorHeap.h"
+#include "../GPUMemory/GPUMemory.h"
+#include "../PipelineState/PipelineState.h"
 #include "../RenderView.h"
 #include "../RootSignature.h"
-#include "../CommandInterface.h"
-#include "../GPUMemory/RenderTargetView.h"
-#include "../GPUMemory/DepthStencil.h"
-#include "../GPUMemory/DepthStencilView.h"
-#include "../GPUMemory/ShaderResourceView.h"
-#include "../DescriptorHeap.h"
 #include "../SwapChain.h"
-#include "../GPUMemory/Resource.h"
-#include "../PipelineState/PipelineState.h"
+
+// Model info
 #include "../Renderer/Model/Transform.h"
 #include "../Renderer/Model/Mesh.h"
-#include "../Renderer/Camera/BaseCamera.h"
-
-
 
 TransparentRenderTask::TransparentRenderTask(	
 	ID3D12Device5* device,

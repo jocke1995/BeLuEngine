@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "CopyPerFrameTask.h"
 
+// DX12 Specifics
 #include "../CommandInterface.h"
 
 CopyPerFrameTask::CopyPerFrameTask(ID3D12Device5* device, COMMAND_INTERFACE_TYPE interfaceType, unsigned int FLAG_THREAD)

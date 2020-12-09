@@ -1,11 +1,9 @@
 #include "stdafx.h"
 #include "ShadowInfo.h"
 
-#include "GPUMemory/DepthStencilView.h"
-#include "GPUMemory/ShaderResourceView.h"
-#include "RenderView.h"
-#include "DescriptorHeap.h"
-#include "GPUMemory/Resource.h"
+#include "../GPUMemory/GPUMemory.h"
+#include "../DescriptorHeap.h"
+#include "../RenderView.h"
 
 ShadowInfo::ShadowInfo(
 	unsigned int textureWidth, unsigned int textureHeight,

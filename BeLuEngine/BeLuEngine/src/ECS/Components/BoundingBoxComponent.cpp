@@ -10,7 +10,7 @@
 // Using the same m_pTransform as the models m_pTransform
 #include "../Renderer/Model/Transform.h"
 #include "TransformComponent.h"
-#include "../Renderer/BoundingBoxPool.h"
+#include "../Renderer/Techniques/BoundingBoxPool.h"
 
 #include "../Renderer/Model/Mesh.h"
 #include "../Renderer/GPUMemory/ShaderResourceView.h"

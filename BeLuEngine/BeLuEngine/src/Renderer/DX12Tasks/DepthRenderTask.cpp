@@ -1,19 +1,19 @@
 #include "stdafx.h"
 #include "DepthRenderTask.h"
 
+// DX12 Specifics
+#include "../Camera/BaseCamera.h"
+#include "../CommandInterface.h"
+#include "../DescriptorHeap.h"
+#include "../GPUMemory/GPUMemory.h"
+#include "../PipelineState/PipelineState.h"
+#include "../RenderView.h"
+#include "../RootSignature.h"
+#include "../SwapChain.h"
+
+// Model info
 #include "../Model/Mesh.h"
 #include "../Model/Transform.h"
-#include "../RootSignature.h"
-#include "../CommandInterface.h"
-#include "../SwapChain.h"
-#include "../DescriptorHeap.h"
-#include "../GPUMemory/RenderTargetView.h"
-#include "../GPUMemory/Resource.h"
-#include "../RenderView.h"
-#include "../PipelineState/PipelineState.h"
-#include "../Camera/BaseCamera.h"
-#include "../GPUMemory/DepthStencil.h"
-#include "../GPUMemory/DepthStencilView.h"
 
 DepthRenderTask::DepthRenderTask(ID3D12Device5* device, 
 	RootSignature* rootSignature, 

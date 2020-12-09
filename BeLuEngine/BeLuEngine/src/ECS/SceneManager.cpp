@@ -1,16 +1,15 @@
 #include "stdafx.h"
 #include "SceneManager.h"
 
+// Misc
 #include "../Misc/AssetLoader.h"
-
-#include "../Renderer/Renderer.h"
 #include "../Events/EventBus.h"
 
 // Renderer
+#include "../Renderer/Renderer.h"
 #include "../Renderer/CommandInterface.h"
 #include "../Renderer/GPUMemory/ShaderResourceView.h"
 #include "../Renderer/GPUMemory/ConstantBuffer.h"
-#include "../Renderer/ShadowInfo.h"
 #include "../Renderer/ViewPool.h"
 #include "../Renderer/Texture/Texture.h"
 #include "../Renderer/Model/Mesh.h"
@@ -20,10 +19,12 @@
 #include "../Renderer/DX12Tasks/CopyPerFrameTask.h"
 
 // RenderTasks
-// WireFrame (currently only used for debugging boundingBoxes
 #include "../Renderer/DX12Tasks/WireframeRenderTask.h"
 #include "../Renderer/DX12Tasks/ShadowRenderTask.h"
-#include "../Renderer/BoundingBoxPool.h"
+
+// Techniques
+#include "../Renderer/Techniques/BoundingBoxPool.h"
+#include "../Renderer/Techniques/ShadowInfo.h"
 
 // ECS
 #include "../ECS/Entity.h"

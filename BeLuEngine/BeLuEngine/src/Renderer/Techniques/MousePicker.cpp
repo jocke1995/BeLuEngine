@@ -2,10 +2,10 @@
 #include "MousePicker.h"
 
 #include "EngineMath.h"
-#include "Camera/BaseCamera.h"
-#include "../Renderer/Transform.h"
-#include "../Renderer/Mesh.h"
-#include "../Renderer/BoundingBoxPool.h"
+#include "../Camera/BaseCamera.h"
+#include "../Renderer/Model/Transform.h"
+#include "../Renderer/Model/Mesh.h"
+#include "../Renderer/Techniques/BoundingBoxPool.h"
 
 MousePicker::MousePicker()
 {

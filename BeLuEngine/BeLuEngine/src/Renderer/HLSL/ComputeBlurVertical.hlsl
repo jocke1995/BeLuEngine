@@ -1,4 +1,4 @@
-#include "../../Headers/structs.h"
+#include "../../Headers/GPU_Structs.h"
 
 Texture2D<float4> textures[]   : register (t0);
 RWTexture2D<float4> textureToBlur[] : register(u0);

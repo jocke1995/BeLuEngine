@@ -1,10 +1,11 @@
 #include "stdafx.h"
+#include "GPU_Structs.h"
 #include "Model.h"
+
 #include "Mesh.h"
 #include "Material.h"
 #include "../Texture/Texture2D.h"
-#include "../GPUMemory/ShaderResourceView.h"
-#include "structs.h"
+#include "../GPUMemory/GPUMemory.h"
 
 Model::Model(const std::wstring* path, std::vector<Mesh*>* meshes, std::vector<Material*>* materials)
 {

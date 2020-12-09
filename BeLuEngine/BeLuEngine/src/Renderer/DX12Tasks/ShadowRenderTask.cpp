@@ -1,17 +1,21 @@
 #include "stdafx.h"
 #include "ShadowRenderTask.h"
 
-#include "../DescriptorHeap.h"
-#include "../GPUMemory/Resource.h"
-#include "../RenderView.h"
-#include "../GPUMemory/DepthStencilView.h"
-#include "../RootSignature.h"
+// DX12 Specifics
+#include "../Camera/BaseCamera.h"
 #include "../CommandInterface.h"
+#include "../GPUMemory/GPUMemory.h"
+#include "../DescriptorHeap.h"
 #include "../PipelineState/PipelineState.h"
-#include "../ShadowInfo.h"
+#include "../RenderView.h"
+#include "../RootSignature.h"
+
+// Techniques
+#include "../Techniques/ShadowInfo.h"
+
+// Model info
 #include "../Renderer/Model/Transform.h"
 #include "../Renderer/Model/Mesh.h"
-#include "../Renderer/Camera/BaseCamera.h"
 
 ShadowRenderTask::ShadowRenderTask(
 	ID3D12Device5* device,

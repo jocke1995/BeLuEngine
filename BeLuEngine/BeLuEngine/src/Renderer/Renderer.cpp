@@ -6,6 +6,7 @@
 #include "../Misc/AssetLoader.h"
 #include "../Misc/MultiThreading/Thread.h"
 #include "../Misc/Window.h"
+
 // ECS
 #include "../ECS/Scene.h"
 #include "../ECS/Entity.h"
@@ -16,13 +17,11 @@
 #include "../ECS/Components/Lights/PointLightComponent.h"
 #include "../ECS/Components/Lights/SpotLightComponent.h"
 
-
 // Renderer-Engine 
 #include "RootSignature.h"
 #include "SwapChain.h"
 #include "GPUMemory/DepthStencilView.h"
 #include "ViewPool.h"
-#include "BoundingBoxPool.h"
 #include "CommandInterface.h"
 #include "DescriptorHeap.h"
 #include "Model/Transform.h"
@@ -35,20 +34,14 @@
 #include "Texture/TextureCubeMap.h"
 #include "Model/Material.h"
 
-// GPUMemory
-#include "GPUMemory/Resource.h"
-#include "GPUMemory/ConstantBuffer.h"
-#include "GPUMemory/UnorderedAccess.h"
-// Views
-#include "GPUMemory/ShaderResourceView.h"
-#include "GPUMemory/ConstantBufferView.h"
-#include "GPUMemory/DepthStencil.h"
+#include "GPUMemory/GPUMemory.h"
 
 // Techniques
-#include "Bloom.h"
-#include "PingPongResource.h"
-#include "ShadowInfo.h"
-#include "MousePicker.h"
+#include "Techniques/Bloom.h"
+#include "Techniques/PingPongResource.h"
+#include "Techniques/ShadowInfo.h"
+#include "Techniques/MousePicker.h"
+#include "Techniques/BoundingBoxPool.h"
 
 // Graphics
 #include "DX12Tasks/DepthRenderTask.h"
@@ -390,10 +383,10 @@ void Renderer::Execute()
 	/* --------------------------------------------------------------- */
 
 	// Wait if the CPU is to far ahead of the gpu
-	m_FenceFrameValue++;
 
 	m_CommandQueues[COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->Signal(m_pFenceFrame, m_FenceFrameValue);
 	waitForFrame();
+	m_FenceFrameValue++;
 
 	/*------------------- Post draw stuff -------------------*/
 	// Clear copy on demand
@@ -1288,7 +1281,7 @@ void Renderer::initRenderTasks()
 	gpsdForwardRenderVector.push_back(&gpsdForwardRender);
 	gpsdForwardRenderVector.push_back(&gpsdForwardRenderStencilTest);
 
-	RenderTask* forwardRenderTask = new FowardRenderTask(
+	RenderTask* forwardRenderTask = new ForwardRenderTask(
 		m_pDevice5,
 		m_pRootSignature,
 		L"ForwardVertex.hlsl", L"ForwardPixel.hlsl",

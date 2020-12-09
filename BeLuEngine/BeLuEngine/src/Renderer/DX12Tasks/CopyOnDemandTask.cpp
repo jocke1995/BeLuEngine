@@ -1,13 +1,14 @@
 #include "stdafx.h"
 #include "CopyOnDemandTask.h"
 
-#include "../Texture/Texture.h"
-#include "../GPUMemory/Resource.h"
+// DX12 Specifics
 #include "../CommandInterface.h"
+#include "../GPUMemory/GPUMemory.h"
 
-#include "../Texture/TextureCubeMap.h"
-
+// Stuff to copy
 #include "../Renderer/Model/Mesh.h"
+#include "../Texture/Texture.h"
+#include "../Texture/TextureCubeMap.h"
 
 CopyOnDemandTask::CopyOnDemandTask(ID3D12Device5* device, COMMAND_INTERFACE_TYPE interfaceType, unsigned int FLAG_THREAD)
 	:CopyTask(device, interfaceType, FLAG_THREAD)

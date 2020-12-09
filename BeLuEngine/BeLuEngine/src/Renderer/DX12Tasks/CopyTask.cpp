@@ -1,8 +1,9 @@
 #include "stdafx.h"
 #include "CopyTask.h"
 
-#include "../GPUMemory/Resource.h"
+// DX12 Specifics
 #include "../CommandInterface.h"
+#include "../GPUMemory/GPUMemory.h"
 
 CopyTask::CopyTask(ID3D12Device5* device, COMMAND_INTERFACE_TYPE interfaceType, unsigned int FLAG_THREAD)
 	:DX12Task(device, interfaceType, FLAG_THREAD)
