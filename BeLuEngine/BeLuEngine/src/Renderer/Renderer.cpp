@@ -21,7 +21,6 @@
 #include "RootSignature.h"
 #include "SwapChain.h"
 #include "GPUMemory/DepthStencilView.h"
-#include "ViewPool.h"
 #include "CommandInterface.h"
 #include "DescriptorHeap.h"
 #include "Model/Transform.h"
@@ -172,13 +171,6 @@ void Renderer::InitD3D12(Window *window, HINSTANCE hInstance, ThreadPool* thread
 
 	// Init BoundingBoxPool
 	BoundingBoxPool::Get(m_pDevice5, m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
-	
-	// Pool to handle GPU memory for the lights
-	m_pViewPool = new ViewPool(
-		m_pDevice5,
-		m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV],
-		m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::RTV],
-		m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::DSV]);
 
 	// Allocate memory for cbPerScene
 	m_pCbPerScene = new ConstantBuffer(
@@ -383,9 +375,8 @@ void Renderer::Execute()
 	/* --------------------------------------------------------------- */
 
 	// Wait if the CPU is to far ahead of the gpu
-
 	m_CommandQueues[COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->Signal(m_pFenceFrame, m_FenceFrameValue);
-	waitForFrame();
+	waitForFrame(0);
 	m_FenceFrameValue++;
 
 	/*------------------- Post draw stuff -------------------*/
@@ -445,7 +436,7 @@ void Renderer::InitDirectionalLightComponent(component::DirectionalLightComponen
 {
 	// Assign CBV from the lightPool
 	std::wstring resourceName = L"DirectionalLight";
-	ConstantBuffer* cb = m_pViewPool->GetFreeCB(sizeof(DirectionalLight), resourceName);
+	ConstantBuffer* cb = new ConstantBuffer(m_pDevice5, sizeof(DirectionalLight), resourceName, m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
 
 	// Check if the light is to cast shadows
 	SHADOW_RESOLUTION resolution = SHADOW_RESOLUTION::UNDEFINED;
@@ -474,7 +465,13 @@ void Renderer::InitDirectionalLightComponent(component::DirectionalLightComponen
 	ShadowInfo* si = nullptr;
 	if (resolution != SHADOW_RESOLUTION::UNDEFINED)
 	{
-		si = m_pViewPool->GetFreeShadowInfo(LIGHT_TYPE::DIRECTIONAL_LIGHT, resolution);
+		si = new ShadowInfo(
+			LIGHT_TYPE::DIRECTIONAL_LIGHT,
+			resolution,
+			m_pDevice5,
+			m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::DSV],
+			m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
+
 		static_cast<DirectionalLight*>(component->GetLightData())->textureShadowMap = si->GetSRV()->GetDescriptorHeapIndex();
 
 		ShadowRenderTask* srt = static_cast<ShadowRenderTask*>(m_RenderTasks[RENDER_TASK_TYPE::SHADOW]);
@@ -509,7 +506,7 @@ void Renderer::InitPointLightComponent(component::PointLightComponent* component
 {
 	// Assign CBV from the lightPool
 	std::wstring resourceName = L"PointLight";
-	ConstantBuffer* cb = m_pViewPool->GetFreeCB(sizeof(PointLight), resourceName);
+	ConstantBuffer* cb = new ConstantBuffer(m_pDevice5, sizeof(PointLight), resourceName, m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
 
 	// Assign views required for shadows from the lightPool
 	ShadowInfo* si = nullptr;
@@ -540,7 +537,7 @@ void Renderer::InitSpotLightComponent(component::SpotLightComponent* component)
 {
 	// Assign CBV from the lightPool
 	std::wstring resourceName = L"SpotLight";
-	ConstantBuffer* cb = m_pViewPool->GetFreeCB(sizeof(SpotLight), resourceName);
+	ConstantBuffer* cb = new ConstantBuffer(m_pDevice5, sizeof(SpotLight), resourceName, m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
 
 	// Check if the light is to cast shadows
 	SHADOW_RESOLUTION resolution = SHADOW_RESOLUTION::UNDEFINED;
@@ -569,7 +566,13 @@ void Renderer::InitSpotLightComponent(component::SpotLightComponent* component)
 	ShadowInfo* si = nullptr;
 	if (resolution != SHADOW_RESOLUTION::UNDEFINED)
 	{
-		si = m_pViewPool->GetFreeShadowInfo(LIGHT_TYPE::SPOT_LIGHT, resolution);
+		si = new ShadowInfo(
+			LIGHT_TYPE::SPOT_LIGHT,
+			resolution,
+			m_pDevice5,
+			m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::DSV],
+			m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
+
 		static_cast<SpotLight*>(component->GetLightData())->textureShadowMap = si->GetSRV()->GetDescriptorHeapIndex();
 
 		ShadowRenderTask* srt = static_cast<ShadowRenderTask*>(m_RenderTasks[RENDER_TASK_TYPE::SHADOW]);
@@ -672,19 +675,20 @@ void Renderer::UnInitDirectionalLightComponent(component::DirectionalLightCompon
 		// Remove light if it matches the entity
 		if (component == dlc)
 		{
-			// Free memory so other m_Entities can use it
-			ConstantBuffer* cbv = std::get<1>(tuple);
-			ShadowInfo* si = std::get<2>(tuple);
-			m_pViewPool->ClearSpecificLight(type, cbv, si);
+			auto& [light, cb, si] = tuple;
 
+			// Free memory so other m_Entities can use it
+			delete std::get<1>(tuple);
+			delete std::get<2>(tuple);
+			
 			// Remove from CopyPerFrame
 			CopyPerFrameTask* cpft = nullptr;
 			cpft = static_cast<CopyPerFrameTask*>(m_CopyTasks[COPY_TASK_TYPE::COPY_PER_FRAME]);
-			cpft->ClearSpecific(cbv->GetUploadResource());
+			cpft->ClearSpecific(cb->GetUploadResource());
 
 			// Finally remove from m_pRenderer
 			ShadowRenderTask* srt = static_cast<ShadowRenderTask*>(m_RenderTasks[RENDER_TASK_TYPE::SHADOW]);
-			srt->ClearSpecificLight(std::get<0>(tuple));
+			srt->ClearSpecificLight(light);
 			m_Lights[type].erase(m_Lights[type].begin() + count);
 
 			// Update cbPerScene
@@ -709,13 +713,14 @@ void Renderer::UnInitPointLightComponent(component::PointLightComponent* compone
 		if (component == plc)
 		{
 			// Free memory so other m_Entities can use it
-			ConstantBuffer* cbv = std::get<1>(tuple);
-			m_pViewPool->ClearSpecificLight(type, cbv, nullptr);
+			auto& [light, cb, si] = tuple;
+
+			delete std::get<1>(tuple);
 
 			// Remove from CopyPerFrame
 			CopyPerFrameTask* cpft = nullptr;
 			cpft = static_cast<CopyPerFrameTask*>(m_CopyTasks[COPY_TASK_TYPE::COPY_PER_FRAME]);
-			cpft->ClearSpecific(cbv->GetUploadResource());
+			cpft->ClearSpecific(cb->GetUploadResource());
 
 			// Finally remove from m_pRenderer
 			m_Lights[type].erase(m_Lights[type].begin() + count);
@@ -742,18 +747,19 @@ void Renderer::UnInitSpotLightComponent(component::SpotLightComponent* component
 		if (component == slc)
 		{
 			// Free memory so other m_Entities can use it
-			ConstantBuffer* cbv = std::get<1>(tuple);
-			ShadowInfo* si = std::get<2>(tuple);
-			m_pViewPool->ClearSpecificLight(type, cbv, si);
+			auto& [light, cb, si] = tuple;
+
+			delete std::get<1>(tuple);
+			delete std::get<2>(tuple);
 
 			// Remove from CopyPerFrame
 			CopyPerFrameTask* cpft = nullptr;
 			cpft = static_cast<CopyPerFrameTask*>(m_CopyTasks[COPY_TASK_TYPE::COPY_PER_FRAME]);
-			cpft->ClearSpecific(cbv->GetUploadResource());
+			cpft->ClearSpecific(cb->GetUploadResource());
 
 			// Finally remove from m_pRenderer
 			ShadowRenderTask* srt = static_cast<ShadowRenderTask*>(m_RenderTasks[RENDER_TASK_TYPE::SHADOW]);
-			srt->ClearSpecificLight(std::get<0>(tuple));
+			srt->ClearSpecificLight(light);
 			m_Lights[type].erase(m_Lights[type].begin() + count);
 
 			// Update cbPerScene
@@ -798,11 +804,7 @@ void Renderer::UnInitBoundingBoxComponent(component::BoundingBoxComponent* compo
 
 void Renderer::OnResetScene()
 {
-	// Lights will be cleared in respective UninitComponent function
-
-	// Clear the rest
 	m_RenderComponents.clear();
-	m_pViewPool->ClearAll();
 	m_CopyTasks[COPY_TASK_TYPE::COPY_PER_FRAME]->Clear();
 	m_pScenePrimaryCamera = nullptr;
 	static_cast<WireframeRenderTask*>(m_RenderTasks[RENDER_TASK_TYPE::WIREFRAME])->Clear();

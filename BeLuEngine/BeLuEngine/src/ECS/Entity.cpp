@@ -11,6 +11,7 @@ Entity::~Entity()
 {
 	for (Component* component : m_Components)
 	{
+		component->OnUnInitScene();
 		delete component;
 	}
 }

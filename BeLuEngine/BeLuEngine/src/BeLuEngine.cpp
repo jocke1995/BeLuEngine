@@ -9,9 +9,6 @@ BeLuEngine::BeLuEngine()
 
 BeLuEngine::~BeLuEngine()
 {
-	// Gpu will crash if we delete stuff while commandQueues are running
-	m_pRenderer->waitForFrame(0);
-
 	delete m_pWindow;
 	delete m_pTimer;
 

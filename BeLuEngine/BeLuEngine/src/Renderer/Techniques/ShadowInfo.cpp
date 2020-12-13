@@ -6,21 +6,78 @@
 #include "../RenderView.h"
 
 ShadowInfo::ShadowInfo(
-	unsigned int textureWidth, unsigned int textureHeight,
+	LIGHT_TYPE lightType,
 	SHADOW_RESOLUTION shadowResolution,
 	ID3D12Device5* device,
 	DescriptorHeap* dh_DSV,
 	DescriptorHeap* dh_SRV)
 {
+	unsigned int depthTextureWidth = 0;
+	unsigned int depthTextureHeight = 0;
+	switch (lightType)
+	{
+	case LIGHT_TYPE::DIRECTIONAL_LIGHT:
+		switch (shadowResolution)
+		{
+		case SHADOW_RESOLUTION::LOW:
+			depthTextureWidth = 1024;
+			depthTextureHeight = 1024;
+			break;
+		case SHADOW_RESOLUTION::MEDIUM:
+			depthTextureWidth = 2048;
+			depthTextureHeight = 2048;
+			break;
+		case SHADOW_RESOLUTION::HIGH:
+			depthTextureWidth = 4096;
+			depthTextureHeight = 4096;
+			break;
+		}
+		break;
+	case LIGHT_TYPE::POINT_LIGHT:
+		switch (shadowResolution)
+		{
+		case SHADOW_RESOLUTION::LOW:
+			depthTextureWidth = 512;
+			depthTextureHeight = 512;
+			break;
+		case SHADOW_RESOLUTION::MEDIUM:
+			depthTextureWidth = 1024;
+			depthTextureHeight = 1024;
+			break;
+		case SHADOW_RESOLUTION::HIGH:
+			depthTextureWidth = 2048;
+			depthTextureHeight = 2048;
+			break;
+		}
+		break;
+	case LIGHT_TYPE::SPOT_LIGHT:
+		switch (shadowResolution)
+		{
+		case SHADOW_RESOLUTION::LOW:
+			depthTextureWidth = 1024;
+			depthTextureHeight = 1024;
+			break;
+		case SHADOW_RESOLUTION::MEDIUM:
+			depthTextureWidth = 2048;
+			depthTextureHeight = 2048;
+			break;
+		case SHADOW_RESOLUTION::HIGH:
+			depthTextureWidth = 4096;
+			depthTextureHeight = 4096;
+			break;
+		}
+		break;
+	}
+
 	m_Id = s_IdCounter++;
 	m_ShadowResolution = shadowResolution;
 
-	createResource(device, textureWidth, textureHeight);
+	createResource(device, depthTextureWidth, depthTextureHeight);
 
 	createDSV(device, dh_DSV);
 	createSRV(device, dh_SRV);
 
-	m_pRenderView = new RenderView(textureWidth, textureHeight);
+	m_pRenderView = new RenderView(depthTextureWidth, depthTextureHeight);
 
 }
 

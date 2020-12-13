@@ -7,11 +7,13 @@ class RenderView;
 class DescriptorHeap;
 class Resource;
 
+#include "../ECS/Components/Lights/Light.h"
+
 class ShadowInfo
 {
 public:
 	ShadowInfo(
-		unsigned int textureWidth, unsigned int textureHeight,
+		LIGHT_TYPE lightType,
 		SHADOW_RESOLUTION shadowResolution,
 		ID3D12Device5* device,
 		DescriptorHeap* dh_DSV,
