@@ -275,7 +275,7 @@ void Renderer::SortObjects()
 		}
 
 		// Free memory
-		delete distFromCamArr;
+		delete[] distFromCamArr;
 	}
 
 	// Update the entity-arrays inside the rendertasks
@@ -678,8 +678,8 @@ void Renderer::UnInitDirectionalLightComponent(component::DirectionalLightCompon
 			auto& [light, cb, si] = tuple;
 
 			// Free memory so other m_Entities can use it
-			delete std::get<1>(tuple);
-			delete std::get<2>(tuple);
+			delete cb;
+			delete si;
 			
 			// Remove from CopyPerFrame
 			CopyPerFrameTask* cpft = nullptr;
@@ -715,7 +715,7 @@ void Renderer::UnInitPointLightComponent(component::PointLightComponent* compone
 			// Free memory so other m_Entities can use it
 			auto& [light, cb, si] = tuple;
 
-			delete std::get<1>(tuple);
+			delete cb;
 
 			// Remove from CopyPerFrame
 			CopyPerFrameTask* cpft = nullptr;
@@ -749,8 +749,8 @@ void Renderer::UnInitSpotLightComponent(component::SpotLightComponent* component
 			// Free memory so other m_Entities can use it
 			auto& [light, cb, si] = tuple;
 
-			delete std::get<1>(tuple);
-			delete std::get<2>(tuple);
+			delete cb;
+			delete si;
 
 			// Remove from CopyPerFrame
 			CopyPerFrameTask* cpft = nullptr;
@@ -1038,8 +1038,8 @@ void Renderer::createCommandQueues()
 
 void Renderer::createSwapChain()
 {
-	UINT resolutionWidth = 1920;
-	UINT resolutionHeight = 1080;
+	unsigned int resolutionWidth = 1920;
+	unsigned int resolutionHeight = 1080;
 
 	m_pSwapChain = new SwapChain(
 		m_pDevice5,
@@ -1057,9 +1057,14 @@ void Renderer::createMainDSV()
 	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
 	dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
 
-	UINT resolutionWidth = 0;
-	UINT resolutionHeight = 0;
-	m_pSwapChain->GetDX12SwapChain()->GetSourceSize(&resolutionWidth, &resolutionHeight);
+	unsigned int resolutionWidth = 0;
+	unsigned int resolutionHeight = 0;
+	HRESULT hr = m_pSwapChain->GetDX12SwapChain()->GetSourceSize(&resolutionWidth, &resolutionHeight);
+	if (FAILED(hr))
+	{
+		Log::PrintSeverity(Log::Severity::CRITICAL, "Failed to GetSourceSize from DX12SwapChain when creating DSV\n");
+	}
+
 
 	m_pMainDepthStencil = new DepthStencil(
 		m_pDevice5,
@@ -1090,7 +1095,7 @@ void Renderer::createFullScreenQuad()
 	vertices[2].uv = { 1.0f, 0.0f };
 
 	vertices[3].pos = { 1.0f, -1.0f, 1.0f };
-	vertices[3].uv = { 1.0f, 1.0f};
+	vertices[3].uv = { 1.0f, 1.0f };
 
 	for (unsigned int i = 0; i < 4; i++)
 	{

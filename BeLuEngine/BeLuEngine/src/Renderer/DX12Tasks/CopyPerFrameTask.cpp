@@ -18,6 +18,7 @@ CopyPerFrameTask::~CopyPerFrameTask()
 void CopyPerFrameTask::ClearSpecific(const Resource* uploadResource)
 {
 	unsigned int i = 0;
+
 	// Loop through all copyPerFrame tasks
 	for (auto& tuple : m_UploadDefaultData)
 	{
