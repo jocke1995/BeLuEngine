@@ -54,9 +54,7 @@ unsigned int __stdcall Thread::threadFunc(void* threadParam)
 		// ------------------- Critical region 2-------------------
 	}
 
-#ifdef _DEBUG
 	Log::Print("Engine thread with id:%d Exiting!\n", threadInstance->m_ThreadId);
-#endif
 
 	return 0;
 }

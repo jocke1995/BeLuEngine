@@ -1,4 +1,6 @@
 #include "BeLuEngine.h"
+#include "Misc/Multithreading/MultiThreadedTask.h"
+#include <cstdlib>
 
 Scene* TestScene(SceneManager* sm);
 Scene* SponzaScene(SceneManager* sm);
@@ -6,6 +8,32 @@ Scene* SponzaScene(SceneManager* sm);
 void TestUpdateScene(SceneManager* sm, double dt);
 void SponzaUpdateScene(SceneManager* sm, double dt);
 
+class PrintClass : public MultiThreadedTask
+{
+public:
+    PrintClass()
+        :MultiThreadedTask(0)
+    {
+
+    }
+    void Execute()
+    {
+        srand(time(NULL));
+        int array[10000] = {};
+        for (unsigned int i = 0; i < 10000; i++)
+        {
+            array[i] = rand() % 10 + 1;
+        }
+
+        int result = 0;
+        for (unsigned int i = 0; i < 10000; i++)
+        {
+            result += array[i];
+        }
+
+        Log::Print("Result: %d\n", result);
+    }
+};
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
 {
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
@@ -21,12 +49,31 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
     SceneManager* const sceneManager = engine.GetSceneHandler();
     Renderer* const renderer = engine.GetRenderer();
 
+    std::vector<PrintClass*> printClasses;
+    for (unsigned int i = 0; i < 50000; i++)
+    {
+        printClasses.push_back(new PrintClass());
+    }
+
+    timer->StartTimer();
+    for (unsigned int i = 0; i < 50000; i++)
+    {
+        threadPool->AddTask(printClasses[i]);
+        //printClasses[i]->Execute();
+    }
+
+    threadPool->WaitForThreads(FLAG_THREAD::ALL);
+    double time = timer->StopTimer();
+
+    Log::Print("Total time: %f\n", time);
     /*------ AssetLoader to load models / textures ------*/
     AssetLoader* al = AssetLoader::Get();
 
     //Scene* scene = TestScene(sceneManager);
     Scene* scene = SponzaScene(sceneManager);
 
+
+    
     // Set scene
     sceneManager->SetScene(scene);
 
