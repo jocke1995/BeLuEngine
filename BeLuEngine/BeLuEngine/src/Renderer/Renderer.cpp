@@ -288,6 +288,9 @@ void Renderer::Execute()
 	int backBufferIndex = dx12SwapChain->GetCurrentBackBufferIndex();
 	int commandInterfaceIndex = m_FrameCounter++ % 2;
 
+	DX12Task::SetBackBufferIndex(backBufferIndex);
+	DX12Task::SetCommandInterfaceIndex(commandInterfaceIndex);
+
 	CopyTask* copyTask = nullptr;
 	ComputeTask* computeTask = nullptr;
 	RenderTask* renderTask = nullptr;
@@ -295,71 +298,51 @@ void Renderer::Execute()
 
 	// Copy on demand
 	copyTask = m_CopyTasks[COPY_TASK_TYPE::COPY_ON_DEMAND];
-	copyTask->SetCommandInterfaceIndex(commandInterfaceIndex);
 	m_pThreadPool->AddTask(copyTask);
 
 	// Copy per frame
 	copyTask = m_CopyTasks[COPY_TASK_TYPE::COPY_PER_FRAME];
-	copyTask->SetCommandInterfaceIndex(commandInterfaceIndex);
 	m_pThreadPool->AddTask(copyTask);
 
 	// Depth pre-pass
 	renderTask = m_RenderTasks[RENDER_TASK_TYPE::DEPTH_PRE_PASS];
-	renderTask->SetCommandInterfaceIndex(commandInterfaceIndex);
 	m_pThreadPool->AddTask(renderTask);
 
 	// Recording shadowmaps
 	renderTask = m_RenderTasks[RENDER_TASK_TYPE::SHADOW];
-	renderTask->SetBackBufferIndex(backBufferIndex);
-	renderTask->SetCommandInterfaceIndex(commandInterfaceIndex);
 	m_pThreadPool->AddTask(renderTask);
 
 	// Opaque draw
 	renderTask = m_RenderTasks[RENDER_TASK_TYPE::FORWARD_RENDER];
-	renderTask->SetBackBufferIndex(backBufferIndex);
-	renderTask->SetCommandInterfaceIndex(commandInterfaceIndex);
 	m_pThreadPool->AddTask(renderTask);
 
 	// DownSample the texture used for bloom
 	renderTask = m_RenderTasks[RENDER_TASK_TYPE::DOWNSAMPLE];
-	renderTask->SetBackBufferIndex(backBufferIndex);
-	renderTask->SetCommandInterfaceIndex(commandInterfaceIndex);
 	m_pThreadPool->AddTask(renderTask);
 
 	// Blending with constant value
 	renderTask = m_RenderTasks[RENDER_TASK_TYPE::TRANSPARENT_CONSTANT];
-	renderTask->SetBackBufferIndex(backBufferIndex);
-	renderTask->SetCommandInterfaceIndex(commandInterfaceIndex);
 	m_pThreadPool->AddTask(renderTask);
 
 	// Blending with opacity texture
 	renderTask = m_RenderTasks[RENDER_TASK_TYPE::TRANSPARENT_TEXTURE];
-	renderTask->SetBackBufferIndex(backBufferIndex);
-	renderTask->SetCommandInterfaceIndex(commandInterfaceIndex);
 	m_pThreadPool->AddTask(renderTask);
 
 	// Blurring for bloom
 	computeTask = m_ComputeTasks[COMPUTE_TASK_TYPE::BLUR];
-	computeTask->SetCommandInterfaceIndex(commandInterfaceIndex);
 	m_pThreadPool->AddTask(computeTask);
 
 	// Outlining, if an object is picked
 	renderTask = m_RenderTasks[RENDER_TASK_TYPE::OUTLINE];
-	renderTask->SetBackBufferIndex(backBufferIndex);
-	renderTask->SetCommandInterfaceIndex(commandInterfaceIndex);
 	m_pThreadPool->AddTask(renderTask);
 
 	renderTask = m_RenderTasks[RENDER_TASK_TYPE::MERGE];
-	renderTask->SetBackBufferIndex(backBufferIndex);
-	renderTask->SetCommandInterfaceIndex(commandInterfaceIndex);
 	m_pThreadPool->AddTask(renderTask);
 	
 	/* ----------------------------- DEVELOPERMODE CommandLists ----------------------------- */
 	if (DEVELOPERMODE_DRAWBOUNDINGBOX == true)
 	{
 		renderTask = m_RenderTasks[RENDER_TASK_TYPE::WIREFRAME];
-		renderTask->SetBackBufferIndex(backBufferIndex);
-		renderTask->SetCommandInterfaceIndex(commandInterfaceIndex);
 		m_pThreadPool->AddTask(renderTask);
 	}
 

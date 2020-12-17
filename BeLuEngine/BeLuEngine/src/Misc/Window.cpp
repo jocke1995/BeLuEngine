@@ -176,7 +176,7 @@ void Window::SetScreenHeight(int height)
 
 bool Window::ExitWindow()
 {
-	SetCursorPos(m_ScreenWidth / 2, m_ScreenHeight / 2);
+	//SetCursorPos(m_ScreenWidth / 2, m_ScreenHeight / 2);
 
 	bool closeWindow = m_ShutDown;
 	MSG msg = { 0 };

@@ -48,8 +48,8 @@ public:
 	DX12Task(ID3D12Device5* device, COMMAND_INTERFACE_TYPE interfaceType, unsigned int FLAG_THREAD);
 	virtual ~DX12Task();
 
-	void SetBackBufferIndex(int backBufferIndex);
-	void SetCommandInterfaceIndex(int index);
+	static void SetBackBufferIndex(int backBufferIndex);
+	static void SetCommandInterfaceIndex(int index);
 	void SetDescriptorHeaps(std::map<DESCRIPTOR_HEAP_TYPE, DescriptorHeap*> dhs);
 
 	void AddResource(std::string id, const Resource* resource);
@@ -60,8 +60,8 @@ protected:
 	std::map<std::string, const Resource*> m_Resources;
 
 	CommandInterface* m_pCommandInterface = nullptr;
-	int m_BackBufferIndex = -1;
-	int m_CommandInterfaceIndex = -1;
+	inline static int m_BackBufferIndex = -1;
+	inline static int m_CommandInterfaceIndex = -1;
 
 	void TransResourceState(ID3D12GraphicsCommandList5* cl, Resource* resource, D3D12_RESOURCE_STATES stateBefore, D3D12_RESOURCE_STATES stateAfter);
 };
