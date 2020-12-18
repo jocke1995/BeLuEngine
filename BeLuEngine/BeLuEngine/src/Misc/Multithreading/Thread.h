@@ -1,37 +1,35 @@
 #ifndef THREAD_H
 #define THREAD_H
 
-#include <queue>
-#include <mutex>
-#include "Core.h"
-
 class MultiThreadedTask;
+
+#include <queue>
+#include <condition_variable>
+#include <mutex>
 
 class Thread
 {
 public:
-	Thread(unsigned int threadId);
+	Thread(
+		std::queue<MultiThreadedTask*>* jobQueue,
+		std::mutex* mutex,
+		std::condition_variable* conditionVariable,
+		unsigned int threadId);
 	~Thread();
 
 private:
 	friend class ThreadPool;
 	HANDLE m_ThreadHandle;
-	HANDLE m_EventHandle;
+
+	std::queue<MultiThreadedTask*>* m_JobQueue;
+	std::mutex* m_Mutex;
+	std::condition_variable* m_conditionVariable;
 
 	static unsigned int __stdcall threadFunc(void* lpParameter);
 
-	std::deque<MultiThreadedTask*> m_TaskDeque;
-	std::mutex m_Mutex;
-
 	MultiThreadedTask* m_pActiveTask = nullptr;
 
-	bool m_IsRunning = true;
+	bool m_IsExiting = false;
 	unsigned int m_ThreadId = 0;
-
-	bool isLastActiveTaskNullptr(unsigned int flag);
-	void addTask(MultiThreadedTask* task);
-	void exitThread();
-	bool isQueueEmptyFromTasksWithSpecifiedFlags(unsigned int flag);
-	bool wakeUpThread();
 };
 #endif

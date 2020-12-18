@@ -8,7 +8,7 @@ ThreadPool::ThreadPool(unsigned int nrOfThreads)
 	// Create Threads
 	for (int i = 0; i < m_NrOfThreads; i++)
 	{
-		m_Threads.push_back(new Thread(i));
+		m_Threads.push_back(new Thread(&m_JobQueue, &m_Mutex, &m_conditionVariable, i));
 	}
 }
 
@@ -24,21 +24,19 @@ ThreadPool::~ThreadPool()
 
 void ThreadPool::WaitForThreads(unsigned int flag)
 {
-	// Two conditios to wait.
-	// 1. Until each m_TaskQueue of each m_Thread is empty
-	// 2. Until each m_Thread's taskpointer is nullptr
-	// Otherwise there is a chance that the mainthread will continue
-	// whilst some m_Threads are working on some of the last tasks.
-
-	// Wait until all tasks are completed
-	bool isEmpty = false;
 	while (true)
 	{
-		isEmpty = isThreadsQueuesEmpty(flag);
+		m_Mutex.lock();
+		bool isJobQueueEmpty = m_JobQueue.empty();
+		bool isAllThreadsWaiting = this->isAllThreadsWaiting();
+		m_Mutex.unlock();
 
-		if (isEmpty && isAllLastActiveTasksFinished(flag))
+		if (isJobQueueEmpty == true)
 		{
-			break;
+			if (isAllThreadsWaiting == true)
+			{
+				break;
+			}
 		}
 	}
 }
@@ -46,8 +44,12 @@ void ThreadPool::WaitForThreads(unsigned int flag)
 void ThreadPool::AddTask(MultiThreadedTask* task)
 {
 	// Adds a m_pTask to a m_Thread
-	m_Threads.at(m_ThreadCounter % m_NrOfThreads)->addTask(task);
-	m_ThreadCounter++;
+	{
+		m_Mutex.lock();
+		m_JobQueue.push(task);
+		m_conditionVariable.notify_one();
+		m_Mutex.unlock();
+	}
 }
 
 ThreadPool& ThreadPool::GetInstance(unsigned int nrOfThreads)
@@ -61,39 +63,28 @@ unsigned int ThreadPool::GetNrOfThreads() const
 	return m_NrOfThreads;
 }
 
-bool ThreadPool::isAllLastActiveTasksFinished(unsigned int flag)
-{
-	for (Thread* thread : m_Threads)
-	{
-		if (thread->isLastActiveTaskNullptr(flag) == false)
-		{
-			return false;
-		}
-	}
-	return true;
-}
-
-bool ThreadPool::isThreadsQueuesEmpty(unsigned int flag)
-{
-	for (auto thread : m_Threads)
-	{
-		if (thread->isQueueEmptyFromTasksWithSpecifiedFlags(flag) == false)
-		{
-			return false;
-		}
-	}
-	return true;
-}
-
-
 void ThreadPool::exitThreads()
 {
-	WaitForThreads(FLAG_THREAD::ALL);
-	std::vector<HANDLE> handles;
-	for (auto thread : m_Threads)
+	m_Mutex.lock();
+	for (unsigned int i = 0; i < m_Threads.size(); i++)
 	{
-		handles.push_back(thread->m_ThreadHandle);
-		thread->exitThread();
+		m_Threads[i]->m_IsExiting = true;
 	}
-	WaitForMultipleObjects(m_NrOfThreads, handles.data(), true, INFINITE);
+	m_Mutex.unlock();
+
+	WaitForThreads(FLAG_THREAD::ALL);
+	m_conditionVariable.notify_all();
+}
+
+bool ThreadPool::isAllThreadsWaiting()
+{
+	for (unsigned int i = 0; i < m_Threads.size(); i++)
+	{
+		// If the thread isn't finished with its current job
+		if (m_Threads[i]->m_pActiveTask != nullptr)
+		{
+			return false;
+		}
+	}
+	return true;
 }

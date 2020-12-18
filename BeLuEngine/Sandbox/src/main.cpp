@@ -19,14 +19,14 @@ public:
     void Execute()
     {
         srand(time(NULL));
-        int array[10000] = {};
-        for (unsigned int i = 0; i < 10000; i++)
+        int array[100] = {};
+        for (unsigned int i = 0; i < 100; i++)
         {
             array[i] = rand() % 10 + 1;
         }
 
         int result = 0;
-        for (unsigned int i = 0; i < 10000; i++)
+        for (unsigned int i = 0; i < 100; i++)
         {
             result += array[i];
         }
@@ -66,69 +66,74 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
     double time = timer->StopTimer();
 
     Log::Print("Total time: %f\n", time);
-    /*------ AssetLoader to load models / textures ------*/
-    AssetLoader* al = AssetLoader::Get();
 
-    //Scene* scene = TestScene(sceneManager);
-    Scene* scene = SponzaScene(sceneManager);
-
-
-    
-    // Set scene
-    sceneManager->SetScene(scene);
-
-    Log::Print("Entering Game-Loop ...\n\n");
-    while (!window->ExitWindow())
+    for (unsigned int i = 0; i < 50000; i++)
     {
-        // Temporary functions to test functionalities in the engine
-        if (window->WasSpacePressed() == true)
-        {
-            // Get camera Pos
-            component::CameraComponent* cc = scene->GetEntity("player")->GetComponent<component::CameraComponent>();
-            DirectX::XMFLOAT3 position = cc->GetCamera()->GetPosition();
-            DirectX::XMFLOAT3 lookAt = cc->GetCamera()->GetDirection();
-            DirectX::XMFLOAT3 lightPos = position + (lookAt * 20);
-
-            static unsigned int counter = 1;
-            std::string name = "pointLight" + std::to_string(counter);
-            /* ---------------------- PointLightDynamic ---------------------- */
-            Model* sphereModel = al->LoadModel(L"../Vendor/Resources/Models/SpherePBR/ball.obj");
-            Entity* entity = scene->AddEntity(name);
-            component::ModelComponent* mc = entity->AddComponent<component::ModelComponent>();
-            component::TransformComponent* tc = entity->AddComponent<component::TransformComponent>();
-            component::PointLightComponent* plc = entity->AddComponent<component::PointLightComponent>(FLAG_LIGHT::USE_TRANSFORM_POSITION);
-
-            mc->SetModel(sphereModel);
-            mc->SetDrawFlag(FLAG_DRAW::DRAW_OPAQUE | FLAG_DRAW::GIVE_SHADOW);
-            tc->GetTransform()->SetScale(0.3f);
-            tc->GetTransform()->SetPosition(lightPos);
-
-            plc->SetColor({ 10.0f, 5.0f, 5.0f });
-
-            counter++;
-
-            sceneManager->AddEntity(entity);
-            /* ---------------------- SpotLightDynamic ---------------------- */
-        }
-        if (window->WasTabPressed() == true)
-        {
-            // Get camera Pos
-            component::CameraComponent* cc = scene->GetEntity("player")->GetComponent<component::CameraComponent>();
-            DirectX::XMFLOAT3 position = cc->GetCamera()->GetPosition();
-            Log::Print("CameraPos: %f, %f, %f\n", position.x, position.y, position.z);
-        }
-
-        /* ------ Update ------ */
-        timer->Update();
-
-        sceneManager->Update(timer->GetDeltaTime());
-
-        /* ------ Sort ------ */
-        renderer->SortObjects();
-
-        /* ------ Draw ------ */
-        renderer->Execute();
+        delete printClasses[i];
     }
+    /*------ AssetLoader to load models / textures ------*/
+    //AssetLoader* al = AssetLoader::Get();
+    //
+    ////Scene* scene = TestScene(sceneManager);
+    //Scene* scene = SponzaScene(sceneManager);
+    //
+    //
+    //
+    //// Set scene
+    //sceneManager->SetScene(scene);
+    //
+    //Log::Print("Entering Game-Loop ...\n\n");
+    //while (!window->ExitWindow())
+    //{
+    //    // Temporary functions to test functionalities in the engine
+    //    if (window->WasSpacePressed() == true)
+    //    {
+    //        // Get camera Pos
+    //        component::CameraComponent* cc = scene->GetEntity("player")->GetComponent<component::CameraComponent>();
+    //        DirectX::XMFLOAT3 position = cc->GetCamera()->GetPosition();
+    //        DirectX::XMFLOAT3 lookAt = cc->GetCamera()->GetDirection();
+    //        DirectX::XMFLOAT3 lightPos = position + (lookAt * 20);
+    //
+    //        static unsigned int counter = 1;
+    //        std::string name = "pointLight" + std::to_string(counter);
+    //        /* ---------------------- PointLightDynamic ---------------------- */
+    //        Model* sphereModel = al->LoadModel(L"../Vendor/Resources/Models/SpherePBR/ball.obj");
+    //        Entity* entity = scene->AddEntity(name);
+    //        component::ModelComponent* mc = entity->AddComponent<component::ModelComponent>();
+    //        component::TransformComponent* tc = entity->AddComponent<component::TransformComponent>();
+    //        component::PointLightComponent* plc = entity->AddComponent<component::PointLightComponent>(FLAG_LIGHT::USE_TRANSFORM_POSITION);
+    //
+    //        mc->SetModel(sphereModel);
+    //        mc->SetDrawFlag(FLAG_DRAW::DRAW_OPAQUE | FLAG_DRAW::GIVE_SHADOW);
+    //        tc->GetTransform()->SetScale(0.3f);
+    //        tc->GetTransform()->SetPosition(lightPos);
+    //
+    //        plc->SetColor({ 10.0f, 5.0f, 5.0f });
+    //
+    //        counter++;
+    //
+    //        sceneManager->AddEntity(entity);
+    //        /* ---------------------- SpotLightDynamic ---------------------- */
+    //    }
+    //    if (window->WasTabPressed() == true)
+    //    {
+    //        // Get camera Pos
+    //        component::CameraComponent* cc = scene->GetEntity("player")->GetComponent<component::CameraComponent>();
+    //        DirectX::XMFLOAT3 position = cc->GetCamera()->GetPosition();
+    //        Log::Print("CameraPos: %f, %f, %f\n", position.x, position.y, position.z);
+    //    }
+    //
+    //    /* ------ Update ------ */
+    //    timer->Update();
+    //
+    //    sceneManager->Update(timer->GetDeltaTime());
+    //
+    //    /* ------ Sort ------ */
+    //    renderer->SortObjects();
+    //
+    //    /* ------ Draw ------ */
+    //    renderer->Execute();
+    //}
     
     return EXIT_SUCCESS;
 }
