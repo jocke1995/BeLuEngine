@@ -16,6 +16,14 @@ ThreadPool::~ThreadPool()
 {
 	exitThreads();
 
+	std::vector<HANDLE> handles;
+	for (Thread* thread : m_Threads)
+	{
+		handles.push_back(thread->m_ThreadHandle);
+	}
+
+	// Make sure all threads have exited
+	WaitForMultipleObjects(m_NrOfThreads, handles.data(), true, INFINITE);
 	for (Thread* thread : m_Threads)
 	{
 		delete thread;
@@ -72,8 +80,8 @@ void ThreadPool::exitThreads()
 	}
 	m_Mutex.unlock();
 
-	WaitForThreads(FLAG_THREAD::ALL);
 	m_conditionVariable.notify_all();
+	WaitForThreads(FLAG_THREAD::ALL);
 }
 
 bool ThreadPool::isAllThreadsWaiting()

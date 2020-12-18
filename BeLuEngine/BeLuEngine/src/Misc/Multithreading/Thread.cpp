@@ -6,26 +6,22 @@
 unsigned int __stdcall Thread::threadFunc(void* threadParam)
 {
 	Thread* t = static_cast<Thread*>(threadParam);
-	while (true)
+	while (t->m_IsExiting == false)
 	{
 		{
-			// Lock that opens when out of scope
+			// Lock
 			std::unique_lock<std::mutex> lock(*(t->m_Mutex));
 			
-			//if (t->m_JobQueue->empty() == true)
-			//{
-				// Wait until jobQueue isn't empty, or until we are exiting the program
-				t->m_conditionVariable->wait(lock,
-					[=]
-				{
-					return (t->m_JobQueue->empty() == false || t->m_IsExiting == true);
-				});
-			//}
+			// Wait until jobQueue isn't empty, or until we are exiting the program
+			t->m_conditionVariable->wait(lock,
+				[=]
+			{
+				return (t->m_JobQueue->empty() == false || t->m_IsExiting == true);
+			});
 
 			if (t->m_IsExiting == true)
 			{
-				Log::Print("Inside is exiting\n");
-				break;
+				continue;
 			}
 			
 			t->m_pActiveTask = t->m_JobQueue->front();

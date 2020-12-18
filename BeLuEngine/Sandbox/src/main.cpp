@@ -18,15 +18,14 @@ public:
     }
     void Execute()
     {
-        srand(time(NULL));
-        int array[100] = {};
-        for (unsigned int i = 0; i < 100; i++)
+        int array[10000] = {};
+        for (unsigned int i = 0; i < 10000; i++)
         {
             array[i] = rand() % 10 + 1;
         }
 
         int result = 0;
-        for (unsigned int i = 0; i < 100; i++)
+        for (unsigned int i = 0; i < 10000; i++)
         {
             result += array[i];
         }
@@ -58,6 +57,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
     timer->StartTimer();
     for (unsigned int i = 0; i < 50000; i++)
     {
+        srand(time(NULL));
         threadPool->AddTask(printClasses[i]);
         //printClasses[i]->Execute();
     }
@@ -71,6 +71,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
     {
         delete printClasses[i];
     }
+
     /*------ AssetLoader to load models / textures ------*/
     //AssetLoader* al = AssetLoader::Get();
     //
