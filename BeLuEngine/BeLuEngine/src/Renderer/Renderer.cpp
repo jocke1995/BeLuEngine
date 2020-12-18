@@ -336,6 +336,7 @@ void Renderer::Execute()
 	renderTask = m_RenderTasks[RENDER_TASK_TYPE::OUTLINE];
 	m_pThreadPool->AddTask(renderTask);
 
+	// Merge 
 	renderTask = m_RenderTasks[RENDER_TASK_TYPE::MERGE];
 	m_pThreadPool->AddTask(renderTask);
 	
@@ -909,7 +910,7 @@ bool Renderer::createDevice()
 {
 	bool deviceCreated = false;
 
-#ifdef _DEBUG
+//#ifdef _DEBUG
 	//Enable the D3D12 debug layer.
 	ID3D12Debug* debugController = nullptr;
 
@@ -929,7 +930,7 @@ bool Renderer::createDevice()
 	}
 	SAFE_RELEASE(&debugController);
 #endif
-#endif
+//#endif
 
 	IDXGIFactory6* factory = nullptr;
 	IDXGIAdapter1* adapter = nullptr;

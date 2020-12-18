@@ -25,7 +25,7 @@ unsigned int __stdcall Thread::threadFunc(void* threadParam)
 			}
 			
 			t->m_pActiveTask = t->m_JobQueue->front();
-			t->m_JobQueue->pop();
+			t->m_JobQueue->pop_front();
 		}
 
 		t->m_pActiveTask->Execute();
@@ -37,7 +37,7 @@ unsigned int __stdcall Thread::threadFunc(void* threadParam)
 }
 
 Thread::Thread(
-	std::queue<MultiThreadedTask*>* jobQueue,
+	std::deque<MultiThreadedTask*>* jobQueue,
 	std::mutex* mutex,
 	std::condition_variable* conditionVariable,
 	unsigned int threadId)

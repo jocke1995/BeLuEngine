@@ -135,10 +135,12 @@ enum FLAG_DRAW
 enum FLAG_THREAD
 {
 	RENDER = BIT(1),
+	TEST = BIT(2),
+	TEST2 = BIT(3),
 	// CopyTextures,
 	// PrepareNextScene ..
 	// etc
-	ALL = BIT(2)
+	ALL = BIT(4)
 	// etc..
 };
 

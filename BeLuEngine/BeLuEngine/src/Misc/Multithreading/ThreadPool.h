@@ -22,7 +22,7 @@ private:
 	ThreadPool(unsigned int nrOfThreads);
 	std::vector<Thread*> m_Threads;
 
-	std::queue<MultiThreadedTask*> m_JobQueue;
+	std::deque<MultiThreadedTask*> m_JobQueue;
 	std::mutex m_Mutex;
 	std::condition_variable m_conditionVariable;
 
@@ -30,7 +30,8 @@ private:
 	unsigned int m_ThreadCounter = 0;
 
 	void exitThreads();
-	bool isAllThreadsWaiting();
+	bool isQueueEmpty(unsigned int flag);
+	bool isAllThreadsWaiting(unsigned int flag);
 };
 
 #endif
