@@ -75,35 +75,53 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
     SceneManager* const sceneManager = engine.GetSceneHandler();
     Renderer* const renderer = engine.GetRenderer();
 
-    //std::vector<PrintClass*> printClasses;
-    //for (unsigned int i = 0; i < 50000; i++)
-    //{
-    //    printClasses.push_back(new PrintClass());
-    //}
-    //
-    //timer->StartTimer();
-    //for (unsigned int i = 0; i < 50000; i++)
-    //{
-    //    srand(time(NULL));
-    //    threadPool->AddTask(printClasses[i]);
-    //    //printClasses[i]->Execute();
-    //}
-    //
-    //threadPool->WaitForThreads(FLAG_THREAD::TEST);
-    //double time = timer->StopTimer();
-    //
-    //Log::Print("Total time: %f\n", time);
-    //
-    //for (unsigned int i = 0; i < 50000; i++)
-    //{
-    //    delete printClasses[i];
-    //}
+    std::vector<PrintClass*> printClasses;
+    std::vector<PrintClass2*> printClasses2;
+    for (unsigned int i = 0; i < 50000; i++)
+    {
+        printClasses.push_back(new PrintClass());
+    }
+    
+    for (unsigned int i = 0; i < 1000; i++)
+    {
+        printClasses2.push_back(new PrintClass2());
+    }
+
+    timer->StartTimer();
+    for (unsigned int i = 0; i < 50000; i++)
+    {
+        srand(time(NULL));
+        threadPool->AddTask(printClasses[i]);
+        //printClasses[i]->Execute();
+    }
+    
+    for (unsigned int i = 0; i < 1000; i++)
+    {
+        srand(time(NULL));
+        threadPool->AddTask(printClasses2[i]);
+        //printClasses[i]->Execute();
+    }
+
+    threadPool->WaitForThreads(FLAG_THREAD::TEST);
+
+    Log::Print(" -------------------- NO MORE FIRST RESULT -------------------------------\n");
+
+    threadPool->WaitForThreads(FLAG_THREAD::TEST2);
+
+    double time = timer->StopTimer();
+    
+    Log::Print("Total time: %f\n", time);
+    
+    for (unsigned int i = 0; i < 50000; i++)
+    {
+        delete printClasses[i];
+    }
 
     /*------ AssetLoader to load models / textures ------*/
     AssetLoader* al = AssetLoader::Get();
     
     //Scene* scene = TestScene(sceneManager);
-    Scene* scene = SponzaScene(sceneManager);
+    Scene* scene = TestScene(sceneManager);
     
     
     
