@@ -24,12 +24,18 @@ unsigned int __stdcall Thread::threadFunc(void* threadParam)
 				continue;
 			}
 			
-			t->m_pActiveTask = t->m_JobQueue->front();
+			t->m_pActiveTask = std::move(t->m_JobQueue->front());
 			t->m_JobQueue->pop_front();
 		}
 
-		t->m_pActiveTask->Execute();
-		t->m_pActiveTask = nullptr;
+		{
+			// Run thread task
+			t->m_pActiveTask->Execute();
+
+			// Lock
+			std::unique_lock<std::mutex> lock(*(t->m_Mutex));
+			t->m_pActiveTask = nullptr;
+		}
 	}
 
 	Log::Print("Engine thread with id:%d Exiting!\n", t->m_ThreadId);

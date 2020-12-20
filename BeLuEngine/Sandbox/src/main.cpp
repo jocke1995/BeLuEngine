@@ -18,14 +18,14 @@ public:
     }
     void Execute()
     {
-        int array[10000] = {};
-        for (unsigned int i = 0; i < 10000; i++)
+        int array[100000] = {};
+        for (unsigned int i = 0; i < 100000; i++)
         {
             array[i] = rand() % 10 + 1;
         }
 
         int result = 0;
-        for (unsigned int i = 0; i < 10000; i++)
+        for (unsigned int i = 0; i < 100000; i++)
         {
             result += array[i];
         }
@@ -75,47 +75,60 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
     SceneManager* const sceneManager = engine.GetSceneHandler();
     Renderer* const renderer = engine.GetRenderer();
 
-    std::vector<PrintClass*> printClasses;
-    std::vector<PrintClass2*> printClasses2;
-    for (unsigned int i = 0; i < 50000; i++)
-    {
-        printClasses.push_back(new PrintClass());
-    }
-    
-    for (unsigned int i = 0; i < 1000; i++)
-    {
-        printClasses2.push_back(new PrintClass2());
-    }
-
-    timer->StartTimer();
-    for (unsigned int i = 0; i < 50000; i++)
-    {
-        srand(time(NULL));
-        threadPool->AddTask(printClasses[i]);
-        //printClasses[i]->Execute();
-    }
-    
-    for (unsigned int i = 0; i < 1000; i++)
-    {
-        srand(time(NULL));
-        threadPool->AddTask(printClasses2[i]);
-        //printClasses[i]->Execute();
-    }
-
-    threadPool->WaitForThreads(FLAG_THREAD::TEST);
-
-    Log::Print(" -------------------- NO MORE FIRST RESULT -------------------------------\n");
-
-    threadPool->WaitForThreads(FLAG_THREAD::TEST2);
-
-    double time = timer->StopTimer();
-    
-    Log::Print("Total time: %f\n", time);
-    
-    for (unsigned int i = 0; i < 50000; i++)
-    {
-        delete printClasses[i];
-    }
+   //std::vector<PrintClass*> printClasses;
+   ////printClasses.reserve(50000);
+   //std::vector<PrintClass2*> printClasses2;
+   ////printClasses2.reserve(1000);
+   //for (unsigned int i = 0; i < 150000; i++)
+   //{
+   //    printClasses.push_back(new PrintClass());
+   //}
+   //
+   //for (unsigned int i = 0; i < 10000; i++)
+   //{
+   //    printClasses2.push_back(new PrintClass2());
+   //}
+   //
+   //timer->StartTimer();
+   //for (unsigned int i = 0; i < 150000; i++)
+   //{
+   //    srand(time(NULL));
+   //    threadPool->AddTask(printClasses[i]);
+   //    //printClasses[i]->Execute();
+   //}
+   //
+   //for (unsigned int i = 0; i < 10000; i++)
+   //{
+   //    srand(time(NULL));
+   //    threadPool->AddTask(printClasses2[i]);
+   //    //printClasses[i]->Execute();
+   //}
+   //
+   //threadPool->WaitForThreads(FLAG_THREAD::TEST);
+   //
+   //Log::Print(" -------------------- NO MORE FIRST RESULT -------------------------------\n");
+   //Log::Print(" -------------------- NO MORE FIRST RESULT -------------------------------\n");
+   //Log::Print(" -------------------- NO MORE FIRST RESULT -------------------------------\n");
+   //Log::Print(" -------------------- NO MORE FIRST RESULT -------------------------------\n");
+   //Log::Print(" -------------------- NO MORE FIRST RESULT -------------------------------\n");
+   //Log::Print(" -------------------- NO MORE FIRST RESULT -------------------------------\n");
+   //Log::Print(" -------------------- NO MORE FIRST RESULT -------------------------------\n");
+   //
+   //threadPool->WaitForThreads(FLAG_THREAD::TEST2);
+   //
+   //double time = timer->StopTimer();
+   //
+   //Log::Print("Total time: %f\n", time);
+   //
+   //for (unsigned int i = 0; i < 150000; i++)
+   //{
+   //    delete printClasses[i];
+   //}
+   //
+   //for (unsigned int i = 0; i < 10000; i++)
+   //{
+   //    delete printClasses2[i];
+   //}
 
     /*------ AssetLoader to load models / textures ------*/
     AssetLoader* al = AssetLoader::Get();

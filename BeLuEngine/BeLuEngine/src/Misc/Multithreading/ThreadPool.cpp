@@ -39,13 +39,10 @@ void ThreadPool::WaitForThreads(unsigned int flag)
 {
 	while (true)
 	{
-		m_Mutex.lock();
 		bool isJobQueueEmpty = isQueueEmpty(flag);
-		bool isAllThreadsSleeping = isAllThreadsWaiting(flag);
-		m_Mutex.unlock();
-
 		if (isJobQueueEmpty == true)
 		{
+			bool isAllThreadsSleeping = isAllThreadsWaiting(flag);
 			if (isAllThreadsSleeping == true)
 			{
 				break;
@@ -91,36 +88,45 @@ void ThreadPool::exitThreads()
 
 bool ThreadPool::isQueueEmpty(unsigned int flag)
 {
-	// Is there no tasks in queue?
-	if (m_JobQueue.empty() == true)
 	{
-		return true;
-	}
+		// Lock
+		std::unique_lock<std::mutex> lock(m_Mutex);
 
-	// If there is tasks in queue, check for jobs with specified flag
-	for (MultiThreadedTask* task : m_JobQueue)
-	{
-		if (task->GetThreadFlags() & flag)
+		// Is there no tasks in queue?
+		if (m_JobQueue.empty() == true)
 		{
-			// We found a job with specified flag thats yet not completed.. still task to do.
-			return false;
+			return true;
+		}
+
+		// If there is tasks in queue, check for jobs with specified flag
+		for (MultiThreadedTask* task : m_JobQueue)
+		{
+			if (task->GetThreadFlags() & flag)
+			{
+				// We found a job with specified flag thats yet not completed.. still task to do.
+				return false;
+			}
 		}
 	}
-
 	return true;
 }
 
 bool ThreadPool::isAllThreadsWaiting(unsigned int flag)
 {
-	for (unsigned int i = 0; i < m_Threads.size(); i++)
 	{
-		// If the thread isn't finished with its current job
-		if (m_Threads[i]->m_pActiveTask != nullptr)
+		// Lock
+		std::unique_lock<std::mutex> lock(m_Mutex);
+
+		for (unsigned int i = 0; i < m_Threads.size(); i++)
 		{
-			// If the task if the type specified by the incoming flag
-			if (m_Threads[i]->m_pActiveTask->GetThreadFlags() & flag)
+			// If the thread isn't finished with its current job
+			if (m_Threads[i]->m_pActiveTask != nullptr)
 			{
-				return false;
+				// If the task if the type specified by the incoming flag
+				if (m_Threads[i]->m_pActiveTask->GetThreadFlags() & flag)
+				{
+					return false;
+				}
 			}
 		}
 	}

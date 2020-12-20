@@ -12,6 +12,7 @@
 #include <D3Dcompiler.h>
 #include <DirectXPackedVector.h>
 #include <DirectXColors.h>
+#include <dxgidebug.h>
 #include "EngineMath.h"
 #include "d3dx12.h"
 
