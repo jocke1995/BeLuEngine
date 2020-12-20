@@ -24,7 +24,8 @@ private:
 
 	std::deque<MultiThreadedTask*> m_JobQueue;
 	std::mutex m_Mutex;
-	std::condition_variable m_conditionVariable;
+	std::condition_variable m_workerThreadConditionVariable;
+	std::condition_variable m_MainThreadConditionVariable;
 
 	unsigned int m_NrOfThreads;
 	unsigned int m_ThreadCounter = 0;

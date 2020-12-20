@@ -12,8 +12,11 @@ unsigned int __stdcall Thread::threadFunc(void* threadParam)
 			// Lock
 			std::unique_lock<std::mutex> lock(*(t->m_Mutex));
 			
+			// Check if queue is empty, if it is, signal main thread so it wakes up
+			t->m_pMainThreadCV->notify_one();
+
 			// Wait until jobQueue isn't empty, or until we are exiting the program
-			t->m_conditionVariable->wait(lock,
+			t->m_pWorkerThreadCV->wait(lock,
 				[=]
 			{
 				return (t->m_JobQueue->empty() == false || t->m_IsExiting == true);
@@ -35,6 +38,9 @@ unsigned int __stdcall Thread::threadFunc(void* threadParam)
 			// Lock
 			std::unique_lock<std::mutex> lock(*(t->m_Mutex));
 			t->m_pActiveTask = nullptr;
+
+			// Notify main thread that the job is done
+			t->m_pMainThreadCV->notify_one();
 		}
 	}
 
@@ -45,12 +51,14 @@ unsigned int __stdcall Thread::threadFunc(void* threadParam)
 Thread::Thread(
 	std::deque<MultiThreadedTask*>* jobQueue,
 	std::mutex* mutex,
-	std::condition_variable* conditionVariable,
+	std::condition_variable* workerThreadCV,
+	std::condition_variable* mainThreadCV,
 	unsigned int threadId)
 {
 	m_JobQueue = jobQueue;
 	m_Mutex = mutex;
-	m_conditionVariable = conditionVariable;
+	m_pWorkerThreadCV = workerThreadCV;
+	m_pMainThreadCV = mainThreadCV;
 
 	m_ThreadId = threadId;
 	// Create and start the thread function

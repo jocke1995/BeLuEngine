@@ -10,12 +10,17 @@ ThreadPool::ThreadPool(unsigned int nrOfThreads)
 	// Create Threads
 	for (int i = 0; i < m_NrOfThreads; i++)
 	{
-		m_Threads.push_back(new Thread(&m_JobQueue, &m_Mutex, &m_conditionVariable, i));
+		m_Threads.push_back(new Thread(
+								&m_JobQueue, &m_Mutex,
+								&m_workerThreadConditionVariable,
+								&m_MainThreadConditionVariable,
+								i));
 	}
 }
 
 ThreadPool::~ThreadPool()
 {
+	// Make sure threads exit the thread-loop
 	exitThreads();
 
 	std::vector<HANDLE> handles;
@@ -37,17 +42,26 @@ ThreadPool::~ThreadPool()
 // FLAG_THREAD::
 void ThreadPool::WaitForThreads(unsigned int flag)
 {
-	while (true)
 	{
-		bool isJobQueueEmpty = isQueueEmpty(flag);
-		if (isJobQueueEmpty == true)
+		// Lock
+		std::unique_lock<std::mutex> lock(m_Mutex);
+
+		// Wait until jobQueue is empty of jobs with specified flag
+		m_MainThreadConditionVariable.wait(lock,
+			[=]
+		{
+			bool isJobQueueEmpty = isQueueEmpty(flag);
+			return (isJobQueueEmpty == true);
+		});
+
+
+		// Wait until all threads are done with their final tasks with the specified flag
+		m_MainThreadConditionVariable.wait(lock,
+			[=]
 		{
 			bool isAllThreadsSleeping = isAllThreadsWaiting(flag);
-			if (isAllThreadsSleeping == true)
-			{
-				break;
-			}
-		}
+			return (isAllThreadsSleeping == true);
+		});
 	}
 }
 
@@ -57,7 +71,7 @@ void ThreadPool::AddTask(MultiThreadedTask* task)
 	{
 		m_Mutex.lock();
 		m_JobQueue.push_back(task);
-		m_conditionVariable.notify_one();
+		m_workerThreadConditionVariable.notify_one();
 		m_Mutex.unlock();
 	}
 }
@@ -82,30 +96,25 @@ void ThreadPool::exitThreads()
 	}
 	m_Mutex.unlock();
 
-	m_conditionVariable.notify_all();
+	m_workerThreadConditionVariable.notify_all();
 	WaitForThreads(FLAG_THREAD::ALL);
 }
 
 bool ThreadPool::isQueueEmpty(unsigned int flag)
 {
+	// Is there no tasks in queue?
+	if (m_JobQueue.empty() == true)
 	{
-		// Lock
-		std::unique_lock<std::mutex> lock(m_Mutex);
+		return true;
+	}
 
-		// Is there no tasks in queue?
-		if (m_JobQueue.empty() == true)
+	// If there is tasks in queue, check for jobs with specified flag
+	for (MultiThreadedTask* task : m_JobQueue)
+	{
+		if (task->GetThreadFlags() & flag)
 		{
-			return true;
-		}
-
-		// If there is tasks in queue, check for jobs with specified flag
-		for (MultiThreadedTask* task : m_JobQueue)
-		{
-			if (task->GetThreadFlags() & flag)
-			{
-				// We found a job with specified flag thats yet not completed.. still task to do.
-				return false;
-			}
+			// We found a job with specified flag thats yet not completed.. still task to do.
+			return false;
 		}
 	}
 	return true;
@@ -113,20 +122,16 @@ bool ThreadPool::isQueueEmpty(unsigned int flag)
 
 bool ThreadPool::isAllThreadsWaiting(unsigned int flag)
 {
-	{
-		// Lock
-		std::unique_lock<std::mutex> lock(m_Mutex);
 
-		for (unsigned int i = 0; i < m_Threads.size(); i++)
+	for (unsigned int i = 0; i < m_Threads.size(); i++)
+	{
+		// If the thread isn't finished with its current job
+		if (m_Threads[i]->m_pActiveTask != nullptr)
 		{
-			// If the thread isn't finished with its current job
-			if (m_Threads[i]->m_pActiveTask != nullptr)
+			// If the task if the type specified by the incoming flag
+			if (m_Threads[i]->m_pActiveTask->GetThreadFlags() & flag)
 			{
-				// If the task if the type specified by the incoming flag
-				if (m_Threads[i]->m_pActiveTask->GetThreadFlags() & flag)
-				{
-					return false;
-				}
+				return false;
 			}
 		}
 	}

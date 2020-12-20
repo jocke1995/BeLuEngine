@@ -13,7 +13,8 @@ public:
 	Thread(
 		std::deque<MultiThreadedTask*>* jobQueue,
 		std::mutex* mutex,
-		std::condition_variable* conditionVariable,
+		std::condition_variable* workerThreadCV,
+		std::condition_variable* mainThreadCV,
 		unsigned int threadId);
 	~Thread();
 
@@ -24,7 +25,8 @@ private:
 	// Reference to the same queue in threadpool, all threads share the same jobqueue
 	std::deque<MultiThreadedTask*>* m_JobQueue;
 	std::mutex* m_Mutex;
-	std::condition_variable* m_conditionVariable;
+	std::condition_variable* m_pWorkerThreadCV;
+	std::condition_variable* m_pMainThreadCV;
 
 	static unsigned int __stdcall threadFunc(void* lpParameter);
 

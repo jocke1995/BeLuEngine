@@ -18,14 +18,14 @@ public:
     }
     void Execute()
     {
-        int array[100000] = {};
-        for (unsigned int i = 0; i < 100000; i++)
+        int array[10000] = {};
+        for (unsigned int i = 0; i < 10000; i++)
         {
             array[i] = rand() % 10 + 1;
         }
 
         int result = 0;
-        for (unsigned int i = 0; i < 100000; i++)
+        for (unsigned int i = 0; i < 10000; i++)
         {
             result += array[i];
         }
@@ -75,124 +75,124 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
     SceneManager* const sceneManager = engine.GetSceneHandler();
     Renderer* const renderer = engine.GetRenderer();
 
-   //std::vector<PrintClass*> printClasses;
-   ////printClasses.reserve(50000);
-   //std::vector<PrintClass2*> printClasses2;
-   ////printClasses2.reserve(1000);
-   //for (unsigned int i = 0; i < 150000; i++)
-   //{
-   //    printClasses.push_back(new PrintClass());
-   //}
-   //
-   //for (unsigned int i = 0; i < 10000; i++)
-   //{
-   //    printClasses2.push_back(new PrintClass2());
-   //}
-   //
-   //timer->StartTimer();
-   //for (unsigned int i = 0; i < 150000; i++)
-   //{
-   //    srand(time(NULL));
-   //    threadPool->AddTask(printClasses[i]);
-   //    //printClasses[i]->Execute();
-   //}
-   //
-   //for (unsigned int i = 0; i < 10000; i++)
-   //{
-   //    srand(time(NULL));
-   //    threadPool->AddTask(printClasses2[i]);
-   //    //printClasses[i]->Execute();
-   //}
-   //
-   //threadPool->WaitForThreads(FLAG_THREAD::TEST);
-   //
-   //Log::Print(" -------------------- NO MORE FIRST RESULT -------------------------------\n");
-   //Log::Print(" -------------------- NO MORE FIRST RESULT -------------------------------\n");
-   //Log::Print(" -------------------- NO MORE FIRST RESULT -------------------------------\n");
-   //Log::Print(" -------------------- NO MORE FIRST RESULT -------------------------------\n");
-   //Log::Print(" -------------------- NO MORE FIRST RESULT -------------------------------\n");
-   //Log::Print(" -------------------- NO MORE FIRST RESULT -------------------------------\n");
-   //Log::Print(" -------------------- NO MORE FIRST RESULT -------------------------------\n");
-   //
-   //threadPool->WaitForThreads(FLAG_THREAD::TEST2);
-   //
-   //double time = timer->StopTimer();
-   //
-   //Log::Print("Total time: %f\n", time);
-   //
-   //for (unsigned int i = 0; i < 150000; i++)
-   //{
-   //    delete printClasses[i];
-   //}
-   //
-   //for (unsigned int i = 0; i < 10000; i++)
-   //{
-   //    delete printClasses2[i];
-   //}
+   std::vector<PrintClass*> printClasses;
+   //printClasses.reserve(50000);
+   std::vector<PrintClass2*> printClasses2;
+   //printClasses2.reserve(1000);
+   for (unsigned int i = 0; i < 10000; i++)
+   {
+       printClasses.push_back(new PrintClass());
+   }
+   
+   for (unsigned int i = 0; i < 1000; i++)
+   {
+       printClasses2.push_back(new PrintClass2());
+   }
+   
+   timer->StartTimer();
+   for (unsigned int i = 0; i < 10000; i++)
+   {
+       srand(time(NULL));
+       threadPool->AddTask(printClasses[i]);
+       //printClasses[i]->Execute();
+   }
+   
+   for (unsigned int i = 0; i < 1000; i++)
+   {
+       srand(time(NULL));
+       threadPool->AddTask(printClasses2[i]);
+       //printClasses[i]->Execute();
+   }
+   
+   threadPool->WaitForThreads(FLAG_THREAD::TEST);
+   
+   Log::Print(" -------------------- NO MORE FIRST RESULT -------------------------------\n");
+   Log::Print(" -------------------- NO MORE FIRST RESULT -------------------------------\n");
+   Log::Print(" -------------------- NO MORE FIRST RESULT -------------------------------\n");
+   Log::Print(" -------------------- NO MORE FIRST RESULT -------------------------------\n");
+   Log::Print(" -------------------- NO MORE FIRST RESULT -------------------------------\n");
+   Log::Print(" -------------------- NO MORE FIRST RESULT -------------------------------\n");
+   Log::Print(" -------------------- NO MORE FIRST RESULT -------------------------------\n");
+   
+   threadPool->WaitForThreads(FLAG_THREAD::TEST2);
+   
+   double time = timer->StopTimer();
+   
+   Log::Print("Total time: %f\n", time);
+   
+   for (unsigned int i = 0; i < 10000; i++)
+   {
+       delete printClasses[i];
+   }
+   
+   for (unsigned int i = 0; i < 1000; i++)
+   {
+       delete printClasses2[i];
+   }
 
     /*------ AssetLoader to load models / textures ------*/
-    AssetLoader* al = AssetLoader::Get();
-    
-    //Scene* scene = TestScene(sceneManager);
-    Scene* scene = TestScene(sceneManager);
-    
-    
-    
-    // Set scene
-    sceneManager->SetScene(scene);
-    
-    Log::Print("Entering Game-Loop ...\n\n");
-    while (!window->ExitWindow())
-    {
-        // Temporary functions to test functionalities in the engine
-        if (window->WasSpacePressed() == true)
-        {
-            // Get camera Pos
-            component::CameraComponent* cc = scene->GetEntity("player")->GetComponent<component::CameraComponent>();
-            DirectX::XMFLOAT3 position = cc->GetCamera()->GetPosition();
-            DirectX::XMFLOAT3 lookAt = cc->GetCamera()->GetDirection();
-            DirectX::XMFLOAT3 lightPos = position + (lookAt * 20);
-    
-            static unsigned int counter = 1;
-            std::string name = "pointLight" + std::to_string(counter);
-            /* ---------------------- PointLightDynamic ---------------------- */
-            Model* sphereModel = al->LoadModel(L"../Vendor/Resources/Models/SpherePBR/ball.obj");
-            Entity* entity = scene->AddEntity(name);
-            component::ModelComponent* mc = entity->AddComponent<component::ModelComponent>();
-            component::TransformComponent* tc = entity->AddComponent<component::TransformComponent>();
-            component::PointLightComponent* plc = entity->AddComponent<component::PointLightComponent>(FLAG_LIGHT::USE_TRANSFORM_POSITION);
-    
-            mc->SetModel(sphereModel);
-            mc->SetDrawFlag(FLAG_DRAW::DRAW_OPAQUE | FLAG_DRAW::GIVE_SHADOW);
-            tc->GetTransform()->SetScale(0.3f);
-            tc->GetTransform()->SetPosition(lightPos);
-    
-            plc->SetColor({ 10.0f, 5.0f, 5.0f });
-    
-            counter++;
-    
-            sceneManager->AddEntity(entity);
-            /* ---------------------- SpotLightDynamic ---------------------- */
-        }
-        if (window->WasTabPressed() == true)
-        {
-            // Get camera Pos
-            component::CameraComponent* cc = scene->GetEntity("player")->GetComponent<component::CameraComponent>();
-            DirectX::XMFLOAT3 position = cc->GetCamera()->GetPosition();
-            Log::Print("CameraPos: %f, %f, %f\n", position.x, position.y, position.z);
-        }
-    
-        /* ------ Update ------ */
-        timer->Update();
-    
-        sceneManager->Update(timer->GetDeltaTime());
-    
-        /* ------ Sort ------ */
-        renderer->SortObjects();
-    
-        /* ------ Draw ------ */
-        renderer->Execute();
-    }
+   //AssetLoader* al = AssetLoader::Get();
+   //
+   //Scene* scene = SponzaScene(sceneManager);
+   ////Scene* scene = TestScene(sceneManager);
+   //
+   //
+   //
+   //// Set scene
+   //sceneManager->SetScene(scene);
+   //
+   //Log::Print("Entering Game-Loop ...\n\n");
+   //while (!window->ExitWindow())
+   //{
+   //    // Temporary functions to test functionalities in the engine
+   //    if (window->WasSpacePressed() == true)
+   //    {
+   //        // Get camera Pos
+   //        component::CameraComponent* cc = scene->GetEntity("player")->GetComponent<component::CameraComponent>();
+   //        DirectX::XMFLOAT3 position = cc->GetCamera()->GetPosition();
+   //        DirectX::XMFLOAT3 lookAt = cc->GetCamera()->GetDirection();
+   //        DirectX::XMFLOAT3 lightPos = position + (lookAt * 20);
+   //
+   //        static unsigned int counter = 1;
+   //        std::string name = "pointLight" + std::to_string(counter);
+   //        /* ---------------------- PointLightDynamic ---------------------- */
+   //        Model* sphereModel = al->LoadModel(L"../Vendor/Resources/Models/SpherePBR/ball.obj");
+   //        Entity* entity = scene->AddEntity(name);
+   //        component::ModelComponent* mc = entity->AddComponent<component::ModelComponent>();
+   //        component::TransformComponent* tc = entity->AddComponent<component::TransformComponent>();
+   //        component::PointLightComponent* plc = entity->AddComponent<component::PointLightComponent>(FLAG_LIGHT::USE_TRANSFORM_POSITION);
+   //
+   //        mc->SetModel(sphereModel);
+   //        mc->SetDrawFlag(FLAG_DRAW::DRAW_OPAQUE | FLAG_DRAW::GIVE_SHADOW);
+   //        tc->GetTransform()->SetScale(0.3f);
+   //        tc->GetTransform()->SetPosition(lightPos);
+   //
+   //        plc->SetColor({ 10.0f, 5.0f, 5.0f });
+   //
+   //        counter++;
+   //
+   //        sceneManager->AddEntity(entity);
+   //        /* ---------------------- SpotLightDynamic ---------------------- */
+   //    }
+   //    if (window->WasTabPressed() == true)
+   //    {
+   //        // Get camera Pos
+   //        component::CameraComponent* cc = scene->GetEntity("player")->GetComponent<component::CameraComponent>();
+   //        DirectX::XMFLOAT3 position = cc->GetCamera()->GetPosition();
+   //        Log::Print("CameraPos: %f, %f, %f\n", position.x, position.y, position.z);
+   //    }
+   //
+   //    /* ------ Update ------ */
+   //    timer->Update();
+   //
+   //    sceneManager->Update(timer->GetDeltaTime());
+   //
+   //    /* ------ Sort ------ */
+   //    renderer->SortObjects();
+   //
+   //    /* ------ Draw ------ */
+   //    renderer->Execute();
+   //}
     
     return EXIT_SUCCESS;
 }
