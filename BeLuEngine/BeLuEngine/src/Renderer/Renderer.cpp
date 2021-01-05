@@ -378,6 +378,111 @@ void Renderer::Execute()
 #endif
 }
 
+void Renderer::SingleThreadedExecute()
+{
+	IDXGISwapChain4* dx12SwapChain = m_pSwapChain->GetDX12SwapChain();
+	unsigned int backBufferIndex = dx12SwapChain->GetCurrentBackBufferIndex();
+	unsigned int commandInterfaceIndex = m_FrameCounter++ % NUM_SWAP_BUFFERS;
+
+	DX12Task::SetBackBufferIndex(backBufferIndex);
+	DX12Task::SetCommandInterfaceIndex(commandInterfaceIndex);
+
+	CopyTask* copyTask = nullptr;
+	ComputeTask* computeTask = nullptr;
+	RenderTask* renderTask = nullptr;
+	/* --------------------- Record command lists --------------------- */
+
+	// Copy on demand
+	copyTask = m_CopyTasks[COPY_TASK_TYPE::COPY_ON_DEMAND];
+	copyTask->Execute();
+	//m_pThreadPool->AddTask(copyTask);
+
+	// Copy per frame
+	copyTask = m_CopyTasks[COPY_TASK_TYPE::COPY_PER_FRAME];
+	copyTask->Execute();
+	//m_pThreadPool->AddTask(copyTask);
+
+
+	// Depth pre-pass
+	renderTask = m_RenderTasks[RENDER_TASK_TYPE::DEPTH_PRE_PASS];
+	renderTask->Execute();
+	//m_pThreadPool->AddTask(renderTask);
+
+	// Recording shadowmaps
+	renderTask = m_RenderTasks[RENDER_TASK_TYPE::SHADOW];
+	renderTask->Execute();
+	//m_pThreadPool->AddTask(renderTask);
+
+	// Opaque draw
+	renderTask = m_RenderTasks[RENDER_TASK_TYPE::FORWARD_RENDER];
+	m_pThreadPool->AddTask(renderTask);
+
+	// DownSample the texture used for bloom
+	renderTask = m_RenderTasks[RENDER_TASK_TYPE::DOWNSAMPLE];
+	renderTask->Execute();
+	//m_pThreadPool->AddTask(renderTask);
+
+	// Blending with constant value
+	renderTask = m_RenderTasks[RENDER_TASK_TYPE::TRANSPARENT_CONSTANT];
+	renderTask->Execute();
+	//m_pThreadPool->AddTask(renderTask);
+
+	// Blending with opacity texture
+	renderTask = m_RenderTasks[RENDER_TASK_TYPE::TRANSPARENT_TEXTURE];
+	renderTask->Execute();
+	//m_pThreadPool->AddTask(renderTask);
+
+	// Blurring for bloom
+	computeTask = m_ComputeTasks[COMPUTE_TASK_TYPE::BLUR];
+	computeTask->Execute();
+	//m_pThreadPool->AddTask(computeTask);
+
+	// Outlining, if an object is picked
+	renderTask = m_RenderTasks[RENDER_TASK_TYPE::OUTLINE];
+	renderTask->Execute();
+	//m_pThreadPool->AddTask(renderTask);
+
+	// Merge 
+	renderTask = m_RenderTasks[RENDER_TASK_TYPE::MERGE];
+	renderTask->Execute();
+	//m_pThreadPool->AddTask(renderTask);
+
+	/* ----------------------------- DEVELOPERMODE CommandLists ----------------------------- */
+	if (DEVELOPERMODE_DRAWBOUNDINGBOX == true)
+	{
+		renderTask = m_RenderTasks[RENDER_TASK_TYPE::WIREFRAME];
+		renderTask->Execute();
+		//m_pThreadPool->AddTask(renderTask);
+	}
+
+	/* ----------------------------- DEVELOPERMODE CommandLists ----------------------------- */
+
+	m_CommandQueues[COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->ExecuteCommandLists(
+		m_DirectCommandLists[commandInterfaceIndex].size(),
+		m_DirectCommandLists[commandInterfaceIndex].data());
+
+	/* --------------------------------------------------------------- */
+
+	// Wait if the CPU is to far ahead of the gpu
+	m_CommandQueues[COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->Signal(m_pFenceFrame, m_FenceFrameValue);
+	waitForFrame(0);
+	m_FenceFrameValue++;
+
+	/*------------------- Post draw stuff -------------------*/
+	// Clear copy on demand
+	m_CopyTasks[COPY_TASK_TYPE::COPY_ON_DEMAND]->Clear();
+
+	/*------------------- Present -------------------*/
+	HRESULT hr = dx12SwapChain->Present(0, 0);
+
+#ifdef _DEBUG
+	if (FAILED(hr))
+	{
+		Log::PrintSeverity(Log::Severity::CRITICAL, "Swapchain Failed to present\n");
+	}
+#endif
+}
+
 void Renderer::InitModelComponent(component::ModelComponent* mc)
 {
 	component::TransformComponent* tc = mc->GetParent()->GetComponent<component::TransformComponent>();

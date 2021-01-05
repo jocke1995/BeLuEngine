@@ -93,6 +93,7 @@ public:
 	void Update(double dt);
 	void SortObjects();
 	void Execute();
+	void SingleThreadedExecute();
 
 	// Render inits, these functions are called by respective components through SetScene to prepare for drawing
 	void InitModelComponent(component::ModelComponent* component);
