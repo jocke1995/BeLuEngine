@@ -415,7 +415,8 @@ void Renderer::SingleThreadedExecute()
 
 	// Opaque draw
 	renderTask = m_RenderTasks[RENDER_TASK_TYPE::FORWARD_RENDER];
-	m_pThreadPool->AddTask(renderTask);
+	renderTask->Execute();
+	//m_pThreadPool->AddTask(renderTask);
 
 	// DownSample the texture used for bloom
 	renderTask = m_RenderTasks[RENDER_TASK_TYPE::DOWNSAMPLE];
