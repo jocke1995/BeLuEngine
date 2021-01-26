@@ -4,9 +4,9 @@
 #include "Resource.h"
 #include "../DescriptorHeap.h"
 
-View::View(DescriptorHeap* descriptorHeap, Resource* resource)
+View::View(DescriptorHeap* descriptorHeap, const Resource* const resource)
 {
-    m_pResource = resource;
+    m_pResource = const_cast<Resource*>(resource);
     m_DescriptorHeapIndex = descriptorHeap->GetNextDescriptorHeapIndex(1);
 }
 
@@ -14,7 +14,7 @@ View::~View()
 {
 }
 
-const Resource* const View::GetResource() const
+Resource* const View::GetResource() const
 {
     return m_pResource;
 }

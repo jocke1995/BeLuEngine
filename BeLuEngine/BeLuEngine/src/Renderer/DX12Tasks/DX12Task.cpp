@@ -6,10 +6,14 @@
 #include "../DescriptorHeap.h"
 #include "../GPUMemory/GPUMemory.h"
 
-DX12Task::DX12Task(ID3D12Device5* device, COMMAND_INTERFACE_TYPE interfaceType, unsigned int FLAG_THREAD)
+DX12Task::DX12Task(
+	ID3D12Device5* device,
+	COMMAND_INTERFACE_TYPE interfaceType,
+	unsigned int FLAG_THREAD,
+	const std::wstring& clName)
 	:MultiThreadedTask(FLAG_THREAD)
 {
-	m_pCommandInterface = new CommandInterface(device, interfaceType);
+	m_pCommandInterface = new CommandInterface(device, interfaceType, clName);
 }
 
 DX12Task::~DX12Task()
@@ -49,12 +53,4 @@ void DX12Task::AddResource(std::string id, const Resource* resource)
 CommandInterface* const DX12Task::GetCommandInterface() const
 {
 	return m_pCommandInterface;
-}
-
-void DX12Task::TransResourceState(ID3D12GraphicsCommandList5* cl, Resource* resource, D3D12_RESOURCE_STATES stateBefore, D3D12_RESOURCE_STATES stateAfter)
-{
-	cl->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-		resource->GetID3D12Resource1(),
-		stateBefore,
-		stateAfter));
 }

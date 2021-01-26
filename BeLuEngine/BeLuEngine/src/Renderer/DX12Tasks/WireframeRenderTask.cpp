@@ -9,7 +9,6 @@
 #include "../PipelineState/PipelineState.h"
 #include "../RenderView.h"
 #include "../RootSignature.h"
-#include "../SwapChain.h"
 
 // Model info
 #include "../Renderer/Model/Transform.h"
@@ -60,8 +59,8 @@ void WireframeRenderTask::Execute()
 {
 	ID3D12CommandAllocator* commandAllocator = m_pCommandInterface->GetCommandAllocator(m_CommandInterfaceIndex);
 	ID3D12GraphicsCommandList5* commandList = m_pCommandInterface->GetCommandList(m_CommandInterfaceIndex);
-	const RenderTargetView* swapChainRenderTarget = m_pSwapChain->GetRTV(m_BackBufferIndex);
-	ID3D12Resource1* swapChainResource = swapChainRenderTarget->GetResource()->GetID3D12Resource1();
+	
+	const RenderTargetView* mainColorRenderTarget = m_RenderTargetViews["mainColorTarget"];
 
 	m_pCommandInterface->Reset(m_CommandInterfaceIndex);
 
@@ -73,21 +72,15 @@ void WireframeRenderTask::Execute()
 
 	commandList->SetGraphicsRootDescriptorTable(RS::dtSRV, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
 
-	// Change state on front/backbuffer
-	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-		swapChainResource,
-		D3D12_RESOURCE_STATE_PRESENT,
-		D3D12_RESOURCE_STATE_RENDER_TARGET));
-
 	DescriptorHeap* renderTargetHeap = m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::RTV];
 
-	unsigned int renderTargetIndex = m_pSwapChain->GetRTV(m_BackBufferIndex)->GetDescriptorHeapIndex();
+	unsigned int renderTargetIndex = mainColorRenderTarget->GetDescriptorHeapIndex();
 	D3D12_CPU_DESCRIPTOR_HANDLE cdh = renderTargetHeap->GetCPUHeapAt(renderTargetIndex);
 
 	commandList->OMSetRenderTargets(1, &cdh, false, nullptr);
 
-	const D3D12_VIEWPORT* viewPort = swapChainRenderTarget->GetRenderView()->GetViewPort();
-	const D3D12_RECT* rect = swapChainRenderTarget->GetRenderView()->GetScissorRect();
+	const D3D12_VIEWPORT* viewPort = mainColorRenderTarget->GetRenderView()->GetViewPort();
+	const D3D12_RECT* rect = mainColorRenderTarget->GetRenderView()->GetScissorRect();
 	commandList->RSSetViewports(1, viewPort);
 	commandList->RSSetScissorRects(1, rect);
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -119,12 +112,6 @@ void WireframeRenderTask::Execute()
 			commandList->DrawIndexedInstanced(num_Indices, 1, 0, 0, 0);
 		}
 	}
-
-	// Ändra state på front/backbuffer
-	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-		swapChainResource,
-		D3D12_RESOURCE_STATE_RENDER_TARGET,
-		D3D12_RESOURCE_STATE_PRESENT));
 
 	commandList->Close();
 }

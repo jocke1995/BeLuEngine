@@ -8,7 +8,11 @@ class Resource;
 class CopyTask : public DX12Task
 {
 public:
-	CopyTask(ID3D12Device5* device, COMMAND_INTERFACE_TYPE interfaceType, unsigned int FLAG_THREAD);
+	CopyTask(
+		ID3D12Device5* device,
+		COMMAND_INTERFACE_TYPE interfaceType,
+		unsigned int FLAG_THREAD,
+		const std::wstring& clName);
 	virtual ~CopyTask();
 
 	// tuple(Upload, Default, Data)

@@ -15,17 +15,15 @@ Resource::Resource(
 	m_Name = name;
 
 	D3D12_HEAP_TYPE d3d12HeapType;
-	D3D12_RESOURCE_STATES startState;
-
 	switch (type)
 	{
 	case RESOURCE_TYPE::UPLOAD:
 		d3d12HeapType = D3D12_HEAP_TYPE_UPLOAD;
-		startState = D3D12_RESOURCE_STATE_GENERIC_READ;
+		m_CurrResourceState = D3D12_RESOURCE_STATE_GENERIC_READ;
 		break;
 	case RESOURCE_TYPE::DEFAULT:
 		d3d12HeapType = D3D12_HEAP_TYPE_DEFAULT;
-		startState = D3D12_RESOURCE_STATE_COMMON;
+		m_CurrResourceState = D3D12_RESOURCE_STATE_COMMON;
 		break;
 	}
 
@@ -41,7 +39,7 @@ Resource::Resource(
 	resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
 	resourceDesc.Flags = flags;
 
-	createResource(device, &resourceDesc, nullptr, startState);
+	createResource(device, &resourceDesc, nullptr, m_CurrResourceState);
 }
 
 Resource::Resource(
@@ -55,7 +53,7 @@ Resource::Resource(
 	m_Type = RESOURCE_TYPE::DEFAULT;
 	m_EntrySize = resourceDesc->Width * resourceDesc->Height;
 	m_Name = name;
-
+	m_CurrResourceState = startState;
 	D3D12_HEAP_TYPE d3d12HeapType = D3D12_HEAP_TYPE_DEFAULT;
 
 	setupHeapProperties(d3d12HeapType);
@@ -103,6 +101,36 @@ D3D12_GPU_VIRTUAL_ADDRESS Resource::GetGPUVirtualAdress() const
 	return m_pResource->GetGPUVirtualAddress();
 }
 
+void Resource::TransResourceState(
+	ID3D12GraphicsCommandList5* cl,
+	D3D12_RESOURCE_STATES stateBefore,
+	D3D12_RESOURCE_STATES stateAfter)
+{
+	// TODO: only do this check in debug or debug_release
+	if (SINGLE_THREADED_RENDERER == true)
+	{
+		if (m_CurrResourceState != stateBefore)
+		{
+			Log::PrintSeverity(Log::Severity::WARNING, "Resource barrier missmatch!\n");
+		}
+		m_CurrResourceState = stateAfter;
+	}
+
+	cl->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+		m_pResource,
+		stateBefore,
+		stateAfter));
+}
+
+D3D12_RESOURCE_STATES Resource::GetCurrentState() const
+{
+	if (SINGLE_THREADED_RENDERER == true)
+	{
+		Log::PrintSeverity(Log::Severity::WARNING, "Resource::GetCurrentState() is not trustworthy when multithreading\n");
+	}
+	return m_CurrResourceState;
+}
+
 void Resource::SetData(const void* data, unsigned int subResourceIndex) const
 {
 	if (m_Type == RESOURCE_TYPE::DEFAULT)
@@ -114,7 +142,6 @@ void Resource::SetData(const void* data, unsigned int subResourceIndex) const
 	void* dataBegin = nullptr;
 
 	// Set up the heap data
-
 	m_pResource->Map(subResourceIndex, nullptr, &dataBegin); // Get a dataBegin pointer where we can copy data to
 	memcpy(dataBegin, data, m_EntrySize);
 	m_pResource->Unmap(subResourceIndex, nullptr);

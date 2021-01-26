@@ -6,7 +6,11 @@
 class CopyPerFrameTask : public CopyTask
 {
 public:
-	CopyPerFrameTask(ID3D12Device5* device, COMMAND_INTERFACE_TYPE interfaceType, unsigned int FLAG_THREAD);
+	CopyPerFrameTask(
+		ID3D12Device5* device,
+		COMMAND_INTERFACE_TYPE interfaceType,
+		unsigned int FLAG_THREAD,
+		const std::wstring& clName);
 	virtual ~CopyPerFrameTask();
 
 	// The submit is inside CopyTask

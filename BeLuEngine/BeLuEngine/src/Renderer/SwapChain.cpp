@@ -316,6 +316,9 @@ const void SwapChain::createSwapBuffers(ID3D12Device5* device,
 		m_RTVs[i]->CreateRTV(device, descriptorHeap_RTV, nullptr);
 	}
 
+	m_RTVs[0]->GetResource()->GetID3D12Resource1()->SetName(L"RTV0_Resource");
+	m_RTVs[1]->GetResource()->GetID3D12Resource1()->SetName(L"RTV1_Resource");
+
 	// Create SRVs
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;

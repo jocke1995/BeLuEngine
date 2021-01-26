@@ -8,58 +8,6 @@ Scene* SponzaScene(SceneManager* sm);
 void TestUpdateScene(SceneManager* sm, double dt);
 void SponzaUpdateScene(SceneManager* sm, double dt);
 
-class PrintClass : public MultiThreadedTask
-{
-public:
-    PrintClass()
-        :MultiThreadedTask(FLAG_THREAD::TEST)
-    {
-
-    }
-    void Execute()
-    {
-        int array[10000] = {};
-        for (unsigned int i = 0; i < 10000; i++)
-        {
-            array[i] = rand() % 10 + 1;
-        }
-
-        int result = 0;
-        for (unsigned int i = 0; i < 10000; i++)
-        {
-            result += array[i];
-        }
-
-        //Log::Print("First Result: %d\n", result);
-    }
-};
-
-class PrintClass2 : public MultiThreadedTask
-{
-public:
-    PrintClass2()
-        :MultiThreadedTask(FLAG_THREAD::TEST2)
-    {
-
-    }
-    void Execute()
-    {
-        int array[100] = {};
-        for (unsigned int i = 0; i < 100; i++)
-        {
-            array[i] = rand() % 10 + 1;
-        }
-
-        int result = 0;
-        for (unsigned int i = 0; i < 100; i++)
-        {
-            result += array[i];
-        }
-
-        //Log::Print("Second Result: %d\n", result);
-    }
-};
-
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
 {
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
@@ -193,8 +141,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
        renderer->SortObjects();
    
        /* ------ Draw ------ */
-       //renderer->Execute();
-       renderer->SingleThreadedExecute();
+       // For easier debugging purposes
+       if (SINGLE_THREADED_RENDERER == true)    
+           renderer->SingleThreadedExecute();
+       else
+           renderer->Execute();
    }
     
     return EXIT_SUCCESS;

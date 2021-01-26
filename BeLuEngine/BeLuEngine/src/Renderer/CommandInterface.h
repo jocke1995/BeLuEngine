@@ -15,7 +15,10 @@ enum COMMAND_INTERFACE_TYPE
 class CommandInterface
 {
 public:
-	CommandInterface(ID3D12Device5* device, COMMAND_INTERFACE_TYPE interfaceType);
+	CommandInterface(
+		ID3D12Device5* device,
+		COMMAND_INTERFACE_TYPE interfaceType,
+		const std::wstring& clName);
 	~CommandInterface();
 
 	ID3D12GraphicsCommandList5* GetCommandList(unsigned int index) const;
@@ -27,6 +30,7 @@ private:
 	ID3D12GraphicsCommandList5* m_pCommandLists[NUM_SWAP_BUFFERS]{ nullptr };
 	ID3D12CommandAllocator* m_pCommandAllocators[NUM_SWAP_BUFFERS]{ nullptr };
 
+	std::wstring m_Name = L"CL_Default";
 	void createCommandInterfaces(ID3D12Device5* device, COMMAND_INTERFACE_TYPE interfaceType);
 };
 

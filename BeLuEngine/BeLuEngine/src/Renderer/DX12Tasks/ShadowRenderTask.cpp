@@ -73,25 +73,25 @@ void ShadowRenderTask::Execute()
 	DescriptorHeap* depthBufferHeap = m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::DSV];
 
 	// Draw for every shadow-casting-light
-	for (auto pair : m_lights)
+	for (auto light : m_lights)
 	{
 		commandList->SetPipelineState(m_PipelineStates[0]->GetPSO());
 		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-		const D3D12_VIEWPORT* viewPort = pair.second->GetRenderView()->GetViewPort();
-		const D3D12_RECT* rect = pair.second->GetRenderView()->GetScissorRect();
+		const D3D12_VIEWPORT* viewPort = light.second->GetRenderView()->GetViewPort();
+		const D3D12_RECT* rect = light.second->GetRenderView()->GetScissorRect();
 		commandList->RSSetViewports(1, viewPort);
 		commandList->RSSetScissorRects(1, rect);
 
-		const DirectX::XMMATRIX* viewProjMatTrans = pair.first->GetCamera()->GetViewProjectionTranposed();
+		const DirectX::XMMATRIX* viewProjMatTrans = light.first->GetCamera()->GetViewProjectionTranposed();
 
-		commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-			pair.second->GetResource()->GetID3D12Resource1(),
+		light.second->GetResource()->TransResourceState(
+			commandList,
 			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-			D3D12_RESOURCE_STATE_DEPTH_WRITE));
+			D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
 		// Clear and set depthstencil
-		unsigned int dsvIndex = pair.second->GetDSV()->GetDescriptorHeapIndex();
+		unsigned int dsvIndex = light.second->GetDSV()->GetDescriptorHeapIndex();
 		D3D12_CPU_DESCRIPTOR_HANDLE dsh = depthBufferHeap->GetCPUHeapAt(dsvIndex);
 		commandList->ClearDepthStencilView(dsh, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 		commandList->OMSetRenderTargets(0, nullptr, true, &dsh);
@@ -122,10 +122,10 @@ void ShadowRenderTask::Execute()
 			}
 		}
 
-		commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-			pair.second->GetResource()->GetID3D12Resource1(),
+		light.second->GetResource()->TransResourceState(
+			commandList,
 			D3D12_RESOURCE_STATE_DEPTH_WRITE,
-			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	}
 	commandList->Close();
 }

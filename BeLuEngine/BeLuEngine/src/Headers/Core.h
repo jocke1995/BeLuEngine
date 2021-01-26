@@ -117,10 +117,16 @@ enum class CAMERA_TYPE
 	}							\
 }
 
+// Debug
+#define SINGLE_THREADED_RENDERER true
+#define DX12DEBUGLAYER true
+#define DX12VALIDATIONGLAYER false
+#define DEVELOPERMODE_DRAWBOUNDINGBOX false
+
+// Common
 #define NUM_SWAP_BUFFERS 2
 #define BIT(x) (1 << x)
 #define MAXNUMBER 10000000.0f
-#define DEVELOPERMODE_DRAWBOUNDINGBOX true
 
 enum FLAG_DRAW
 {

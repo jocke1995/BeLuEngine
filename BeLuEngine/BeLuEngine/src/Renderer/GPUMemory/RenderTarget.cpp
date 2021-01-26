@@ -67,5 +67,5 @@ void RenderTarget::createResource(ID3D12Device5* device, unsigned int width, uns
 	clearValue.Color[2] = 0.0f;
 	clearValue.Color[3] = 1.0f;
 
-	m_pResource = new Resource(device, &resourceDesc, &clearValue, L"Bloom0_RESOURCE", D3D12_RESOURCE_STATE_RENDER_TARGET);
+	m_pResource = new Resource(device, &resourceDesc, &clearValue, resourceName, D3D12_RESOURCE_STATE_RENDER_TARGET);
 }

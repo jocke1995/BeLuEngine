@@ -9,7 +9,6 @@
 #include "../RootSignature.h"
 #include "../PipelineState/GraphicsState.h"
 #include "../RenderView.h"
-#include "../SwapChain.h"
 
 // Model info
 #include "../Renderer/Model/Transform.h"
@@ -36,8 +35,8 @@ void OutliningRenderTask::Execute()
 {
 	ID3D12CommandAllocator* commandAllocator = m_pCommandInterface->GetCommandAllocator(m_CommandInterfaceIndex);
 	ID3D12GraphicsCommandList5* commandList = m_pCommandInterface->GetCommandList(m_CommandInterfaceIndex);
-	const RenderTargetView* swapChainRenderTarget = m_pSwapChain->GetRTV(m_BackBufferIndex);
-	ID3D12Resource1* swapChainResource = swapChainRenderTarget->GetResource()->GetID3D12Resource1();
+	const RenderTargetView* mainColorTargetRenderTarget = m_RenderTargetViews["mainColorTarget"];
+	ID3D12Resource1* mainColorTargetResource = mainColorTargetRenderTarget->GetResource()->GetID3D12Resource1();
 
 	m_pCommandInterface->Reset(m_CommandInterfaceIndex);
 
@@ -48,7 +47,8 @@ void OutliningRenderTask::Execute()
 	DescriptorHeap* renderTargetHeap = m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::RTV];
 	DescriptorHeap* depthBufferHeap = m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::DSV];
 
-	D3D12_CPU_DESCRIPTOR_HANDLE cdh = renderTargetHeap->GetCPUHeapAt(m_BackBufferIndex);
+	const unsigned int mainColorTargetIndex = mainColorTargetRenderTarget->GetDescriptorHeapIndex();
+	D3D12_CPU_DESCRIPTOR_HANDLE cdh = renderTargetHeap->GetCPUHeapAt(mainColorTargetIndex);
 	D3D12_CPU_DESCRIPTOR_HANDLE dsh = depthBufferHeap->GetCPUHeapAt(m_pDepthStencil->GetDSV()->GetDescriptorHeapIndex());
 
 	// Check if there is an object to outline
@@ -63,16 +63,10 @@ void OutliningRenderTask::Execute()
 	commandList->SetGraphicsRootSignature(m_pRootSig);
 	commandList->SetGraphicsRootDescriptorTable(RS::dtSRV, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
 
-	// Change state on front/backbuffer
-	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-		swapChainResource,
-		D3D12_RESOURCE_STATE_PRESENT,
-		D3D12_RESOURCE_STATE_RENDER_TARGET));
-
 	commandList->OMSetRenderTargets(1, &cdh, true, &dsh);
 
-	const D3D12_VIEWPORT* viewPort = swapChainRenderTarget->GetRenderView()->GetViewPort();
-	const D3D12_RECT* rect = swapChainRenderTarget->GetRenderView()->GetScissorRect();
+	const D3D12_VIEWPORT* viewPort = mainColorTargetRenderTarget->GetRenderView()->GetViewPort();
+	const D3D12_RECT* rect = mainColorTargetRenderTarget->GetRenderView()->GetScissorRect();
 	commandList->RSSetViewports(1, viewPort);
 	commandList->RSSetScissorRects(1, rect);
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -108,12 +102,6 @@ void OutliningRenderTask::Execute()
 		commandList->OMSetStencilRef(1);
 		commandList->DrawIndexedInstanced(num_Indices, 1, 0, 0, 0);
 	}
-
-	// Change state on front/backbuffer
-	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-		swapChainResource,
-		D3D12_RESOURCE_STATE_RENDER_TARGET,
-		D3D12_RESOURCE_STATE_PRESENT));
 
 	commandList->Close();
 }

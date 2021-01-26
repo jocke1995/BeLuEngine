@@ -9,7 +9,6 @@
 #include "../PipelineState/PipelineState.h"
 #include "../RenderView.h"
 #include "../RootSignature.h"
-#include "../SwapChain.h"
 
 // Model info
 #include "../Renderer/Model/Transform.h"
@@ -35,8 +34,8 @@ void TransparentRenderTask::Execute()
 {
 	ID3D12CommandAllocator* commandAllocator = m_pCommandInterface->GetCommandAllocator(m_CommandInterfaceIndex);
 	ID3D12GraphicsCommandList5* commandList = m_pCommandInterface->GetCommandList(m_CommandInterfaceIndex);
-	const RenderTargetView* swapChainRenderTarget = m_pSwapChain->GetRTV(m_BackBufferIndex);
-	ID3D12Resource1* swapChainResource = swapChainRenderTarget->GetResource()->GetID3D12Resource1();
+	const RenderTargetView* mainColorTargetRenderTarget = m_RenderTargetViews["mainColorTarget"];
+	ID3D12Resource1* mainColorTargetResource = mainColorTargetRenderTarget->GetResource()->GetID3D12Resource1();
 
 	m_pCommandInterface->Reset(m_CommandInterfaceIndex);
 
@@ -49,23 +48,17 @@ void TransparentRenderTask::Execute()
 	commandList->SetGraphicsRootDescriptorTable(RS::dtCBV, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
 	commandList->SetGraphicsRootDescriptorTable(RS::dtSRV, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
 
-	// Change state on front/backbuffer
-	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-		swapChainResource,
-		D3D12_RESOURCE_STATE_PRESENT,
-		D3D12_RESOURCE_STATE_RENDER_TARGET));
-
 	DescriptorHeap* renderTargetHeap = m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::RTV];
 	DescriptorHeap* depthBufferHeap  = m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::DSV];
 
-	unsigned int renderTargetIndex = m_pSwapChain->GetRTV(m_BackBufferIndex)->GetDescriptorHeapIndex();
+	unsigned int renderTargetIndex = mainColorTargetRenderTarget->GetDescriptorHeapIndex();
 	D3D12_CPU_DESCRIPTOR_HANDLE cdh = renderTargetHeap->GetCPUHeapAt(renderTargetIndex);
 	D3D12_CPU_DESCRIPTOR_HANDLE dsh = depthBufferHeap->GetCPUHeapAt(m_pDepthStencil->GetDSV()->GetDescriptorHeapIndex());
 
 	commandList->OMSetRenderTargets(1, &cdh, true, &dsh);
 
-	const D3D12_VIEWPORT* viewPort = swapChainRenderTarget->GetRenderView()->GetViewPort();
-	const D3D12_RECT* rect = swapChainRenderTarget->GetRenderView()->GetScissorRect();
+	const D3D12_VIEWPORT* viewPort = mainColorTargetRenderTarget->GetRenderView()->GetViewPort();
+	const D3D12_RECT* rect = mainColorTargetRenderTarget->GetRenderView()->GetScissorRect();
 	commandList->RSSetViewports(1, viewPort);
 	commandList->RSSetScissorRects(1, rect);
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -83,47 +76,32 @@ void TransparentRenderTask::Execute()
 		component::ModelComponent* mc = m_RenderComponents.at(i).first;
 		component::TransformComponent* tc = m_RenderComponents.at(i).second;
 
-		if (mc != nullptr)
+		// Draw for every m_pMesh the MeshComponent has
+		for (unsigned int j = 0; j < mc->GetNrOfMeshes(); j++)
 		{
-			// Draw for every m_pMesh the MeshComponent has
-			for (unsigned int j = 0; j < mc->GetNrOfMeshes(); j++)
+			Mesh* m = mc->GetMeshAt(j);
+			unsigned int num_Indices = m->GetNumIndices();
+			const SlotInfo* info = mc->GetSlotInfoAt(j);
+
+			Transform* transform = tc->GetTransform();
+
+			DirectX::XMMATRIX* WTransposed = transform->GetWorldMatrixTransposed();
+			DirectX::XMMATRIX WVPTransposed = (*viewProjMatTrans) * (*WTransposed);
+
+			// Create a CB_PER_OBJECT struct
+			CB_PER_OBJECT_STRUCT perObject = { *WTransposed, WVPTransposed , *info };
+
+			commandList->SetGraphicsRoot32BitConstants(RS::CB_PER_OBJECT_CONSTANTS, sizeof(CB_PER_OBJECT_STRUCT) / sizeof(UINT), &perObject, 0);
+
+			commandList->IASetIndexBuffer(mc->GetMeshAt(j)->GetIndexBufferView());
+			// Draw each object twice with different PSO 
+			for (int k = 0; k < 2; k++)
 			{
-				Mesh* m = mc->GetMeshAt(j);
-				unsigned int num_Indices = m->GetNumIndices();
-				const SlotInfo* info = mc->GetSlotInfoAt(j);
-
-				Transform* transform = tc->GetTransform();
-
-				DirectX::XMMATRIX* WTransposed = transform->GetWorldMatrixTransposed();
-				DirectX::XMMATRIX WVPTransposed = (*viewProjMatTrans) * (*WTransposed);
-
-				// Create a CB_PER_OBJECT struct
-				CB_PER_OBJECT_STRUCT perObject = { *WTransposed, WVPTransposed , *info };
-
-				commandList->SetGraphicsRoot32BitConstants(RS::CB_PER_OBJECT_CONSTANTS, sizeof(CB_PER_OBJECT_STRUCT) / sizeof(UINT), &perObject, 0);
-
-				commandList->IASetIndexBuffer(mc->GetMeshAt(j)->GetIndexBufferView());
-				// Draw each object twice with different PSO 
-				for (int k = 0; k < 2; k++)
-				{
-					commandList->SetPipelineState(m_PipelineStates[k]->GetPSO());
-					commandList->DrawIndexedInstanced(num_Indices, 1, 0, 0, 0);
-				}
+				commandList->SetPipelineState(m_PipelineStates[k]->GetPSO());
+				commandList->DrawIndexedInstanced(num_Indices, 1, 0, 0, 0);
 			}
 		}
-		// It's a particleEffect (This is pretty hardcoded to make stuff work)
-		else
-		{
-			// handeled by ParticleRenderTask
-		}
-			
 	}
-	
-	// Change state on front/backbuffer
-	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-		swapChainResource,
-		D3D12_RESOURCE_STATE_RENDER_TARGET,
-		D3D12_RESOURCE_STATE_PRESENT));
 
 	commandList->Close();
 }

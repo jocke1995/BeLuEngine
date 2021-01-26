@@ -4,6 +4,8 @@
 #include "RenderTask.h"
 class Mesh;
 
+class ShaderResourceView;
+
 class MergeRenderTask : public RenderTask
 {
 public:
@@ -16,14 +18,14 @@ public:
 		unsigned int FLAG_THREAD);
 	virtual ~MergeRenderTask();
 	
-	void AddSRVIndexToMerge(unsigned int srvIndex);
+	void AddSRVToMerge(const ShaderResourceView* srvToMerge);
 	void SetFullScreenQuad(Mesh* mesh);
 	void CreateSlotInfo();
 
 	void Execute() override final;
 private:
 	Mesh* m_pFullScreenQuadMesh = nullptr;
-	std::vector<unsigned int> m_SRVIndices;
+	std::vector<const ShaderResourceView*> m_SRVs;
 
 	SlotInfo m_Info;
 	unsigned int m_NumIndices;

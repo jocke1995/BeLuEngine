@@ -1,8 +1,12 @@
 #include "stdafx.h"
 #include "CommandInterface.h"
 
-CommandInterface::CommandInterface(ID3D12Device5* device, COMMAND_INTERFACE_TYPE interfaceType)
+CommandInterface::CommandInterface(
+	ID3D12Device5* device,
+	COMMAND_INTERFACE_TYPE interfaceType,
+	const std::wstring& clName)
 {
+	m_Name = clName;
 	createCommandInterfaces(device, interfaceType);
 }
 
@@ -66,6 +70,8 @@ void CommandInterface::createCommandInterfaces(ID3D12Device5* device, COMMAND_IN
 			nullptr,
 			IID_PPV_ARGS(&m_pCommandLists[i]));
 
+		m_pCommandAllocators[i]->SetName((m_Name + L"_CmdList").c_str());
+		m_pCommandLists[i]->SetName((m_Name + L"_CmdList").c_str());
 		if (FAILED(hr))
 		{
 			Log::PrintSeverity(Log::Severity::CRITICAL, "Failed to Create CommandList\n");

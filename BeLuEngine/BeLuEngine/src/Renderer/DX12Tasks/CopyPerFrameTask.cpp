@@ -4,8 +4,12 @@
 // DX12 Specifics
 #include "../CommandInterface.h"
 
-CopyPerFrameTask::CopyPerFrameTask(ID3D12Device5* device, COMMAND_INTERFACE_TYPE interfaceType, unsigned int FLAG_THREAD)
-	:CopyTask(device, interfaceType, FLAG_THREAD)
+CopyPerFrameTask::CopyPerFrameTask(
+	ID3D12Device5* device,
+	COMMAND_INTERFACE_TYPE interfaceType,
+	unsigned int FLAG_THREAD,
+	const std::wstring& clName)
+	:CopyTask(device, interfaceType, FLAG_THREAD, clName)
 {
 
 }

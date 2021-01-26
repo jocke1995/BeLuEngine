@@ -8,7 +8,6 @@
 #include "../PipelineState/PipelineState.h"
 #include "../RenderView.h"
 #include "../RootSignature.h"
-#include "../SwapChain.h"
 
 // Model info
 #include "../Model/Mesh.h"
@@ -86,8 +85,19 @@ void DownSampleRenderTask::Execute()
 
 	commandList->IASetIndexBuffer(m_pFullScreenQuadMesh->GetIndexBufferView());
 
-	// Draw a fullscreen quad 
+
+	m_pSourceSRV->GetResource()->TransResourceState(
+		commandList,
+		D3D12_RESOURCE_STATE_RENDER_TARGET,
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
+	// Draw a fullscreen quad
 	commandList->DrawIndexedInstanced(m_NumIndices, 1, 0, 0, 0);
+
+	m_pSourceSRV->GetResource()->TransResourceState(
+		commandList,
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+		D3D12_RESOURCE_STATE_RENDER_TARGET);
 
 	commandList->Close();
 }

@@ -8,7 +8,11 @@ class Mesh;
 class CopyOnDemandTask : public CopyTask
 {
 public:
-	CopyOnDemandTask(ID3D12Device5* device, COMMAND_INTERFACE_TYPE interfaceType, unsigned int FLAG_THREAD);
+	CopyOnDemandTask(
+		ID3D12Device5* device,
+		COMMAND_INTERFACE_TYPE interfaceType,
+		unsigned int FLAG_THREAD,
+		const std::wstring& clName);
 	virtual ~CopyOnDemandTask();
 
 	void SubmitTexture(Texture* texture);

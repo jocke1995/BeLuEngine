@@ -39,6 +39,13 @@ public:
     ID3D12Resource1** GetID3D12Resource1PP();
     D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAdress() const;
 
+    void TransResourceState(
+        ID3D12GraphicsCommandList5* cl,
+        D3D12_RESOURCE_STATES stateBefore,
+        D3D12_RESOURCE_STATES stateAfter);
+
+    D3D12_RESOURCE_STATES GetCurrentState() const;
+
     // Only to be used if the resource is of type: UPLOAD
     void SetData(const void* data, unsigned int subResourceIndex = 0) const;
 protected:
@@ -49,6 +56,7 @@ protected:
     RESOURCE_TYPE m_Type;
     ID3D12Resource1* m_pResource = nullptr;
     D3D12_HEAP_PROPERTIES m_HeapProperties = {};
+    D3D12_RESOURCE_STATES m_CurrResourceState = D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON;
 
     void setupHeapProperties(D3D12_HEAP_TYPE heapType);
     void createResource(

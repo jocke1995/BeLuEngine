@@ -8,7 +8,6 @@ class Window;
 // Renderer Engine
 class RootSignature;
 class SwapChain;
-class RenderTargetView;
 class ViewPool;
 class BoundingBoxPool;
 class DescriptorHeap;
@@ -22,7 +21,15 @@ class ConstantBuffer;
 class ShaderResource;
 class UnorderedAccess;
 class DepthStencil;
+class RenderTarget;
 class Resource;
+
+// Descriptors
+class RenderTargetView;
+class ShaderResourceView;
+class UnorderedAccessView;
+class ConstantBufferView;
+class DepthStencilView;
 
 // Enums
 enum COMMAND_INTERFACE_TYPE;
@@ -148,7 +155,9 @@ private:
 	// CommandQueues
 	std::map<COMMAND_INTERFACE_TYPE, ID3D12CommandQueue*> m_CommandQueues;
 
-	// RenderTargets
+	// -------------- RenderTargets -------------- 
+	std::pair<RenderTarget*, ShaderResourceView*> m_pMainColorBuffer;
+
 	// Swapchain (inheriting from 'RenderTarget')
 	SwapChain* m_pSwapChain = nullptr;
 	
@@ -157,6 +166,7 @@ private:
 
 	// Depthbuffer
 	DepthStencil* m_pMainDepthStencil = nullptr;
+	// -------------- RenderTargets -------------- 
 
 	// Rootsignature
 	RootSignature* m_pRootSignature = nullptr;

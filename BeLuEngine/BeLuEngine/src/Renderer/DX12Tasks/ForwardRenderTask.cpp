@@ -9,7 +9,6 @@
 #include "../PipelineState/PipelineState.h"
 #include "../RenderView.h"
 #include "../RootSignature.h"
-#include "../SwapChain.h"
 
 // Model info
 #include "../Renderer/Model/Transform.h"
@@ -35,8 +34,9 @@ void ForwardRenderTask::Execute()
 {
 	ID3D12CommandAllocator* commandAllocator = m_pCommandInterface->GetCommandAllocator(m_CommandInterfaceIndex);
 	ID3D12GraphicsCommandList5* commandList = m_pCommandInterface->GetCommandList(m_CommandInterfaceIndex);
-	const RenderTargetView* swapChainRenderTarget = m_pSwapChain->GetRTV(m_BackBufferIndex);
-	ID3D12Resource1* swapChainResource = swapChainRenderTarget->GetResource()->GetID3D12Resource1();
+
+	const RenderTargetView* mainColorRenderTarget = m_RenderTargetViews["mainColorTarget"];
+	ID3D12Resource1* mainColorTargetResource = mainColorRenderTarget->GetResource()->GetID3D12Resource1();
 
 	m_pCommandInterface->Reset(m_CommandInterfaceIndex);
 
@@ -49,21 +49,15 @@ void ForwardRenderTask::Execute()
 	commandList->SetGraphicsRootDescriptorTable(RS::dtCBV, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
 	commandList->SetGraphicsRootDescriptorTable(RS::dtSRV, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
 
-	// Change state on front/backbuffer
-	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-		swapChainResource,
-		D3D12_RESOURCE_STATE_PRESENT,
-		D3D12_RESOURCE_STATE_RENDER_TARGET));
-
 	DescriptorHeap* renderTargetHeap = m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::RTV];
 	DescriptorHeap* depthBufferHeap  = m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::DSV];
 
 	// RenderTargets
-	const unsigned int swapChainIndex = swapChainRenderTarget->GetDescriptorHeapIndex();
+	const unsigned int mainColorTargetIndex = mainColorRenderTarget->GetDescriptorHeapIndex();
 	const unsigned int brightTargetIndex = m_RenderTargetViews["brightTarget"]->GetDescriptorHeapIndex();
-	D3D12_CPU_DESCRIPTOR_HANDLE cdhSwapChain = renderTargetHeap->GetCPUHeapAt(swapChainIndex);
+	D3D12_CPU_DESCRIPTOR_HANDLE cdhMainColorTarget = renderTargetHeap->GetCPUHeapAt(mainColorTargetIndex);
 	D3D12_CPU_DESCRIPTOR_HANDLE cdhBrightTarget = renderTargetHeap->GetCPUHeapAt(brightTargetIndex);
-	D3D12_CPU_DESCRIPTOR_HANDLE cdhs[] = { cdhSwapChain, cdhBrightTarget };
+	D3D12_CPU_DESCRIPTOR_HANDLE cdhs[] = { cdhMainColorTarget, cdhBrightTarget };
 
 	// Depth
 	D3D12_CPU_DESCRIPTOR_HANDLE dsh = depthBufferHeap->GetCPUHeapAt(m_pDepthStencil->GetDSV()->GetDescriptorHeapIndex());
@@ -71,18 +65,17 @@ void ForwardRenderTask::Execute()
 	commandList->OMSetRenderTargets(2, cdhs, false, &dsh);
 
 	float clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-	commandList->ClearRenderTargetView(cdhSwapChain, clearColor, 0, nullptr);
+	commandList->ClearRenderTargetView(cdhMainColorTarget, clearColor, 0, nullptr);
 	commandList->ClearRenderTargetView(cdhBrightTarget, clearColor, 0, nullptr);
 
-	const D3D12_VIEWPORT viewPortSwapChain = *swapChainRenderTarget->GetRenderView()->GetViewPort();
+	const D3D12_VIEWPORT viewPortMainColorTarget = *mainColorRenderTarget->GetRenderView()->GetViewPort();
 	const D3D12_VIEWPORT viewPortBrightTarget = *m_RenderTargetViews["brightTarget"]->GetRenderView()->GetViewPort();
-	const D3D12_VIEWPORT viewPorts[2] = { viewPortSwapChain, viewPortBrightTarget };
+	const D3D12_VIEWPORT viewPorts[2] = { viewPortMainColorTarget, viewPortBrightTarget };
 
-	const D3D12_RECT rectSwapChain = *swapChainRenderTarget->GetRenderView()->GetScissorRect();
+	const D3D12_RECT rectMainColorTarget = *mainColorRenderTarget->GetRenderView()->GetScissorRect();
 	const D3D12_RECT rectBrightTarget = *m_RenderTargetViews["brightTarget"]->GetRenderView()->GetScissorRect();
-	const D3D12_RECT rects[2] = { rectSwapChain, rectBrightTarget };
+	const D3D12_RECT rects[2] = { rectMainColorTarget, rectBrightTarget };
 
-	const D3D12_RECT* rect = swapChainRenderTarget->GetRenderView()->GetScissorRect();
 	commandList->RSSetViewports(2, viewPorts);
 	commandList->RSSetScissorRects(2, rects);
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -122,12 +115,6 @@ void ForwardRenderTask::Execute()
 		commandList->OMSetStencilRef(1);
 		drawRenderComponent(outlinedModel.first, outlinedModel.second, viewProjMatTrans, commandList);
 	}
-
-	// Change state on front/backbuffer
-	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-		swapChainResource,
-		D3D12_RESOURCE_STATE_RENDER_TARGET,
-		D3D12_RESOURCE_STATE_PRESENT));
 
 	commandList->Close();
 }

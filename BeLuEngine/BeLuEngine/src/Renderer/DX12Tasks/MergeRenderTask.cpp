@@ -30,9 +30,9 @@ MergeRenderTask::~MergeRenderTask()
 {
 }
 
-void MergeRenderTask::AddSRVIndexToMerge(unsigned int srvIndex)
+void MergeRenderTask::AddSRVToMerge(const ShaderResourceView* srvToMerge)
 {
-	m_SRVIndices.push_back(srvIndex);
+	m_SRVs.push_back(srvToMerge);
 }
 
 void MergeRenderTask::SetFullScreenQuad(Mesh* mesh)
@@ -48,7 +48,8 @@ void MergeRenderTask::CreateSlotInfo()
 
 	// Textures
 	// The descriptorHeapIndices for the SRVs are currently put inside the textureSlots inside SlotInfo
-	m_Info.textureAlbedo = m_SRVIndices[0];	// Blurred srv
+	m_Info.textureAlbedo = m_SRVs[0]->GetDescriptorHeapIndex();	// Blurred srv
+	m_Info.textureMetallic = m_SRVs[1]->GetDescriptorHeapIndex();	// Main color buffer
 }
 
 void MergeRenderTask::Execute()
@@ -76,10 +77,16 @@ void MergeRenderTask::Execute()
 	commandList->SetGraphicsRootDescriptorTable(RS::dtSRV, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
 
 	// Change state on front/backbuffer
-	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-		swapChainResource,
+	swapChainRenderTarget->GetResource()->TransResourceState(
+		commandList,
 		D3D12_RESOURCE_STATE_PRESENT,
-		D3D12_RESOURCE_STATE_RENDER_TARGET));
+		D3D12_RESOURCE_STATE_RENDER_TARGET);
+
+	// Change state on mainColorBuffer
+	m_SRVs[1]->GetResource()->TransResourceState(
+		commandList,
+		D3D12_RESOURCE_STATE_RENDER_TARGET,
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 	commandList->OMSetRenderTargets(1, &cdh, true, nullptr);
 
@@ -92,9 +99,6 @@ void MergeRenderTask::Execute()
 	commandList->SetPipelineState(m_PipelineStates[0]->GetPSO());
 
 	// Draw a fullscreen quad 
-	// The descriptorHeapIndices for the SRVs are currently put inside the textureSlots inside SlotInfo
-	m_Info.textureMetallic = m_pSwapChain->GetSRV(m_BackBufferIndex)->GetDescriptorHeapIndex();
-
 	DirectX::XMMATRIX identityMatrix = DirectX::XMMatrixIdentity();
 
 	// Create a CB_PER_OBJECT struct
@@ -106,11 +110,23 @@ void MergeRenderTask::Execute()
 
 	commandList->DrawIndexedInstanced(m_NumIndices, 1, 0, 0, 0);
 
+	// Change state on bloomBuffer for next frame
+	m_SRVs[0]->GetResource()->TransResourceState(
+		commandList,
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+		D3D12_RESOURCE_STATE_RENDER_TARGET);
+
+	// Change state on mainColorBuffer
+	m_SRVs[1]->GetResource()->TransResourceState(
+		commandList,
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+		D3D12_RESOURCE_STATE_RENDER_TARGET);
+
 	// Change state on front/backbuffer
-	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-		swapChainResource,
+	swapChainRenderTarget->GetResource()->TransResourceState(
+		commandList,
 		D3D12_RESOURCE_STATE_RENDER_TARGET,
-		D3D12_RESOURCE_STATE_PRESENT));
+		D3D12_RESOURCE_STATE_PRESENT);
 
 	commandList->Close();
 }

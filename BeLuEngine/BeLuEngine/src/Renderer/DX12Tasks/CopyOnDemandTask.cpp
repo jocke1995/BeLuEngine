@@ -10,8 +10,12 @@
 #include "../Texture/Texture.h"
 #include "../Texture/TextureCubeMap.h"
 
-CopyOnDemandTask::CopyOnDemandTask(ID3D12Device5* device, COMMAND_INTERFACE_TYPE interfaceType, unsigned int FLAG_THREAD)
-	:CopyTask(device, interfaceType, FLAG_THREAD)
+CopyOnDemandTask::CopyOnDemandTask(
+	ID3D12Device5* device,
+	COMMAND_INTERFACE_TYPE interfaceType,
+	unsigned int FLAG_THREAD,
+	const std::wstring& clName)
+	:CopyTask(device, interfaceType, FLAG_THREAD, clName)
 {
 
 }
@@ -60,12 +64,12 @@ void CopyOnDemandTask::Execute()
 void CopyOnDemandTask::copyTexture(ID3D12GraphicsCommandList5* commandList, Texture* texture)
 {
 	ID3D12Resource* defaultHeap = texture->m_pDefaultResource->GetID3D12Resource1();
-	ID3D12Resource* uploadHeap = texture->m_pUploadResource->GetID3D12Resource1();
+	ID3D12Resource* uploadHeap  = texture->m_pUploadResource->GetID3D12Resource1();
 
-	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-		defaultHeap,
+	texture->m_pDefaultResource->TransResourceState(
+		commandList,
 		D3D12_RESOURCE_STATE_COMMON,
-		D3D12_RESOURCE_STATE_COPY_DEST));
+		D3D12_RESOURCE_STATE_COPY_DEST);
 
 	// Transfer the data
 	UpdateSubresources(commandList,
@@ -73,8 +77,8 @@ void CopyOnDemandTask::copyTexture(ID3D12GraphicsCommandList5* commandList, Text
 		0, 0, static_cast<unsigned int>(texture->m_SubresourceData.size()),
 		texture->m_SubresourceData.data());
 
-	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-		defaultHeap,
+	texture->m_pDefaultResource->TransResourceState(
+		commandList,
 		D3D12_RESOURCE_STATE_COPY_DEST,
-		D3D12_RESOURCE_STATE_COMMON));
+		D3D12_RESOURCE_STATE_COMMON);
 }

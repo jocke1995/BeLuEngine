@@ -45,7 +45,11 @@ enum COPY_TASK_TYPE
 class DX12Task : public MultiThreadedTask
 {
 public:
-	DX12Task(ID3D12Device5* device, COMMAND_INTERFACE_TYPE interfaceType, unsigned int FLAG_THREAD);
+	DX12Task(
+		ID3D12Device5* device,
+		COMMAND_INTERFACE_TYPE interfaceType,
+		unsigned int FLAG_THREAD,
+		const std::wstring& clName);
 	virtual ~DX12Task();
 
 	static void SetBackBufferIndex(int backBufferIndex);
@@ -62,8 +66,6 @@ protected:
 	CommandInterface* m_pCommandInterface = nullptr;
 	inline static int m_BackBufferIndex = -1;
 	inline static int m_CommandInterfaceIndex = -1;
-
-	void TransResourceState(ID3D12GraphicsCommandList5* cl, Resource* resource, D3D12_RESOURCE_STATES stateBefore, D3D12_RESOURCE_STATES stateAfter);
 };
 
 #endif
