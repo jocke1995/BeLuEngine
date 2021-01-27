@@ -1,7 +1,7 @@
 workspace "BeLuEngineProject"
     architecture "x64"
     configurations { "Debug", "Release" }
-    startproject "Game"
+    startproject "Sandbox"
     systemversion "latest"
     
 project "BeLuEngine"
