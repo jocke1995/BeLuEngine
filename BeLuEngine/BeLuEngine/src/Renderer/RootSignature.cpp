@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "RootSignature.h"
 
+#include "../Misc/Log.h"
+
 #include "d3dx12.h"
 
 RootSignature::RootSignature(ID3D12Device5* device)
@@ -15,7 +17,7 @@ RootSignature::RootSignature(ID3D12Device5* device)
 
 	if(FAILED(hr))
 	{
-		Log::PrintSeverity(Log::Severity::CRITICAL, "Failed to create RootSignature\n");
+		BL_LOG_CRITICAL("Failed to create RootSignature\n");
 	}
 }
 
@@ -197,9 +199,9 @@ void RootSignature::createRootSignatureStructure()
 
 	if (FAILED(hr) && errorMessages)
 	{
-		Log::PrintSeverity(Log::Severity::CRITICAL, "Failed to Serialize RootSignature\n");
+		BL_LOG_CRITICAL("Failed to Serialize RootSignature\n");
 
 		const char* errorMsg = static_cast<const char*>(errorMessages->GetBufferPointer());
-		Log::PrintSeverity(Log::Severity::CRITICAL, "%s\n", errorMsg);
+		BL_LOG_CRITICAL("%s\n", errorMsg);
 	}
 }

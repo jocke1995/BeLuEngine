@@ -4,6 +4,7 @@
 // Miscellaneous
 #include "Misc/Window.h"
 #include "Misc/Timer.h"
+#include "Misc/Log.h"
 #include "Misc/MultiThreading/ThreadPool.h"
 #include "Misc/AssetLoader.h"
 

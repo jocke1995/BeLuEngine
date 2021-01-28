@@ -2,6 +2,8 @@
 #include "stdafx.h"
 #include "AssetLoader.h"
 
+#include "../Misc/Log.h"
+
 #include "../ECS/Scene.h"
 #include "../ECS/Entity.h"
 
@@ -141,7 +143,7 @@ Model* AssetLoader::LoadModel(const std::wstring& path)
 
 	if (assimpScene == nullptr)
 	{
-		Log::PrintSeverity(Log::Severity::CRITICAL, "Failed to load model with path: \'%S\'\n", path.c_str());
+		BL_LOG_CRITICAL("Failed to load model with path: \'%S\'\n", path.c_str());
 		return nullptr;
 	}
 
@@ -252,7 +254,7 @@ void AssetLoader::processMeshData(const aiScene* assimpScene, const aiMesh* assi
 		}
 		else
 		{
-			Log::PrintSeverity(Log::Severity::CRITICAL, "Mesh has no positions\n");
+			BL_LOG_CRITICAL("Mesh has no positions\n");
 		}
 
 		// Get Normals
@@ -264,7 +266,7 @@ void AssetLoader::processMeshData(const aiScene* assimpScene, const aiMesh* assi
 		}
 		else
 		{
-			Log::PrintSeverity(Log::Severity::CRITICAL, "Mesh has no normals\n");
+			BL_LOG_CRITICAL("Mesh has no normals\n");
 		}
 
 		// Get tangents
@@ -276,7 +278,7 @@ void AssetLoader::processMeshData(const aiScene* assimpScene, const aiMesh* assi
 		}
 		else
 		{
-			Log::PrintSeverity(Log::Severity::CRITICAL, "Mesh has no tangents\n");
+			BL_LOG_CRITICAL("Mesh has no tangents\n");
 		}
 
 		// Get texture coordinates if there are any
@@ -287,7 +289,7 @@ void AssetLoader::processMeshData(const aiScene* assimpScene, const aiMesh* assi
 		}
 		else
 		{
-			Log::PrintSeverity(Log::Severity::CRITICAL, "Mesh has no textureCoords\n");
+			BL_LOG_CRITICAL("Mesh has no textureCoords\n");
 		}
 
 		vertices->push_back(vTemp);
@@ -426,7 +428,7 @@ Texture* AssetLoader::processTexture(aiMaterial* mat, TEXTURE2D_TYPE texture_typ
 		{
 			std::string tempString = std::string(filePathWithoutTexture.begin(), filePathWithoutTexture.end());
 			// No texture, warn and apply default Texture
-			Log::PrintSeverity(Log::Severity::WARNING, "Applying default texture: " + warningMessageTextureType +
+			BL_LOG_WARNING("Applying default texture: " + warningMessageTextureType +
 				" on mesh with path: \'%s\'\n", tempString.c_str());
 		}
 

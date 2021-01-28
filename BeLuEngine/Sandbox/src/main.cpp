@@ -1,5 +1,4 @@
 #include "BeLuEngine.h"
-#include "Misc/Multithreading/MultiThreadedTask.h"
 #include <cstdlib>
 
 Scene* TestScene(SceneManager* sm);
@@ -23,71 +22,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
     SceneManager* const sceneManager = engine.GetSceneHandler();
     Renderer* const renderer = engine.GetRenderer();
 
-  //  unsigned int numPrintClasses1 = 600000;
-  //  unsigned int numPrintClasses2 = 60000;
-  // std::vector<PrintClass*> printClasses;
-  // //printClasses.reserve(50000);
-  // std::vector<PrintClass2*> printClasses2;
-  // //printClasses2.reserve(1000);
-  // for (unsigned int i = 0; i < numPrintClasses1; i++)
-  // {
-  //     printClasses.push_back(new PrintClass());
-  // }
-  // 
-  // for (unsigned int i = 0; i < numPrintClasses2; i++)
-  // {
-  //     printClasses2.push_back(new PrintClass2());
-  // }
-  // 
-  // timer->StartTimer();
-  // for (unsigned int i = 0; i < numPrintClasses1; i++)
-  // {
-  //     srand(time(NULL));
-  //     threadPool->AddTask(printClasses[i]);
-  //     //printClasses[i]->Execute();
-  // }
-  // 
-  // for (unsigned int i = 0; i < numPrintClasses2; i++)
-  // {
-  //     srand(time(NULL));
-  //     threadPool->AddTask(printClasses2[i]);
-  //     //printClasses[i]->Execute();
-  // }
-  // 
-  // threadPool->WaitForThreads(FLAG_THREAD::TEST);
-  // 
-  // Log::Print(" -------------------- NO MORE FIRST RESULT -------------------------------\n");
-  // Log::Print(" -------------------- NO MORE FIRST RESULT -------------------------------\n");
-  // Log::Print(" -------------------- NO MORE FIRST RESULT -------------------------------\n");
-  // Log::Print(" -------------------- NO MORE FIRST RESULT -------------------------------\n");
-  // Log::Print(" -------------------- NO MORE FIRST RESULT -------------------------------\n");
-  // Log::Print(" -------------------- NO MORE FIRST RESULT -------------------------------\n");
-  // Log::Print(" -------------------- NO MORE FIRST RESULT -------------------------------\n");
-  // 
-  // threadPool->WaitForThreads(FLAG_THREAD::TEST2);
-  // 
-  // double time = timer->StopTimer();
-  // 
-  // Log::Print("Total time: %f\n", time);
-  // 
-  // for (unsigned int i = 0; i < numPrintClasses1; i++)
-  // {
-  //     delete printClasses[i];
-  // }
-  // 
-  // for (unsigned int i = 0; i < numPrintClasses2; i++)
-  // {
-  //     delete printClasses2[i];
-  // }
-
     /*------ AssetLoader to load models / textures ------*/
    AssetLoader* al = AssetLoader::Get();
    
    Scene* scene = SponzaScene(sceneManager);
    //Scene* scene = TestScene(sceneManager);
-   
-   
-   
+
    // Set scene
    sceneManager->SetScene(scene);
    

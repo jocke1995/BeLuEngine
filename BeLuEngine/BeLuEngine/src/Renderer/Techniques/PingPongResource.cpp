@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "PingPongResource.h"
 
+#include "../Misc/Log.h"
+
 #include "../GPUMemory/GPUMemory.h"
 
 PingPongResource::PingPongResource(
@@ -54,6 +56,6 @@ void PingPongResource::CreateRTV(ID3D12Device5* device, unsigned int width, unsi
 	}
 	else
 	{
-		Log::PrintSeverity(Log::Severity::WARNING, "Trying to CreateRTV in 'PingPongResource' when it already exists\n");
+		BL_LOG_WARNING("Trying to CreateRTV in 'PingPongResource' when it already exists\n");
 	}
 }

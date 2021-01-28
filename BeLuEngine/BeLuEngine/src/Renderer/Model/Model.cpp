@@ -2,6 +2,9 @@
 #include "GPU_Structs.h"
 #include "Model.h"
 
+#include "../Misc/Log.h"
+
+
 #include "Mesh.h"
 #include "Material.h"
 #include "../Texture/Texture2D.h"
@@ -76,7 +79,7 @@ void Model::updateSlotInfo()
 #ifdef DEBUG
 	if (m_Meshes[0]->m_pSRV == nullptr || m_Materials[0]->GetTexture(TEXTURE2D_TYPE::ALBEDO)->m_pSRV == nullptr)
 	{
-		Log::PrintSeverity(Log::Severity::CRITICAL, "Model.cpp::updateSlotInfo got unInit:ed variables\n");
+		BL_LOG_CRITICAL("Model.cpp::updateSlotInfo got unInit:ed variables\n");
 	}
 #endif // DEBUG
 

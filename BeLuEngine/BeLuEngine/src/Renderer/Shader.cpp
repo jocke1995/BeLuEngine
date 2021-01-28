@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "Shader.h"
 
+#include "../Misc/Log.h"
+
 Shader::Shader(LPCTSTR path, ShaderType type)
 {
 	m_Path = path;
@@ -67,13 +69,13 @@ void Shader::compileShader()
 
 	if (m_pBlob == nullptr)
 	{
-		Log::PrintSeverity(Log::Severity::CRITICAL, "blob is nullptr when loading shader with path: %S\n", m_Path);
+		BL_LOG_CRITICAL("blob is nullptr when loading shader with path: %S\n", m_Path);
 	}
 
 	if (FAILED(hr) && errorMessages)
 	{
 		const char* errorMsg = (const char*)errorMessages->GetBufferPointer();
 
-		Log::PrintSeverity(Log::Severity::CRITICAL, "%s\n", errorMsg);
+		BL_LOG_CRITICAL("%s\n", errorMsg);
 	}
 }

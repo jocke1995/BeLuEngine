@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "ComputeState.h"
 
+#include "../Misc/Log.h"
+
 #include "../RootSignature.h"
 #include "../Shader.h"
 
@@ -22,7 +24,7 @@ ComputeState::ComputeState(ID3D12Device5* device, RootSignature* rootSignature, 
 	m_pPSO->SetName(psoName.c_str());
 	if (!SUCCEEDED(hr))
 	{
-		Log::PrintSeverity(Log::Severity::CRITICAL, "Failed to create %S\n", psoName);
+		BL_LOG_CRITICAL("Failed to create %S\n", psoName);
 	}
 }
 
@@ -43,11 +45,11 @@ Shader* ComputeState::GetShader(ShaderType type) const
 	}
 	else if (type == ShaderType::VS)
 	{
-		Log::PrintSeverity(Log::Severity::CRITICAL, "There is no vertexShader in \'%S\'\n", m_PsoName);
+		BL_LOG_CRITICAL("There is no vertexShader in \'%S\'\n", m_PsoName);
 	}
 	else if (type == ShaderType::PS)
 	{
-		Log::PrintSeverity(Log::Severity::CRITICAL, "There is no pixelShader in \'%S\'\n", m_PsoName);
+		BL_LOG_CRITICAL("There is no pixelShader in \'%S\'\n", m_PsoName);
 	}
 
 	return nullptr;

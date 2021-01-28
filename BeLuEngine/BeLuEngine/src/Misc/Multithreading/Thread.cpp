@@ -2,6 +2,7 @@
 #include "Thread.h"
 #include "MultiThreadedTask.h"
 #include "../Misc/Timer.h"
+#include "../Misc/Log.h"
 
 unsigned int __stdcall Thread::threadFunc(void* threadParam)
 {
@@ -67,7 +68,7 @@ Thread::Thread(
 	// Set Thread Priority
 	if (SetThreadPriority(m_ThreadHandle, THREAD_PRIORITY_TIME_CRITICAL) == false)
 	{
-		Log::PrintSeverity(Log::Severity::CRITICAL, "Failed to 'SetThreadPriority' belonging to a thread with id: %d\n", m_ThreadId);
+		BL_LOG_CRITICAL("Failed to 'SetThreadPriority' belonging to a thread with id: %d\n", m_ThreadId);
 	}
 }
 
@@ -75,6 +76,6 @@ Thread::~Thread()
 {
 	if (CloseHandle(m_ThreadHandle) == false)
 	{
-		Log::PrintSeverity(Log::Severity::WARNING, "Failed to 'CloseHandle' belonging to a thread with id: %d\n", m_ThreadId);
+		BL_LOG_WARNING("Failed to 'CloseHandle' belonging to a thread with id: %d\n", m_ThreadId);
 	}
 }

@@ -31,7 +31,7 @@ void BeLuEngine::Init(HINSTANCE hInstance, int nCmdShow)
 	int numThreads = std::thread::hardware_concurrency();
 	if (numThreads == 0) // function not supported
 	{
-		Log::PrintSeverity(Log::Severity::WARNING, "Only 1 core on CPU, might be very laggy!\n");
+		BL_LOG_WARNING("Only 1 core on CPU, might be very laggy!\n");
 		numThreads = 1;
 	}
 

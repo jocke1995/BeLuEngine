@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "Texture2DGUI.h"
 
+#include "../Misc/Log.h"
+
 #include "../GPUMemory/Resource.h"
 #include "../CommandInterface.h"
 #include "../GPUMemory/ShaderResourceView.h"
@@ -25,7 +27,7 @@ bool Texture2DGUI::Init(ID3D12Device5* device, DescriptorHeap* descriptorHeap)
 	unsigned int byteSize = LoadImageDataFromFile(&m_pImageData, &m_ResourceDescription, m_FilePath, &m_ImageBytesPerRow);
 	if (byteSize == 0)
 	{
-		Log::PrintSeverity(Log::Severity::CRITICAL, "Failed to create texture: \'%s\'.\n", to_string(m_FilePath).c_str());
+		BL_LOG_CRITICAL("Failed to create texture: \'%s\'.\n", to_string(m_FilePath).c_str());
 		return false;
 	}
 	

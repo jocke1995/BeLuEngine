@@ -2,8 +2,9 @@
 #include "Renderer.h"
 
 // Misc
-#include "../Misc/MultiThreading/ThreadPool.h"
 #include "../Misc/AssetLoader.h"
+#include "../Misc/Log.h"
+#include "../Misc/MultiThreading/ThreadPool.h"
 #include "../Misc/MultiThreading/Thread.h"
 #include "../Misc/Window.h"
 
@@ -136,7 +137,7 @@ void Renderer::InitD3D12(Window *window, HINSTANCE hInstance, ThreadPool* thread
 	// Create Device
 	if (!createDevice())
 	{
-		Log::PrintSeverity(Log::Severity::CRITICAL, "Failed to Create Device\n");
+		BL_LOG_CRITICAL("Failed to Create Device\n");
 	}
 
 	// Create CommandQueues (copy, compute and direct)
@@ -391,7 +392,7 @@ void Renderer::Execute()
 #ifdef DEBUG
 	if (FAILED(hr))
 	{
-		Log::PrintSeverity(Log::Severity::CRITICAL, "Swapchain Failed to present\n");
+		BL_LOG_CRITICAL("Swapchain Failed to present\n");
 	}
 #endif
 }
@@ -484,7 +485,7 @@ void Renderer::SingleThreadedExecute()
 #ifdef DEBUG
 	if (FAILED(hr))
 	{
-		Log::PrintSeverity(Log::Severity::CRITICAL, "Swapchain Failed to present\n");
+		BL_LOG_CRITICAL("Swapchain Failed to present\n");
 	}
 #endif
 }
@@ -714,7 +715,7 @@ void Renderer::InitBoundingBoxComponent(component::BoundingBoxComponent* compone
 
 			if (mesh == nullptr)
 			{
-				Log::PrintSeverity(Log::Severity::WARNING, "Forgot to initialize BoundingBoxComponent on Entity: %s\n", component->GetParent()->GetName().c_str());
+				BL_LOG_WARNING("Forgot to initialize BoundingBoxComponent on Entity: %s\n", component->GetParent()->GetName().c_str());
 				return;
 			}
 
@@ -1097,7 +1098,7 @@ bool Renderer::createDevice()
 		}
 		else
 		{
-			Log::PrintSeverity(Log::Severity::CRITICAL, "Failed to create Device\n");
+			BL_LOG_CRITICAL("Failed to create Device\n");
 		}
 	
 		SAFE_RELEASE(&adapter);
@@ -1123,7 +1124,7 @@ void Renderer::createCommandQueues()
 	hr = m_pDevice5->CreateCommandQueue(&cqdDirect, IID_PPV_ARGS(&m_CommandQueues[COMMAND_INTERFACE_TYPE::DIRECT_TYPE]));
 	if (FAILED(hr))
 	{
-		Log::PrintSeverity(Log::Severity::CRITICAL, "Failed to Create Direct CommandQueue\n");
+		BL_LOG_CRITICAL("Failed to Create Direct CommandQueue\n");
 	}
 	m_CommandQueues[COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->SetName(L"DirectQueue");
 
@@ -1133,7 +1134,7 @@ void Renderer::createCommandQueues()
 	hr = m_pDevice5->CreateCommandQueue(&cqdCompute, IID_PPV_ARGS(&m_CommandQueues[COMMAND_INTERFACE_TYPE::COMPUTE_TYPE]));
 	if (FAILED(hr))
 	{
-		Log::PrintSeverity(Log::Severity::CRITICAL, "Failed to Create Compute CommandQueue\n");
+		BL_LOG_CRITICAL("Failed to Create Compute CommandQueue\n");
 	}
 	m_CommandQueues[COMMAND_INTERFACE_TYPE::COMPUTE_TYPE]->SetName(L"ComputeQueue");
 
@@ -1143,7 +1144,7 @@ void Renderer::createCommandQueues()
 	hr = m_pDevice5->CreateCommandQueue(&cqdCopy, IID_PPV_ARGS(&m_CommandQueues[COMMAND_INTERFACE_TYPE::COPY_TYPE]));
 	if (FAILED(hr))
 	{
-		Log::PrintSeverity(Log::Severity::CRITICAL, "Failed to Create Copy CommandQueue\n");
+		BL_LOG_CRITICAL("Failed to Create Copy CommandQueue\n");
 	}
 	m_CommandQueues[COMMAND_INTERFACE_TYPE::COPY_TYPE]->SetName(L"CopyQueue");
 }
@@ -1174,7 +1175,7 @@ void Renderer::createMainDSV()
 	HRESULT hr = m_pSwapChain->GetDX12SwapChain()->GetSourceSize(&resolutionWidth, &resolutionHeight);
 	if (FAILED(hr))
 	{
-		Log::PrintSeverity(Log::Severity::CRITICAL, "Failed to GetSourceSize from DX12SwapChain when creating DSV\n");
+		BL_LOG_CRITICAL("Failed to GetSourceSize from DX12SwapChain when creating DSV\n");
 	}
 
 
@@ -1885,7 +1886,7 @@ void Renderer::createFences()
 
 	if (FAILED(hr))
 	{
-		Log::PrintSeverity(Log::Severity::CRITICAL, "Failed to Create Fence\n");
+		BL_LOG_CRITICAL("Failed to Create Fence\n");
 	}
 	m_FenceFrameValue = 1;
 
@@ -1934,7 +1935,7 @@ void Renderer::prepareScene(Scene* activeScene)
 
 	if (m_pScenePrimaryCamera == nullptr)
 	{
-		Log::PrintSeverity(Log::Severity::CRITICAL, "No primary camera was set in scenes\n");
+		BL_LOG_CRITICAL("No primary camera was set in scenes\n");
 
 		// Todo: Set default m_pCamera
 	}

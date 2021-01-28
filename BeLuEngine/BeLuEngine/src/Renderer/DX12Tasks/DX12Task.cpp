@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "DX12Task.h"
 
+#include "../Misc/Log.h"
+
 // DX12 Specifics
 #include "../CommandInterface.h"
 #include "../DescriptorHeap.h"
@@ -44,9 +46,7 @@ void DX12Task::AddResource(std::string id, const Resource* resource)
 	}
 	else
 	{
-		Log::PrintSeverity(
-			Log::Severity::CRITICAL,
-			"Trying to add Resource with name: \'%s\' that already exists.\n", id);
+		BL_LOG_CRITICAL("Trying to add Resource with name: \'%s\' that already exists.\n", id);
 	}
 }
 

@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "DescriptorHeap.h"
 
+#include "../Misc/Log.h"
+
 DescriptorHeap::DescriptorHeap(ID3D12Device5* device, DESCRIPTOR_HEAP_TYPE type)
 {
 	// Create description
@@ -32,7 +34,7 @@ DescriptorHeap::DescriptorHeap(ID3D12Device5* device, DESCRIPTOR_HEAP_TYPE type)
 	HRESULT hr = device->CreateDescriptorHeap(&m_Desc, IID_PPV_ARGS(&m_pDescriptorHeap));
 	if (hr != S_OK)
 	{
-		Log::PrintSeverity(Log::Severity::CRITICAL, "Failed to create DescriptorHeap\n");
+		BL_LOG_CRITICAL("Failed to create DescriptorHeap\n");
 	}
 
 	m_pDescriptorHeap->SetName(dhName.c_str());

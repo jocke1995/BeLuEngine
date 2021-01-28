@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "TextureCubeMap.h"
 
+#include "../Misc/Log.h"
 #include "../GPUMemory/Resource.h"
 #include "../CommandInterface.h"
 #include "../GPUMemory/ShaderResourceView.h"
@@ -33,7 +34,7 @@ bool TextureCubeMap::Init(ID3D12Device5* device, DescriptorHeap* descriptorHeap)
 
 	if (FAILED(hr))
 	{
-		Log::PrintSeverity(Log::Severity::CRITICAL, "Failed to create texture: \'%s\'.\n", to_string(m_FilePath).c_str());
+		BL_LOG_CRITICAL("Failed to create texture: \'%s\'.\n", to_string(m_FilePath).c_str());
 		delete m_pDefaultResource;
 		m_pDefaultResource = nullptr;
 		return false;

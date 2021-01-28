@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "BoundingBoxComponent.h"
 
+#include "../Misc/Log.h"
 
 #include "../Entity.h"
 
@@ -95,7 +96,7 @@ namespace component
 	{
 		if ((m_FlagOBB & F_OBBFlags::COLLISION) == false)
 		{
-			Log::PrintSeverity(Log::Severity::WARNING, "Object \"%s\" does not have collision enabled!\n", m_pParent->GetName().c_str());
+			BL_LOG_WARNING("Object \"%s\" does not have collision enabled!\n", m_pParent->GetName().c_str());
 		}
 
 		return &m_OrientedBoundingBox;
@@ -262,7 +263,7 @@ namespace component
 		}
 		else
 		{
-			Log::PrintSeverity(Log::Severity::CRITICAL, "Trying to add a bounding box when no mesh and/or transform exists on entity.\n");
+		BL_LOG_CRITICAL("Trying to add a bounding box when no mesh and/or transform exists on entity.\n");
 			return false;
 		}
 	}

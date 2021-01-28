@@ -2,6 +2,8 @@
 #define CORE_H
 
 #include <string>
+#include <filesystem>
+
 #include <locale>
 #include <codecvt>
 #include <vector>
@@ -144,58 +146,8 @@ enum FLAG_THREAD
 	// CopyTextures,
 	// PrepareNextScene ..
 	// etc
-	ALL = BIT(4)
+	ALL = BIT(2)
 	// etc..
 };
-
-namespace Log
-{
-	enum class Severity
-	{
-		WARNING,
-		CRITICAL,
-		OTHER
-	};
-
-	template <typename... Args>
-	inline void PrintSeverity(const Severity type, const std::string string, const Args&... args)
-	{
-		std::vector<char> inputBuffer;
-		inputBuffer.resize(256);
-		char typeBuffer[32] = {};
-
-		sprintf(inputBuffer.data(), string.c_str(), args...);
-
-		switch (type)
-		{
-		case Severity::CRITICAL:
-			sprintf(typeBuffer, "CRITICAL ERROR: ");
-			break;
-
-		case Severity::WARNING:
-			sprintf(typeBuffer, "WARNING: ");
-			break;
-
-		default:
-			sprintf(typeBuffer, "");
-			break;
-		}
-
-		std::string finalBuffer = std::string(typeBuffer) + inputBuffer.data();
-
-		OutputDebugStringA(finalBuffer.c_str());
-	}
-
-	template <typename... Args>
-	inline void Print(const std::string string, const Args&... args)
-	{
-		std::vector<char> inputBuffer;
-		inputBuffer.resize(256);
-
-		sprintf(inputBuffer.data(), string.c_str(), args...);
-
-		OutputDebugStringA(inputBuffer.data());
-	}
-}
 
 #endif

@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "SwapChain.h"
 
+#include "../Misc/Log.h"
+
 #include "GPUMemory/Resource.h"
 #include "GPUMemory/RenderTargetView.h"
 #include "GPUMemory/ShaderResourceView.h"
@@ -22,7 +24,7 @@ SwapChain::SwapChain(
 
 	if (hr != S_OK)
 	{
-		Log::PrintSeverity(Log::Severity::CRITICAL, "Failed to create DXGIFactory for SwapChain\n");
+		BL_LOG_CRITICAL("Failed to create DXGIFactory for SwapChain\n");
 	}
 
 	HMONITOR hmon = MonitorFromWindow(const_cast<HWND>(*hwnd), MONITOR_DEFAULTTONEAREST);
@@ -82,7 +84,7 @@ SwapChain::SwapChain(
 	}
 	else
 	{
-		Log::PrintSeverity(Log::Severity::CRITICAL, "Failed to create Swapchain\n");
+		BL_LOG_CRITICAL("Failed to create Swapchain\n");
 	}
 
 	SAFE_RELEASE(&factory);
@@ -175,13 +177,13 @@ const void SwapChain::lookForSupportedResolutions(unsigned int* width, unsigned 
 	IDXGIOutput* output = nullptr;
 	if (FAILED(m_pSwapChain4->GetContainingOutput(&output)))
 	{
-		Log::PrintSeverity(Log::Severity::CRITICAL, "Unable to retrieve the output adapter!\n");
+		BL_LOG_CRITICAL("Unable to retrieve the output adapter!\n");
 	}
 
 	// get the amount of supported display modes for the desired format
 	if (FAILED(output->GetDisplayModeList(m_DesiredColourFormat, 0, &m_NumberOfSupportedModes, NULL)))
 	{
-		Log::PrintSeverity(Log::Severity::CRITICAL, "Unable to list all supported display modes!\n");
+		BL_LOG_CRITICAL("Unable to list all supported display modes!\n");
 	}
 
 	// set up array for the supported modes
@@ -191,7 +193,7 @@ const void SwapChain::lookForSupportedResolutions(unsigned int* width, unsigned 
 	// fill the array with the available display modes
 	if (FAILED(output->GetDisplayModeList(m_DesiredColourFormat, 0, &m_NumberOfSupportedModes, m_pSupportedModes)))
 	{
-		Log::PrintSeverity(Log::Severity::CRITICAL, "Unable to retrieve all supported display modes!\n");
+		BL_LOG_CRITICAL("Unable to retrieve all supported display modes!\n");
 	}
 
 	// release the output adapter
@@ -217,8 +219,7 @@ const void SwapChain::lookForSupportedResolutions(unsigned int* width, unsigned 
 	if (!supportedMode)
 	{
 		// print a warning 
-		Log::PrintSeverity(Log::Severity::WARNING,
-			"The desired screen resolution is not supported! Resizing to the nearest supported resolution...\n");
+		BL_LOG_WARNING("The desired screen resolution is not supported! Resizing to the nearest supported resolution...\n");
 
 		for (unsigned int i = 0; i < m_NumberOfSupportedModes; i++)
 		{
@@ -256,7 +257,7 @@ const void SwapChain::resize(const HWND* hwnd)
 {
 	if (FAILED(m_pSwapChain4->ResizeTarget(&m_CurrentModeDescription)))
 	{
-		Log::PrintSeverity(Log::Severity::CRITICAL, "Unable to resize target to a supported display mode!");
+		BL_LOG_CRITICAL("Unable to resize target to a supported display mode!");
 	}
 	else
 	{
@@ -310,7 +311,7 @@ const void SwapChain::createSwapBuffers(ID3D12Device5* device,
 		HRESULT hr = m_pSwapChain4->GetBuffer(i, IID_PPV_ARGS(const_cast<Resource*>(m_RTVs[i]->GetResource())->GetID3D12Resource1PP()));
 		if (FAILED(hr))
 		{
-			Log::PrintSeverity(Log::Severity::CRITICAL, "Failed to GetBuffer from RenderTarget to Swapchain\n");
+			BL_LOG_CRITICAL("Failed to GetBuffer from RenderTarget to Swapchain\n");
 		}
 
 		m_RTVs[i]->CreateRTV(device, descriptorHeap_RTV, nullptr);
