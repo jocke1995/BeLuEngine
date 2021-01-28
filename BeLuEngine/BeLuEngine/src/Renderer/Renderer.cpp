@@ -388,7 +388,7 @@ void Renderer::Execute()
 	/*------------------- Present -------------------*/
 	HRESULT hr = dx12SwapChain->Present(0, 0);
 	
-#ifdef _DEBUG
+#ifdef DEBUG
 	if (FAILED(hr))
 	{
 		Log::PrintSeverity(Log::Severity::CRITICAL, "Swapchain Failed to present\n");
@@ -481,7 +481,7 @@ void Renderer::SingleThreadedExecute()
 	/*------------------- Present -------------------*/
 	HRESULT hr = dx12SwapChain->Present(0, 0);
 
-#ifdef _DEBUG
+#ifdef DEBUG
 	if (FAILED(hr))
 	{
 		Log::PrintSeverity(Log::Severity::CRITICAL, "Swapchain Failed to present\n");

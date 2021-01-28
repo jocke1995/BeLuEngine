@@ -73,7 +73,7 @@ const SlotInfo* Model::GetSlotInfoAt(unsigned int index) const
 
 void Model::updateSlotInfo()
 {
-#ifdef _DEBUG
+#ifdef DEBUG
 	if (m_Meshes[0]->m_pSRV == nullptr || m_Materials[0]->GetTexture(TEXTURE2D_TYPE::ALBEDO)->m_pSRV == nullptr)
 	{
 		Log::PrintSeverity(Log::Severity::CRITICAL, "Model.cpp::updateSlotInfo got unInit:ed variables\n");

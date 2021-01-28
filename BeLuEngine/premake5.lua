@@ -1,6 +1,6 @@
 workspace "BeLuEngineProject"
     architecture "x64"
-    configurations { "Debug", "Release" }
+    configurations { "Debug", "Release", "Dist" }
     startproject "Sandbox"
     systemversion "latest"
     
@@ -39,11 +39,15 @@ project "BeLuEngine"
     }
     defines{"_CRT_SECURE_NO_DEPRECATE", "_CRT_NONSTDC_NO_DEPRECATE"}
         filter "configurations:Debug"
-            defines { "_DEBUG", "BT_USE_DOUBLE_PRECISION"  }
+            defines { "DEBUG", "BT_USE_DOUBLE_PRECISION"  }
             symbols "On"
 
         filter "configurations:Release"
-            defines { "NDEBUG", "BT_USE_DOUBLE_PRECISION" }
+            defines { "DEBUG", "BT_USE_DOUBLE_PRECISION" }
+            optimize "On"
+        
+        filter "configurations:Dist"
+            defines { "DIST", "BT_USE_DOUBLE_PRECISION" }
             optimize "On"
 
 project "Game"
@@ -68,11 +72,15 @@ project "Game"
     }
     
     filter "configurations:Debug"
-        defines { "_DEBUG" }
+        defines { "DEBUG" }
         symbols "On"
     
     filter "configurations:Release"
-        defines { "NDEBUG" }
+        defines { "DEBUG" }
+        optimize "On"
+
+    filter "configurations:Dist"
+        defines { "DIST", "BT_USE_DOUBLE_PRECISION" }
         optimize "On"
 
 project "Sandbox"
@@ -98,9 +106,13 @@ project "Sandbox"
     }
     
     filter "configurations:Debug"
-        defines { "_DEBUG" }
+        defines { "DEBUG" }
         symbols "On"
     
     filter "configurations:Release"
-        defines { "NDEBUG" }
+        defines { "DEBUG" }
+        optimize "On"
+
+    filter "configurations:Dist"
+        defines { "DIST", "BT_USE_DOUBLE_PRECISION" }
         optimize "On"
