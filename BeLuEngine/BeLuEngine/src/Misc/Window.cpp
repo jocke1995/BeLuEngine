@@ -4,9 +4,18 @@
 #include "../Input/Input.h"
 #include "../Misc/Log.h"
 
+
+#ifdef DEBUG
+	#include "../ImGui/imgui_impl_win32.h"
+	extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+#endif
+
 // callback function for windows messages
 LRESULT CALLBACK WndProc(HWND hWnd, unsigned int msg, WPARAM wParam, LPARAM lParam)
 {
+#ifdef DEBUG
+	ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
+#endif
 	switch (msg)
 	{
 	case WM_SYSKEYDOWN: // alt+enter
@@ -130,7 +139,7 @@ Window::Window(
 	m_ShutDown = false;
 
 	// Set this to true to Show cursor, dont forget to unlock cursor in ExitWindow()
-	ShowCursor(false);
+	ShowCursor(true);
 	SetCursorPos(m_ScreenWidth / 2, m_ScreenHeight / 2);
 }
 

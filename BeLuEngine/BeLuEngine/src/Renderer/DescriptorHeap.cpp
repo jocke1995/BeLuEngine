@@ -50,7 +50,11 @@ DescriptorHeap::~DescriptorHeap()
 void DescriptorHeap::SetCPUGPUHeapStart()
 {
 	m_CPUHeapStart = m_pDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
-	m_GPUHeapStart = m_pDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
+
+	if (m_Desc.Flags & D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE)
+	{
+		m_GPUHeapStart = m_pDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
+	}
 }
 
 void DescriptorHeap::IncrementDescriptorHeapIndex()

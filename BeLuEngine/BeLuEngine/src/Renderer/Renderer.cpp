@@ -8,6 +8,12 @@
 #include "../Misc/MultiThreading/Thread.h"
 #include "../Misc/Window.h"
 
+// Debug
+#include "../ImGUI/imgui.h"
+#include "../ImGUI/imgui_impl_win32.h"
+#include "../ImGUI/imgui_impl_dx12.h"
+#include "DX12Tasks/ImGuiRenderTask.h"
+
 // ECS
 #include "../ECS/Scene.h"
 #include "../ECS/Entity.h"
@@ -78,7 +84,7 @@ Renderer& Renderer::GetInstance()
 
 Renderer::~Renderer()
 {
-	
+
 }
 
 void Renderer::deleteRenderer()
@@ -127,6 +133,11 @@ void Renderer::deleteRenderer()
 	delete m_pCbPerSceneData;
 	delete m_pCbPerFrame;
 	delete m_pCbPerFrameData;
+
+	// Cleanup ImGui
+	ImGui_ImplDX12_Shutdown();
+	ImGui_ImplWin32_Shutdown();
+	ImGui::DestroyContext();
 }
 
 void Renderer::InitD3D12(Window *window, HINSTANCE hInstance, ThreadPool* threadPool)
@@ -211,6 +222,25 @@ void Renderer::InitD3D12(Window *window, HINSTANCE hInstance, ThreadPool* thread
 
 	m_pCbPerFrameData = new CB_PER_FRAME_STRUCT();
 
+#ifdef DEBUG
+	// Setup ImGui context
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO();
+
+	// Setup ImGui style
+	ImGui::StyleColorsDark();
+	//ImGui::StyleColorsClassic();
+
+	unsigned int imGuiTextureIndex = m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]->GetNextDescriptorHeapIndex(1);
+
+	// Setup Platform/Renderer bindings
+	ImGui_ImplWin32_Init(*m_pWindow->GetHwnd());
+	ImGui_ImplDX12_Init(m_pDevice5, NUM_SWAP_BUFFERS,
+		DXGI_FORMAT_R16G16B16A16_FLOAT, m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]->GetID3D12DescriptorHeap(),
+		m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]->GetCPUHeapAt(imGuiTextureIndex),
+		m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]->GetGPUHeapAt(imGuiTextureIndex));
+#endif
 	initRenderTasks();
 	
 	submitMeshToCodt(m_pFullScreenQuad);
@@ -462,6 +492,19 @@ void Renderer::SingleThreadedExecute()
 		renderTask->Execute();
 	}
 
+#ifdef DEBUG
+	ImGuiIO& io = ImGui::GetIO();
+
+	io.DisplaySize = ImVec2(1920, 1080);
+
+	// Start the Dear ImGui frame
+	ImGui_ImplDX12_NewFrame();
+	ImGui_ImplWin32_NewFrame();
+	ImGui::NewFrame();
+
+	renderTask = m_RenderTasks[RENDER_TASK_TYPE::IMGUI];
+	renderTask->Execute();
+#endif
 	/* ----------------------------- DEVELOPERMODE CommandLists ----------------------------- */
 
 	m_CommandQueues[COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->ExecuteCommandLists(
@@ -1022,8 +1065,7 @@ bool Renderer::createDevice()
 {
 	bool deviceCreated = false;
 
-	if (DX12DEBUGLAYER == true)
-	{
+#ifdef DEBUG
 		//Enable the D3D12 debug layer.
 		ID3D12Debug3* debugController = nullptr;
 		HMODULE mD3D12 = LoadLibrary(L"D3D12.dll"); // ist�llet f�r GetModuleHandle
@@ -1059,11 +1101,10 @@ bool Renderer::createDevice()
 		}
 
 		SAFE_RELEASE(&debugController);
-	}
+#endif
 	
 	IDXGIFactory6* factory = nullptr;
 	IDXGIAdapter1* adapter = nullptr;
-
 	CreateDXGIFactory(IID_PPV_ARGS(&factory));
 
 	for (unsigned int adapterIndex = 0;; ++adapterIndex)
@@ -1746,6 +1787,20 @@ void Renderer::initRenderTasks()
 	static_cast<MergeRenderTask*>(mergeTask)->CreateSlotInfo();
 #pragma endregion MergePass
 
+#pragma region IMGUIRENDERTASK
+	RenderTask* imGuiRenderTask = new ImGuiRenderTask(
+		m_pDevice5,
+		m_pRootSignature,
+		L"", L"",
+		nullptr,
+		L"",
+		FLAG_THREAD::RENDER);
+
+	imGuiRenderTask->SetSwapChain(m_pSwapChain);
+	imGuiRenderTask->SetDescriptorHeaps(m_DescriptorHeaps);
+
+#pragma endregion IMGUIRENDERTASK
+
 #pragma region ComputeAndCopyTasks
 	UINT resolutionWidth = 0;
 	UINT resolutionHeight = 0;
@@ -1794,6 +1849,7 @@ void Renderer::initRenderTasks()
 	m_RenderTasks[RENDER_TASK_TYPE::WIREFRAME] = wireFrameRenderTask;
 	m_RenderTasks[RENDER_TASK_TYPE::OUTLINE] = outliningRenderTask;
 	m_RenderTasks[RENDER_TASK_TYPE::MERGE] = mergeTask;
+	m_RenderTasks[RENDER_TASK_TYPE::IMGUI] = imGuiRenderTask;
 	m_RenderTasks[RENDER_TASK_TYPE::DOWNSAMPLE] = downSampleTask;
 
 	// Pushback in the order of execution
@@ -1861,6 +1917,13 @@ void Renderer::initRenderTasks()
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
 		m_DirectCommandLists[i].push_back(mergeTask->GetCommandInterface()->GetCommandList(i));
+	}
+
+	// -------------------------------------- GUI -------------------------------------------------
+	// Debug/ImGui
+	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
+	{
+		m_DirectCommandLists[i].push_back(imGuiRenderTask->GetCommandInterface()->GetCommandList(i));
 	}
 }
 

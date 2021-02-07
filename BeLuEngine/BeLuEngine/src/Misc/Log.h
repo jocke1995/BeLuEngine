@@ -21,7 +21,7 @@ public:
 		const std::string& fileName,
 		const std::string& lineNumber,
 		const Severity type,
-		const std::string string,
+		const std::string& string,
 		const Args&... args)
 	{
 		std::vector<char> inputBuffer;

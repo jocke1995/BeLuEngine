@@ -121,7 +121,6 @@ enum class CAMERA_TYPE
 
 // Debug
 #define SINGLE_THREADED_RENDERER true
-#define DX12DEBUGLAYER true
 #define DX12VALIDATIONGLAYER false
 #define DEVELOPERMODE_DRAWBOUNDINGBOX false
 
