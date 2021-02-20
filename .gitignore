@@ -2,7 +2,6 @@
 
 BeLuEngine/build/
 BeLuEngine/bin/
-BeLuEngine/*.bat
 
 **.sln
 **.vcxproj
@@ -12,6 +11,3 @@ BeLuEngine/*.bat
 **.vs
 **bin/
 **bin-int/
-
-
-BeLuEngine/Vendor/Resources/Scenes/**
