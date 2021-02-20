@@ -134,10 +134,13 @@ void Renderer::deleteRenderer()
 	delete m_pCbPerFrame;
 	delete m_pCbPerFrameData;
 
+#ifdef DEBUG
+	Log::Print("HERE\n\n\n\n\n\n\n\n\n\n\n\n");
 	// Cleanup ImGui
 	ImGui_ImplDX12_Shutdown();
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
+#endif
 }
 
 void Renderer::InitD3D12(Window *window, HINSTANCE hInstance, ThreadPool* threadPool)
@@ -160,11 +163,12 @@ void Renderer::InitD3D12(Window *window, HINSTANCE hInstance, ThreadPool* thread
 	// Fence for WaitForFrame();
 	createFences();
 
+	
 #pragma region RenderTargets
 	// Main color renderTarget (used until the swapchain RT is drawn to)
 	m_pMainColorBuffer.first = new RenderTarget(
 		m_pDevice5,
-		1919, 1080,
+		m_pWindow->GetScreenWidth(), m_pWindow->GetScreenHeight(),
 		L"mainColor_RESOURCE",
 		m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::RTV]);
 
@@ -226,11 +230,12 @@ void Renderer::InitD3D12(Window *window, HINSTANCE hInstance, ThreadPool* thread
 	// Setup ImGui context
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO();
 
 	// Setup ImGui style
 	ImGui::StyleColorsDark();
-	//ImGui::StyleColorsClassic();
+
+	ImGuiIO& io = ImGui::GetIO();
+	io.ConfigFlags = ImGuiConfigFlags_NoMouse;
 
 	unsigned int imGuiTextureIndex = m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]->GetNextDescriptorHeapIndex(1);
 
@@ -398,6 +403,15 @@ void Renderer::Execute()
 
 	/* ----------------------------- DEVELOPERMODE CommandLists ----------------------------- */
 
+#ifdef DEBUG
+	// Start the Dear ImGui frame (FIX: not threadsafe atm)
+	ImGui_ImplDX12_NewFrame();
+	ImGui_ImplWin32_NewFrame();
+	ImGui::NewFrame();
+
+	renderTask = m_RenderTasks[RENDER_TASK_TYPE::IMGUI];
+	m_pThreadPool->AddTask(renderTask);
+#endif
 	// Wait for the threads which records the commandlists to complete
 	m_pThreadPool->WaitForThreads(FLAG_THREAD::RENDER);
 
@@ -493,10 +507,6 @@ void Renderer::SingleThreadedExecute()
 	}
 
 #ifdef DEBUG
-	ImGuiIO& io = ImGui::GetIO();
-
-	io.DisplaySize = ImVec2(1920, 1080);
-
 	// Start the Dear ImGui frame
 	ImGui_ImplDX12_NewFrame();
 	ImGui_ImplWin32_NewFrame();
@@ -1192,8 +1202,8 @@ void Renderer::createCommandQueues()
 
 void Renderer::createSwapChain()
 {
-	unsigned int resolutionWidth = 1920;
-	unsigned int resolutionHeight = 1080;
+	unsigned int resolutionWidth = m_pWindow->GetScreenWidth();
+	unsigned int resolutionHeight = m_pWindow->GetScreenHeight();
 
 	m_pSwapChain = new SwapChain(
 		m_pDevice5,

@@ -2,6 +2,10 @@
 #include "../Misc/Log.h"
 #include "..\Events\EventBus.h"
 
+#include "../ImGUI/imgui.h"
+#include "../ImGUI/imgui_impl_win32.h"
+#include "../ImGUI/imgui_impl_dx12.h"
+
 Input& Input::GetInstance()
 {
 	static Input instance;
@@ -56,6 +60,32 @@ void Input::SetKeyState(SCAN_CODES key, bool pressed)
 			EventBus::GetInstance().Publish(&MovementInput(key, false));
 		}
 	}
+#ifdef DEBUG
+	else if (key == SCAN_CODES::ALT)
+	{
+		static bool enabled = true;
+
+		if (justPressed == true)
+		{
+			// Toggle mouse lookaround
+			enabled = !enabled;
+			EventBus::GetInstance().Publish(&ToggleCameraLookAround(key, enabled));
+
+			ShowCursor(!enabled);
+
+			ImGuiIO& io = ImGui::GetIO();
+
+			if (enabled == false)
+			{
+				io.ConfigFlags = 0;
+			}
+			else
+			{
+				io.ConfigFlags = ImGuiConfigFlags_NoMouse;
+			}
+		}
+	}
+#endif
 }
 
 void Input::SetMouseButtonState(MOUSE_BUTTON button, bool pressed)

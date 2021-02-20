@@ -1,6 +1,8 @@
 #ifndef BASECAMERA_H
 #define BASECAMERA_H
 
+struct ToggleCameraLookAround;
+
 class BaseCamera
 {
 public:
@@ -26,6 +28,7 @@ public:
 	virtual const DirectX::XMMATRIX* GetViewProjection() const = 0;
 	virtual const DirectX::XMMATRIX* GetViewProjectionTranposed() const = 0;
 
+	bool IsCameraLookaroundEnabled() const;
 protected:
 	DirectX::XMVECTOR m_RightVector;
 	DirectX::XMVECTOR m_EyeVector;
@@ -41,6 +44,10 @@ protected:
 
 	bool m_IsPrimary = false;
 	virtual void updateSpecific(double dt = 0.0) = 0;
+
+	// Event on pressing alt-key
+	void toggleCameraLookaround(ToggleCameraLookAround* event);
+	bool m_CameraLookaroundEnabled = true;
 };
 
 #endif

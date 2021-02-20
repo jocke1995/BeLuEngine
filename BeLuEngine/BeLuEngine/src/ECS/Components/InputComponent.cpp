@@ -62,5 +62,8 @@ void component::InputComponent::rotate(MouseMovement* event)
 	component::CameraComponent* cc = m_pParent->GetComponent<component::CameraComponent>();
 	PerspectiveCamera* pc = static_cast<PerspectiveCamera*>(cc->GetCamera());
 
-	pc->RotateCamera(event->x, event->y);
+	if (pc->IsCameraLookaroundEnabled() == true)
+	{
+		pc->RotateCamera(event->x, event->y);
+	}
 }

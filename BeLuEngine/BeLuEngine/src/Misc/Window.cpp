@@ -138,9 +138,7 @@ Window::Window(
 
 	m_ShutDown = false;
 
-	// Set this to true to Show cursor, dont forget to unlock cursor in ExitWindow()
-	ShowCursor(true);
-	SetCursorPos(m_ScreenWidth / 2, m_ScreenHeight / 2);
+	ShowCursor(false);
 }
 
 
@@ -186,8 +184,6 @@ void Window::SetScreenHeight(int height)
 
 bool Window::ExitWindow()
 {
-	//SetCursorPos(m_ScreenWidth / 2, m_ScreenHeight / 2);
-
 	bool closeWindow = m_ShutDown;
 	MSG msg = { 0 };
 
@@ -235,7 +231,7 @@ bool Window::initWindow(HINSTANCE hInstance, int nCmdShow)
 
 	if (m_WindowedFullScreen || (width < m_ScreenWidth || height < m_ScreenHeight))
 	{
-		m_ScreenWidth = width;
+		m_ScreenWidth = width - 1;
 		m_ScreenHeight = height;
 	}
 
@@ -278,8 +274,10 @@ bool Window::initWindow(HINSTANCE hInstance, int nCmdShow)
 		return false;
 	}
 
+#ifdef DEBUG
 	// Remove the topbar of the window if we are in fullscreen
-	//SetWindowLong(m_Hwnd, GWL_STYLE, 0);
+	SetWindowLong(m_Hwnd, GWL_STYLE, 0);
+#endif
 
 	ShowWindow(m_Hwnd, nCmdShow);
 	UpdateWindow(m_Hwnd);

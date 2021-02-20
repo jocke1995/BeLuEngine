@@ -1,5 +1,7 @@
 #include "stdafx.h"
 #include "BaseCamera.h"
+#include "../Events/EventBus.h"
+#include "../Misc/Log.h"
 
 BaseCamera::BaseCamera(DirectX::XMVECTOR position, DirectX::XMVECTOR direction, bool isPrimary)
 {
@@ -13,11 +15,19 @@ BaseCamera::BaseCamera(DirectX::XMVECTOR position, DirectX::XMVECTOR direction, 
 	m_ViewMatrixInverse = DirectX::XMMatrixInverse(nullptr, m_ViewMatrix);
 
 	m_IsPrimary = isPrimary;
+
+	if (m_IsPrimary == true)
+	{
+		EventBus::GetInstance().Subscribe(this, &BaseCamera::toggleCameraLookaround);
+	}
 }
 
 BaseCamera::~BaseCamera()
 {
-
+	if (m_IsPrimary == true)
+	{
+		EventBus::GetInstance().Unsubscribe(this, &BaseCamera::toggleCameraLookaround);
+	}
 }
 
 void BaseCamera::Update(double dt)
@@ -78,4 +88,14 @@ const DirectX::XMMATRIX* BaseCamera::GetViewMatrix() const
 const DirectX::XMMATRIX* BaseCamera::GetViewMatrixInverse() const
 {
 	return &m_ViewMatrixInverse;
+}
+
+bool BaseCamera::IsCameraLookaroundEnabled() const
+{
+	return m_CameraLookaroundEnabled;
+}
+
+void BaseCamera::toggleCameraLookaround(ToggleCameraLookAround* event)
+{
+	m_CameraLookaroundEnabled = event->m_Enabled;
 }

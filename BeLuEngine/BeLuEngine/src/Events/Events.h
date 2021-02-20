@@ -16,6 +16,13 @@ struct MovementInput : public Event
 	bool pressed;
 };
 
+struct ToggleCameraLookAround : public Event
+{
+	ToggleCameraLookAround(SCAN_CODES key, bool toggled) : key{ key }, m_Enabled{ toggled } {};
+	SCAN_CODES key;
+	bool m_Enabled;
+};
+
 struct MouseMovement : public Event
 {
 	MouseMovement(int x, int y) : x{ x }, y{ y } {};

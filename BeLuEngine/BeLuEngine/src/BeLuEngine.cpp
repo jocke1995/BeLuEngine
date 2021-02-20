@@ -9,17 +9,18 @@ BeLuEngine::BeLuEngine()
 
 BeLuEngine::~BeLuEngine()
 {
-	delete m_pWindow;
 	delete m_pTimer;
 
 	m_pSceneManager->deleteSceneManager();
 	m_pRenderer->deleteRenderer();
+
+	delete m_pWindow;
 }
 
 void BeLuEngine::Init(HINSTANCE hInstance, int nCmdShow)
 {
 	// Window values
-	bool windowedFullscreen = true;
+	bool windowedFullscreen = false;
 	int windowWidth = 1280;
 	int windowHeight = 720;
 
