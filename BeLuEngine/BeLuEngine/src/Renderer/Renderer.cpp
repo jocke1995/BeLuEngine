@@ -135,7 +135,6 @@ void Renderer::deleteRenderer()
 	delete m_pCbPerFrameData;
 
 #ifdef DEBUG
-	Log::Print("HERE\n\n\n\n\n\n\n\n\n\n\n\n");
 	// Cleanup ImGui
 	ImGui_ImplDX12_Shutdown();
 	ImGui_ImplWin32_Shutdown();
@@ -237,6 +236,9 @@ void Renderer::InitD3D12(Window *window, HINSTANCE hInstance, ThreadPool* thread
 	ImGuiIO& io = ImGui::GetIO();
 	io.ConfigFlags = ImGuiConfigFlags_NoMouse;
 
+	io.DisplaySize.x = m_pWindow->GetScreenWidth();
+	io.DisplaySize.y = m_pWindow->GetScreenHeight();
+
 	unsigned int imGuiTextureIndex = m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]->GetNextDescriptorHeapIndex(1);
 
 	// Setup Platform/Renderer bindings
@@ -253,6 +255,11 @@ void Renderer::InitD3D12(Window *window, HINSTANCE hInstance, ThreadPool* thread
 
 void Renderer::Update(double dt)
 {
+#ifdef DEBUG
+	ImGui_ImplDX12_NewFrame();
+	ImGui_ImplWin32_NewFrame();
+	ImGui::NewFrame();
+#endif
 	float3 right = reinterpret_cast<float3&>(m_pScenePrimaryCamera->GetRightVector());
 	right.normalize();
 
@@ -404,14 +411,10 @@ void Renderer::Execute()
 	/* ----------------------------- DEVELOPERMODE CommandLists ----------------------------- */
 
 #ifdef DEBUG
-	// Start the Dear ImGui frame (FIX: not threadsafe atm)
-	ImGui_ImplDX12_NewFrame();
-	ImGui_ImplWin32_NewFrame();
-	ImGui::NewFrame();
-
 	renderTask = m_RenderTasks[RENDER_TASK_TYPE::IMGUI];
 	m_pThreadPool->AddTask(renderTask);
 #endif
+
 	// Wait for the threads which records the commandlists to complete
 	m_pThreadPool->WaitForThreads(FLAG_THREAD::RENDER);
 
@@ -507,11 +510,6 @@ void Renderer::SingleThreadedExecute()
 	}
 
 #ifdef DEBUG
-	// Start the Dear ImGui frame
-	ImGui_ImplDX12_NewFrame();
-	ImGui_ImplWin32_NewFrame();
-	ImGui::NewFrame();
-
 	renderTask = m_RenderTasks[RENDER_TASK_TYPE::IMGUI];
 	renderTask->Execute();
 #endif

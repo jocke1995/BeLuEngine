@@ -29,7 +29,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, unsigned int msg, WPARAM wParam, LPARAM lPar
 		{
 			//if (MessageBox(0, L"Are you sure you want to exit?", L"Exit", MB_YESNO | MB_ICONQUESTION) == IDYES)
 			//{
-			DestroyWindow(hWnd);
+			PostQuitMessage(0);
+			//DestroyWindow(hWnd);
 			//}
 		}
 		// Temp to create objects during runtime
