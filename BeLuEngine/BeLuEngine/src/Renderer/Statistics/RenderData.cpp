@@ -9,7 +9,7 @@ EngineStatistics::~EngineStatistics()
 {
 }
 
-IM_RenderStats& EngineStatistics::GetIM_RenderStats()
+IM_CommonStats& EngineStatistics::GetIM_RenderStats()
 {
 	return m_DebugInfo;
 }

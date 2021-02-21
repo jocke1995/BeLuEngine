@@ -79,6 +79,16 @@ Renderer::Renderer()
 	m_RenderTasks.resize(RENDER_TASK_TYPE::NR_OF_RENDERTASKS);
 	m_CopyTasks.resize(COPY_TASK_TYPE::NR_OF_COPYTASKS);
 	m_ComputeTasks.resize(COMPUTE_TASK_TYPE::NR_OF_COMPUTETASKS);
+
+	// Processinfo
+	// Create handle to process
+	DWORD currentProcessID = GetCurrentProcessId();
+	m_ProcessHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, false, currentProcessID);
+
+	if (m_ProcessHandle == nullptr)
+	{
+		BL_LOG_CRITICAL("Failed to create handle to process\n");
+	}
 }
 
 Renderer& Renderer::GetInstance()
@@ -349,7 +359,7 @@ void Renderer::SortObjects()
 	setRenderTasksRenderComponents();
 }
 
-void Renderer::Execute()
+void Renderer::ExecuteMT()
 {
 	IDXGISwapChain4* dx12SwapChain = m_pSwapChain->GetDX12SwapChain();
 	unsigned int backBufferIndex = dx12SwapChain->GetCurrentBackBufferIndex();
@@ -450,7 +460,7 @@ void Renderer::Execute()
 #endif
 }
 
-void Renderer::SingleThreadedExecute()
+void Renderer::ExecuteST()
 {
 	IDXGISwapChain4* dx12SwapChain = m_pSwapChain->GetDX12SwapChain();
 	unsigned int backBufferIndex = dx12SwapChain->GetCurrentBackBufferIndex();
@@ -1087,6 +1097,7 @@ bool Renderer::createDevice()
 		PFN_D3D12_GET_DEBUG_INTERFACE f = (PFN_D3D12_GET_DEBUG_INTERFACE)GetProcAddress(mD3D12, "D3D12GetDebugInterface");
 		if (SUCCEEDED(f(IID_PPV_ARGS(&debugController))))
 		{
+			EngineStatistics::GetIM_RenderStats().m_DebugLayerActive = true;
 			debugController->EnableDebugLayer();
 			debugController->SetEnableGPUBasedValidation(DX12VALIDATIONGLAYER);
 		}
@@ -1143,6 +1154,11 @@ bool Renderer::createDevice()
 		SAFE_RELEASE(&adapter);
 	}
 	
+	if (FAILED(adapter->QueryInterface(__uuidof(IDXGIAdapter4), reinterpret_cast<void**>(&m_pAdapter4))))
+	{
+		BL_LOG_CRITICAL("Failed to queryInterface for adapter4\n");
+	}
+
 	if (adapter)
 	{
 		HRESULT hr = S_OK;

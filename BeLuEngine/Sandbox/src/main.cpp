@@ -83,9 +83,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
        /* ------ Draw ------ */
        // For easier debugging purposes
        if (SINGLE_THREADED_RENDERER == true)    
-           renderer->SingleThreadedExecute();
+           renderer->ExecuteST();
        else
-           renderer->Execute();
+           renderer->ExecuteMT();
    }
     
     return EXIT_SUCCESS;

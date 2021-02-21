@@ -38,7 +38,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
         renderer->SortObjects();
 
         /* ------ Draw ------ */
-        renderer->Execute();
+        renderer->ExecuteMT();
     }
 
     return 0;
