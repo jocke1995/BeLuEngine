@@ -7,6 +7,7 @@ public:
 	static ImGuiHandler& GetInstance();
 
 	void NewFrame();
+	void EndFrame();
 	void UpdateFrame();
 
 private:
@@ -15,6 +16,7 @@ private:
 
 
 	void updateMemoryInfo();
+	void resetThreadInfos();
 };
 
 #endif

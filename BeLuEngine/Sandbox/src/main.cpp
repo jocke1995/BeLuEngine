@@ -176,14 +176,14 @@ Scene* TestScene(SceneManager* sm)
     /* ---------------------- SpotLightDynamic ---------------------- */
 
     /* ---------------------- dirLight ---------------------- */
-    entity = scene->AddEntity("dirLight");
-    dlc = entity->AddComponent<component::DirectionalLightComponent>(FLAG_LIGHT::CAST_SHADOW);
-    dlc->SetColor({ 0.6f, 0.6f, 0.6f });
-    dlc->SetDirection({ 1.0f, -1.0f, 0.0f });
-    dlc->SetCameraTop(30.0f);
-    dlc->SetCameraBot(-30.0f);
-    dlc->SetCameraLeft(-70.0f);
-    dlc->SetCameraRight(70.0f);
+    //entity = scene->AddEntity("dirLight");
+    //dlc = entity->AddComponent<component::DirectionalLightComponent>(FLAG_LIGHT::CAST_SHADOW);
+    //dlc->SetColor({ 0.6f, 0.6f, 0.6f });
+    //dlc->SetDirection({ 1.0f, -1.0f, 0.0f });
+    //dlc->SetCameraTop(30.0f);
+    //dlc->SetCameraBot(-30.0f);
+    //dlc->SetCameraLeft(-70.0f);
+    //dlc->SetCameraRight(70.0f);
     /* ---------------------- dirLight ---------------------- */
 
     /* ---------------------- Update Function ---------------------- */

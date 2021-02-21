@@ -457,6 +457,9 @@ void Renderer::ExecuteMT()
 	{
 		BL_LOG_CRITICAL("Swapchain Failed to present\n");
 	}
+
+	// Check to end ImGui if its active
+	ImGuiHandler::GetInstance().EndFrame();
 #endif
 }
 
@@ -554,6 +557,9 @@ void Renderer::ExecuteST()
 	{
 		BL_LOG_CRITICAL("Swapchain Failed to present\n");
 	}
+
+	// Check to end ImGui if its active
+	ImGuiHandler::GetInstance().EndFrame();
 #endif
 }
 

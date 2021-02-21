@@ -7,6 +7,14 @@
 unsigned int __stdcall Thread::threadFunc(void* threadParam)
 {
 	Thread* t = static_cast<Thread*>(threadParam);
+
+// Statistics info
+#ifdef DEBUG
+	std::stringstream ss;
+	ss << std::this_thread::get_id();
+	t->m_pStatistics->m_Id = std::stoull(ss.str());
+#endif
+
 	while (t->m_IsExiting == false)
 	{
 		{
@@ -35,6 +43,7 @@ unsigned int __stdcall Thread::threadFunc(void* threadParam)
 		{
 			// Run thread task
 			t->m_pActiveTask->Execute();
+			t->m_pStatistics->m_TasksCompleted++;
 
 			// Lock
 			std::unique_lock<std::mutex> lock(*(t->m_Mutex));
@@ -70,6 +79,10 @@ Thread::Thread(
 	{
 		BL_LOG_CRITICAL("Failed to 'SetThreadPriority' belonging to a thread with id: %d\n", m_ThreadId);
 	}
+
+	m_pStatistics = new IM_ThreadStats();
+
+	EngineStatistics::GetIM_ThreadStats().push_back(m_pStatistics);
 }
 
 Thread::~Thread()
@@ -78,4 +91,6 @@ Thread::~Thread()
 	{
 		BL_LOG_WARNING("Failed to 'CloseHandle' belonging to a thread with id: %d\n", m_ThreadId);
 	}
+
+	delete m_pStatistics;
 }

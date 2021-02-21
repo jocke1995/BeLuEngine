@@ -7,6 +7,8 @@ class MultiThreadedTask;
 #include <condition_variable>
 #include <mutex>
 
+#include "../Renderer/Statistics/RenderData.h"
+
 class Thread
 {
 public:
@@ -34,5 +36,8 @@ private:
 
 	bool m_IsExiting = false;
 	unsigned int m_ThreadId = 0;
+
+	// Used for debug statistics
+	IM_ThreadStats* m_pStatistics = nullptr;
 };
 #endif

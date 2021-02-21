@@ -27,6 +27,11 @@ void ImGuiHandler::NewFrame()
 	ImGui::NewFrame();
 }
 
+void ImGuiHandler::EndFrame()
+{
+	
+}
+
 void ImGuiHandler::UpdateFrame()
 {
 	// Update statistics
@@ -37,6 +42,7 @@ void ImGuiHandler::UpdateFrame()
 
 	IM_CommonStats& cStats = EngineStatistics::GetIM_CommonStats();
 	IM_MemoryStats& mStats = EngineStatistics::GetIM_MemoryStats();
+	std::vector<IM_ThreadStats*>& tStats = EngineStatistics::GetIM_ThreadStats();
 
 	cStats.m_TotalFPS = ImGui::GetIO().Framerate;
 	cStats.m_TotalMS = 1000.0f / ImGui::GetIO().Framerate;
@@ -60,17 +66,40 @@ void ImGuiHandler::UpdateFrame()
 			ImGui::Text("RAM (MiB)");
  			ImGui::Text("Process usage: %d", mStats.m_ProcessRamUsage);
 			ImGui::Text("Total usage: %d", mStats.m_TotalRamUsage);
-			ImGui::Text("Total Available: %d", mStats.m_TotalRam);
-
+			ImGui::Text("Installed: %d", mStats.m_TotalRam);
+			ImGui::Text("----------------------");
 			ImGui::Text("VRAM (MiB)");
 			ImGui::Text("Process usage: %d", mStats.m_ProcessVramUsage);
-			ImGui::Text("Total usage: %d", mStats.m_CurrVramUsage);
-			ImGui::Text("Total Available: %d", mStats.m_TotalVram);
+			ImGui::Text("Installed: %d", mStats.m_TotalVram);
 		}
-		
+
+		// Threads is currently showing contribution one frame behind.. Because ImGui is also multithreaded
+		if (ImGui::CollapsingHeader("Threads"))
+		{
+			unsigned int threadsUsedThisFrame = 0;
+			for (IM_ThreadStats* threadStat : tStats)
+			{
+				// Only show the threads who completed a task this frame
+				if (threadStat->m_TasksCompleted != 0)
+				{
+					threadsUsedThisFrame++;
+				}
+			}
+
+			ImGui::Text("CPU threads: %d", threadsUsedThisFrame);
+			for (IM_ThreadStats* threadStat : tStats)
+			{
+				// Only show the threads who completed a task this frame
+				if (threadStat->m_TasksCompleted != 0)
+				{
+					ImGui::Text("ID: %d   Completed tasks: %d", threadStat->m_Id, threadStat->m_TasksCompleted);
+				}
+			}
+		}
 	}
 	ImGui::End();
 		
+	this->resetThreadInfos();
 }
 
 ImGuiHandler::ImGuiHandler()
@@ -78,9 +107,9 @@ ImGuiHandler::ImGuiHandler()
 #ifdef _DEBUG
 	EngineStatistics::GetIM_CommonStats().m_Build = "Debug";
 #elif DIST
-	EngineStatistics::GetIM_RenderStats().m_Build = "Dist";
+	EngineStatistics::GetIM_CommonStats().m_Build = "Dist";
 #else
-	EngineStatistics::GetIM_RenderStats().m_Build = "Debug_Release";
+	EngineStatistics::GetIM_CommonStats().m_Build = "Debug_Release";
 #endif
 }
 
@@ -116,4 +145,15 @@ void ImGuiHandler::updateMemoryInfo()
 		mStats.m_ProcessVramUsage = info.CurrentUsage / DIV / DIV;
 		mStats.m_TotalVram = aDesc.DedicatedVideoMemory / DIV / DIV;
 	};
+}
+
+void ImGuiHandler::resetThreadInfos()
+{
+	std::vector<IM_ThreadStats*>& tStats = EngineStatistics::GetIM_ThreadStats();
+
+	for (IM_ThreadStats* threadStat : tStats)
+	{
+		// Only show the threads who completed a task this frame
+		threadStat->m_TasksCompleted = 0;
+	}
 }

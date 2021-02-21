@@ -23,8 +23,27 @@ struct IM_MemoryStats
 
 	// VRAM
 	unsigned int m_ProcessVramUsage = 0;
-	unsigned int m_CurrVramUsage = 0;
 	unsigned int m_TotalVram = 0;
+};
+
+struct IM_ThreadStats
+{
+	unsigned int m_Id = 0;
+	unsigned int m_TasksCompleted = 0;
+};
+
+struct IM_RenderStats
+{
+	// Lights
+	unsigned int m_NumPointLights = 0;
+	unsigned int m_NumSpotLights = 0;
+	unsigned int m_NumDirectionalLights = 0;
+
+	unsigned int m_NumShadowCastingLights = 0;
+
+	// Draws
+	unsigned int m_NumDrawCalls = 0;
+	unsigned int m_NumVertices = 0;
 };
 
 // Singleton to hold all debug info
@@ -35,12 +54,14 @@ public:
 
 	static IM_CommonStats& GetIM_CommonStats();
 	static IM_MemoryStats& GetIM_MemoryStats();
+	static std::vector<IM_ThreadStats*>& GetIM_ThreadStats();
 private:
 	EngineStatistics();
 
 	// Structs with statistics to draw
 	static inline IM_CommonStats m_CommonInfo = {};
 	static inline IM_MemoryStats m_MemoryInfo = {};
+	static inline std::vector<IM_ThreadStats*> m_ThreadInfo = {};
 };
 
 #endif

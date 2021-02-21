@@ -37,7 +37,7 @@ void BeLuEngine::Init(HINSTANCE hInstance, int nCmdShow)
 	}
 
 	Log::Print("Total CPU Cores: %d\n", numThreads);
-	m_pThreadPool = &ThreadPool::GetInstance(numThreads);
+	m_pThreadPool = &ThreadPool::GetInstance(numThreads * 2);
 
 	// Sub-engines
 	m_pRenderer = &Renderer::GetInstance();

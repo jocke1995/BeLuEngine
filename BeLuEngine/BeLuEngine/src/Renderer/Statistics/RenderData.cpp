@@ -18,3 +18,8 @@ IM_MemoryStats& EngineStatistics::GetIM_MemoryStats()
 {
 	return m_MemoryInfo;
 }
+
+std::vector<IM_ThreadStats*>& EngineStatistics::GetIM_ThreadStats()
+{
+	return m_ThreadInfo;
+}
