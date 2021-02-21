@@ -1,8 +1,9 @@
 # BeLuEngine
 This project is created by me (Joakim Sjöberg) as a way to learn how to create a game engine. 
 The project is developed on windows platform where I use Visual Studio 2019 (Community edition) as platform.
-Below you can see what the engine can render at this date (22/02/2021).
-![Screenshot](Screenshots/22-02-2021_SPONZA.png)
+
+## Screenshots
+![Screenshot](Screenshots/22-02-2021_SPONZA.png "Title")
 ---
 ## Roadmap
 temp1
