@@ -8,10 +8,15 @@
 #include "../Misc/MultiThreading/Thread.h"
 #include "../Misc/Window.h"
 
+// Headers
+#include "Core.h"
+
 // Debug
 #include "../ImGUI/imgui.h"
 #include "../ImGUI/imgui_impl_win32.h"
 #include "../ImGUI/imgui_impl_dx12.h"
+#include "../ImGui/ImGuiHandler.h"
+#include "Statistics/RenderData.h"
 #include "DX12Tasks/ImGuiRenderTask.h"
 
 // ECS
@@ -255,11 +260,6 @@ void Renderer::InitD3D12(Window *window, HINSTANCE hInstance, ThreadPool* thread
 
 void Renderer::Update(double dt)
 {
-#ifdef DEBUG
-	ImGui_ImplDX12_NewFrame();
-	ImGui_ImplWin32_NewFrame();
-	ImGui::NewFrame();
-#endif
 	float3 right = reinterpret_cast<float3&>(m_pScenePrimaryCamera->GetRightVector());
 	right.normalize();
 
@@ -278,6 +278,12 @@ void Renderer::Update(double dt)
 
 	// Picking
 	updateMousePicker();
+
+	// ImGui
+#ifdef DEBUG
+	ImGuiHandler::GetInstance().NewFrame();
+	ImGuiHandler::GetInstance().UpdateFrame();
+#endif
 }
 
 void Renderer::SortObjects()
@@ -1128,8 +1134,8 @@ bool Renderer::createDevice()
 		{
 			DXGI_ADAPTER_DESC adapterDesc = {};
 			adapter->GetDesc(&adapterDesc);
-
-			Log::Print("Adapter: %S\n", adapterDesc.Description);
+			EngineStatistics::GetIM_RenderStats().m_Adapter = to_string(std::wstring(adapterDesc.Description));
+			EngineStatistics::GetIM_RenderStats().m_API = "DirectX 12"; // TEMP: Specifiy when creating application later
 
 			break;
 		}
@@ -1202,6 +1208,9 @@ void Renderer::createSwapChain()
 {
 	unsigned int resolutionWidth = m_pWindow->GetScreenWidth();
 	unsigned int resolutionHeight = m_pWindow->GetScreenHeight();
+
+	EngineStatistics::GetIM_RenderStats().m_ResX = resolutionWidth;
+	EngineStatistics::GetIM_RenderStats().m_ResY = resolutionHeight;
 
 	m_pSwapChain = new SwapChain(
 		m_pDevice5,

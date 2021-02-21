@@ -58,12 +58,9 @@ void ImGuiRenderTask::Execute()
 
 	commandList->OMSetRenderTargets(1, &cdh, true, nullptr);
 
-	
-
-
-	static bool show = true;
-	ImGui::ShowDemoWindow(&show);
-
+	// temp
+	bool a = true;
+	ImGui::ShowDemoWindow(&a);
 
 	ImGui::Render();
 	ImDrawData* drawData = ImGui::GetDrawData();
