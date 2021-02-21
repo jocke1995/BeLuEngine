@@ -12,6 +12,9 @@ public:
 private:
 	ImGuiHandler();
 	~ImGuiHandler();
+
+
+	void updateMemoryInfo();
 };
 
 #endif

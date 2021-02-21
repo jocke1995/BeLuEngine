@@ -1097,7 +1097,7 @@ bool Renderer::createDevice()
 		PFN_D3D12_GET_DEBUG_INTERFACE f = (PFN_D3D12_GET_DEBUG_INTERFACE)GetProcAddress(mD3D12, "D3D12GetDebugInterface");
 		if (SUCCEEDED(f(IID_PPV_ARGS(&debugController))))
 		{
-			EngineStatistics::GetIM_RenderStats().m_DebugLayerActive = true;
+			EngineStatistics::GetIM_CommonStats().m_DebugLayerActive = true;
 			debugController->EnableDebugLayer();
 			debugController->SetEnableGPUBasedValidation(DX12VALIDATIONGLAYER);
 		}
@@ -1145,8 +1145,8 @@ bool Renderer::createDevice()
 		{
 			DXGI_ADAPTER_DESC adapterDesc = {};
 			adapter->GetDesc(&adapterDesc);
-			EngineStatistics::GetIM_RenderStats().m_Adapter = to_string(std::wstring(adapterDesc.Description));
-			EngineStatistics::GetIM_RenderStats().m_API = "DirectX 12"; // TEMP: Specifiy when creating application later
+			EngineStatistics::GetIM_CommonStats().m_Adapter = to_string(std::wstring(adapterDesc.Description));
+			EngineStatistics::GetIM_CommonStats().m_API = "DirectX 12"; // TEMP: Specifiy when creating application later
 
 			break;
 		}
@@ -1225,8 +1225,8 @@ void Renderer::createSwapChain()
 	unsigned int resolutionWidth = m_pWindow->GetScreenWidth();
 	unsigned int resolutionHeight = m_pWindow->GetScreenHeight();
 
-	EngineStatistics::GetIM_RenderStats().m_ResX = resolutionWidth;
-	EngineStatistics::GetIM_RenderStats().m_ResY = resolutionHeight;
+	EngineStatistics::GetIM_CommonStats().m_ResX = resolutionWidth;
+	EngineStatistics::GetIM_CommonStats().m_ResY = resolutionHeight;
 
 	m_pSwapChain = new SwapChain(
 		m_pDevice5,

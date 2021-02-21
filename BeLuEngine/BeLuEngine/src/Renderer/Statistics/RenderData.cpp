@@ -9,7 +9,12 @@ EngineStatistics::~EngineStatistics()
 {
 }
 
-IM_CommonStats& EngineStatistics::GetIM_RenderStats()
+IM_CommonStats& EngineStatistics::GetIM_CommonStats()
 {
-	return m_DebugInfo;
+	return m_CommonInfo;
+}
+
+IM_MemoryStats& EngineStatistics::GetIM_MemoryStats()
+{
+	return m_MemoryInfo;
 }
