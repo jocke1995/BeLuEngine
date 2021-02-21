@@ -1,8 +1,15 @@
 # BeLuEngine
 This project is created by me (Joakim Sjöberg) as a way to learn how to create a game engine. 
 The project is developed on windows platform where I use Visual Studio 2019 (Community edition) as platform.
-
+Below you can see what the engine can render at this date (22/02/2021).
+![Screenshot](Screenshots/22-02-2021_SPONZA.png)
 ---
+## Roadmap
+temp1
+### title2
+temp2
+---
+
 ## The structure of the VS solution
 The solution is, as of the date of writing this document, divided into three(3) projects.
 The projects are: Engine, Game and Sandbox.
@@ -20,7 +27,7 @@ It is staticly linked to the library that Engine creates.
 
 ---
 ## API
-Currently the only API supported is DirectX12. In the future I will add support for other API's such as DirectX11 and Vulkan.
+Currently the only API supported is DirectX12. In the future I will add support for other API's such as Vulkan and DirectX 11.
 
 ---
 ## Feature List

@@ -2,6 +2,7 @@
 #include "BeLuEngine.h"
 #include "Misc/MultiThreading/Thread.h"
 
+#include "Renderer/Statistics/EngineStatistics.h"
 BeLuEngine::BeLuEngine()
 {
 	
@@ -35,8 +36,8 @@ void BeLuEngine::Init(HINSTANCE hInstance, int nCmdShow)
 		BL_LOG_WARNING("Only 1 core on CPU, might be very laggy!\n");
 		numThreads = 1;
 	}
-
-	Log::Print("Total CPU Cores: %d\n", numThreads);
+	
+	EngineStatistics::GetIM_CommonStats().m_NumCpuCores = numThreads;
 	m_pThreadPool = &ThreadPool::GetInstance(numThreads * 2);
 
 	// Sub-engines

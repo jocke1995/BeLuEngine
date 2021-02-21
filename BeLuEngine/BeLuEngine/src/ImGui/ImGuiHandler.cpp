@@ -5,7 +5,7 @@
 #include "../ImGUI/imgui_impl_win32.h"
 #include "../ImGUI/imgui_impl_dx12.h"
 
-#include "../Renderer/Statistics/RenderData.h"
+#include "../Renderer/Statistics/EngineStatistics.h"
 #include <psapi.h>
 
 #include "../Renderer/Renderer.h"
@@ -15,13 +15,17 @@
 
 ImGuiHandler& ImGuiHandler::GetInstance()
 {
-	static ImGuiHandler instance;
+	// Init
+	EngineStatistics::GetInstance();
 
+	static ImGuiHandler instance;
 	return instance;
 }
 
 void ImGuiHandler::NewFrame()
 {
+	this->resetThreadInfos();
+
 	ImGui_ImplDX12_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
@@ -55,8 +59,10 @@ void ImGuiHandler::UpdateFrame()
 			ImGui::Text("Build: %s", cStats.m_Build.c_str());
 			ImGui::Text("DebugLayer Active: %s", cStats.m_DebugLayerActive ? "yes" : "no");
 			ImGui::Text("API: %s", cStats.m_API.c_str());
-			ImGui::Text("Multithreading commandlists: %s", cStats.m_STRenderer ? "no" : "yes");
+			ImGui::Text("Multithreaded Rendering: %s", cStats.m_STRenderer ? "no" : "yes");
 			ImGui::Text("Adapter: %s", cStats.m_Adapter.c_str());
+			ImGui::Text("CPU ID: %s", cStats.m_CPU.c_str());
+			ImGui::Text("Total Cpu Cores: %d", cStats.m_NumCpuCores);
 			ImGui::Text("Resolution: %d x %d", cStats.m_ResX, cStats.m_ResY);
 			ImGui::Text("FPS: %d", cStats.m_TotalFPS);
 			ImGui::Text("MS: %f", cStats.m_TotalMS);
@@ -72,8 +78,6 @@ void ImGuiHandler::UpdateFrame()
 			ImGui::Text("Process usage: %d", mStats.m_ProcessVramUsage);
 			ImGui::Text("Installed: %d", mStats.m_TotalVram);
 		}
-
-		// Threads is currently showing contribution one frame behind.. Because ImGui is also multithreaded
 		if (ImGui::CollapsingHeader("Threads"))
 		{
 			unsigned int threadsUsedThisFrame = 0;
@@ -92,14 +96,12 @@ void ImGuiHandler::UpdateFrame()
 				// Only show the threads who completed a task this frame
 				if (threadStat->m_TasksCompleted != 0)
 				{
-					ImGui::Text("ID: %d   Completed tasks: %d", threadStat->m_Id, threadStat->m_TasksCompleted);
+					ImGui::Text("ID: %d\tCompleted tasks: %d", threadStat->m_Id, threadStat->m_TasksCompleted);
 				}
 			}
 		}
 	}
 	ImGui::End();
-		
-	this->resetThreadInfos();
 }
 
 ImGuiHandler::ImGuiHandler()

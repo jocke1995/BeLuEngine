@@ -16,7 +16,7 @@
 #include "../ImGUI/imgui_impl_win32.h"
 #include "../ImGUI/imgui_impl_dx12.h"
 #include "../ImGui/ImGuiHandler.h"
-#include "Statistics/RenderData.h"
+#include "Statistics/EngineStatistics.h"
 #include "DX12Tasks/ImGuiRenderTask.h"
 
 // ECS
@@ -292,7 +292,6 @@ void Renderer::Update(double dt)
 	// ImGui
 #ifdef DEBUG
 	ImGuiHandler::GetInstance().NewFrame();
-	ImGuiHandler::GetInstance().UpdateFrame();
 #endif
 }
 
@@ -426,11 +425,6 @@ void Renderer::ExecuteMT()
 
 	/* ----------------------------- DEVELOPERMODE CommandLists ----------------------------- */
 
-#ifdef DEBUG
-	renderTask = m_RenderTasks[RENDER_TASK_TYPE::IMGUI];
-	m_pThreadPool->AddTask(renderTask);
-#endif
-
 	// Wait for the threads which records the commandlists to complete
 	m_pThreadPool->WaitForThreads(FLAG_THREAD::RENDER);
 
@@ -439,6 +433,19 @@ void Renderer::ExecuteMT()
 		m_DirectCommandLists[commandInterfaceIndex].data());
 
 	/* --------------------------------------------------------------- */
+
+	// ImGui
+#ifdef DEBUG
+	// Have to update ImGui here to get all information that happens inside rendering
+	ImGuiHandler::GetInstance().UpdateFrame();
+
+	renderTask = m_RenderTasks[RENDER_TASK_TYPE::IMGUI];
+	renderTask->Execute();
+
+	m_CommandQueues[COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->ExecuteCommandLists(
+		m_ImGuiCommandLists[commandInterfaceIndex].size(),
+		m_ImGuiCommandLists[commandInterfaceIndex].data());
+#endif
 
 	// Wait if the CPU is to far ahead of the gpu
 	m_CommandQueues[COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->Signal(m_pFenceFrame, m_FenceFrameValue);
@@ -528,10 +535,6 @@ void Renderer::ExecuteST()
 		renderTask->Execute();
 	}
 
-#ifdef DEBUG
-	renderTask = m_RenderTasks[RENDER_TASK_TYPE::IMGUI];
-	renderTask->Execute();
-#endif
 	/* ----------------------------- DEVELOPERMODE CommandLists ----------------------------- */
 
 	m_CommandQueues[COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->ExecuteCommandLists(
@@ -539,6 +542,19 @@ void Renderer::ExecuteST()
 		m_DirectCommandLists[commandInterfaceIndex].data());
 
 	/* --------------------------------------------------------------- */
+
+	// ImGui
+#ifdef DEBUG
+	// Have to update ImGui here to get all information that happens inside rendering
+	ImGuiHandler::GetInstance().UpdateFrame();
+
+	renderTask = m_RenderTasks[RENDER_TASK_TYPE::IMGUI];
+	renderTask->Execute();
+
+	m_CommandQueues[COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->ExecuteCommandLists(
+		m_ImGuiCommandLists[commandInterfaceIndex].size(),
+		m_ImGuiCommandLists[commandInterfaceIndex].data());
+#endif
 
 	// Wait if the CPU is to far ahead of the gpu
 	m_CommandQueues[COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->Signal(m_pFenceFrame, m_FenceFrameValue);
@@ -1962,7 +1978,7 @@ void Renderer::initRenderTasks()
 	// Debug/ImGui
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
-		m_DirectCommandLists[i].push_back(imGuiRenderTask->GetCommandInterface()->GetCommandList(i));
+		m_ImGuiCommandLists[i].push_back(imGuiRenderTask->GetCommandInterface()->GetCommandList(i));
 	}
 }
 

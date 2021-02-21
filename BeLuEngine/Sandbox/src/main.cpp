@@ -31,6 +31,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
    // Set scene
    sceneManager->SetScene(scene);
    
+   CpuIdEx;
    Log::Print("Entering Game-Loop ...\n\n");
    while (!window->ExitWindow())
    {
@@ -234,18 +235,18 @@ Scene* SponzaScene(SceneManager* sm)
     mc = entity->AddComponent<component::ModelComponent>();
     tc = entity->AddComponent<component::TransformComponent>();
     plc = entity->AddComponent<component::PointLightComponent>(FLAG_LIGHT::USE_TRANSFORM_POSITION);
-
+    
     mc->SetModel(sphereModel);
     mc->SetDrawFlag(FLAG_DRAW::DRAW_OPAQUE | FLAG_DRAW::GIVE_SHADOW);
     tc->GetTransform()->SetScale(0.3f);
     tc->GetTransform()->SetPosition({ -185.0f, 40.0f, 66.0f });
     plc->SetColor({ 0.0f, 0.0f, 15.0f });
-
+    
     entity = scene->AddEntity("Brazier1");
     mc = entity->AddComponent<component::ModelComponent>();
     tc = entity->AddComponent<component::TransformComponent>();
     plc = entity->AddComponent<component::PointLightComponent>(FLAG_LIGHT::USE_TRANSFORM_POSITION);
-
+    
     mc->SetModel(sphereModel);
     mc->SetDrawFlag(FLAG_DRAW::DRAW_OPAQUE | FLAG_DRAW::GIVE_SHADOW);
     tc->GetTransform()->SetScale(0.3f);

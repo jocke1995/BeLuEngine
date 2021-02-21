@@ -1,12 +1,22 @@
 #include "stdafx.h"
-#include "RenderData.h"
+#include "EngineStatistics.h"
+
+#include "../Misc/MicrosoftCPU.h"
 
 EngineStatistics::EngineStatistics()
 {
+	m_CommonInfo.m_CPU = InstructionSet::GetInstance().GetCPU();
 }
 
 EngineStatistics::~EngineStatistics()
 {
+}
+
+EngineStatistics& EngineStatistics::GetInstance()
+{
+	static EngineStatistics instance;
+
+	return instance;
 }
 
 IM_CommonStats& EngineStatistics::GetIM_CommonStats()
