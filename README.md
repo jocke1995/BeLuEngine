@@ -3,7 +3,8 @@ This project is created by me (Joakim Sjöberg) as a way to learn new features a
 The project is developed on windows platform where I use Visual Studio 2019 (Community edition) as platform.
 
 ## Screenshots
-![Alt](Screenshots/22-02-2021_SPONZA.png "22-02-2021_SPONZA")
+### 22-02-2021_SPONZA
+![Alt](Screenshots/22-02-2021_SPONZA.png)
 ---
 ## Roadmap
 ##### Controllers in ImGui to change stuff in real time
@@ -35,6 +36,7 @@ Currently the only API supported is DirectX12. In the future I will add support 
 ## Feature List
 Here I will list all the features (that is worth mentioning) implemented in my engine.
 ##### Entity Component System
+##### PBR using roughness and metallic maps
 ##### Multi-threading
 ##### Shadow Mapping (Spotlights and DirectionalLights)
 ##### FPS-Picking (with Boundingboxes)
