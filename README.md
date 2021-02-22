@@ -1,14 +1,15 @@
 # BeLuEngine
-This project is created by me (Joakim Sjöberg) as a way to learn how to create a game engine. 
+This project is created by me (Joakim Sjöberg) as a way to learn new features and techniques. 
 The project is developed on windows platform where I use Visual Studio 2019 (Community edition) as platform.
 
 ## Screenshots
-![Screenshot](Screenshots/22-02-2021_SPONZA.png "Title")
+![Alt](Screenshots/22-02-2021_SPONZA.png "22-02-2021_SPONZA")
 ---
 ## Roadmap
-temp1
-### title2
-temp2
+##### Controllers in ImGui to change stuff in real time
+##### DXR shadows, reflections and ao
+##### Async data-streaming with the copy queue
+
 ---
 
 ## The structure of the VS solution
