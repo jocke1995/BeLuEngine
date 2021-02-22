@@ -86,18 +86,20 @@ private:
 ```
 
 ## Enums
-Enums should be named with camel casing. Starting with a capital letter. An enum should also use the prefix **F_** if it is used as a flag otherwise it should use the **E_** prefix.
-Enum elements should be named with only capital letters and underscores.
+An enum should use the prefix **F_** if it is used as a flag otherwise it should use the **E_** prefix.
+Enum elements should be named with only capital letters and underscores. Enums should have a "NUM_ELEMENTS" as the last parameter.
 ```cpp
-enum F_MyFlags
+enum F_THREAD_FLAGS
 {
-  MY_FLAG_FLAG = (1 << 0),
-  MY_FLAG_FLAG = (1 << 1),
+  COMMANDLIST_RECORDING = (1 << 0),
+  ASYNC_DATA_STREAMING  = (1 << 1),
 };
 
-enum E_MyEnum
+enum E_LIGHT_TYPE
 {
-  MY_ENUM_0 = 0,
-  MY_ENUM_1 = 1,
+  DIRECTIONAL_LIGHT,
+  SPOT_LIGHT,
+  POINT_LIGHT,
+  NUM_LIGHT_TYPES
 };
 ```
