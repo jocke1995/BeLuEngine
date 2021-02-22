@@ -15,7 +15,7 @@ BlurComputeTask::BlurComputeTask(
 	ID3D12Device5* device,
 	RootSignature* rootSignature,
 	std::vector<std::pair< std::wstring, std::wstring>> csNamePSOName,
-	COMMAND_INTERFACE_TYPE interfaceType,
+	E_COMMAND_INTERFACE_TYPE interfaceType,
 	ShaderResourceView* brightSRV,
 	const PingPongResource* Bloom0_RESOURCE,
 	const PingPongResource* Bloom1_RESOURCE,
@@ -50,7 +50,7 @@ void BlurComputeTask::Execute()
 
 	commandList->SetComputeRootSignature(m_pRootSig);
 
-	DescriptorHeap* descriptorHeap_CBV_UAV_SRV = m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV];
+	DescriptorHeap* descriptorHeap_CBV_UAV_SRV = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV];
 	ID3D12DescriptorHeap* d3d12DescriptorHeap = descriptorHeap_CBV_UAV_SRV->GetID3D12DescriptorHeap();
 	commandList->SetDescriptorHeaps(1, &d3d12DescriptorHeap);
 

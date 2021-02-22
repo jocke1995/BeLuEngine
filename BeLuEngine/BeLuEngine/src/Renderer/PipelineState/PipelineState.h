@@ -15,13 +15,13 @@ public:
 	virtual ~PipelineState();
 
 	ID3D12PipelineState* GetPSO() const;
-	virtual Shader* GetShader(ShaderType type) const = 0;
+	virtual Shader* GetShader(E_SHADER_TYPE type) const = 0;
 
 protected:
 	ID3D12PipelineState* m_pPSO = nullptr;
 	std::wstring m_PsoName;
 
-	Shader* createShader(const std::wstring& fileName, ShaderType type);
+	Shader* createShader(const std::wstring& fileName, E_SHADER_TYPE type);
 };
 
 #endif

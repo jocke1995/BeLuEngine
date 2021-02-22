@@ -17,7 +17,7 @@ SwapChain::SwapChain(
 	DescriptorHeap* descriptorHeap_CBV_UAV_SRV)
 {
 
-	m_WindowMode = static_cast<int>(WINDOW_MODE::WINDOWED);
+	m_WindowMode = static_cast<int>(E_WINDOW_MODE::WINDOWED);
 
 	IDXGIFactory4* factory = nullptr;
 	HRESULT hr = CreateDXGIFactory(IID_PPV_ARGS(&factory));
@@ -89,7 +89,7 @@ SwapChain::SwapChain(
 
 	SAFE_RELEASE(&factory);
 	
-	if (m_WindowMode == static_cast<int>(WINDOW_MODE::FULLSCREEN))
+	if (m_WindowMode == static_cast<int>(E_WINDOW_MODE::FULLSCREEN))
 	{
 		// Finally, activate fullscreen state
 		m_pSwapChain4->SetFullscreenState(true, NULL);
@@ -105,7 +105,7 @@ SwapChain::~SwapChain()
 	clearSwapBuffers();
 
 	// You can not release the swapchain in fullscreen mode
-	if (m_WindowMode == static_cast<int>(WINDOW_MODE::FULLSCREEN))
+	if (m_WindowMode == static_cast<int>(E_WINDOW_MODE::FULLSCREEN))
 	{
 		m_pSwapChain4->SetFullscreenState(false, NULL);
 	}
@@ -131,7 +131,7 @@ const ShaderResourceView* SwapChain::GetSRV(unsigned int backBufferIndex) const
 const bool SwapChain::IsFullscreen() const
 {
 	bool fullscreen = false;
-	if (m_WindowMode == static_cast<int>(WINDOW_MODE::FULLSCREEN))
+	if (m_WindowMode == static_cast<int>(E_WINDOW_MODE::FULLSCREEN))
 	{
 		fullscreen = true;
 	}
@@ -145,7 +145,7 @@ void SwapChain::ToggleWindowMode(ID3D12Device5* device,
 	DescriptorHeap* descriptorHeap_RTV,
 	DescriptorHeap* descriptorHeap_CBV_UAV_SRV)
 {
-	if (m_WindowMode == static_cast<int>(WINDOW_MODE::FULLSCREEN))
+	if (m_WindowMode == static_cast<int>(E_WINDOW_MODE::FULLSCREEN))
 	{
 		m_WindowMode = 0;
 	}
@@ -156,7 +156,7 @@ void SwapChain::ToggleWindowMode(ID3D12Device5* device,
 
 	clearSwapBuffers();
 
-	if (m_WindowMode == static_cast<int>(WINDOW_MODE::FULLSCREEN))
+	if (m_WindowMode == static_cast<int>(E_WINDOW_MODE::FULLSCREEN))
 	{
 		m_pSwapChain4->SetFullscreenState(true, nullptr);
 	}
@@ -268,7 +268,7 @@ const void SwapChain::resize(const HWND* hwnd)
 	}
 
 	// If not fullscreen, fit the window to the screen
-	if (m_WindowMode == static_cast<int>(WINDOW_MODE::WINDOWED))
+	if (m_WindowMode == static_cast<int>(E_WINDOW_MODE::WINDOWED))
 	{
 		// Make sure that the window starts at the top left corner
 		int windowWidth = 800;

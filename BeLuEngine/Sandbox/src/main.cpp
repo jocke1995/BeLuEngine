@@ -51,10 +51,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
            Entity* entity = scene->AddEntity(name);
            component::ModelComponent* mc = entity->AddComponent<component::ModelComponent>();
            component::TransformComponent* tc = entity->AddComponent<component::TransformComponent>();
-           component::PointLightComponent* plc = entity->AddComponent<component::PointLightComponent>(FLAG_LIGHT::USE_TRANSFORM_POSITION);
+           component::PointLightComponent* plc = entity->AddComponent<component::PointLightComponent>(F_LIGHT_FLAGS::USE_TRANSFORM_POSITION);
    
            mc->SetModel(sphereModel);
-           mc->SetDrawFlag(FLAG_DRAW::DRAW_OPAQUE | FLAG_DRAW::GIVE_SHADOW);
+           mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
            tc->GetTransform()->SetScale(0.3f);
            tc->GetTransform()->SetPosition(lightPos);
    
@@ -114,7 +114,7 @@ Scene* TestScene(SceneManager* sm)
 
     /* ---------------------- Player ---------------------- */
     Entity* entity = (scene->AddEntity("player"));
-    cc = entity->AddComponent<component::CameraComponent>(CAMERA_TYPE::PERSPECTIVE, true);
+    cc = entity->AddComponent<component::CameraComponent>(E_CAMERA_TYPE::PERSPECTIVE, true);
     ic = entity->AddComponent<component::InputComponent>();
     scene->SetPrimaryCamera(cc->GetCamera());
     /* ---------------------- Player ---------------------- */
@@ -126,7 +126,7 @@ Scene* TestScene(SceneManager* sm)
 
     mc = entity->GetComponent<component::ModelComponent>();
     mc->SetModel(floorModel);
-    mc->SetDrawFlag(FLAG_DRAW::DRAW_OPAQUE | FLAG_DRAW::GIVE_SHADOW);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
     tc = entity->GetComponent<component::TransformComponent>();
     tc->GetTransform()->SetScale(50, 1, 50);
     tc->GetTransform()->SetPosition(0.0f, 0.0f, 0.0f);
@@ -138,7 +138,7 @@ Scene* TestScene(SceneManager* sm)
     tc = entity->AddComponent<component::TransformComponent>();
 
     mc->SetModel(sphereModel);
-    mc->SetDrawFlag(FLAG_DRAW::DRAW_OPAQUE | FLAG_DRAW::GIVE_SHADOW);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
     tc->GetTransform()->SetScale(1.0f);
     tc->GetTransform()->SetPosition(0, 4, 30);
     /* ---------------------- Sphere ---------------------- */
@@ -214,7 +214,7 @@ Scene* SponzaScene(SceneManager* sm)
 
     /* ---------------------- Player ---------------------- */
     Entity* entity = (scene->AddEntity("player"));
-    cc = entity->AddComponent<component::CameraComponent>(CAMERA_TYPE::PERSPECTIVE, true);
+    cc = entity->AddComponent<component::CameraComponent>(E_CAMERA_TYPE::PERSPECTIVE, true);
     ic = entity->AddComponent<component::InputComponent>();
     scene->SetPrimaryCamera(cc->GetCamera());
     /* ---------------------- Player ---------------------- */
@@ -223,9 +223,10 @@ Scene* SponzaScene(SceneManager* sm)
     entity = scene->AddEntity("sponza");
     mc = entity->AddComponent<component::ModelComponent>();
     tc = entity->AddComponent<component::TransformComponent>();
+    //bbc = entity->AddComponent<component::BoundingBoxComponent>(F_BOUNDING_BOX_FLAGS::PICKING);
 
     mc->SetModel(sponza);
-    mc->SetDrawFlag(FLAG_DRAW::DRAW_OPAQUE | FLAG_DRAW::GIVE_SHADOW);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
     tc->GetTransform()->SetPosition({0.0f, 0.0f, 0.0f});
     tc->GetTransform()->SetScale(0.3f, 0.3f, 0.3f);
     /* ---------------------- Sponza ---------------------- */
@@ -234,10 +235,10 @@ Scene* SponzaScene(SceneManager* sm)
     entity = scene->AddEntity("Brazier0");
     mc = entity->AddComponent<component::ModelComponent>();
     tc = entity->AddComponent<component::TransformComponent>();
-    plc = entity->AddComponent<component::PointLightComponent>(FLAG_LIGHT::USE_TRANSFORM_POSITION);
+    plc = entity->AddComponent<component::PointLightComponent>(F_LIGHT_FLAGS::USE_TRANSFORM_POSITION);
     
     mc->SetModel(sphereModel);
-    mc->SetDrawFlag(FLAG_DRAW::DRAW_OPAQUE | FLAG_DRAW::GIVE_SHADOW);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
     tc->GetTransform()->SetScale(0.3f);
     tc->GetTransform()->SetPosition({ -185.0f, 40.0f, 66.0f });
     plc->SetColor({ 0.0f, 0.0f, 15.0f });
@@ -245,10 +246,10 @@ Scene* SponzaScene(SceneManager* sm)
     entity = scene->AddEntity("Brazier1");
     mc = entity->AddComponent<component::ModelComponent>();
     tc = entity->AddComponent<component::TransformComponent>();
-    plc = entity->AddComponent<component::PointLightComponent>(FLAG_LIGHT::USE_TRANSFORM_POSITION);
+    plc = entity->AddComponent<component::PointLightComponent>(F_LIGHT_FLAGS::USE_TRANSFORM_POSITION);
     
     mc->SetModel(sphereModel);
-    mc->SetDrawFlag(FLAG_DRAW::DRAW_OPAQUE | FLAG_DRAW::GIVE_SHADOW);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
     tc->GetTransform()->SetScale(0.3f);
     tc->GetTransform()->SetPosition({ -185.0f, 40.0f, -42.6f });
     plc->SetColor({ 10.0f, 0.0f, 10.0f });
@@ -256,10 +257,10 @@ Scene* SponzaScene(SceneManager* sm)
     entity = scene->AddEntity("Brazier2");
     mc = entity->AddComponent<component::ModelComponent>();
     tc = entity->AddComponent<component::TransformComponent>();
-    plc = entity->AddComponent<component::PointLightComponent>(FLAG_LIGHT::USE_TRANSFORM_POSITION);
+    plc = entity->AddComponent<component::PointLightComponent>(F_LIGHT_FLAGS::USE_TRANSFORM_POSITION);
 
     mc->SetModel(sphereModel);
-    mc->SetDrawFlag(FLAG_DRAW::DRAW_OPAQUE | FLAG_DRAW::GIVE_SHADOW);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
     tc->GetTransform()->SetScale(0.3f);
     tc->GetTransform()->SetPosition({ 146.0f, 40.0f, 66.0f });
     plc->SetColor({ 0.0f, 15.0f, 0.0f });
@@ -267,10 +268,10 @@ Scene* SponzaScene(SceneManager* sm)
     entity = scene->AddEntity("Brazier3");
     mc = entity->AddComponent<component::ModelComponent>();
     tc = entity->AddComponent<component::TransformComponent>();
-    plc = entity->AddComponent<component::PointLightComponent>(FLAG_LIGHT::USE_TRANSFORM_POSITION);
+    plc = entity->AddComponent<component::PointLightComponent>(F_LIGHT_FLAGS::USE_TRANSFORM_POSITION);
 
     mc->SetModel(sphereModel);
-    mc->SetDrawFlag(FLAG_DRAW::DRAW_OPAQUE | FLAG_DRAW::GIVE_SHADOW);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
     tc->GetTransform()->SetScale(0.3f);
     tc->GetTransform()->SetPosition({ 146.0f, 40.0f, -42.6f });
     plc->SetColor({ 15.0f, 0.0f, 0.0f });
@@ -278,7 +279,7 @@ Scene* SponzaScene(SceneManager* sm)
 
     /* ---------------------- dirLight ---------------------- */
     entity = scene->AddEntity("dirLight");
-    dlc = entity->AddComponent<component::DirectionalLightComponent>(FLAG_LIGHT::CAST_SHADOW);
+    dlc = entity->AddComponent<component::DirectionalLightComponent>(F_LIGHT_FLAGS::CAST_SHADOW);
     dlc->SetColor({ 0.17, 0.25, 0.3f});
     dlc->SetCameraDistance(300);
     dlc->SetDirection({ -1.0f, -2.0f, 0.03f });

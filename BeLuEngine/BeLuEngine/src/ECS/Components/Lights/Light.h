@@ -5,7 +5,7 @@
 
 class BaseCamera;
 
-enum FLAG_LIGHT
+enum F_LIGHT_FLAGS
 {
 	// Set flag to make the light position inherit the position of the corresponding m_pMesh
 	USE_TRANSFORM_POSITION = BIT(1),
@@ -26,7 +26,7 @@ static unsigned int s_LightIdCounter = 0;
 class Light
 {
 public:
-	Light(CAMERA_TYPE camType, unsigned int lightFlags = 0);
+	Light(E_CAMERA_TYPE camType, unsigned int lightFlags = 0);
 	virtual ~Light();
 
 	bool operator== (const Light& other);
@@ -46,7 +46,7 @@ protected:
 	unsigned int m_Id = 0;
 
 	BaseCamera* m_pCamera = nullptr;
-	CAMERA_TYPE m_CameraType;
+	E_CAMERA_TYPE m_CameraType;
 
 	// Orthographic
 	void CreateOrthographicCamera(

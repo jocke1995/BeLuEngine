@@ -9,7 +9,7 @@
 namespace component
 {
 	// Default Settings
-	CameraComponent::CameraComponent(Entity* parent, CAMERA_TYPE camType, bool primary)
+	CameraComponent::CameraComponent(Entity* parent, E_CAMERA_TYPE camType, bool primary)
 		:Component(parent)
 	{
 		m_PrimaryCamera = primary;
@@ -18,10 +18,10 @@ namespace component
 
 		switch (m_CamType)
 		{
-		case CAMERA_TYPE::PERSPECTIVE:
+		case E_CAMERA_TYPE::PERSPECTIVE:
 			m_pCamera = createPerspective();
 			break;
-		case CAMERA_TYPE::ORTHOGRAPHIC:
+		case E_CAMERA_TYPE::ORTHOGRAPHIC:
 			m_pCamera = createOrthographic();
 			break;
 		}
@@ -59,7 +59,7 @@ namespace component
 
 	BaseCamera* CameraComponent::createPerspective(DirectX::XMVECTOR position, DirectX::XMVECTOR direction, double fov, double aspectRatio, double nearZ, double farZ)
 	{
-		m_CamType = CAMERA_TYPE::PERSPECTIVE;
+		m_CamType = E_CAMERA_TYPE::PERSPECTIVE;
 		return new PerspectiveCamera(
 			position, direction,
 			fov, aspectRatio,
@@ -69,7 +69,7 @@ namespace component
 
 	BaseCamera* CameraComponent::createOrthographic(DirectX::XMVECTOR position, DirectX::XMVECTOR direction, float left, float right, float bot, float top, float nearZ, float farZ)
 	{
-		m_CamType = CAMERA_TYPE::ORTHOGRAPHIC;
+		m_CamType = E_CAMERA_TYPE::ORTHOGRAPHIC;
 		return new OrthographicCamera(
 			position, direction,
 			left, right,

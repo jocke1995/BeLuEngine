@@ -97,7 +97,7 @@ void ThreadPool::exitThreads()
 	m_Mutex.unlock();
 
 	m_workerThreadConditionVariable.notify_all();
-	WaitForThreads(FLAG_THREAD::ALL);
+	WaitForThreads(F_THREAD_FLAGS::ALL);
 }
 
 bool ThreadPool::isQueueEmpty(unsigned int flag)

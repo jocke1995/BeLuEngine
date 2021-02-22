@@ -13,8 +13,8 @@ class ShadowInfo
 {
 public:
 	ShadowInfo(
-		LIGHT_TYPE lightType,
-		SHADOW_RESOLUTION shadowResolution,
+		E_LIGHT_TYPE lightType,
+		E_SHADOW_RESOLUTION shadowResolution,
 		ID3D12Device5* device,
 		DescriptorHeap* dh_DSV,
 		DescriptorHeap* dh_SRV);
@@ -25,7 +25,7 @@ public:
 	bool operator != (const ShadowInfo& other);
 
 	unsigned int GetId() const;
-	SHADOW_RESOLUTION GetShadowResolution() const;
+	E_SHADOW_RESOLUTION GetShadowResolution() const;
 	Resource* GetResource() const;
 	DepthStencilView* GetDSV() const;
 	ShaderResourceView* GetSRV() const;
@@ -34,7 +34,7 @@ public:
 private:
 	inline static unsigned int s_IdCounter = 0;
 	unsigned int m_Id = 0;
-	SHADOW_RESOLUTION m_ShadowResolution = SHADOW_RESOLUTION::UNDEFINED;
+	E_SHADOW_RESOLUTION m_ShadowResolution = E_SHADOW_RESOLUTION::UNDEFINED;
 
 	Resource* m_pResource = nullptr;
 	DepthStencilView* m_pDSV = nullptr;

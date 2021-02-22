@@ -14,7 +14,7 @@
 Texture2D::Texture2D(const std::wstring& filePath)
 	: Texture(filePath)
 {
-	m_Type = TEXTURE_TYPE::TEXTURE2D;
+	m_Type = E_TEXTURE_TYPE::TEXTURE2D;
 	m_SubresourceData.resize(1); // 1 subresource
 }
 

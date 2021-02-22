@@ -4,7 +4,7 @@
 MultiThreadedTask::MultiThreadedTask(unsigned int FLAG_THREAD)
 {
 	m_Flags = FLAG_THREAD;
-	m_Flags |= FLAG_THREAD::ALL;
+	m_Flags |= F_THREAD_FLAGS::ALL;
 }
 
 MultiThreadedTask::~MultiThreadedTask()

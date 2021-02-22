@@ -5,7 +5,7 @@
 
 CommandInterface::CommandInterface(
 	ID3D12Device5* device,
-	COMMAND_INTERFACE_TYPE interfaceType,
+	E_COMMAND_INTERFACE_TYPE interfaceType,
 	const std::wstring& clName)
 {
 	m_Name = clName;
@@ -38,18 +38,18 @@ void CommandInterface::Reset(unsigned int index)
 	m_pCommandLists[index]->Reset(m_pCommandAllocators[index], NULL);
 }
 
-void CommandInterface::createCommandInterfaces(ID3D12Device5* device, COMMAND_INTERFACE_TYPE interfaceType)
+void CommandInterface::createCommandInterfaces(ID3D12Device5* device, E_COMMAND_INTERFACE_TYPE interfaceType)
 {
 	D3D12_COMMAND_LIST_TYPE D3D12type;
 	switch (interfaceType)
 	{
-	case COMMAND_INTERFACE_TYPE::DIRECT_TYPE:
+	case E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE:
 		D3D12type = D3D12_COMMAND_LIST_TYPE_DIRECT;
 		break;
-	case COMMAND_INTERFACE_TYPE::COPY_TYPE:
+	case E_COMMAND_INTERFACE_TYPE::COPY_TYPE:
 		D3D12type = D3D12_COMMAND_LIST_TYPE_COPY;
 		break;
-	case COMMAND_INTERFACE_TYPE::COMPUTE_TYPE:
+	case E_COMMAND_INTERFACE_TYPE::COMPUTE_TYPE:
 		D3D12type = D3D12_COMMAND_LIST_TYPE_COMPUTE;
 		break;
 	default:

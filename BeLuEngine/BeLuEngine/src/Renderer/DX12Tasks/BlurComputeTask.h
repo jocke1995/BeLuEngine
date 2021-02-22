@@ -12,7 +12,7 @@ public:
 		ID3D12Device5* device,
 		RootSignature* rootSignature,
 		std::vector<std::pair<std::wstring, std::wstring>> csNamePSOName,
-		COMMAND_INTERFACE_TYPE interfaceType,
+		E_COMMAND_INTERFACE_TYPE interfaceType,
 		ShaderResourceView* brightSRV,
 		const PingPongResource* Bloom0_RESOURCE,
 		const PingPongResource* Bloom1_RESOURCE,

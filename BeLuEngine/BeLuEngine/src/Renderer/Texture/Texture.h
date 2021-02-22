@@ -18,7 +18,7 @@ public:
 	virtual bool Init(ID3D12Device5* device, DescriptorHeap* descriptorHeap) = 0;
 
 	const std::wstring& GetPath() const;
-	TEXTURE_TYPE GetType() const;
+	E_TEXTURE_TYPE GetType() const;
 	const unsigned int GetDescriptorHeapIndex() const;
 	BYTE* GetData() const;
 	unsigned int GetWidth() const;
@@ -30,7 +30,7 @@ protected:
 	friend class Renderer;
 	friend class Model;
 
-	TEXTURE_TYPE m_Type = TEXTURE_TYPE::UNKNOWN;
+	E_TEXTURE_TYPE m_Type = E_TEXTURE_TYPE::UNKNOWN;
 
 	unsigned char* m_pImageData = nullptr;
 	int m_ImageBytesPerRow = 0;

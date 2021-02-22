@@ -6,8 +6,8 @@
 #include "../RenderView.h"
 
 ShadowInfo::ShadowInfo(
-	LIGHT_TYPE lightType,
-	SHADOW_RESOLUTION shadowResolution,
+	E_LIGHT_TYPE lightType,
+	E_SHADOW_RESOLUTION shadowResolution,
 	ID3D12Device5* device,
 	DescriptorHeap* dh_DSV,
 	DescriptorHeap* dh_SRV)
@@ -16,52 +16,52 @@ ShadowInfo::ShadowInfo(
 	unsigned int depthTextureHeight = 0;
 	switch (lightType)
 	{
-	case LIGHT_TYPE::DIRECTIONAL_LIGHT:
+	case E_LIGHT_TYPE::DIRECTIONAL_LIGHT:
 		switch (shadowResolution)
 		{
-		case SHADOW_RESOLUTION::LOW:
+		case E_SHADOW_RESOLUTION::LOW:
 			depthTextureWidth = 1024;
 			depthTextureHeight = 1024;
 			break;
-		case SHADOW_RESOLUTION::MEDIUM:
+		case E_SHADOW_RESOLUTION::MEDIUM:
 			depthTextureWidth = 2048;
 			depthTextureHeight = 2048;
 			break;
-		case SHADOW_RESOLUTION::HIGH:
+		case E_SHADOW_RESOLUTION::HIGH:
 			depthTextureWidth = 4096;
 			depthTextureHeight = 4096;
 			break;
 		}
 		break;
-	case LIGHT_TYPE::POINT_LIGHT:
+	case E_LIGHT_TYPE::POINT_LIGHT:
 		switch (shadowResolution)
 		{
-		case SHADOW_RESOLUTION::LOW:
+		case E_SHADOW_RESOLUTION::LOW:
 			depthTextureWidth = 512;
 			depthTextureHeight = 512;
 			break;
-		case SHADOW_RESOLUTION::MEDIUM:
+		case E_SHADOW_RESOLUTION::MEDIUM:
 			depthTextureWidth = 1024;
 			depthTextureHeight = 1024;
 			break;
-		case SHADOW_RESOLUTION::HIGH:
+		case E_SHADOW_RESOLUTION::HIGH:
 			depthTextureWidth = 2048;
 			depthTextureHeight = 2048;
 			break;
 		}
 		break;
-	case LIGHT_TYPE::SPOT_LIGHT:
+	case E_LIGHT_TYPE::SPOT_LIGHT:
 		switch (shadowResolution)
 		{
-		case SHADOW_RESOLUTION::LOW:
+		case E_SHADOW_RESOLUTION::LOW:
 			depthTextureWidth = 1024;
 			depthTextureHeight = 1024;
 			break;
-		case SHADOW_RESOLUTION::MEDIUM:
+		case E_SHADOW_RESOLUTION::MEDIUM:
 			depthTextureWidth = 2048;
 			depthTextureHeight = 2048;
 			break;
-		case SHADOW_RESOLUTION::HIGH:
+		case E_SHADOW_RESOLUTION::HIGH:
 			depthTextureWidth = 4096;
 			depthTextureHeight = 4096;
 			break;
@@ -106,7 +106,7 @@ unsigned int ShadowInfo::GetId() const
 	return m_Id;
 }
 
-SHADOW_RESOLUTION ShadowInfo::GetShadowResolution() const
+E_SHADOW_RESOLUTION ShadowInfo::GetShadowResolution() const
 {
 	return m_ShadowResolution;
 }

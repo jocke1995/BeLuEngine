@@ -12,7 +12,7 @@
 
 CopyOnDemandTask::CopyOnDemandTask(
 	ID3D12Device5* device,
-	COMMAND_INTERFACE_TYPE interfaceType,
+	E_COMMAND_INTERFACE_TYPE interfaceType,
 	unsigned int FLAG_THREAD,
 	const std::wstring& clName)
 	:CopyTask(device, interfaceType, FLAG_THREAD, clName)

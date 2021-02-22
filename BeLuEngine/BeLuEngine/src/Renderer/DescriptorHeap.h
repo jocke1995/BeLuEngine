@@ -4,7 +4,7 @@
 // DX12 Forward Declarations (But cant because using non-pointers)
 #include "d3dx12.h"
 
-enum class DESCRIPTOR_HEAP_TYPE
+enum class E_DESCRIPTOR_HEAP_TYPE
 {
 	CBV_UAV_SRV,
 	RTV,
@@ -15,7 +15,7 @@ enum class DESCRIPTOR_HEAP_TYPE
 class DescriptorHeap
 {
 public:
-	DescriptorHeap(ID3D12Device5* device, DESCRIPTOR_HEAP_TYPE type);
+	DescriptorHeap(ID3D12Device5* device, E_DESCRIPTOR_HEAP_TYPE type);
 	virtual ~DescriptorHeap();
 
 	void SetCPUGPUHeapStart();

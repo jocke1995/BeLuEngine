@@ -3,7 +3,7 @@
 
 #include "../Misc/Log.h"
 
-Shader::Shader(LPCTSTR path, ShaderType type)
+Shader::Shader(LPCTSTR path, E_SHADER_TYPE type)
 {
 	m_Path = path;
 	m_Type = type;
@@ -26,17 +26,17 @@ void Shader::compileShader()
 	std::string entryPoint;
 	std::string shaderModelTarget;
 
-	if (m_Type == ShaderType::VS)
+	if (m_Type == E_SHADER_TYPE::VS)
 	{
 		entryPoint = "VS_main";
 		shaderModelTarget = "vs_5_1";
 	}
-	else if (m_Type == ShaderType::PS)
+	else if (m_Type == E_SHADER_TYPE::PS)
 	{
 		entryPoint = "PS_main";
 		shaderModelTarget = "ps_5_1";
 	}
-	else if (m_Type == ShaderType::CS)
+	else if (m_Type == E_SHADER_TYPE::CS)
 	{
 		entryPoint = "CS_main";
 		shaderModelTarget = "cs_5_1";

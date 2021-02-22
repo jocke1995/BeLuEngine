@@ -72,13 +72,13 @@ bool AssetLoader::IsTextureLoadedOnGpu(const Texture* texture) const
 void AssetLoader::loadDefaultMaterial()
 {
 	// Load default textures
-	std::map<TEXTURE2D_TYPE, Texture*> matTextures;
-	matTextures[TEXTURE2D_TYPE::ALBEDO] = LoadTexture2D(m_FilePathDefaultTextures + L"default_albedo.dds");
-	matTextures[TEXTURE2D_TYPE::ROUGHNESS] = LoadTexture2D(m_FilePathDefaultTextures + L"default_roughness.dds");
-	matTextures[TEXTURE2D_TYPE::METALLIC] = LoadTexture2D(m_FilePathDefaultTextures + L"default_metallic.dds");
-	matTextures[TEXTURE2D_TYPE::NORMAL] = LoadTexture2D(m_FilePathDefaultTextures + L"default_normal.dds");
-	matTextures[TEXTURE2D_TYPE::EMISSIVE] = LoadTexture2D(m_FilePathDefaultTextures + L"default_emissive.dds");
-	matTextures[TEXTURE2D_TYPE::OPACITY] = LoadTexture2D(m_FilePathDefaultTextures + L"default_opacity.dds");
+	std::map<E_TEXTURE2D_TYPE, Texture*> matTextures;
+	matTextures[E_TEXTURE2D_TYPE::ALBEDO] = LoadTexture2D(m_FilePathDefaultTextures + L"default_albedo.dds");
+	matTextures[E_TEXTURE2D_TYPE::ROUGHNESS] = LoadTexture2D(m_FilePathDefaultTextures + L"default_roughness.dds");
+	matTextures[E_TEXTURE2D_TYPE::METALLIC] = LoadTexture2D(m_FilePathDefaultTextures + L"default_metallic.dds");
+	matTextures[E_TEXTURE2D_TYPE::NORMAL] = LoadTexture2D(m_FilePathDefaultTextures + L"default_normal.dds");
+	matTextures[E_TEXTURE2D_TYPE::EMISSIVE] = LoadTexture2D(m_FilePathDefaultTextures + L"default_emissive.dds");
+	matTextures[E_TEXTURE2D_TYPE::OPACITY] = LoadTexture2D(m_FilePathDefaultTextures + L"default_opacity.dds");
 
 	std::wstring matName = L"DefaultMaterial";
 	Material* material = new Material(&matName, &matTextures);
@@ -148,7 +148,7 @@ Model* AssetLoader::LoadModel(const std::wstring& path)
 	}
 
 	std::vector<Mesh*> meshes;
-	std::vector<std::map<TEXTURE2D_TYPE, Texture*>> textures;
+	std::vector<std::map<E_TEXTURE2D_TYPE, Texture*>> textures;
 	std::vector<Material*> materials;
 
 	meshes.reserve(assimpScene->mNumMeshes);
@@ -190,7 +190,7 @@ Texture* AssetLoader::LoadTexture2D(const std::wstring& path)
 	return texture;
 }
 
-Shader* AssetLoader::loadShader(const std::wstring& fileName, ShaderType type)
+Shader* AssetLoader::loadShader(const std::wstring& fileName, E_SHADER_TYPE type)
 {
 	// Check if the shader already exists
 	if (m_LoadedShaders.count(fileName) != 0)
@@ -334,12 +334,12 @@ Material* AssetLoader::loadMaterial(aiMaterial* mat, const std::wstring& folderP
 	if (m_LoadedMaterials.count(matName) == 0)
 	{
 		// Load material
-		std::map<TEXTURE2D_TYPE, Texture*> matTextures;
+		std::map<E_TEXTURE2D_TYPE, Texture*> matTextures;
 
 		// Add the textures to the m_pMesh
-		for (unsigned int i = 0; i < static_cast<unsigned int>(TEXTURE2D_TYPE::NUM_TYPES); i++)
+		for (unsigned int i = 0; i < static_cast<unsigned int>(E_TEXTURE2D_TYPE::NUM_TYPES); i++)
 		{
-			TEXTURE2D_TYPE type = static_cast<TEXTURE2D_TYPE>(i);
+			E_TEXTURE2D_TYPE type = static_cast<E_TEXTURE2D_TYPE>(i);
 			Texture* texture = processTexture(mat, type, folderPath);
 			matTextures[type] = texture;
 		}
@@ -361,7 +361,7 @@ Material* AssetLoader::loadMaterial(aiMaterial* mat, const std::wstring& folderP
 	}
 }
 
-Texture* AssetLoader::processTexture(aiMaterial* mat, TEXTURE2D_TYPE texture_type, const std::wstring& filePathWithoutTexture)
+Texture* AssetLoader::processTexture(aiMaterial* mat, E_TEXTURE2D_TYPE texture_type, const std::wstring& filePathWithoutTexture)
 {
 	aiTextureType type = aiTextureType::aiTextureType_NONE;
 	aiString str;
@@ -374,32 +374,32 @@ Texture* AssetLoader::processTexture(aiMaterial* mat, TEXTURE2D_TYPE texture_typ
 	// Find the textureType
 	switch (texture_type)
 	{
-	case::TEXTURE2D_TYPE::ALBEDO:
+	case::E_TEXTURE2D_TYPE::ALBEDO:
 		type = aiTextureType_DIFFUSE;
 		defaultPath = m_FilePathDefaultTextures + L"default_albedo.dds";
 		warningMessageTextureType = "Albedo";
 		break;
-	case::TEXTURE2D_TYPE::ROUGHNESS:
+	case::E_TEXTURE2D_TYPE::ROUGHNESS:
 		type = aiTextureType_SPECULAR;
 		defaultPath = m_FilePathDefaultTextures + L"default_roughness.dds";
 		warningMessageTextureType = "Roughness";
 		break;
-	case::TEXTURE2D_TYPE::METALLIC:
+	case::E_TEXTURE2D_TYPE::METALLIC:
 		type = aiTextureType_AMBIENT;
 		defaultPath = m_FilePathDefaultTextures + L"default_metallic.dds";
 		warningMessageTextureType = "Metallic";
 		break;
-	case::TEXTURE2D_TYPE::NORMAL:
+	case::E_TEXTURE2D_TYPE::NORMAL:
 		type = aiTextureType_NORMALS;
 		defaultPath = m_FilePathDefaultTextures + L"default_normal.dds";
 		warningMessageTextureType = "Normal";
 		break;
-	case::TEXTURE2D_TYPE::EMISSIVE:
+	case::E_TEXTURE2D_TYPE::EMISSIVE:
 		type = aiTextureType_EMISSIVE;
 		defaultPath = m_FilePathDefaultTextures + L"default_emissive.dds";
 		warningMessageTextureType = "Emissive";
 		break;
-	case::TEXTURE2D_TYPE::OPACITY:
+	case::E_TEXTURE2D_TYPE::OPACITY:
 		type = aiTextureType_OPACITY;
 		defaultPath = m_FilePathDefaultTextures + L"default_opacity.dds";
 		warningMessageTextureType = "Opacity";
@@ -420,7 +420,7 @@ Texture* AssetLoader::processTexture(aiMaterial* mat, TEXTURE2D_TYPE texture_typ
 	else
 	{
 		// Logging, avoid logging emissive and opacity
-		if (texture_type == TEXTURE2D_TYPE::EMISSIVE || texture_type == TEXTURE2D_TYPE::OPACITY)
+		if (texture_type == E_TEXTURE2D_TYPE::EMISSIVE || texture_type == E_TEXTURE2D_TYPE::OPACITY)
 		{
 			
 		}

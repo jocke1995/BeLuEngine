@@ -20,17 +20,17 @@ ID3D12PipelineState* PipelineState::GetPSO() const
 	return m_pPSO;
 }
 
-Shader* PipelineState::createShader(const std::wstring& fileName, ShaderType type)
+Shader* PipelineState::createShader(const std::wstring& fileName, E_SHADER_TYPE type)
 {
-	if (type == ShaderType::VS)
+	if (type == E_SHADER_TYPE::VS)
 	{
 		return AssetLoader::Get()->loadShader(fileName, type);
 	}
-	else if (type == ShaderType::PS)
+	else if (type == E_SHADER_TYPE::PS)
 	{
 		return AssetLoader::Get()->loadShader(fileName, type);
 	}
-	else if (type == ShaderType::CS)
+	else if (type == E_SHADER_TYPE::CS)
 	{
 		return AssetLoader::Get()->loadShader(fileName, type);
 	}

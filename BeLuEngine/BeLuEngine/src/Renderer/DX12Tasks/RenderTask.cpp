@@ -17,7 +17,7 @@ RenderTask::RenderTask(
 	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*>* gpsds,
 	const std::wstring& psoName,
 	unsigned int FLAG_THREAD)
-	:DX12Task(device, COMMAND_INTERFACE_TYPE::DIRECT_TYPE, FLAG_THREAD, psoName)
+	:DX12Task(device, E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE, FLAG_THREAD, psoName)
 {
 	if (gpsds != nullptr)
 	{

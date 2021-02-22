@@ -6,7 +6,7 @@
 namespace component
 {
 	DirectionalLightComponent::DirectionalLightComponent(Entity* parent, unsigned int lightFlags)
-		:Component(parent), Light(CAMERA_TYPE::ORTHOGRAPHIC, lightFlags)
+		:Component(parent), Light(E_CAMERA_TYPE::ORTHOGRAPHIC, lightFlags)
 	{
 		m_pDirectionalLight = new DirectionalLight();
 		m_pDirectionalLight->direction = { -1.0f,  -0.5f,  0.0f, 0.0f };
@@ -106,7 +106,7 @@ namespace component
 
 	void DirectionalLightComponent::initFlagUsages()
 	{
-		if (m_LightFlags & static_cast<unsigned int>(FLAG_LIGHT::CAST_SHADOW))
+		if (m_LightFlags & static_cast<unsigned int>(F_LIGHT_FLAGS::CAST_SHADOW))
 		{
 			CreateOrthographicCamera(
 				{

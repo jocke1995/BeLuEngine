@@ -14,7 +14,7 @@
 Texture2DGUI::Texture2DGUI(const std::wstring& filePath)
 	: Texture(filePath)
 {
-	m_Type = TEXTURE_TYPE::TEXTURE2DGUI;
+	m_Type = E_TEXTURE_TYPE::TEXTURE2DGUI;
 }
 
 Texture2DGUI::~Texture2DGUI()

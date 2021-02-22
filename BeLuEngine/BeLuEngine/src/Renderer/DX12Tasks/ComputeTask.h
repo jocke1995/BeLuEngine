@@ -14,7 +14,7 @@ public:
 		RootSignature* rootSignature,
 		std::vector<std::pair< std::wstring, std::wstring>> csNamePSOName,
 		unsigned int FLAG_THREAD,
-		COMMAND_INTERFACE_TYPE interfaceType = COMMAND_INTERFACE_TYPE::COMPUTE_TYPE,
+		E_COMMAND_INTERFACE_TYPE interfaceType = E_COMMAND_INTERFACE_TYPE::COMPUTE_TYPE,
 		const std::wstring& clName = L"ComputeDefaultCommandListName");
 	virtual ~ComputeTask();
 

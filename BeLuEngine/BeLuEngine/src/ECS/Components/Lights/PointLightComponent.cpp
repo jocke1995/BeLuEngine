@@ -12,7 +12,7 @@
 namespace component
 {
 	PointLightComponent::PointLightComponent(Entity* parent, unsigned int lightFlags)
-		:Component(parent), Light(CAMERA_TYPE::PERSPECTIVE, lightFlags)
+		:Component(parent), Light(E_CAMERA_TYPE::PERSPECTIVE, lightFlags)
 	{
 		m_pPointLight = new PointLight();
 		m_pPointLight->position = { 0.0f,  2.0f,  0.0f, 0.0f };
@@ -32,7 +32,7 @@ namespace component
 			m_pCamera->Update(dt);
 		}
 
-		if (m_LightFlags & static_cast<unsigned int>(FLAG_LIGHT::USE_TRANSFORM_POSITION))
+		if (m_LightFlags & static_cast<unsigned int>(F_LIGHT_FLAGS::USE_TRANSFORM_POSITION))
 		{
 			Transform* tc = m_pParent->GetComponent<TransformComponent>()->GetTransform();
 			float3 position = tc->GetPositionFloat3();

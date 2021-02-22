@@ -12,7 +12,7 @@
 TextureCubeMap::TextureCubeMap(const std::wstring& filePath)
 	: Texture(filePath)
 {
-	m_Type = TEXTURE_TYPE::TEXTURECUBEMAP;
+	m_Type = E_TEXTURE_TYPE::TEXTURECUBEMAP;
 	m_SubresourceData.resize(6); // 6 Subresources for a cubemap
 }
 

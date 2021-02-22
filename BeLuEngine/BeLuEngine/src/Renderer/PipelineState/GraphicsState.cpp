@@ -14,8 +14,8 @@ GraphicsState::GraphicsState(ID3D12Device5* device, RootSignature* rootSignature
 
 	m_pGPSD->pRootSignature = rootSignature->GetRootSig();
 
-	m_pVS = createShader(VSName, ShaderType::VS);
-	m_pPS = createShader(PSName, ShaderType::PS);
+	m_pVS = createShader(VSName, E_SHADER_TYPE::VS);
+	m_pPS = createShader(PSName, E_SHADER_TYPE::PS);
 
 	ID3DBlob* vsBlob = m_pVS->GetBlob();
 	ID3DBlob* psBlob = m_pPS->GetBlob();
@@ -44,13 +44,13 @@ const D3D12_GRAPHICS_PIPELINE_STATE_DESC* GraphicsState::GetGpsd() const
 	return m_pGPSD;
 }
 
-Shader* GraphicsState::GetShader(ShaderType type) const
+Shader* GraphicsState::GetShader(E_SHADER_TYPE type) const
 {
-	if (type == ShaderType::VS)
+	if (type == E_SHADER_TYPE::VS)
 	{
 		return m_pVS;
 	}
-	else if (type == ShaderType::PS)
+	else if (type == E_SHADER_TYPE::PS)
 	{
 		return m_pPS;
 	}

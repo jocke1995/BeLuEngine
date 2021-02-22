@@ -11,7 +11,7 @@ namespace component
 	{
 	public:
 		// Default Settings
-		CameraComponent(Entity* parent, CAMERA_TYPE camType, bool primary = false);
+		CameraComponent(Entity* parent, E_CAMERA_TYPE camType, bool primary = false);
 
 		virtual ~CameraComponent();
 
@@ -24,7 +24,7 @@ namespace component
 
 	private:
 		BaseCamera* m_pCamera = nullptr;
-		CAMERA_TYPE m_CamType = CAMERA_TYPE::UNDEFINED;
+		E_CAMERA_TYPE m_CamType = E_CAMERA_TYPE::UNDEFINED;
 		bool m_PrimaryCamera = false;
 
 		// Todo: add and calculate m_pMesh to be able to draw frustrum in wireframe

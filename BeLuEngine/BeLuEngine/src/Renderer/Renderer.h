@@ -32,8 +32,8 @@ class ConstantBufferView;
 class DepthStencilView;
 
 // Enums
-enum COMMAND_INTERFACE_TYPE;
-enum class DESCRIPTOR_HEAP_TYPE;
+enum E_COMMAND_INTERFACE_TYPE;
+enum class E_DESCRIPTOR_HEAP_TYPE;
 
 // techniques
 class ShadowInfo;
@@ -161,7 +161,7 @@ private:
 	HANDLE m_ProcessHandle = nullptr;
 
 	// CommandQueues
-	std::map<COMMAND_INTERFACE_TYPE, ID3D12CommandQueue*> m_CommandQueues;
+	std::map<E_COMMAND_INTERFACE_TYPE, ID3D12CommandQueue*> m_CommandQueues;
 
 	// -------------- RenderTargets -------------- 
 	std::pair<RenderTarget*, ShaderResourceView*> m_pMainColorBuffer;
@@ -191,11 +191,11 @@ private:
 	Mesh* m_pFullScreenQuad = nullptr;
 
 	// Group of components that's needed for rendering:
-	std::map<FLAG_DRAW, std::vector<std::pair<component::ModelComponent*, component::TransformComponent*>>> m_RenderComponents;
+	std::map<F_DRAW_FLAGS, std::vector<std::pair<component::ModelComponent*, component::TransformComponent*>>> m_RenderComponents;
 	std::vector<component::BoundingBoxComponent*> m_BoundingBoxesToBePicked;
 
 	ViewPool* m_pViewPool = nullptr;
-	std::map<LIGHT_TYPE, std::vector<std::tuple<Light*, ConstantBuffer*, ShadowInfo*>>> m_Lights;
+	std::map<E_LIGHT_TYPE, std::vector<std::tuple<Light*, ConstantBuffer*, ShadowInfo*>>> m_Lights;
 
 	// Current scene to be drawn
 	Scene* m_pCurrActiveScene = nullptr;
@@ -211,7 +211,7 @@ private:
 	std::vector<ID3D12CommandList*> m_ImGuiCommandLists[NUM_SWAP_BUFFERS];
 
 	// DescriptorHeaps
-	std::map<DESCRIPTOR_HEAP_TYPE, DescriptorHeap*> m_DescriptorHeaps = {};
+	std::map<E_DESCRIPTOR_HEAP_TYPE, DescriptorHeap*> m_DescriptorHeaps = {};
 
 	// Fences
 	HANDLE m_EventHandle = nullptr;

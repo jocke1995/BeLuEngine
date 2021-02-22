@@ -10,7 +10,7 @@
 
 DX12Task::DX12Task(
 	ID3D12Device5* device,
-	COMMAND_INTERFACE_TYPE interfaceType,
+	E_COMMAND_INTERFACE_TYPE interfaceType,
 	unsigned int FLAG_THREAD,
 	const std::wstring& clName)
 	:MultiThreadedTask(FLAG_THREAD)
@@ -33,7 +33,7 @@ void DX12Task::SetCommandInterfaceIndex(int index)
 	m_CommandInterfaceIndex = index;
 }
 
-void DX12Task::SetDescriptorHeaps(std::map<DESCRIPTOR_HEAP_TYPE, DescriptorHeap*> dhs)
+void DX12Task::SetDescriptorHeaps(std::map<E_DESCRIPTOR_HEAP_TYPE, DescriptorHeap*> dhs)
 {
 	m_DescriptorHeaps = dhs;
 }

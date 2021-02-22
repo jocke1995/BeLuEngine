@@ -55,7 +55,7 @@ namespace component
 		for (unsigned int i = 0; i < m_Transforms.size(); i++)
 		{
 			// No need for equations every frame if the object doesn't have collision enabled 
-			if (m_FlagOBB & F_OBBFlags::COLLISION)
+			if (m_FlagOBB & F_BOUNDING_BOX_FLAGS::COLLISION)
 			{
 				// Making a temporary OBB which takes the original state of the OBB
 				DirectX::BoundingOrientedBox obb;
@@ -94,7 +94,7 @@ namespace component
 
 	const DirectX::BoundingOrientedBox* BoundingBoxComponent::GetOBB() const
 	{
-		if ((m_FlagOBB & F_OBBFlags::COLLISION) == false)
+		if ((m_FlagOBB & F_BOUNDING_BOX_FLAGS::COLLISION) == false)
 		{
 			BL_LOG_WARNING("Object \"%s\" does not have collision enabled!\n", m_pParent->GetName().c_str());
 		}

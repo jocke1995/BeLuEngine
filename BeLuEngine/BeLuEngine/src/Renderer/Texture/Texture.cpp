@@ -39,7 +39,7 @@ const std::wstring& Texture::GetPath() const
 	return m_FilePath;
 }
 
-TEXTURE_TYPE Texture::GetType() const
+E_TEXTURE_TYPE Texture::GetType() const
 {
 	return m_Type;
 }

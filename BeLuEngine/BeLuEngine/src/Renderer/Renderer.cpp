@@ -76,9 +76,9 @@
 Renderer::Renderer()
 {
 	EventBus::GetInstance().Subscribe(this, &Renderer::toggleFullscreen);
-	m_RenderTasks.resize(RENDER_TASK_TYPE::NR_OF_RENDERTASKS);
-	m_CopyTasks.resize(COPY_TASK_TYPE::NR_OF_COPYTASKS);
-	m_ComputeTasks.resize(COMPUTE_TASK_TYPE::NR_OF_COMPUTETASKS);
+	m_RenderTasks.resize(E_RENDER_TASK_TYPE::NR_OF_RENDERTASKS);
+	m_CopyTasks.resize(E_COPY_TASK_TYPE::NR_OF_COPYTASKS);
+	m_ComputeTasks.resize(E_COMPUTE_TASK_TYPE::NR_OF_COMPUTETASKS);
 
 	// Processinfo
 	// Create handle to process
@@ -113,9 +113,9 @@ void Renderer::deleteRenderer()
 		Log::Print("Failed To Close Handle... ErrorCode: %d\n", GetLastError());
 	}
 
-	SAFE_RELEASE(&m_CommandQueues[COMMAND_INTERFACE_TYPE::DIRECT_TYPE]);
-	SAFE_RELEASE(&m_CommandQueues[COMMAND_INTERFACE_TYPE::COMPUTE_TYPE]);
-	SAFE_RELEASE(&m_CommandQueues[COMMAND_INTERFACE_TYPE::COPY_TYPE]);
+	SAFE_RELEASE(&m_CommandQueues[E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE]);
+	SAFE_RELEASE(&m_CommandQueues[E_COMMAND_INTERFACE_TYPE::COMPUTE_TYPE]);
+	SAFE_RELEASE(&m_CommandQueues[E_COMMAND_INTERFACE_TYPE::COPY_TYPE]);
 
 	delete m_pRootSignature;
 	delete m_pFullScreenQuad;
@@ -184,12 +184,12 @@ void Renderer::InitD3D12(Window *window, HINSTANCE hInstance, ThreadPool* thread
 		m_pDevice5,
 		m_pWindow->GetScreenWidth(), m_pWindow->GetScreenHeight(),
 		L"mainColor_RESOURCE",
-		m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::RTV]);
+		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV]);
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	m_pMainColorBuffer.second = new ShaderResourceView(
 		m_pDevice5,
-		m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV],
+		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV],
 		m_pMainColorBuffer.first->GetDefaultResource());
 
 	// Swapchain
@@ -197,8 +197,8 @@ void Renderer::InitD3D12(Window *window, HINSTANCE hInstance, ThreadPool* thread
 
 	// Bloom
 	m_pBloomResources = new Bloom(m_pDevice5, 
-		m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::RTV],
-		m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV],
+		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV],
+		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV],
 		m_pSwapChain
 		);
 
@@ -215,17 +215,17 @@ void Renderer::InitD3D12(Window *window, HINSTANCE hInstance, ThreadPool* thread
 	// FullScreenQuad
 	createFullScreenQuad();
 	// Init Assetloader
-	AssetLoader* al = AssetLoader::Get(m_pDevice5, m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV], m_pWindow);
+	AssetLoader* al = AssetLoader::Get(m_pDevice5, m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV], m_pWindow);
 
 	// Init BoundingBoxPool
-	BoundingBoxPool::Get(m_pDevice5, m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
+	BoundingBoxPool::Get(m_pDevice5, m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
 
 	// Allocate memory for cbPerScene
 	m_pCbPerScene = new ConstantBuffer(
 		m_pDevice5, 
 		sizeof(CB_PER_SCENE_STRUCT),
 		L"CB_PER_SCENE",
-		m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]
+		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]
 		);
 	
 	m_pCbPerSceneData = new CB_PER_SCENE_STRUCT();
@@ -235,7 +235,7 @@ void Renderer::InitD3D12(Window *window, HINSTANCE hInstance, ThreadPool* thread
 		m_pDevice5,
 		sizeof(CB_PER_FRAME_STRUCT),
 		L"CB_PER_FRAME",
-		m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]
+		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]
 	);
 
 	m_pCbPerFrameData = new CB_PER_FRAME_STRUCT();
@@ -254,14 +254,14 @@ void Renderer::InitD3D12(Window *window, HINSTANCE hInstance, ThreadPool* thread
 	io.DisplaySize.x = m_pWindow->GetScreenWidth();
 	io.DisplaySize.y = m_pWindow->GetScreenHeight();
 
-	unsigned int imGuiTextureIndex = m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]->GetNextDescriptorHeapIndex(1);
+	unsigned int imGuiTextureIndex = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]->GetNextDescriptorHeapIndex(1);
 
 	// Setup Platform/Renderer bindings
 	ImGui_ImplWin32_Init(*m_pWindow->GetHwnd());
 	ImGui_ImplDX12_Init(m_pDevice5, NUM_SWAP_BUFFERS,
-		DXGI_FORMAT_R16G16B16A16_FLOAT, m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]->GetID3D12DescriptorHeap(),
-		m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]->GetCPUHeapAt(imGuiTextureIndex),
-		m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]->GetGPUHeapAt(imGuiTextureIndex));
+		DXGI_FORMAT_R16G16B16A16_FLOAT, m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]->GetID3D12DescriptorHeap(),
+		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]->GetCPUHeapAt(imGuiTextureIndex),
+		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]->GetGPUHeapAt(imGuiTextureIndex));
 #endif
 	initRenderTasks();
 	
@@ -373,62 +373,62 @@ void Renderer::ExecuteMT()
 	/* --------------------- Record command lists --------------------- */
 
 	// Copy on demand
-	copyTask = m_CopyTasks[COPY_TASK_TYPE::COPY_ON_DEMAND];
+	copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND];
 	m_pThreadPool->AddTask(copyTask);
 
 	// Copy per frame
-	copyTask = m_CopyTasks[COPY_TASK_TYPE::COPY_PER_FRAME];
+	copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME];
 	m_pThreadPool->AddTask(copyTask);
 
 	// Depth pre-pass
-	renderTask = m_RenderTasks[RENDER_TASK_TYPE::DEPTH_PRE_PASS];
+	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::DEPTH_PRE_PASS];
 	m_pThreadPool->AddTask(renderTask);
 
 	// Recording shadowmaps
-	renderTask = m_RenderTasks[RENDER_TASK_TYPE::SHADOW];
+	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::SHADOW];
 	m_pThreadPool->AddTask(renderTask);
 
 	// Opaque draw
-	renderTask = m_RenderTasks[RENDER_TASK_TYPE::FORWARD_RENDER];
+	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::FORWARD_RENDER];
 	m_pThreadPool->AddTask(renderTask);
 
 	// DownSample the texture used for bloom
-	renderTask = m_RenderTasks[RENDER_TASK_TYPE::DOWNSAMPLE];
+	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::DOWNSAMPLE];
 	m_pThreadPool->AddTask(renderTask);
 
 	// Blending with constant value
-	renderTask = m_RenderTasks[RENDER_TASK_TYPE::TRANSPARENT_CONSTANT];
+	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::TRANSPARENT_CONSTANT];
 	m_pThreadPool->AddTask(renderTask);
 
 	// Blending with opacity texture
-	renderTask = m_RenderTasks[RENDER_TASK_TYPE::TRANSPARENT_TEXTURE];
+	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::TRANSPARENT_TEXTURE];
 	m_pThreadPool->AddTask(renderTask);
 
 	// Blurring for bloom
-	computeTask = m_ComputeTasks[COMPUTE_TASK_TYPE::BLUR];
+	computeTask = m_ComputeTasks[E_COMPUTE_TASK_TYPE::BLUR];
 	m_pThreadPool->AddTask(computeTask);
 
 	// Outlining, if an object is picked
-	renderTask = m_RenderTasks[RENDER_TASK_TYPE::OUTLINE];
+	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::OUTLINE];
 	m_pThreadPool->AddTask(renderTask);
 
 	// Merge 
-	renderTask = m_RenderTasks[RENDER_TASK_TYPE::MERGE];
+	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::MERGE];
 	m_pThreadPool->AddTask(renderTask);
 	
 	/* ----------------------------- DEVELOPERMODE CommandLists ----------------------------- */
 	if (DEVELOPERMODE_DRAWBOUNDINGBOX == true)
 	{
-		renderTask = m_RenderTasks[RENDER_TASK_TYPE::WIREFRAME];
+		renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::WIREFRAME];
 		m_pThreadPool->AddTask(renderTask);
 	}
 
 	/* ----------------------------- DEVELOPERMODE CommandLists ----------------------------- */
 
 	// Wait for the threads which records the commandlists to complete
-	m_pThreadPool->WaitForThreads(FLAG_THREAD::RENDER);
+	m_pThreadPool->WaitForThreads(F_THREAD_FLAGS::RENDER);
 
-	m_CommandQueues[COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->ExecuteCommandLists(
+	m_CommandQueues[E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->ExecuteCommandLists(
 		m_DirectCommandLists[commandInterfaceIndex].size(), 
 		m_DirectCommandLists[commandInterfaceIndex].data());
 
@@ -439,22 +439,22 @@ void Renderer::ExecuteMT()
 	// Have to update ImGui here to get all information that happens inside rendering
 	ImGuiHandler::GetInstance().UpdateFrame();
 
-	renderTask = m_RenderTasks[RENDER_TASK_TYPE::IMGUI];
+	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::IMGUI];
 	renderTask->Execute();
 
-	m_CommandQueues[COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->ExecuteCommandLists(
+	m_CommandQueues[E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->ExecuteCommandLists(
 		m_ImGuiCommandLists[commandInterfaceIndex].size(),
 		m_ImGuiCommandLists[commandInterfaceIndex].data());
 #endif
 
 	// Wait if the CPU is to far ahead of the gpu
-	m_CommandQueues[COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->Signal(m_pFenceFrame, m_FenceFrameValue);
+	m_CommandQueues[E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->Signal(m_pFenceFrame, m_FenceFrameValue);
 	waitForFrame(0);
 	m_FenceFrameValue++;
 
 	/*------------------- Post draw stuff -------------------*/
 	// Clear copy on demand
-	m_CopyTasks[COPY_TASK_TYPE::COPY_ON_DEMAND]->Clear();
+	m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]->Clear();
 
 	/*------------------- Present -------------------*/
 	HRESULT hr = dx12SwapChain->Present(0, 0);
@@ -485,59 +485,59 @@ void Renderer::ExecuteST()
 	/* --------------------- Record command lists --------------------- */
 
 	// Copy on demand
-	copyTask = m_CopyTasks[COPY_TASK_TYPE::COPY_ON_DEMAND];
+	copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND];
 	copyTask->Execute();
 
 	// Copy per frame
-	copyTask = m_CopyTasks[COPY_TASK_TYPE::COPY_PER_FRAME];
+	copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME];
 	copyTask->Execute();
 
 	// Depth pre-pass
-	renderTask = m_RenderTasks[RENDER_TASK_TYPE::DEPTH_PRE_PASS];
+	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::DEPTH_PRE_PASS];
 	renderTask->Execute();
 
 	// Recording shadowmaps
-	renderTask = m_RenderTasks[RENDER_TASK_TYPE::SHADOW];
+	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::SHADOW];
 	renderTask->Execute();
 
 	// Opaque draw
-	renderTask = m_RenderTasks[RENDER_TASK_TYPE::FORWARD_RENDER];
+	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::FORWARD_RENDER];
 	renderTask->Execute();
 
 	// DownSample the texture used for bloom
-	renderTask = m_RenderTasks[RENDER_TASK_TYPE::DOWNSAMPLE];
+	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::DOWNSAMPLE];
 	renderTask->Execute();
 
 	// Blending with constant value
-	renderTask = m_RenderTasks[RENDER_TASK_TYPE::TRANSPARENT_CONSTANT];
+	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::TRANSPARENT_CONSTANT];
 	renderTask->Execute();
 
 	// Blending with opacity texture
-	renderTask = m_RenderTasks[RENDER_TASK_TYPE::TRANSPARENT_TEXTURE];
+	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::TRANSPARENT_TEXTURE];
 	renderTask->Execute();
 
 	// Blurring for bloom
-	computeTask = m_ComputeTasks[COMPUTE_TASK_TYPE::BLUR];
+	computeTask = m_ComputeTasks[E_COMPUTE_TASK_TYPE::BLUR];
 	computeTask->Execute();
 
 	// Outlining, if an object is picked
-	renderTask = m_RenderTasks[RENDER_TASK_TYPE::OUTLINE];
+	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::OUTLINE];
 	renderTask->Execute();
 
 	// Merge 
-	renderTask = m_RenderTasks[RENDER_TASK_TYPE::MERGE];
+	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::MERGE];
 	renderTask->Execute();
 
 	/* ----------------------------- DEVELOPERMODE CommandLists ----------------------------- */
 	if (DEVELOPERMODE_DRAWBOUNDINGBOX == true)
 	{
-		renderTask = m_RenderTasks[RENDER_TASK_TYPE::WIREFRAME];
+		renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::WIREFRAME];
 		renderTask->Execute();
 	}
 
 	/* ----------------------------- DEVELOPERMODE CommandLists ----------------------------- */
 
-	m_CommandQueues[COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->ExecuteCommandLists(
+	m_CommandQueues[E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->ExecuteCommandLists(
 		m_DirectCommandLists[commandInterfaceIndex].size(),
 		m_DirectCommandLists[commandInterfaceIndex].data());
 
@@ -548,22 +548,22 @@ void Renderer::ExecuteST()
 	// Have to update ImGui here to get all information that happens inside rendering
 	ImGuiHandler::GetInstance().UpdateFrame();
 
-	renderTask = m_RenderTasks[RENDER_TASK_TYPE::IMGUI];
+	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::IMGUI];
 	renderTask->Execute();
 
-	m_CommandQueues[COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->ExecuteCommandLists(
+	m_CommandQueues[E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->ExecuteCommandLists(
 		m_ImGuiCommandLists[commandInterfaceIndex].size(),
 		m_ImGuiCommandLists[commandInterfaceIndex].data());
 #endif
 
 	// Wait if the CPU is to far ahead of the gpu
-	m_CommandQueues[COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->Signal(m_pFenceFrame, m_FenceFrameValue);
+	m_CommandQueues[E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->Signal(m_pFenceFrame, m_FenceFrameValue);
 	waitForFrame(0);
 	m_FenceFrameValue++;
 
 	/*------------------- Post draw stuff -------------------*/
 	// Clear copy on demand
-	m_CopyTasks[COPY_TASK_TYPE::COPY_ON_DEMAND]->Clear();
+	m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]->Clear();
 
 	/*------------------- Present -------------------*/
 	HRESULT hr = dx12SwapChain->Present(0, 0);
@@ -590,29 +590,29 @@ void Renderer::InitModelComponent(component::ModelComponent* mc)
 	if (tc != nullptr)
 	{
 		// Finally store the object in the corresponding renderComponent vectors so it will be drawn
-		if (FLAG_DRAW::DRAW_TRANSPARENT_CONSTANT & mc->GetDrawFlag())
+		if (F_DRAW_FLAGS::DRAW_TRANSPARENT_CONSTANT & mc->GetDrawFlag())
 		{
-			m_RenderComponents[FLAG_DRAW::DRAW_TRANSPARENT_CONSTANT].push_back(std::make_pair(mc, tc));
+			m_RenderComponents[F_DRAW_FLAGS::DRAW_TRANSPARENT_CONSTANT].push_back(std::make_pair(mc, tc));
 		}
 
-		if (FLAG_DRAW::DRAW_TRANSPARENT_TEXTURE & mc->GetDrawFlag())
+		if (F_DRAW_FLAGS::DRAW_TRANSPARENT_TEXTURE & mc->GetDrawFlag())
 		{
-			m_RenderComponents[FLAG_DRAW::DRAW_TRANSPARENT_TEXTURE].push_back(std::make_pair(mc, tc));
+			m_RenderComponents[F_DRAW_FLAGS::DRAW_TRANSPARENT_TEXTURE].push_back(std::make_pair(mc, tc));
 		}
 
-		if (FLAG_DRAW::DRAW_OPAQUE & mc->GetDrawFlag())
+		if (F_DRAW_FLAGS::DRAW_OPAQUE & mc->GetDrawFlag())
 		{
-			m_RenderComponents[FLAG_DRAW::DRAW_OPAQUE].push_back(std::make_pair(mc, tc));
+			m_RenderComponents[F_DRAW_FLAGS::DRAW_OPAQUE].push_back(std::make_pair(mc, tc));
 		}
 
-		if (FLAG_DRAW::NO_DEPTH & ~mc->GetDrawFlag())
+		if (F_DRAW_FLAGS::NO_DEPTH & ~mc->GetDrawFlag())
 		{
-			m_RenderComponents[FLAG_DRAW::NO_DEPTH].push_back(std::make_pair(mc, tc));
+			m_RenderComponents[F_DRAW_FLAGS::NO_DEPTH].push_back(std::make_pair(mc, tc));
 		}
 
-		if (FLAG_DRAW::GIVE_SHADOW & mc->GetDrawFlag())
+		if (F_DRAW_FLAGS::GIVE_SHADOW & mc->GetDrawFlag())
 		{
-			m_RenderComponents[FLAG_DRAW::GIVE_SHADOW].push_back(std::make_pair(mc, tc));
+			m_RenderComponents[F_DRAW_FLAGS::GIVE_SHADOW].push_back(std::make_pair(mc, tc));
 		}
 	}
 }
@@ -621,13 +621,13 @@ void Renderer::InitDirectionalLightComponent(component::DirectionalLightComponen
 {
 	// Assign CBV from the lightPool
 	std::wstring resourceName = L"DirectionalLight";
-	ConstantBuffer* cb = new ConstantBuffer(m_pDevice5, sizeof(DirectionalLight), resourceName, m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
+	ConstantBuffer* cb = new ConstantBuffer(m_pDevice5, sizeof(DirectionalLight), resourceName, m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
 
 	// Check if the light is to cast shadows
-	SHADOW_RESOLUTION resolution = SHADOW_RESOLUTION::UNDEFINED;
+	E_SHADOW_RESOLUTION resolution = E_SHADOW_RESOLUTION::UNDEFINED;
 
 	int shadowRes = -1;
-	if (component->GetLightFlags() & static_cast<unsigned int>(FLAG_LIGHT::CAST_SHADOW))
+	if (component->GetLightFlags() & static_cast<unsigned int>(F_LIGHT_FLAGS::CAST_SHADOW))
 	{
 		// Max resolution
 		shadowRes = 2;
@@ -635,48 +635,48 @@ void Renderer::InitDirectionalLightComponent(component::DirectionalLightComponen
 
 	if (shadowRes == 0)
 	{
-		resolution = SHADOW_RESOLUTION::LOW;
+		resolution = E_SHADOW_RESOLUTION::LOW;
 	}
 	else if (shadowRes == 1)
 	{
-		resolution = SHADOW_RESOLUTION::MEDIUM;
+		resolution = E_SHADOW_RESOLUTION::MEDIUM;
 	}
 	else if (shadowRes >= 2)
 	{
-		resolution = SHADOW_RESOLUTION::HIGH;
+		resolution = E_SHADOW_RESOLUTION::HIGH;
 	}
 
 	// Assign views required for shadows from the lightPool
 	ShadowInfo* si = nullptr;
-	if (resolution != SHADOW_RESOLUTION::UNDEFINED)
+	if (resolution != E_SHADOW_RESOLUTION::UNDEFINED)
 	{
 		si = new ShadowInfo(
-			LIGHT_TYPE::DIRECTIONAL_LIGHT,
+			E_LIGHT_TYPE::DIRECTIONAL_LIGHT,
 			resolution,
 			m_pDevice5,
-			m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::DSV],
-			m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
+			m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::DSV],
+			m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
 
 		static_cast<DirectionalLight*>(component->GetLightData())->textureShadowMap = si->GetSRV()->GetDescriptorHeapIndex();
 
-		ShadowRenderTask* srt = static_cast<ShadowRenderTask*>(m_RenderTasks[RENDER_TASK_TYPE::SHADOW]);
+		ShadowRenderTask* srt = static_cast<ShadowRenderTask*>(m_RenderTasks[E_RENDER_TASK_TYPE::SHADOW]);
 		srt->AddShadowCastingLight(std::make_pair(component, si));
 	}
 
 	// Save in m_pRenderer
-	m_Lights[LIGHT_TYPE::DIRECTIONAL_LIGHT].push_back(std::make_tuple(component, cb, si));
+	m_Lights[E_LIGHT_TYPE::DIRECTIONAL_LIGHT].push_back(std::make_tuple(component, cb, si));
 
 	
 	// Submit to gpu
 	CopyTask* copyTask = nullptr;
 
-	if (component->GetLightFlags() & static_cast<unsigned int>(FLAG_LIGHT::STATIC))
+	if (component->GetLightFlags() & static_cast<unsigned int>(F_LIGHT_FLAGS::STATIC))
 	{
-		copyTask = m_CopyTasks[COPY_TASK_TYPE::COPY_ON_DEMAND];
+		copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND];
 	}
 	else
 	{
-		copyTask = m_CopyTasks[COPY_TASK_TYPE::COPY_PER_FRAME];
+		copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME];
 	}
 
 	const void* data = static_cast<const void*>(component->GetLightData());
@@ -691,23 +691,23 @@ void Renderer::InitPointLightComponent(component::PointLightComponent* component
 {
 	// Assign CBV from the lightPool
 	std::wstring resourceName = L"PointLight";
-	ConstantBuffer* cb = new ConstantBuffer(m_pDevice5, sizeof(PointLight), resourceName, m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
+	ConstantBuffer* cb = new ConstantBuffer(m_pDevice5, sizeof(PointLight), resourceName, m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
 
 	// Assign views required for shadows from the lightPool
 	ShadowInfo* si = nullptr;
 
 	// Save in m_pRenderer
-	m_Lights[LIGHT_TYPE::POINT_LIGHT].push_back(std::make_tuple(component, cb, si));
+	m_Lights[E_LIGHT_TYPE::POINT_LIGHT].push_back(std::make_tuple(component, cb, si));
 
 	// Submit to gpu
 	CopyTask* copyTask = nullptr;
-	if (component->GetLightFlags() & static_cast<unsigned int>(FLAG_LIGHT::STATIC))
+	if (component->GetLightFlags() & static_cast<unsigned int>(F_LIGHT_FLAGS::STATIC))
 	{
-		copyTask = m_CopyTasks[COPY_TASK_TYPE::COPY_ON_DEMAND];
+		copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND];
 	}
 	else
 	{
-		copyTask = m_CopyTasks[COPY_TASK_TYPE::COPY_PER_FRAME];
+		copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME];
 	}
 
 	const void* data = static_cast<const void*>(component->GetLightData());
@@ -722,13 +722,13 @@ void Renderer::InitSpotLightComponent(component::SpotLightComponent* component)
 {
 	// Assign CBV from the lightPool
 	std::wstring resourceName = L"SpotLight";
-	ConstantBuffer* cb = new ConstantBuffer(m_pDevice5, sizeof(SpotLight), resourceName, m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
+	ConstantBuffer* cb = new ConstantBuffer(m_pDevice5, sizeof(SpotLight), resourceName, m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
 
 	// Check if the light is to cast shadows
-	SHADOW_RESOLUTION resolution = SHADOW_RESOLUTION::UNDEFINED;
+	E_SHADOW_RESOLUTION resolution = E_SHADOW_RESOLUTION::UNDEFINED;
 
 	int shadowRes = -1;
-	if (component->GetLightFlags() & static_cast<unsigned int>(FLAG_LIGHT::CAST_SHADOW))
+	if (component->GetLightFlags() & static_cast<unsigned int>(F_LIGHT_FLAGS::CAST_SHADOW))
 	{
 		// Max resolution
 		shadowRes = 2;
@@ -736,45 +736,45 @@ void Renderer::InitSpotLightComponent(component::SpotLightComponent* component)
 
 	if (shadowRes == 0)
 	{
-		resolution = SHADOW_RESOLUTION::LOW;
+		resolution = E_SHADOW_RESOLUTION::LOW;
 	}
 	else if (shadowRes == 1)
 	{
-		resolution = SHADOW_RESOLUTION::MEDIUM;
+		resolution = E_SHADOW_RESOLUTION::MEDIUM;
 	}
 	else if (shadowRes >= 2)
 	{
-		resolution = SHADOW_RESOLUTION::HIGH;
+		resolution = E_SHADOW_RESOLUTION::HIGH;
 	}
 
 	// Assign views required for shadows from the lightPool
 	ShadowInfo* si = nullptr;
-	if (resolution != SHADOW_RESOLUTION::UNDEFINED)
+	if (resolution != E_SHADOW_RESOLUTION::UNDEFINED)
 	{
 		si = new ShadowInfo(
-			LIGHT_TYPE::SPOT_LIGHT,
+			E_LIGHT_TYPE::SPOT_LIGHT,
 			resolution,
 			m_pDevice5,
-			m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::DSV],
-			m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
+			m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::DSV],
+			m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
 
 		static_cast<SpotLight*>(component->GetLightData())->textureShadowMap = si->GetSRV()->GetDescriptorHeapIndex();
 
-		ShadowRenderTask* srt = static_cast<ShadowRenderTask*>(m_RenderTasks[RENDER_TASK_TYPE::SHADOW]);
+		ShadowRenderTask* srt = static_cast<ShadowRenderTask*>(m_RenderTasks[E_RENDER_TASK_TYPE::SHADOW]);
 		srt->AddShadowCastingLight(std::make_pair(component, si));
 	}
 	// Save in m_pRenderer
-	m_Lights[LIGHT_TYPE::SPOT_LIGHT].push_back(std::make_tuple(component, cb, si));
+	m_Lights[E_LIGHT_TYPE::SPOT_LIGHT].push_back(std::make_tuple(component, cb, si));
 
 	// Submit to gpu
 	CopyTask* copyTask = nullptr;
-	if (component->GetLightFlags() & static_cast<unsigned int>(FLAG_LIGHT::STATIC))
+	if (component->GetLightFlags() & static_cast<unsigned int>(F_LIGHT_FLAGS::STATIC))
 	{
-		copyTask = m_CopyTasks[COPY_TASK_TYPE::COPY_ON_DEMAND];
+		copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND];
 	}
 	else
 	{
-		copyTask = m_CopyTasks[COPY_TASK_TYPE::COPY_PER_FRAME];
+		copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME];
 	}
 
 	const void* data = static_cast<const void*>(component->GetLightData());
@@ -815,11 +815,11 @@ void Renderer::InitBoundingBoxComponent(component::BoundingBoxComponent* compone
 
 			component->AddMesh(mesh);
 		}
-		static_cast<WireframeRenderTask*>(m_RenderTasks[RENDER_TASK_TYPE::WIREFRAME])->AddObjectToDraw(component);
+		static_cast<WireframeRenderTask*>(m_RenderTasks[E_RENDER_TASK_TYPE::WIREFRAME])->AddObjectToDraw(component);
 	}
 
 	// Add to vector so the mouse picker can check for intersections
-	if (component->GetFlagOBB() & F_OBBFlags::PICKING)
+	if (component->GetFlagOBB() & F_BOUNDING_BOX_FLAGS::PICKING)
 	{
 		m_BoundingBoxesToBePicked.push_back(component);
 	}
@@ -849,7 +849,7 @@ void Renderer::UnInitModelComponent(component::ModelComponent* component)
 
 void Renderer::UnInitDirectionalLightComponent(component::DirectionalLightComponent* component)
 {
-	LIGHT_TYPE type = LIGHT_TYPE::DIRECTIONAL_LIGHT;
+	E_LIGHT_TYPE type = E_LIGHT_TYPE::DIRECTIONAL_LIGHT;
 	unsigned int count = 0;
 	for (auto& tuple : m_Lights[type])
 	{
@@ -868,11 +868,11 @@ void Renderer::UnInitDirectionalLightComponent(component::DirectionalLightCompon
 			
 			// Remove from CopyPerFrame
 			CopyPerFrameTask* cpft = nullptr;
-			cpft = static_cast<CopyPerFrameTask*>(m_CopyTasks[COPY_TASK_TYPE::COPY_PER_FRAME]);
+			cpft = static_cast<CopyPerFrameTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME]);
 			cpft->ClearSpecific(cb->GetUploadResource());
 
 			// Finally remove from m_pRenderer
-			ShadowRenderTask* srt = static_cast<ShadowRenderTask*>(m_RenderTasks[RENDER_TASK_TYPE::SHADOW]);
+			ShadowRenderTask* srt = static_cast<ShadowRenderTask*>(m_RenderTasks[E_RENDER_TASK_TYPE::SHADOW]);
 			srt->ClearSpecificLight(light);
 			m_Lights[type].erase(m_Lights[type].begin() + count);
 
@@ -886,7 +886,7 @@ void Renderer::UnInitDirectionalLightComponent(component::DirectionalLightCompon
 
 void Renderer::UnInitPointLightComponent(component::PointLightComponent* component)
 {
-	LIGHT_TYPE type = LIGHT_TYPE::POINT_LIGHT;
+	E_LIGHT_TYPE type = E_LIGHT_TYPE::POINT_LIGHT;
 	unsigned int count = 0;
 	for (auto& tuple : m_Lights[type])
 	{
@@ -904,7 +904,7 @@ void Renderer::UnInitPointLightComponent(component::PointLightComponent* compone
 
 			// Remove from CopyPerFrame
 			CopyPerFrameTask* cpft = nullptr;
-			cpft = static_cast<CopyPerFrameTask*>(m_CopyTasks[COPY_TASK_TYPE::COPY_PER_FRAME]);
+			cpft = static_cast<CopyPerFrameTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME]);
 			cpft->ClearSpecific(cb->GetUploadResource());
 
 			// Finally remove from m_pRenderer
@@ -920,7 +920,7 @@ void Renderer::UnInitPointLightComponent(component::PointLightComponent* compone
 
 void Renderer::UnInitSpotLightComponent(component::SpotLightComponent* component)
 {
-	LIGHT_TYPE type = LIGHT_TYPE::SPOT_LIGHT;
+	E_LIGHT_TYPE type = E_LIGHT_TYPE::SPOT_LIGHT;
 	unsigned int count = 0;
 	for (auto& tuple : m_Lights[type])
 	{
@@ -939,11 +939,11 @@ void Renderer::UnInitSpotLightComponent(component::SpotLightComponent* component
 
 			// Remove from CopyPerFrame
 			CopyPerFrameTask* cpft = nullptr;
-			cpft = static_cast<CopyPerFrameTask*>(m_CopyTasks[COPY_TASK_TYPE::COPY_PER_FRAME]);
+			cpft = static_cast<CopyPerFrameTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME]);
 			cpft->ClearSpecific(cb->GetUploadResource());
 
 			// Finally remove from m_pRenderer
-			ShadowRenderTask* srt = static_cast<ShadowRenderTask*>(m_RenderTasks[RENDER_TASK_TYPE::SHADOW]);
+			ShadowRenderTask* srt = static_cast<ShadowRenderTask*>(m_RenderTasks[E_RENDER_TASK_TYPE::SHADOW]);
 			srt->ClearSpecificLight(light);
 			m_Lights[type].erase(m_Lights[type].begin() + count);
 
@@ -969,7 +969,7 @@ void Renderer::UnInitBoundingBoxComponent(component::BoundingBoxComponent* compo
 			// Stop drawing the wireFrame
 			if (DEVELOPERMODE_DRAWBOUNDINGBOX == true)
 			{
-				static_cast<WireframeRenderTask*>(m_RenderTasks[RENDER_TASK_TYPE::WIREFRAME])->ClearSpecific(component);
+				static_cast<WireframeRenderTask*>(m_RenderTasks[E_RENDER_TASK_TYPE::WIREFRAME])->ClearSpecific(component);
 			}
 
 			// Stop picking this boundingBox
@@ -990,21 +990,21 @@ void Renderer::UnInitBoundingBoxComponent(component::BoundingBoxComponent* compo
 void Renderer::OnResetScene()
 {
 	m_RenderComponents.clear();
-	m_CopyTasks[COPY_TASK_TYPE::COPY_PER_FRAME]->Clear();
+	m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME]->Clear();
 	m_pScenePrimaryCamera = nullptr;
-	static_cast<WireframeRenderTask*>(m_RenderTasks[RENDER_TASK_TYPE::WIREFRAME])->Clear();
+	static_cast<WireframeRenderTask*>(m_RenderTasks[E_RENDER_TASK_TYPE::WIREFRAME])->Clear();
 	m_BoundingBoxesToBePicked.clear();
 }
 
 void Renderer::submitToCodt(std::tuple<Resource*, Resource*, const void*>* Upload_Default_Data)
 {
-	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[COPY_TASK_TYPE::COPY_ON_DEMAND]);
+	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]);
 	codt->Submit(Upload_Default_Data);
 }
 
 void Renderer::submitMeshToCodt(Mesh* mesh)
 {
-	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[COPY_TASK_TYPE::COPY_ON_DEMAND]);
+	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]);
 
 	std::tuple<Resource*, Resource*, const void*> Vert_Upload_Default_Data(mesh->m_pUploadResourceVertices, mesh->m_pDefaultResourceVertices, mesh->m_Vertices.data());
 	std::tuple<Resource*, Resource*, const void*> Indi_Upload_Default_Data(mesh->m_pUploadResourceIndices, mesh->m_pDefaultResourceIndices, mesh->m_Indices.data());
@@ -1030,17 +1030,17 @@ void Renderer::submitModelToGPU(Model* model)
 
 		Texture* texture;
 		// Submit Material
-		texture = model->GetMaterialAt(i)->GetTexture(TEXTURE2D_TYPE::ALBEDO);
+		texture = model->GetMaterialAt(i)->GetTexture(E_TEXTURE2D_TYPE::ALBEDO);
 		submitTextureToCodt(texture);
-		texture = model->GetMaterialAt(i)->GetTexture(TEXTURE2D_TYPE::ROUGHNESS);
+		texture = model->GetMaterialAt(i)->GetTexture(E_TEXTURE2D_TYPE::ROUGHNESS);
 		submitTextureToCodt(texture);
-		texture = model->GetMaterialAt(i)->GetTexture(TEXTURE2D_TYPE::METALLIC);
+		texture = model->GetMaterialAt(i)->GetTexture(E_TEXTURE2D_TYPE::METALLIC);
 		submitTextureToCodt(texture);
-		texture = model->GetMaterialAt(i)->GetTexture(TEXTURE2D_TYPE::NORMAL);
+		texture = model->GetMaterialAt(i)->GetTexture(E_TEXTURE2D_TYPE::NORMAL);
 		submitTextureToCodt(texture);
-		texture = model->GetMaterialAt(i)->GetTexture(TEXTURE2D_TYPE::EMISSIVE);
+		texture = model->GetMaterialAt(i)->GetTexture(E_TEXTURE2D_TYPE::EMISSIVE);
 		submitTextureToCodt(texture);
-		texture = model->GetMaterialAt(i)->GetTexture(TEXTURE2D_TYPE::OPACITY);
+		texture = model->GetMaterialAt(i)->GetTexture(E_TEXTURE2D_TYPE::OPACITY);
 		submitTextureToCodt(texture);
 	}
 
@@ -1054,7 +1054,7 @@ void Renderer::submitTextureToCodt(Texture* texture)
 		return;
 	}
 
-	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[COPY_TASK_TYPE::COPY_ON_DEMAND]);
+	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]);
 	codt->SubmitTexture(texture);
 
 	AssetLoader::Get()->m_LoadedTextures.at(texture->GetPath()).first = true;
@@ -1062,19 +1062,19 @@ void Renderer::submitTextureToCodt(Texture* texture)
 
 void Renderer::submitToCpft(std::tuple<Resource*, Resource*, const void*>* Upload_Default_Data)
 {
-	CopyPerFrameTask* cpft = static_cast<CopyPerFrameTask*>(m_CopyTasks[COPY_TASK_TYPE::COPY_PER_FRAME]);
+	CopyPerFrameTask* cpft = static_cast<CopyPerFrameTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME]);
 	cpft->Submit(Upload_Default_Data);
 }
 
 void Renderer::clearSpecificCpft(Resource* upload)
 {
-	CopyPerFrameTask* cpft = static_cast<CopyPerFrameTask*>(m_CopyTasks[COPY_TASK_TYPE::COPY_PER_FRAME]);
+	CopyPerFrameTask* cpft = static_cast<CopyPerFrameTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME]);
 	cpft->ClearSpecific(upload);
 }
 
 DescriptorHeap* Renderer::getCBVSRVUAVdHeap() const
 {
-	return m_DescriptorHeaps.at(DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV);
+	return m_DescriptorHeaps.at(E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV);
 }
 
 Entity* const Renderer::GetPickedEntity() const
@@ -1094,16 +1094,16 @@ Window* const Renderer::GetWindow() const
 
 void Renderer::setRenderTasksPrimaryCamera()
 {
-	m_RenderTasks[RENDER_TASK_TYPE::DEPTH_PRE_PASS]->SetCamera(m_pScenePrimaryCamera);
-	m_RenderTasks[RENDER_TASK_TYPE::FORWARD_RENDER]->SetCamera(m_pScenePrimaryCamera);
-	m_RenderTasks[RENDER_TASK_TYPE::TRANSPARENT_CONSTANT]->SetCamera(m_pScenePrimaryCamera);
-	m_RenderTasks[RENDER_TASK_TYPE::TRANSPARENT_TEXTURE]->SetCamera(m_pScenePrimaryCamera);
-	m_RenderTasks[RENDER_TASK_TYPE::SHADOW]->SetCamera(m_pScenePrimaryCamera);
-	m_RenderTasks[RENDER_TASK_TYPE::OUTLINE]->SetCamera(m_pScenePrimaryCamera);
+	m_RenderTasks[E_RENDER_TASK_TYPE::DEPTH_PRE_PASS]->SetCamera(m_pScenePrimaryCamera);
+	m_RenderTasks[E_RENDER_TASK_TYPE::FORWARD_RENDER]->SetCamera(m_pScenePrimaryCamera);
+	m_RenderTasks[E_RENDER_TASK_TYPE::TRANSPARENT_CONSTANT]->SetCamera(m_pScenePrimaryCamera);
+	m_RenderTasks[E_RENDER_TASK_TYPE::TRANSPARENT_TEXTURE]->SetCamera(m_pScenePrimaryCamera);
+	m_RenderTasks[E_RENDER_TASK_TYPE::SHADOW]->SetCamera(m_pScenePrimaryCamera);
+	m_RenderTasks[E_RENDER_TASK_TYPE::OUTLINE]->SetCamera(m_pScenePrimaryCamera);
 
 	if (DEVELOPERMODE_DRAWBOUNDINGBOX == true)
 	{
-		m_RenderTasks[RENDER_TASK_TYPE::WIREFRAME]->SetCamera(m_pScenePrimaryCamera);
+		m_RenderTasks[E_RENDER_TASK_TYPE::WIREFRAME]->SetCamera(m_pScenePrimaryCamera);
 	}
 }
 
@@ -1214,32 +1214,32 @@ void Renderer::createCommandQueues()
 	D3D12_COMMAND_QUEUE_DESC cqdDirect = {};
 	cqdDirect.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
 	HRESULT hr;
-	hr = m_pDevice5->CreateCommandQueue(&cqdDirect, IID_PPV_ARGS(&m_CommandQueues[COMMAND_INTERFACE_TYPE::DIRECT_TYPE]));
+	hr = m_pDevice5->CreateCommandQueue(&cqdDirect, IID_PPV_ARGS(&m_CommandQueues[E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE]));
 	if (FAILED(hr))
 	{
 		BL_LOG_CRITICAL("Failed to Create Direct CommandQueue\n");
 	}
-	m_CommandQueues[COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->SetName(L"DirectQueue");
+	m_CommandQueues[E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->SetName(L"DirectQueue");
 
 	// Compute
 	D3D12_COMMAND_QUEUE_DESC cqdCompute = {};
 	cqdCompute.Type = D3D12_COMMAND_LIST_TYPE_COMPUTE;
-	hr = m_pDevice5->CreateCommandQueue(&cqdCompute, IID_PPV_ARGS(&m_CommandQueues[COMMAND_INTERFACE_TYPE::COMPUTE_TYPE]));
+	hr = m_pDevice5->CreateCommandQueue(&cqdCompute, IID_PPV_ARGS(&m_CommandQueues[E_COMMAND_INTERFACE_TYPE::COMPUTE_TYPE]));
 	if (FAILED(hr))
 	{
 		BL_LOG_CRITICAL("Failed to Create Compute CommandQueue\n");
 	}
-	m_CommandQueues[COMMAND_INTERFACE_TYPE::COMPUTE_TYPE]->SetName(L"ComputeQueue");
+	m_CommandQueues[E_COMMAND_INTERFACE_TYPE::COMPUTE_TYPE]->SetName(L"ComputeQueue");
 
 	// Copy
 	D3D12_COMMAND_QUEUE_DESC cqdCopy = {};
 	cqdCopy.Type = D3D12_COMMAND_LIST_TYPE_COPY;
-	hr = m_pDevice5->CreateCommandQueue(&cqdCopy, IID_PPV_ARGS(&m_CommandQueues[COMMAND_INTERFACE_TYPE::COPY_TYPE]));
+	hr = m_pDevice5->CreateCommandQueue(&cqdCopy, IID_PPV_ARGS(&m_CommandQueues[E_COMMAND_INTERFACE_TYPE::COPY_TYPE]));
 	if (FAILED(hr))
 	{
 		BL_LOG_CRITICAL("Failed to Create Copy CommandQueue\n");
 	}
-	m_CommandQueues[COMMAND_INTERFACE_TYPE::COPY_TYPE]->SetName(L"CopyQueue");
+	m_CommandQueues[E_COMMAND_INTERFACE_TYPE::COPY_TYPE]->SetName(L"CopyQueue");
 }
 
 void Renderer::createSwapChain()
@@ -1254,9 +1254,9 @@ void Renderer::createSwapChain()
 		m_pDevice5,
 		m_pWindow->GetHwnd(),
 		resolutionWidth, resolutionHeight,
-		m_CommandQueues[COMMAND_INTERFACE_TYPE::DIRECT_TYPE],
-		m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::RTV],
-		m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
+		m_CommandQueues[E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE],
+		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV],
+		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
 }
 
 void Renderer::createMainDSV()
@@ -1280,7 +1280,7 @@ void Renderer::createMainDSV()
 		resolutionWidth, resolutionHeight,
 		L"MainDSV",
 		&dsvDesc,
-		m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::DSV]);
+		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::DSV]);
 }
 
 void Renderer::createRootSignature()
@@ -1320,7 +1320,7 @@ void Renderer::createFullScreenQuad()
 	m_pFullScreenQuad = new Mesh(&vertexVector, &indexVector);
 
 	// init dx12 resources
-	m_pFullScreenQuad->Init(m_pDevice5, m_DescriptorHeaps.at(DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV));
+	m_pFullScreenQuad->Init(m_pDevice5, m_DescriptorHeaps.at(E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV));
 }
 
 void Renderer::updateMousePicker()
@@ -1361,14 +1361,14 @@ void Renderer::updateMousePicker()
 		component::ModelComponent*		mc = parentOfPickedObject->GetComponent<component::ModelComponent>();
 		component::TransformComponent*	tc = parentOfPickedObject->GetComponent<component::TransformComponent>();
 
-		static_cast<OutliningRenderTask*>(m_RenderTasks[RENDER_TASK_TYPE::OUTLINE])->SetObjectToOutline(&std::make_pair(mc, tc));
+		static_cast<OutliningRenderTask*>(m_RenderTasks[E_RENDER_TASK_TYPE::OUTLINE])->SetObjectToOutline(&std::make_pair(mc, tc));
 
 		m_pPickedEntity = parentOfPickedObject;
 	}
 	else
 	{
 		// No object was picked, reset the outlingRenderTask
-		static_cast<OutliningRenderTask*>(m_RenderTasks[RENDER_TASK_TYPE::OUTLINE])->Clear();
+		static_cast<OutliningRenderTask*>(m_RenderTasks[E_RENDER_TASK_TYPE::OUTLINE])->Clear();
 		m_pPickedEntity = nullptr;
 	}
 }
@@ -1425,7 +1425,7 @@ void Renderer::initRenderTasks()
 		L"DepthVertex.hlsl", L"DepthPixel.hlsl",
 		&gpsdDepthPrePassVector,
 		L"DepthPrePassPSO",
-		FLAG_THREAD::RENDER);
+		F_THREAD_FLAGS::RENDER);
 
 	DepthPrePassRenderTask->SetMainDepthStencil(m_pMainDepthStencil);
 	DepthPrePassRenderTask->SetSwapChain(m_pSwapChain);
@@ -1503,7 +1503,7 @@ void Renderer::initRenderTasks()
 		L"ForwardVertex.hlsl", L"ForwardPixel.hlsl",
 		&gpsdForwardRenderVector,
 		L"ForwardRenderingPSO",
-		FLAG_THREAD::RENDER);
+		F_THREAD_FLAGS::RENDER);
 
 	forwardRenderTask->AddResource("cbPerFrame", m_pCbPerFrame->GetDefaultResource());
 	forwardRenderTask->AddResource("cbPerScene", m_pCbPerScene->GetDefaultResource());
@@ -1551,7 +1551,7 @@ void Renderer::initRenderTasks()
 		L"DownSampleTexturePSO",
 		std::get<2>(*m_pBloomResources->GetBrightTuple()),		// Read from this in actual resolution
 		m_pBloomResources->GetPingPongResource(0)->GetRTV(),	// Write to this in 1280x720
-		FLAG_THREAD::RENDER);
+		F_THREAD_FLAGS::RENDER);
 	
 	static_cast<DownSampleRenderTask*>(downSampleTask)->SetFullScreenQuad(m_pFullScreenQuad);
 	downSampleTask->SetDescriptorHeaps(m_DescriptorHeaps);
@@ -1593,7 +1593,7 @@ void Renderer::initRenderTasks()
 		L"OutlinedVertex.hlsl", L"OutlinedPixel.hlsl",
 		&gpsdOutliningVector,
 		L"outliningScaledPSO",
-		FLAG_THREAD::RENDER);
+		F_THREAD_FLAGS::RENDER);
 	
 	outliningRenderTask->SetMainDepthStencil(m_pMainDepthStencil);
 	outliningRenderTask->AddRenderTargetView("mainColorTarget", m_pMainColorBuffer.first->GetRTV());
@@ -1689,7 +1689,7 @@ void Renderer::initRenderTasks()
 		L"TransparentConstantPixel.hlsl",
 		&gpsdBlendVector,
 		L"BlendPSOConstant",
-		FLAG_THREAD::RENDER);
+		F_THREAD_FLAGS::RENDER);
 
 	transparentConstantRenderTask->AddResource("cbPerFrame", m_pCbPerFrame->GetDefaultResource());
 	transparentConstantRenderTask->AddResource("cbPerScene", m_pCbPerScene->GetDefaultResource());
@@ -1704,7 +1704,7 @@ void Renderer::initRenderTasks()
 		L"TransparentTexturePixel.hlsl",
 		&gpsdBlendVector,
 		L"BlendPSOTexture",
-		FLAG_THREAD::RENDER);
+		F_THREAD_FLAGS::RENDER);
 
 	transparentTextureRenderTask->AddResource("cbPerFrame", m_pCbPerFrame->GetDefaultResource());
 	transparentTextureRenderTask->AddResource("cbPerScene", m_pCbPerScene->GetDefaultResource());
@@ -1760,7 +1760,7 @@ void Renderer::initRenderTasks()
 		L"DepthVertex.hlsl", L"DepthPixel.hlsl",
 		&gpsdShadowVector,
 		L"ShadowPSO",
-		FLAG_THREAD::RENDER);
+		F_THREAD_FLAGS::RENDER);
 
 	shadowRenderTask->SetDescriptorHeaps(m_DescriptorHeaps);
 #pragma endregion ShadowPass
@@ -1792,7 +1792,7 @@ void Renderer::initRenderTasks()
 		L"WhiteVertex.hlsl", L"WhitePixel.hlsl",
 		&gpsdWireFrameVector,
 		L"WireFramePSO",
-		FLAG_THREAD::RENDER);
+		F_THREAD_FLAGS::RENDER);
 
 	wireFrameRenderTask->AddRenderTargetView("mainColorTarget", m_pMainColorBuffer.first->GetRTV());
 	wireFrameRenderTask->SetDescriptorHeaps(m_DescriptorHeaps);
@@ -1832,7 +1832,7 @@ void Renderer::initRenderTasks()
 		L"MergeVertex.hlsl", L"MergePixel.hlsl",
 		&gpsdMergePassVector,
 		L"MergePassPSO",
-		FLAG_THREAD::RENDER);
+		F_THREAD_FLAGS::RENDER);
 
 	static_cast<MergeRenderTask*>(mergeTask)->SetFullScreenQuad(m_pFullScreenQuad);
 	static_cast<MergeRenderTask*>(mergeTask)->AddSRVToMerge(m_pBloomResources->GetPingPongResource(0)->GetSRV());
@@ -1849,7 +1849,7 @@ void Renderer::initRenderTasks()
 		L"", L"",
 		nullptr,
 		L"",
-		FLAG_THREAD::RENDER);
+		F_THREAD_FLAGS::RENDER);
 
 	imGuiRenderTask->SetSwapChain(m_pSwapChain);
 	imGuiRenderTask->SetDescriptorHeaps(m_DescriptorHeaps);
@@ -1868,18 +1868,18 @@ void Renderer::initRenderTasks()
 	ComputeTask* blurComputeTask = new BlurComputeTask(
 		m_pDevice5, m_pRootSignature,
 		csNamePSOName,
-		COMMAND_INTERFACE_TYPE::DIRECT_TYPE,
+		E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE,
 		std::get<2>(*m_pBloomResources->GetBrightTuple()),
 		m_pBloomResources->GetPingPongResource(0),
 		m_pBloomResources->GetPingPongResource(1),
 		m_pBloomResources->GetBlurWidth(), m_pBloomResources->GetBlurHeight(),
-		FLAG_THREAD::RENDER);
+		F_THREAD_FLAGS::RENDER);
 
 	blurComputeTask->SetDescriptorHeaps(m_DescriptorHeaps);
 
 	// CopyTasks
-	CopyTask* copyPerFrameTask = new CopyPerFrameTask(m_pDevice5, COMMAND_INTERFACE_TYPE::DIRECT_TYPE, FLAG_THREAD::RENDER, L"copyPerFrameCL");
-	CopyTask* copyOnDemandTask = new CopyOnDemandTask(m_pDevice5, COMMAND_INTERFACE_TYPE::DIRECT_TYPE, FLAG_THREAD::RENDER, L"copyOnDemandCL");
+	CopyTask* copyPerFrameTask = new CopyPerFrameTask(m_pDevice5, E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE, F_THREAD_FLAGS::RENDER, L"copyPerFrameCL");
+	CopyTask* copyOnDemandTask = new CopyOnDemandTask(m_pDevice5, E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE, F_THREAD_FLAGS::RENDER, L"copyOnDemandCL");
 
 #pragma endregion ComputeAndCopyTasks
 	// Add the tasks to desired vectors so they can be used in m_pRenderer
@@ -1888,24 +1888,24 @@ void Renderer::initRenderTasks()
 
 	/* ------------------------- CopyQueue Tasks ------------------------ */
 
-	m_CopyTasks[COPY_TASK_TYPE::COPY_PER_FRAME] = copyPerFrameTask;
-	m_CopyTasks[COPY_TASK_TYPE::COPY_ON_DEMAND] = copyOnDemandTask;
+	m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME] = copyPerFrameTask;
+	m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND] = copyOnDemandTask;
 
 	/* ------------------------- ComputeQueue Tasks ------------------------ */
 	
-	m_ComputeTasks[COMPUTE_TASK_TYPE::BLUR] = blurComputeTask;
+	m_ComputeTasks[E_COMPUTE_TASK_TYPE::BLUR] = blurComputeTask;
 
 	/* ------------------------- DirectQueue Tasks ---------------------- */
-	m_RenderTasks[RENDER_TASK_TYPE::DEPTH_PRE_PASS] = DepthPrePassRenderTask;
-	m_RenderTasks[RENDER_TASK_TYPE::SHADOW] = shadowRenderTask;
-	m_RenderTasks[RENDER_TASK_TYPE::FORWARD_RENDER] = forwardRenderTask;
-	m_RenderTasks[RENDER_TASK_TYPE::TRANSPARENT_CONSTANT] = transparentConstantRenderTask;
-	m_RenderTasks[RENDER_TASK_TYPE::TRANSPARENT_TEXTURE] = transparentTextureRenderTask;
-	m_RenderTasks[RENDER_TASK_TYPE::WIREFRAME] = wireFrameRenderTask;
-	m_RenderTasks[RENDER_TASK_TYPE::OUTLINE] = outliningRenderTask;
-	m_RenderTasks[RENDER_TASK_TYPE::MERGE] = mergeTask;
-	m_RenderTasks[RENDER_TASK_TYPE::IMGUI] = imGuiRenderTask;
-	m_RenderTasks[RENDER_TASK_TYPE::DOWNSAMPLE] = downSampleTask;
+	m_RenderTasks[E_RENDER_TASK_TYPE::DEPTH_PRE_PASS] = DepthPrePassRenderTask;
+	m_RenderTasks[E_RENDER_TASK_TYPE::SHADOW] = shadowRenderTask;
+	m_RenderTasks[E_RENDER_TASK_TYPE::FORWARD_RENDER] = forwardRenderTask;
+	m_RenderTasks[E_RENDER_TASK_TYPE::TRANSPARENT_CONSTANT] = transparentConstantRenderTask;
+	m_RenderTasks[E_RENDER_TASK_TYPE::TRANSPARENT_TEXTURE] = transparentTextureRenderTask;
+	m_RenderTasks[E_RENDER_TASK_TYPE::WIREFRAME] = wireFrameRenderTask;
+	m_RenderTasks[E_RENDER_TASK_TYPE::OUTLINE] = outliningRenderTask;
+	m_RenderTasks[E_RENDER_TASK_TYPE::MERGE] = mergeTask;
+	m_RenderTasks[E_RENDER_TASK_TYPE::IMGUI] = imGuiRenderTask;
+	m_RenderTasks[E_RENDER_TASK_TYPE::DOWNSAMPLE] = downSampleTask;
 
 	// Pushback in the order of execution
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
@@ -1984,18 +1984,18 @@ void Renderer::initRenderTasks()
 
 void Renderer::setRenderTasksRenderComponents()
 {
-	m_RenderTasks[RENDER_TASK_TYPE::DEPTH_PRE_PASS]->SetRenderComponents(&m_RenderComponents[FLAG_DRAW::NO_DEPTH]);
-	m_RenderTasks[RENDER_TASK_TYPE::FORWARD_RENDER]->SetRenderComponents(&m_RenderComponents[FLAG_DRAW::DRAW_OPAQUE]);
-	m_RenderTasks[RENDER_TASK_TYPE::TRANSPARENT_CONSTANT]->SetRenderComponents(&m_RenderComponents[FLAG_DRAW::DRAW_TRANSPARENT_CONSTANT]);
-	m_RenderTasks[RENDER_TASK_TYPE::TRANSPARENT_TEXTURE]->SetRenderComponents(&m_RenderComponents[FLAG_DRAW::DRAW_TRANSPARENT_TEXTURE]);
-	m_RenderTasks[RENDER_TASK_TYPE::SHADOW]->SetRenderComponents(&m_RenderComponents[FLAG_DRAW::GIVE_SHADOW]);
+	m_RenderTasks[E_RENDER_TASK_TYPE::DEPTH_PRE_PASS]->SetRenderComponents(&m_RenderComponents[F_DRAW_FLAGS::NO_DEPTH]);
+	m_RenderTasks[E_RENDER_TASK_TYPE::FORWARD_RENDER]->SetRenderComponents(&m_RenderComponents[F_DRAW_FLAGS::DRAW_OPAQUE]);
+	m_RenderTasks[E_RENDER_TASK_TYPE::TRANSPARENT_CONSTANT]->SetRenderComponents(&m_RenderComponents[F_DRAW_FLAGS::DRAW_TRANSPARENT_CONSTANT]);
+	m_RenderTasks[E_RENDER_TASK_TYPE::TRANSPARENT_TEXTURE]->SetRenderComponents(&m_RenderComponents[F_DRAW_FLAGS::DRAW_TRANSPARENT_TEXTURE]);
+	m_RenderTasks[E_RENDER_TASK_TYPE::SHADOW]->SetRenderComponents(&m_RenderComponents[F_DRAW_FLAGS::GIVE_SHADOW]);
 }
 
 void Renderer::createDescriptorHeaps()
 {
-	m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV] = new DescriptorHeap(m_pDevice5, DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV);
-	m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::RTV]		 = new DescriptorHeap(m_pDevice5, DESCRIPTOR_HEAP_TYPE::RTV);
-	m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::DSV]		 = new DescriptorHeap(m_pDevice5, DESCRIPTOR_HEAP_TYPE::DSV);
+	m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV] = new DescriptorHeap(m_pDevice5, E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV);
+	m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV]		 = new DescriptorHeap(m_pDevice5, E_DESCRIPTOR_HEAP_TYPE::RTV);
+	m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::DSV]		 = new DescriptorHeap(m_pDevice5, E_DESCRIPTOR_HEAP_TYPE::DSV);
 }
 
 void Renderer::createFences()
@@ -2016,7 +2016,7 @@ void Renderer::waitForGPU()
 {
 	//Signal and increment the fence value.
 	const UINT64 oldFenceValue = m_FenceFrameValue;
-	m_CommandQueues[COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->Signal(m_pFenceFrame, oldFenceValue);
+	m_CommandQueues[E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->Signal(m_pFenceFrame, oldFenceValue);
 	m_FenceFrameValue++;
 
 	//Wait until command queue is done.
@@ -2068,9 +2068,9 @@ void Renderer::submitUploadPerSceneData()
 {
 	*m_pCbPerSceneData = {};
 	// ----- directional lights -----
-	m_pCbPerSceneData->Num_Dir_Lights = static_cast<unsigned int>(m_Lights[LIGHT_TYPE::DIRECTIONAL_LIGHT].size());
+	m_pCbPerSceneData->Num_Dir_Lights = static_cast<unsigned int>(m_Lights[E_LIGHT_TYPE::DIRECTIONAL_LIGHT].size());
 	unsigned int index = 0;
-	for (auto& tuple : m_Lights[LIGHT_TYPE::DIRECTIONAL_LIGHT])
+	for (auto& tuple : m_Lights[E_LIGHT_TYPE::DIRECTIONAL_LIGHT])
 	{
 		m_pCbPerSceneData->dirLightIndices[index].x = static_cast<float>(std::get<1>(tuple)->GetCBV()->GetDescriptorHeapIndex());
 		index++;
@@ -2078,9 +2078,9 @@ void Renderer::submitUploadPerSceneData()
 	// ----- directional m_lights -----
 
 	// ----- point lights -----
-	m_pCbPerSceneData->Num_Point_Lights = static_cast<unsigned int>(m_Lights[LIGHT_TYPE::POINT_LIGHT].size());
+	m_pCbPerSceneData->Num_Point_Lights = static_cast<unsigned int>(m_Lights[E_LIGHT_TYPE::POINT_LIGHT].size());
 	index = 0;
-	for (auto& tuple : m_Lights[LIGHT_TYPE::POINT_LIGHT])
+	for (auto& tuple : m_Lights[E_LIGHT_TYPE::POINT_LIGHT])
 	{
 		m_pCbPerSceneData->pointLightIndices[index].x = static_cast<float>(std::get<1>(tuple)->GetCBV()->GetDescriptorHeapIndex());
 		index++;
@@ -2088,9 +2088,9 @@ void Renderer::submitUploadPerSceneData()
 	// ----- point m_lights -----
 
 	// ----- spot lights -----
-	m_pCbPerSceneData->Num_Spot_Lights = static_cast<unsigned int>(m_Lights[LIGHT_TYPE::SPOT_LIGHT].size());
+	m_pCbPerSceneData->Num_Spot_Lights = static_cast<unsigned int>(m_Lights[E_LIGHT_TYPE::SPOT_LIGHT].size());
 	index = 0;
-	for (auto& tuple : m_Lights[LIGHT_TYPE::SPOT_LIGHT])
+	for (auto& tuple : m_Lights[E_LIGHT_TYPE::SPOT_LIGHT])
 	{
 		m_pCbPerSceneData->spotLightIndices[index].x = static_cast<float>(std::get<1>(tuple)->GetCBV()->GetDescriptorHeapIndex());
 		index++;
@@ -2098,7 +2098,7 @@ void Renderer::submitUploadPerSceneData()
 	// ----- spot m_lights -----
 	
 	// Submit CB_PER_SCENE to be uploaded to VRAM
-	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[COPY_TASK_TYPE::COPY_ON_DEMAND]);
+	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]);
 	const void* data = static_cast<const void*>(m_pCbPerSceneData);
 	codt->Submit(&std::make_tuple(m_pCbPerScene->GetUploadResource(), m_pCbPerScene->GetDefaultResource(), data));
 }
@@ -2106,7 +2106,7 @@ void Renderer::submitUploadPerSceneData()
 void Renderer::submitUploadPerFrameData()
 {
 	// Submit dynamic-light-data to be uploaded to VRAM
-	CopyPerFrameTask* cpft = static_cast<CopyPerFrameTask*>(m_CopyTasks[COPY_TASK_TYPE::COPY_PER_FRAME]);
+	CopyPerFrameTask* cpft = static_cast<CopyPerFrameTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME]);
 
 	// CB_PER_FRAME_STRUCT
 	if (cpft != nullptr)
@@ -2119,13 +2119,13 @@ void Renderer::submitUploadPerFrameData()
 void Renderer::toggleFullscreen(WindowChange* event)
 {
 	m_FenceFrameValue++;
-	m_CommandQueues[COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->Signal(m_pFenceFrame, m_FenceFrameValue);
+	m_CommandQueues[E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->Signal(m_pFenceFrame, m_FenceFrameValue);
 
 	// Wait for all frames
 	waitForFrame(0);
 
 	// Wait for the threads which records the commandlists to complete
-	m_pThreadPool->WaitForThreads(FLAG_THREAD::RENDER);
+	m_pThreadPool->WaitForThreads(F_THREAD_FLAGS::RENDER);
 
 	for (auto task : m_RenderTasks)
 	{
@@ -2151,9 +2151,9 @@ void Renderer::toggleFullscreen(WindowChange* event)
 
 	m_pSwapChain->ToggleWindowMode(m_pDevice5,
 		m_pWindow->GetHwnd(),
-		m_CommandQueues[COMMAND_INTERFACE_TYPE::DIRECT_TYPE],
-		m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::RTV],
-		m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
+		m_CommandQueues[E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE],
+		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV],
+		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
 
 	// Change the member variables of the window class to match the swapchain
 	UINT width = 0, height = 0;

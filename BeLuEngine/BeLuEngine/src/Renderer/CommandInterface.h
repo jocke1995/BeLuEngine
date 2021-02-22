@@ -5,7 +5,7 @@
 struct ID3D12GraphicsCommandList5;
 struct ID3D12CommandAllocator;
 
-enum COMMAND_INTERFACE_TYPE
+enum E_COMMAND_INTERFACE_TYPE
 {
 	DIRECT_TYPE,
 	COPY_TYPE,
@@ -17,7 +17,7 @@ class CommandInterface
 public:
 	CommandInterface(
 		ID3D12Device5* device,
-		COMMAND_INTERFACE_TYPE interfaceType,
+		E_COMMAND_INTERFACE_TYPE interfaceType,
 		const std::wstring& clName);
 	~CommandInterface();
 
@@ -31,7 +31,7 @@ private:
 	ID3D12CommandAllocator* m_pCommandAllocators[NUM_SWAP_BUFFERS]{ nullptr };
 
 	std::wstring m_Name = L"CL_Default";
-	void createCommandInterfaces(ID3D12Device5* device, COMMAND_INTERFACE_TYPE interfaceType);
+	void createCommandInterfaces(ID3D12Device5* device, E_COMMAND_INTERFACE_TYPE interfaceType);
 };
 
 #endif

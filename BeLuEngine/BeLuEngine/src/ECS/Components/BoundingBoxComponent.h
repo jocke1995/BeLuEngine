@@ -10,7 +10,7 @@
 
 // used for enabling Collision and/or Picking.
 // write as "F_OBBFlags::COLLISION | F_OBBFlags::PICKING", without the "", if you want to have more than one
-enum F_OBBFlags
+enum F_BOUNDING_BOX_FLAGS
 {
 	COLLISION = BIT(1),
 	PICKING = BIT(2)

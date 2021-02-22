@@ -88,9 +88,9 @@ private:
     void processMeshData(const aiScene* assimpScene, const aiMesh* assimpMesh, std::vector<Vertex>* vertices, std::vector<unsigned int>* indices);
     Material* processMaterial(std::wstring path, const aiScene* assimpScene, const aiMesh* assimpMesh);
     Material* loadMaterial(aiMaterial* mat, const std::wstring& folderPath);
-    Texture* processTexture(aiMaterial* mat, TEXTURE2D_TYPE texture_type, const std::wstring& filePathWithoutTexture);
+    Texture* processTexture(aiMaterial* mat, E_TEXTURE2D_TYPE texture_type, const std::wstring& filePathWithoutTexture);
    
-    Shader* loadShader(const std::wstring& fileName, ShaderType type);
+    Shader* loadShader(const std::wstring& fileName, E_SHADER_TYPE type);
 };
 
 #endif

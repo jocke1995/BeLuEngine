@@ -10,7 +10,7 @@ ComputeTask::ComputeTask(
 	RootSignature* rootSignature,
 	std::vector<std::pair<std::wstring, std::wstring>> csNamePSOName,
 	unsigned int FLAG_THREAD,
-	COMMAND_INTERFACE_TYPE interfaceType,
+	E_COMMAND_INTERFACE_TYPE interfaceType,
 	const std::wstring& clName)
 	:DX12Task(device, interfaceType, FLAG_THREAD, clName)
 {

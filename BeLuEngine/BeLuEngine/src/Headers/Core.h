@@ -49,14 +49,14 @@ inline std::string GetFileExtension(const std::string& FileName)
 	return "";
 }
 
-enum class WINDOW_MODE
+enum class E_WINDOW_MODE
 {
 	WINDOWED,
 	WINDOWED_FULLSCREEN,
 	FULLSCREEN
 };
 
-enum class TEXTURE_TYPE
+enum class E_TEXTURE_TYPE
 {
 	UNKNOWN,
 	TEXTURE2D,
@@ -65,7 +65,7 @@ enum class TEXTURE_TYPE
 	NUM_TYPES
 };
 
-enum class TEXTURE2D_TYPE
+enum class E_TEXTURE2D_TYPE
 {
 	ALBEDO,
 	ROUGHNESS,
@@ -76,7 +76,7 @@ enum class TEXTURE2D_TYPE
 	NUM_TYPES
 };
 
-enum LIGHT_TYPE
+enum E_LIGHT_TYPE
 {
 	DIRECTIONAL_LIGHT,
 	POINT_LIGHT,
@@ -84,7 +84,7 @@ enum LIGHT_TYPE
 	NUM_LIGHT_TYPES
 };
 
-enum SHADOW_RESOLUTION
+enum E_SHADOW_RESOLUTION
 {
 	LOW,
 	MEDIUM,
@@ -93,7 +93,7 @@ enum SHADOW_RESOLUTION
 	UNDEFINED
 };
 
-enum class ShaderType
+enum class E_SHADER_TYPE
 {
 	VS = 0,
 	PS = 1,
@@ -101,7 +101,7 @@ enum class ShaderType
 	UNSPECIFIED = 3
 };
 
-enum class CAMERA_TYPE
+enum class E_CAMERA_TYPE
 {
 	PERSPECTIVE,
 	ORTHOGRAPHIC,
@@ -129,7 +129,7 @@ enum class CAMERA_TYPE
 #define BIT(x) (1 << x)
 #define MAXNUMBER 10000000.0f
 
-enum FLAG_DRAW
+enum F_DRAW_FLAGS
 {
 	NO_DEPTH = BIT(1),
 	DRAW_OPAQUE = BIT(2),
@@ -139,7 +139,7 @@ enum FLAG_DRAW
 	NUM_FLAG_DRAWS = 5,
 };
 
-enum FLAG_THREAD
+enum F_THREAD_FLAGS
 {
 	RENDER = BIT(1),
 	// CopyTextures,

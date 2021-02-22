@@ -13,7 +13,7 @@ struct D3D12_INDEX_BUFFER_VIEW;
 class Material
 {
 public:
-    Material(const std::wstring* path, std::map<TEXTURE2D_TYPE, Texture*>* textures);
+    Material(const std::wstring* path, std::map<E_TEXTURE2D_TYPE, Texture*>* textures);
     virtual ~Material();
 
     bool operator == (const Material& other);
@@ -22,15 +22,15 @@ public:
     const std::wstring& GetPath() const;
 
     // Material
-    Texture* GetTexture(TEXTURE2D_TYPE type) const;
+    Texture* GetTexture(E_TEXTURE2D_TYPE type) const;
 
-    void SetTexture(TEXTURE2D_TYPE type, Texture* texture);
+    void SetTexture(E_TEXTURE2D_TYPE type, Texture* texture);
 
 private:
     friend class Renderer;
 
     std::wstring m_Name;
-    std::map<TEXTURE2D_TYPE, Texture*> m_Textures;
+    std::map<E_TEXTURE2D_TYPE, Texture*> m_Textures;
 };
 
 #endif

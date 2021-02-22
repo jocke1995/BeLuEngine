@@ -6,7 +6,7 @@
 #include "../../../Renderer/Camera/OrthographicCamera.h"
 #include "../../../Renderer/Camera/PerspectiveCamera.h"
 
-Light::Light(CAMERA_TYPE camType, unsigned int lightFlags)
+Light::Light(E_CAMERA_TYPE camType, unsigned int lightFlags)
 {
 	m_Id = s_LightIdCounter++;
 
