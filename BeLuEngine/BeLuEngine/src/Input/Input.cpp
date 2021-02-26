@@ -90,11 +90,19 @@ void Input::SetKeyState(SCAN_CODES key, bool pressed)
 
 void Input::SetMouseButtonState(MOUSE_BUTTON button, bool pressed)
 {
+	bool alreadyPressed = m_MouseButtonState[button];
+
 	m_MouseButtonState[button] = pressed;
-	switch (pressed) {
+
+	switch (pressed)
+	{
 	case true:	// Pressed
-		EventBus::GetInstance().Publish(&MouseClick(button, pressed));
+		if (alreadyPressed == false)
+		{
+			EventBus::GetInstance().Publish(&MouseClick(button, pressed));
+		}
 		break;
+
 	case false:	// Released
 		EventBus::GetInstance().Publish(&MouseRelease(button, pressed));
 		break;

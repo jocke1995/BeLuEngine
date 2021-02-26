@@ -10,20 +10,33 @@
 
 #include "../Renderer/Renderer.h"
 #include "../Misc/Window.h"
+#include "../Misc/Log.h"
 
+#include "../Renderer/Camera/BaseCamera.h"
+
+#include "../Events/EventBus.h"
+#include "../Events/Events.h"
+
+#include "../ECS/Entity.h"
 #define DIV 1024
 
 ImGuiHandler& ImGuiHandler::GetInstance()
 {
 	// Init
 	EngineStatistics::GetInstance();
-
 	static ImGuiHandler instance;
+
 	return instance;
 }
 
 void ImGuiHandler::NewFrame()
 {
+	static bool a = true;
+
+	if(a)
+		EventBus::GetInstance().Subscribe(this, &ImGuiHandler::onEntityClicked);
+
+	a = false;
 	this->resetThreadInfos();
 
 	ImGui_ImplDX12_NewFrame();
@@ -102,6 +115,8 @@ void ImGuiHandler::UpdateFrame()
 		}
 	}
 	ImGui::End();
+
+	drawSelectedEntityInfo();
 }
 
 ImGuiHandler::ImGuiHandler()
@@ -117,6 +132,54 @@ ImGuiHandler::ImGuiHandler()
 
 ImGuiHandler::~ImGuiHandler()
 {
+	EventBus::GetInstance().Unsubscribe(this, &ImGuiHandler::onEntityClicked);
+}
+
+void ImGuiHandler::onEntityClicked(MouseClick* event)
+{
+	if (event->button == MOUSE_BUTTON::LEFT_DOWN && event->pressed == true)
+	{
+		Renderer& r = Renderer::GetInstance();
+
+		Entity* e = r.GetPickedEntity();
+		if (e != nullptr)
+		{
+			m_pSelectedEntity = e;
+			// Do something..?
+			Log::Print("Picked and pressed at: %s!\n", m_pSelectedEntity->GetName().c_str());
+		}
+	}
+}
+
+void ImGuiHandler::drawSelectedEntityInfo()
+{
+	Renderer& r = Renderer::GetInstance();
+	const Window* window = r.GetWindow();
+
+	if (m_pSelectedEntity == nullptr)
+		return;
+	std::string imGuiTitle = "Entity: " + m_pSelectedEntity->GetName();
+	if (ImGui::Begin(imGuiTitle.c_str()))
+	{
+		for (Component* c : *m_pSelectedEntity->GetAllComponents())
+		{
+			if (dynamic_cast<component::ModelComponent*>(c))
+			{
+				if (ImGui::CollapsingHeader("Model"))
+				{
+					//ImGui::Text("Build: %s", cStats.m_Build.c_str());
+				}
+			}
+			else if (dynamic_cast<component::TransformComponent*>(c))
+			{
+				if (ImGui::CollapsingHeader("Transform"))
+				{
+					//ImGui::Text("Build: %s", cStats.m_Build.c_str());
+				}
+			}
+		}
+	}
+	ImGui::End();
 }
 
 void ImGuiHandler::updateMemoryInfo()

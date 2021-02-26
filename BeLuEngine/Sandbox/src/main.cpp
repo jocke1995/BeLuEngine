@@ -1,5 +1,4 @@
 #include "BeLuEngine.h"
-#include <cstdlib>
 
 Scene* TestScene(SceneManager* sm);
 Scene* SponzaScene(SceneManager* sm);
@@ -31,7 +30,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
    // Set scene
    sceneManager->SetScene(scene);
    
-   CpuIdEx;
    Log::Print("Entering Game-Loop ...\n\n");
    while (!window->ExitWindow())
    {
