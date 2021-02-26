@@ -78,6 +78,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
    
        sceneManager->Update(timer->GetDeltaTime());
    
+       
        /* ------ Sort ------ */
        renderer->SortObjects();
    
@@ -223,13 +224,47 @@ Scene* SponzaScene(SceneManager* sm)
     entity = scene->AddEntity("sponza");
     mc = entity->AddComponent<component::ModelComponent>();
     tc = entity->AddComponent<component::TransformComponent>();
-    //bbc = entity->AddComponent<component::BoundingBoxComponent>(F_BOUNDING_BOX_FLAGS::PICKING);
-
+    
     mc->SetModel(sponza);
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
     tc->GetTransform()->SetPosition({0.0f, 0.0f, 0.0f});
     tc->GetTransform()->SetScale(0.3f, 0.3f, 0.3f);
     /* ---------------------- Sponza ---------------------- */
+
+    /* ---------------------- Sphere ---------------------- */
+    entity = scene->AddEntity("sphere1");
+    mc = entity->AddComponent<component::ModelComponent>();
+    tc = entity->AddComponent<component::TransformComponent>();
+    bbc = entity->AddComponent<component::BoundingBoxComponent>(F_BOUNDING_BOX_FLAGS::PICKING);
+
+    mc->SetModel(sphereModel);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
+    tc->GetTransform()->SetScale(1.0f);
+    tc->GetTransform()->SetPosition(5, 15, 5);
+    bbc->Init();
+
+    entity = scene->AddEntity("sphere2");
+    mc = entity->AddComponent<component::ModelComponent>();
+    tc = entity->AddComponent<component::TransformComponent>();
+    bbc = entity->AddComponent<component::BoundingBoxComponent>(F_BOUNDING_BOX_FLAGS::PICKING);
+
+    mc->SetModel(sphereModel);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
+    tc->GetTransform()->SetScale(1.0f);
+    tc->GetTransform()->SetPosition(5, 25, 10);
+    bbc->Init();
+
+    entity = scene->AddEntity("sphere3");
+    mc = entity->AddComponent<component::ModelComponent>();
+    tc = entity->AddComponent<component::TransformComponent>();
+    bbc = entity->AddComponent<component::BoundingBoxComponent>(F_BOUNDING_BOX_FLAGS::PICKING);
+
+    mc->SetModel(sphereModel);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
+    tc->GetTransform()->SetScale(1.0f);
+    tc->GetTransform()->SetPosition(5, 35, 15);
+    bbc->Init();
+    /* ---------------------- Sphere ---------------------- */
 
     /* ---------------------- Braziers ---------------------- */
     entity = scene->AddEntity("Brazier0");

@@ -263,7 +263,7 @@ namespace component
 		}
 		else
 		{
-		BL_LOG_CRITICAL("Trying to add a bounding box when no mesh and/or transform exists on entity.\n");
+			BL_LOG_CRITICAL("Trying to add a bounding box when no mesh and/or transform exists on entity.\n");
 			return false;
 		}
 	}
