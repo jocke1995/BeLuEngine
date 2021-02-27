@@ -2,6 +2,7 @@
 #include "ImGuiHandler.h"
 
 #include "../ImGUI/imgui.h"
+#include "../ImGui/imgui_internal.h"
 #include "../ImGUI/imgui_impl_win32.h"
 #include "../ImGUI/imgui_impl_dx12.h"
 
@@ -18,6 +19,7 @@
 #include "../Events/Events.h"
 
 #include "../ECS/Entity.h"
+#include "../Renderer/Model/Transform.h"
 #define DIV 1024
 
 ImGuiHandler& ImGuiHandler::GetInstance()
@@ -145,8 +147,6 @@ void ImGuiHandler::onEntityClicked(MouseClick* event)
 		if (e != nullptr)
 		{
 			m_pSelectedEntity = e;
-			// Do something..?
-			Log::Print("Picked and pressed at: %s!\n", m_pSelectedEntity->GetName().c_str());
 		}
 	}
 }
@@ -158,7 +158,7 @@ void ImGuiHandler::drawSelectedEntityInfo()
 
 	if (m_pSelectedEntity == nullptr)
 		return;
-	std::string imGuiTitle = "Entity: " + m_pSelectedEntity->GetName();
+	std::string imGuiTitle = "Entity: ";// + m_pSelectedEntity->GetName();
 	if (ImGui::Begin(imGuiTitle.c_str()))
 	{
 		for (Component* c : *m_pSelectedEntity->GetAllComponents())
@@ -172,9 +172,41 @@ void ImGuiHandler::drawSelectedEntityInfo()
 			}
 			else if (dynamic_cast<component::TransformComponent*>(c))
 			{
+				component::TransformComponent* tc = dynamic_cast<component::TransformComponent*>(c);
 				if (ImGui::CollapsingHeader("Transform"))
 				{
-					//ImGui::Text("Build: %s", cStats.m_Build.c_str());
+					DirectX::XMFLOAT3 pos	 = tc->GetTransform()->GetPositionXMFLOAT3();
+					DirectX::XMFLOAT3 scale  = tc->GetTransform()->GetScale();
+					DirectX::XMFLOAT3 rot	 = tc->GetTransform()->GetRot();
+
+					ImGui::Text("Translate");
+					ImGui::DragFloat("##X1", &pos.x, 0.5f);
+					ImGui::DragFloat("##Y1", &pos.y, 0.5f);
+					ImGui::DragFloat("##Z1", &pos.z, 0.5f);
+					ImGui::Text("Scale");
+					ImGui::DragFloat("##X2", &scale.x, 0.5f);
+					ImGui::DragFloat("##Y2", &scale.y, 0.5f);
+					ImGui::DragFloat("##Z2", &scale.z, 0.5f);
+					ImGui::Text("Rot");
+					ImGui::DragFloat("##X3", &rot.x, 0.1f);
+					ImGui::DragFloat("##Y3", &rot.y, 0.1f);
+					ImGui::DragFloat("##Z3", &rot.z, 0.1f);
+
+					// Nice and perfect set-functions.
+					tc->GetTransform()->SetPosition(pos);
+					tc->GetTransform()->SetScale(scale.x, scale.y, scale.z);
+					tc->GetTransform()->SetRotationX(rot.x);
+					tc->GetTransform()->SetRotationY(rot.y);
+					tc->GetTransform()->SetRotationZ(rot.z);
+				}
+			}
+			else if (component::PointLightComponent * plc = dynamic_cast<component::PointLightComponent*>(c))
+			{
+				if (ImGui::CollapsingHeader("PointLight"))
+				{
+					PointLight* pl = static_cast<PointLight*>(plc->GetLightData());
+
+					ImGui::ColorEdit3("", &pl->baseLight.color.r);
 				}
 			}
 		}

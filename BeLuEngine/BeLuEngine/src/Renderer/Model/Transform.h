@@ -29,9 +29,9 @@ public:
 
 	DirectX::XMFLOAT3 GetScale() const;
 
-	// gets a quaternion representation of the rotation matrix
-	float4 GetRotation();
 	// gets the rotation of the transform in all axisis
+	DirectX::XMFLOAT3 GetRot() const;
+
 	DirectX::XMMATRIX GetRotMatrix() const;
 
 	DirectX::XMFLOAT3 GetForwardXMFLOAT3() const;
@@ -47,12 +47,10 @@ private:
 	DirectX::XMMATRIX m_WorldMatTransposed;
 
 	DirectX::XMFLOAT3 m_Position;
+	DirectX::XMFLOAT3 m_Rot;
 	DirectX::XMFLOAT3 m_Scale;
 
-	DirectX::XMMATRIX m_RotXMat;
-	DirectX::XMMATRIX m_RotYMat;
-	DirectX::XMMATRIX m_RotZMat;
-	DirectX::XMMATRIX m_RotationMat;
+	DirectX::XMFLOAT4 m_RotQuat;
 };
 
 #endif

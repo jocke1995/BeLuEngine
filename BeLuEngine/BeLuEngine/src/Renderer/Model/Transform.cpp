@@ -4,14 +4,12 @@
 Transform::Transform(bool invertDirection)
 {
 	m_Position = DirectX::XMFLOAT3(0.0, 0.0, 0.0);
-	m_RotationMat = DirectX::XMMatrixIdentity();
+	m_Rot = DirectX::XMFLOAT3(1.0, 1.0, 1.0);
 	m_Scale = DirectX::XMFLOAT3(1.0, 1.0, 1.0);
 
 	UpdateWorldMatrix();
 
-	m_RotXMat = DirectX::XMMatrixIdentity();
-	m_RotYMat = DirectX::XMMatrixIdentity();
-	m_RotZMat = DirectX::XMMatrixIdentity();
+	m_RotQuat = {};
 }
 
 Transform::~Transform()
@@ -30,20 +28,29 @@ void Transform::SetPosition(DirectX::XMFLOAT3 pos)
 
 void Transform::SetRotationX(float radians)
 {
-	m_RotXMat = DirectX::XMMatrixRotationX(radians);
-	m_RotationMat = m_RotXMat * m_RotYMat * m_RotZMat;
+	m_Rot.x = radians;
+
+	DirectX::XMVECTOR rotVector = DirectX::XMQuaternionRotationRollPitchYaw(m_Rot.x, m_Rot.y, m_Rot.z);
+	//rotVector = DirectX::XMQuaternionNormalize(rotVector);
+	DirectX::XMStoreFloat4(&m_RotQuat, rotVector);
 }
 
 void Transform::SetRotationY(float radians)
 {
-	m_RotYMat = DirectX::XMMatrixRotationY(radians);
-	m_RotationMat = m_RotXMat * m_RotYMat * m_RotZMat;
+	m_Rot.y = radians;
+
+	DirectX::XMVECTOR rotVector = DirectX::XMQuaternionRotationRollPitchYaw(m_Rot.x, m_Rot.y, m_Rot.z);
+	//rotVector = DirectX::XMQuaternionNormalize(rotVector);
+	DirectX::XMStoreFloat4(&m_RotQuat, rotVector);
 }
 
 void Transform::SetRotationZ(float radians)
 {
-	m_RotZMat = DirectX::XMMatrixRotationZ(radians);
-	m_RotationMat = m_RotXMat * m_RotYMat * m_RotZMat;
+	m_Rot.z = radians;
+
+	DirectX::XMVECTOR rotVector = DirectX::XMQuaternionRotationRollPitchYaw(m_Rot.x, m_Rot.y, m_Rot.z);
+	//rotVector = DirectX::XMQuaternionNormalize(rotVector);
+	DirectX::XMStoreFloat4(&m_RotQuat, rotVector);
 }
 
 void Transform::SetScale(float scale)
@@ -67,7 +74,9 @@ void Transform::UpdateWorldMatrix()
 {
 	DirectX::XMMATRIX posMat = DirectX::XMMatrixTranslation(m_Position.x, m_Position.y, m_Position.z);
 	DirectX::XMMATRIX sclMat = DirectX::XMMatrixScaling(m_Scale.x, m_Scale.y, m_Scale.z);
-	DirectX::XMMATRIX rotMat = m_RotationMat;
+
+	DirectX::XMVECTOR rotVector = DirectX::XMLoadFloat4(&m_RotQuat);
+	DirectX::XMMATRIX rotMat = DirectX::XMMatrixRotationQuaternion(rotVector);
 
 	m_WorldMat = sclMat * rotMat * posMat;
 
@@ -104,58 +113,77 @@ DirectX::XMFLOAT3 Transform::GetScale() const
 	return m_Scale;
 }
 
-float4 Transform::GetRotation()
+DirectX::XMFLOAT3 Transform::GetRot() const
 {
-	DirectX::XMVECTOR quat = DirectX::XMQuaternionRotationMatrix(m_RotationMat);
-	return { quat.m128_f32[0], quat.m128_f32[1], quat.m128_f32[2], quat.m128_f32[3] };
+	return m_Rot;
 }
 
 DirectX::XMMATRIX Transform::GetRotMatrix() const
 {
-	return m_RotationMat;
+	DirectX::XMVECTOR rotVector = DirectX::XMLoadFloat4(&m_RotQuat);
+	DirectX::XMMATRIX rotMat = DirectX::XMMatrixRotationQuaternion(rotVector);
+	return rotMat;
 }
 
 DirectX::XMFLOAT3 Transform::GetForwardXMFLOAT3() const
 {
+	DirectX::XMVECTOR rotVector = DirectX::XMLoadFloat4(&m_RotQuat);
+	DirectX::XMMATRIX rotMat = DirectX::XMMatrixRotationQuaternion(rotVector);
+
 	DirectX::XMFLOAT3 forward;
-	DirectX::XMStoreFloat3(&forward, m_RotationMat.r[2]);
+	DirectX::XMStoreFloat3(&forward, rotMat.r[2]);
 
 	return forward;
 }
 
 float3 Transform::GetForwardFloat3() const
 {
+	DirectX::XMVECTOR rotVector = DirectX::XMLoadFloat4(&m_RotQuat);
+	DirectX::XMMATRIX rotMat = DirectX::XMMatrixRotationQuaternion(rotVector);
+
 	DirectX::XMFLOAT3 forward;
-	DirectX::XMStoreFloat3(&forward, m_RotationMat.r[2]);
+	DirectX::XMStoreFloat3(&forward, rotMat.r[2]);
 
 	return { forward.x, forward.y, forward.z };
 }
 
 DirectX::XMFLOAT3 Transform::GetRightXMFLOAT3() const
 {
+	DirectX::XMVECTOR rotVector = DirectX::XMLoadFloat4(&m_RotQuat);
+	DirectX::XMMATRIX rotMat = DirectX::XMMatrixRotationQuaternion(rotVector);
+
 	DirectX::XMFLOAT3 right;
-	DirectX::XMStoreFloat3(&right, m_RotationMat.r[0]);
+	DirectX::XMStoreFloat3(&right, rotMat.r[0]);
 
 	return DirectX::XMFLOAT3( right.x, right.y, right.z);
 }
 float3 Transform::GetRightFloat3() const
 {
+	DirectX::XMVECTOR rotVector = DirectX::XMLoadFloat4(&m_RotQuat);
+	DirectX::XMMATRIX rotMat = DirectX::XMMatrixRotationQuaternion(rotVector);
+
 	DirectX::XMFLOAT3 right;
-	DirectX::XMStoreFloat3(&right, m_RotationMat.r[0]);
+	DirectX::XMStoreFloat3(&right, rotMat.r[0]);
 
 	return {  right.x, right.y, right.z };
 }
 DirectX::XMFLOAT3 Transform::GetUpXMFLOAT3() const
 {
+	DirectX::XMVECTOR rotVector = DirectX::XMLoadFloat4(&m_RotQuat);
+	DirectX::XMMATRIX rotMat = DirectX::XMMatrixRotationQuaternion(rotVector);
+
 	DirectX::XMFLOAT3 up;
-	DirectX::XMStoreFloat3(&up, m_RotationMat.r[1]);
+	DirectX::XMStoreFloat3(&up, rotMat.r[1]);
 
 	return up;
 }
 float3 Transform::GetUpFloat3() const
 {
+	DirectX::XMVECTOR rotVector = DirectX::XMLoadFloat4(&m_RotQuat);
+	DirectX::XMMATRIX rotMat = DirectX::XMMatrixRotationQuaternion(rotVector);
+
 	DirectX::XMFLOAT3 up;
-	DirectX::XMStoreFloat3(&up, m_RotationMat.r[1]);
+	DirectX::XMStoreFloat3(&up, rotMat.r[1]);
 
 	return { up.x, up.y, up.z };
 }

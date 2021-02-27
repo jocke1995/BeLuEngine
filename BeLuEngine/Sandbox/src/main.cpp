@@ -50,11 +50,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
            component::ModelComponent* mc = entity->AddComponent<component::ModelComponent>();
            component::TransformComponent* tc = entity->AddComponent<component::TransformComponent>();
            component::PointLightComponent* plc = entity->AddComponent<component::PointLightComponent>(F_LIGHT_FLAGS::USE_TRANSFORM_POSITION);
+           component::BoundingBoxComponent* bbc = entity->AddComponent<component::BoundingBoxComponent>(F_BOUNDING_BOX_FLAGS::PICKING);;
    
            mc->SetModel(sphereModel);
            mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
            tc->GetTransform()->SetScale(0.3f);
            tc->GetTransform()->SetPosition(lightPos);
+           bbc->Init();
    
            plc->SetColor({ 10.0f, 5.0f, 5.0f });
    
