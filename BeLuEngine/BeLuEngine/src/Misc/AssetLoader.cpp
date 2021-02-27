@@ -81,7 +81,7 @@ void AssetLoader::loadDefaultMaterial()
 	matTextures[E_TEXTURE2D_TYPE::OPACITY] = LoadTexture2D(m_FilePathDefaultTextures + L"default_opacity.dds");
 
 	std::wstring matName = L"DefaultMaterial";
-	Material* material = new Material(&matName, &matTextures);
+	Material* material = new Material(&matName, &matTextures, { 1.0f, 1.0f, 0.0f, 0.0f });
 	m_LoadedMaterials[matName].first = false;
 	m_LoadedMaterials[matName].second = material;
 }
@@ -344,7 +344,7 @@ Material* AssetLoader::loadMaterial(aiMaterial* mat, const std::wstring& folderP
 			matTextures[type] = texture;
 		}
 
-		Material* material = new Material(&matName, &matTextures);
+		Material* material = new Material(&matName, &matTextures, {1.0f, 1.0f, 0.0f, 0.0f});
 		m_LoadedMaterials[matName].first = false;
 		m_LoadedMaterials[matName].second = material;
 

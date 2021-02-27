@@ -23,13 +23,14 @@ ConstantBuffer<CB_PER_FRAME_STRUCT>  cbPerFrame  : register(b4, space3);
 
 PS_OUTPUT PS_main(VS_OUT input)
 {
+	SlotInfo info = cbPerObject.info;
 	// Sample from textures
 	float2 uvScaled = float2(input.uv.x, input.uv.y);
-	float4 albedo   = textures[cbPerObject.info.textureAlbedo	].Sample(Anisotropic16_Wrap, uvScaled);
-	float roughness = textures[cbPerObject.info.textureRoughness].Sample(Anisotropic16_Wrap, uvScaled).r;
-	float metallic  = textures[cbPerObject.info.textureMetallic	].Sample(Anisotropic16_Wrap, uvScaled).r;
-	float4 emissive = textures[cbPerObject.info.textureEmissive	].Sample(Anisotropic16_Wrap, uvScaled);
-	float4 normal   = textures[cbPerObject.info.textureNormal	].Sample(Anisotropic16_Wrap, uvScaled);
+	float4 albedo   = textures[info.textureAlbedo	].Sample(Anisotropic16_Wrap, uvScaled);
+	float roughness = textures[info.textureRoughness].Sample(Anisotropic16_Wrap, uvScaled).r;
+	float metallic  = textures[info.textureMetallic	].Sample(Anisotropic16_Wrap, uvScaled).r;
+	float4 emissive = textures[info.textureEmissive	].Sample(Anisotropic16_Wrap, uvScaled);
+	float4 normal   = textures[info.textureNormal	].Sample(Anisotropic16_Wrap, uvScaled);
 
 	normal = (2.0f * normal) - 1.0f;
 	normal = float4(normalize(mul(normal.xyz, input.tbn)), 1.0f);
@@ -101,6 +102,7 @@ PS_OUTPUT PS_main(VS_OUT input)
 	finalColor += (emissive.rgb * 2);
 
 	PS_OUTPUT output;
+
 	output.sceneColor = float4(finalColor.rgb, 1.0f);
 
 	float brightness = dot(output.sceneColor.rgb, float3(0.2126, 0.7152, 0.0722));

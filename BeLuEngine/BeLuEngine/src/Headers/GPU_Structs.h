@@ -16,6 +16,16 @@ struct DescriptorHeapIndices
 	unsigned int index3;
 };
 
+struct MaterialData
+{
+	// ints used as bools to make them pad to 4 bytes on the GPU
+	float m_HasRoughnessTexture;
+	float m_HasMetallicTexture;
+
+	float roughness;
+	float metallic;
+};
+
 // Indicies of where the descriptors are stored in the descriptorHeap
 struct SlotInfo
 {
@@ -27,8 +37,11 @@ struct SlotInfo
 	unsigned int textureNormal;
 	unsigned int textureEmissive;
 	unsigned int textureOpacity;
+	unsigned int pad;
 
-	unsigned int pad[1];
+	// ints used as bools to make them pad to 4 bytes on the GPU
+	MaterialData matData;
+
 };
 
 struct CB_PER_OBJECT_STRUCT

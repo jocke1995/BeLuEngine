@@ -585,7 +585,8 @@ void Renderer::InitModelComponent(component::ModelComponent* mc)
 
 	// Submit to codt
 	submitModelToGPU(mc->m_pModel);
-	
+	submitMaterialToGPU(mc->m_pModel);
+
 	// Only add the m_Entities that actually should be drawn
 	if (tc != nullptr)
 	{
@@ -1027,24 +1028,42 @@ void Renderer::submitModelToGPU(Model* model)
 
 		// Submit Mesh
 		submitMeshToCodt(mesh);
-
-		Texture* texture;
-		// Submit Material
-		texture = model->GetMaterialAt(i)->GetTexture(E_TEXTURE2D_TYPE::ALBEDO);
-		submitTextureToCodt(texture);
-		texture = model->GetMaterialAt(i)->GetTexture(E_TEXTURE2D_TYPE::ROUGHNESS);
-		submitTextureToCodt(texture);
-		texture = model->GetMaterialAt(i)->GetTexture(E_TEXTURE2D_TYPE::METALLIC);
-		submitTextureToCodt(texture);
-		texture = model->GetMaterialAt(i)->GetTexture(E_TEXTURE2D_TYPE::NORMAL);
-		submitTextureToCodt(texture);
-		texture = model->GetMaterialAt(i)->GetTexture(E_TEXTURE2D_TYPE::EMISSIVE);
-		submitTextureToCodt(texture);
-		texture = model->GetMaterialAt(i)->GetTexture(E_TEXTURE2D_TYPE::OPACITY);
-		submitTextureToCodt(texture);
 	}
 
 	AssetLoader::Get()->m_LoadedModels.at(model->GetPath()).first = true;
+}
+
+void Renderer::submitMaterialToGPU(Model* model)
+{
+	for (unsigned int i = 0; i < model->GetSize(); i++)
+	{
+		Texture* texture;
+		Material* mat = model->GetMaterialAt(i);
+
+		// Skip already loaded ones
+		if (AssetLoader::Get()->IsMaterialLoadedOnGpu(mat) == true)
+		{
+			continue;
+		}
+
+		// Submit Textures
+		texture = mat->GetTexture(E_TEXTURE2D_TYPE::ALBEDO);
+		submitTextureToCodt(texture);
+		texture = mat->GetTexture(E_TEXTURE2D_TYPE::ROUGHNESS);
+		submitTextureToCodt(texture);
+		texture = mat->GetTexture(E_TEXTURE2D_TYPE::METALLIC);
+		submitTextureToCodt(texture);
+		texture = mat->GetTexture(E_TEXTURE2D_TYPE::NORMAL);
+		submitTextureToCodt(texture);
+		texture = mat->GetTexture(E_TEXTURE2D_TYPE::EMISSIVE);
+		submitTextureToCodt(texture);
+		texture = mat->GetTexture(E_TEXTURE2D_TYPE::OPACITY);
+		submitTextureToCodt(texture);
+
+		// Submit material
+		AssetLoader::Get()->m_LoadedMaterials.at(mat->GetName()).first = true;
+	}
+	
 }
 
 void Renderer::submitTextureToCodt(Texture* texture)
