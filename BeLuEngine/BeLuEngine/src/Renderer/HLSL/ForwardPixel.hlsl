@@ -19,6 +19,7 @@ ConstantBuffer<PointLight> pointLight[]		: register(b0, space1);
 ConstantBuffer<SpotLight> spotLight[]		: register(b0, space2);
 
 ConstantBuffer<CB_PER_OBJECT_STRUCT> cbPerObject : register(b1, space3);
+ConstantBuffer<MaterialData>		 materials[] : register(b0, space4);
 ConstantBuffer<CB_PER_FRAME_STRUCT>  cbPerFrame  : register(b4, space3);
 
 PS_OUTPUT PS_main(VS_OUT input)
@@ -102,6 +103,16 @@ PS_OUTPUT PS_main(VS_OUT input)
 	finalColor += (emissive.rgb * 2);
 
 	PS_OUTPUT output;
+
+	//MaterialData mat = materials[info.matIndex];
+	//if (mat.m_HasRoughnessTexture == 1.0f)
+	//{
+	//	finalColor = float3(0.0f, 1.0f, 0.0f);
+	//}
+	//else
+	//{
+	//	finalColor = float3(1.0f, 0.0f, 0.0f);
+	//}
 
 	output.sceneColor = float4(finalColor.rgb, 1.0f);
 

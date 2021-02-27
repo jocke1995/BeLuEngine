@@ -37,10 +37,10 @@ struct SlotInfo
 	unsigned int textureNormal;
 	unsigned int textureEmissive;
 	unsigned int textureOpacity;
-	unsigned int pad;
+	unsigned int matIndex;
 
 	// ints used as bools to make them pad to 4 bytes on the GPU
-	MaterialData matData;
+	//MaterialData matData;
 
 };
 

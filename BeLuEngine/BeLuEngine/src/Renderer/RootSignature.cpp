@@ -40,7 +40,7 @@ ID3DBlob* RootSignature::GetBlob() const
 void RootSignature::createRootSignatureStructure()
 {
 	// DescriptorTable for CBV's (bindless)
-	D3D12_DESCRIPTOR_RANGE dtRangesCBV[3]{};
+	D3D12_DESCRIPTOR_RANGE dtRangesCBV[4]{};
 	dtRangesCBV[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
 	dtRangesCBV[0].NumDescriptors = -1;
 	dtRangesCBV[0].BaseShaderRegister = 0;	// b0
@@ -53,6 +53,10 @@ void RootSignature::createRootSignatureStructure()
 	dtRangesCBV[2].NumDescriptors = -1;
 	dtRangesCBV[2].BaseShaderRegister = 0;	// b0
 	dtRangesCBV[2].RegisterSpace = 2;		// space2
+	dtRangesCBV[3].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+	dtRangesCBV[3].NumDescriptors = -1;
+	dtRangesCBV[3].BaseShaderRegister = 0;	// b0
+	dtRangesCBV[3].RegisterSpace = 4;		// space4
 	D3D12_ROOT_DESCRIPTOR_TABLE dtCBV = {};
 	dtCBV.NumDescriptorRanges = ARRAYSIZE(dtRangesCBV);
 	dtCBV.pDescriptorRanges = dtRangesCBV;

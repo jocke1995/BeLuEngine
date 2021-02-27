@@ -126,6 +126,7 @@ private:
 	friend class BeLuEngine;
 	friend class SceneManager;
 	friend class ImGuiHandler;
+	friend class Material;
 	Renderer();
 
 	// For control of safe release of DirectX resources

@@ -85,7 +85,6 @@ void Model::updateSlotInfo()
 
 	for (unsigned int i = 0; i < m_Size; i++)
 	{
-		MaterialData m = *m_Materials[i]->GetMaterialData();
 		m_SlotInfos[i] =
 		{
 			m_Meshes[i]->m_pSRV->GetDescriptorHeapIndex(),
@@ -95,8 +94,7 @@ void Model::updateSlotInfo()
 			m_Materials[i]->GetTexture(E_TEXTURE2D_TYPE::NORMAL)->GetDescriptorHeapIndex(),
 			m_Materials[i]->GetTexture(E_TEXTURE2D_TYPE::EMISSIVE)->GetDescriptorHeapIndex(),
 			m_Materials[i]->GetTexture(E_TEXTURE2D_TYPE::OPACITY)->GetDescriptorHeapIndex(),
-			0, // Pad, TODO
-			{m.m_HasRoughnessTexture, m.m_HasMetallicTexture, m.roughness, m.metallic}
+			m_Materials[i]->GetMaterialData()->first->GetCBV()->GetDescriptorHeapIndex()
 		};
 	}
 }

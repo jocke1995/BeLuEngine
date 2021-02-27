@@ -1061,6 +1061,10 @@ void Renderer::submitMaterialToGPU(Model* model)
 		submitTextureToCodt(texture);
 
 		// Submit material
+		CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]);
+		const void* data = static_cast<const void*>(&mat->GetMaterialData()->second);
+		codt->Submit(&std::make_tuple(mat->GetMaterialData()->first->GetUploadResource(), mat->GetMaterialData()->first->GetDefaultResource(), data));
+
 		AssetLoader::Get()->m_LoadedMaterials.at(mat->GetName()).first = true;
 	}
 	

@@ -17,7 +17,7 @@ class ConstantBuffer;
 class Material
 {
 public:
-    Material(const std::wstring* path, std::map<E_TEXTURE2D_TYPE, Texture*>* textures, MaterialData matData);
+    Material(const std::wstring* path, std::map<E_TEXTURE2D_TYPE, Texture*>* textures);
     virtual ~Material();
 
     bool operator == (const Material& other);
@@ -28,7 +28,7 @@ public:
 
     // Material
     Texture* GetTexture(E_TEXTURE2D_TYPE type) const;
-    const MaterialData* GetMaterialData() const;
+    const std::pair<ConstantBuffer*, MaterialData>* GetMaterialData() const;
 
     void SetTexture(E_TEXTURE2D_TYPE type, Texture* texture);
 
@@ -37,7 +37,7 @@ private:
 
     std::wstring m_Name;
     std::map<E_TEXTURE2D_TYPE, Texture*> m_Textures;
-    MaterialData m_MaterialData = {};
+    std::pair<ConstantBuffer*, MaterialData> m_MaterialData = {};
     
 };
 
