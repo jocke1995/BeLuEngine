@@ -3,21 +3,22 @@
 
 #include "RenderTask.h"
 
-class FowardRenderTask : public RenderTask
+class ForwardRenderTask : public RenderTask
 {
 public:
-	FowardRenderTask(ID3D12Device5* device, 
+	ForwardRenderTask(ID3D12Device5* device, 
 		RootSignature* rootSignature, 
-		LPCWSTR VSName, LPCWSTR PSName, 
+		const std::wstring& VSName, const std::wstring& PSName,
 		std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*>* gpsds, 
-		LPCTSTR psoName);
-	~FowardRenderTask();
+		const std::wstring& psoName,
+		unsigned int FLAG_THREAD);
+	~ForwardRenderTask();
 
-	void Execute();
+	void Execute() override final;
 
 private:
 	void drawRenderComponent(
-		component::MeshComponent* mc,
+		component::ModelComponent* mc,
 		component::TransformComponent* tc,
 		const DirectX::XMMATRIX* viewProjTransposed,
 		ID3D12GraphicsCommandList5* cl);

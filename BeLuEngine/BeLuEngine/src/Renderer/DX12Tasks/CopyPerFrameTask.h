@@ -6,14 +6,18 @@
 class CopyPerFrameTask : public CopyTask
 {
 public:
-	CopyPerFrameTask(ID3D12Device5* device);
+	CopyPerFrameTask(
+		ID3D12Device5* device,
+		E_COMMAND_INTERFACE_TYPE interfaceType,
+		unsigned int FLAG_THREAD,
+		const std::wstring& clName);
 	virtual ~CopyPerFrameTask();
 
 	// The submit is inside CopyTask
 
 	// Removal
 	void ClearSpecific(const Resource* uploadResource);
-	void Clear();
+	void Clear() override;
 
 	void Execute();
 };

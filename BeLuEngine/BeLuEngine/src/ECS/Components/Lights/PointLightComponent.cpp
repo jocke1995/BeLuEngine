@@ -2,8 +2,9 @@
 #include "PointLightComponent.h"
 
 // Renderer
-#include "../Renderer/Transform.h"
-#include "../Renderer/BaseCamera.h"
+#include "../Renderer/Model/Transform.h"
+#include "../Renderer/Camera/BaseCamera.h"
+#include "../Renderer/Renderer.h"
 
 // ECS
 #include "../ECS/Entity.h"
@@ -11,11 +12,11 @@
 namespace component
 {
 	PointLightComponent::PointLightComponent(Entity* parent, unsigned int lightFlags)
-		:Component(parent), Light(CAMERA_TYPE::PERSPECTIVE, lightFlags)
+		:Component(parent), Light(E_CAMERA_TYPE::PERSPECTIVE, lightFlags)
 	{
 		m_pPointLight = new PointLight();
 		m_pPointLight->position = { 0.0f,  2.0f,  0.0f, 0.0f };
-		m_pPointLight->attenuation = { 1.0f, 0.09f, 0.032f, 0.0f };
+		m_pPointLight->attenuation = { 1.0f, 0.027f, 0.0028f, 0.0f };
 		m_pPointLight->baseLight = *m_pBaseLight;
 	}
 
@@ -31,7 +32,7 @@ namespace component
 			m_pCamera->Update(dt);
 		}
 
-		if (m_LightFlags & FLAG_LIGHT::USE_TRANSFORM_POSITION)
+		if (m_LightFlags & static_cast<unsigned int>(F_LIGHT_FLAGS::USE_TRANSFORM_POSITION))
 		{
 			Transform* tc = m_pParent->GetComponent<TransformComponent>()->GetTransform();
 			float3 position = tc->GetPositionFloat3();
@@ -39,6 +40,16 @@ namespace component
 			m_pPointLight->position.y = position.y;
 			m_pPointLight->position.z = position.z;
 		}
+	}
+
+	void PointLightComponent::OnInitScene()
+	{
+		Renderer::GetInstance().InitPointLightComponent(this);
+	}
+
+	void PointLightComponent::OnUnInitScene()
+	{
+		Renderer::GetInstance().UnInitPointLightComponent(this);
 	}
 
 	void PointLightComponent::SetPosition(float3 position)
@@ -58,19 +69,8 @@ namespace component
 		return m_pPointLight;
 	}
 
-	void PointLightComponent::UpdateLightData(COLOR_TYPE type)
+	void PointLightComponent::UpdateLightColor()
 	{
-		switch (type)
-		{
-		case COLOR_TYPE::LIGHT_AMBIENT:
-			m_pPointLight->baseLight.ambient = m_pBaseLight->ambient;
-			break;
-		case COLOR_TYPE::LIGHT_DIFFUSE:
-			m_pPointLight->baseLight.diffuse = m_pBaseLight->diffuse;
-			break;
-		case COLOR_TYPE::LIGHT_SPECULAR:
-			m_pPointLight->baseLight.specular = m_pBaseLight->specular;
-			break;
-		}
+		m_pPointLight->baseLight.color = m_pBaseLight->color;
 	}
 }

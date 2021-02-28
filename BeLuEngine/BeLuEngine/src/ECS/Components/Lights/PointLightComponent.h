@@ -12,15 +12,17 @@ namespace component
 		PointLightComponent(Entity* parent, unsigned int lightFlags = 0);
 		virtual ~PointLightComponent();
 
-		void Update(double dt);
+		void Update(double dt) override;
+		void OnInitScene() override;
+		void OnUnInitScene() override;
 
 		void SetPosition(float3 position);
 		void SetAttenuation(float3 attenuation);
 
-		void* GetLightData() const;
+		void* GetLightData() const override;
 
 	protected:
-		void UpdateLightData(COLOR_TYPE type);
+		void UpdateLightColor() override;
 
 	private:
 		PointLight* m_pPointLight = nullptr;

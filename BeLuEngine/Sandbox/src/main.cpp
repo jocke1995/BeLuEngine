@@ -1,266 +1,347 @@
 #include "BeLuEngine.h"
 
+Scene* TestScene(SceneManager* sm);
+Scene* SponzaScene(SceneManager* sm);
+
+void TestUpdateScene(SceneManager* sm, double dt);
+void SponzaUpdateScene(SceneManager* sm, double dt);
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
 {
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
     /* ------ Engine  ------ */
-    BeLuEngine beLuEngine = BeLuEngine();
-    beLuEngine.Init(hInstance, nCmdShow);
-     
-	/*  ------ Get references from engine  ------ */
-	Window* const window = beLuEngine.GetWindow();
-	Timer* const timer = beLuEngine.GetTimer();
-	ThreadPool* const threadPool = beLuEngine.GetThreadPool();
-	SceneManager* const sceneManager = beLuEngine.GetSceneHandler();
-	Renderer* const renderer = beLuEngine.GetRenderer();
+    BeLuEngine engine;
+    engine.Init(hInstance, nCmdShow);
+
+    /*  ------ Get references from engine  ------ */
+    Window* const window = engine.GetWindow();
+    Timer* const timer = engine.GetTimer();
+    ThreadPool* const threadPool = engine.GetThreadPool();
+    SceneManager* const sceneManager = engine.GetSceneHandler();
+    Renderer* const renderer = engine.GetRenderer();
 
     /*------ AssetLoader to load models / textures ------*/
+   AssetLoader* al = AssetLoader::Get();
+   
+   Scene* scene = SponzaScene(sceneManager);
+   //Scene* scene = TestScene(sceneManager);
+
+   // Set scene
+   sceneManager->SetScene(scene);
+   
+   Log::Print("Entering Game-Loop ...\n\n");
+   while (!window->ExitWindow())
+   {
+       // Temporary functions to test functionalities in the engine
+       if (window->WasSpacePressed() == true)
+       {
+           // Get camera Pos
+           component::CameraComponent* cc = scene->GetEntity("player")->GetComponent<component::CameraComponent>();
+           DirectX::XMFLOAT3 position = cc->GetCamera()->GetPosition();
+           DirectX::XMFLOAT3 lookAt = cc->GetCamera()->GetDirection();
+           DirectX::XMFLOAT3 lightPos = position + (lookAt * 20);
+   
+           static unsigned int counter = 1;
+           std::string name = "pointLight" + std::to_string(counter);
+           /* ---------------------- PointLightDynamic ---------------------- */
+           Model* sphereModel = al->LoadModel(L"../Vendor/Resources/Models/SpherePBR/ball.obj");
+           Entity* entity = scene->AddEntity(name);
+           component::ModelComponent* mc = entity->AddComponent<component::ModelComponent>();
+           component::TransformComponent* tc = entity->AddComponent<component::TransformComponent>();
+           component::PointLightComponent* plc = entity->AddComponent<component::PointLightComponent>(F_LIGHT_FLAGS::USE_TRANSFORM_POSITION);
+           component::BoundingBoxComponent* bbc = entity->AddComponent<component::BoundingBoxComponent>(F_BOUNDING_BOX_FLAGS::PICKING);;
+   
+           mc->SetModel(sphereModel);
+           mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
+           tc->GetTransform()->SetScale(0.3f);
+           tc->GetTransform()->SetPosition(lightPos);
+           bbc->Init();
+   
+           plc->SetColor({ 10.0f, 5.0f, 5.0f });
+   
+           counter++;
+   
+           sceneManager->AddEntity(entity);
+           /* ---------------------- SpotLightDynamic ---------------------- */
+       }
+       if (window->WasTabPressed() == true)
+       {
+           // Get camera Pos
+           component::CameraComponent* cc = scene->GetEntity("player")->GetComponent<component::CameraComponent>();
+           DirectX::XMFLOAT3 position = cc->GetCamera()->GetPosition();
+           Log::Print("CameraPos: %f, %f, %f\n", position.x, position.y, position.z);
+       }
+   
+       /* ------ Update ------ */
+       timer->Update();
+   
+       sceneManager->Update(timer->GetDeltaTime());
+   
+       
+       /* ------ Sort ------ */
+       renderer->SortObjects();
+   
+       /* ------ Draw ------ */
+       // For easier debugging purposes
+       if (SINGLE_THREADED_RENDERER == true)    
+           renderer->ExecuteST();
+       else
+           renderer->ExecuteMT();
+   }
+    
+    return EXIT_SUCCESS;
+}
+
+Scene* TestScene(SceneManager* sm)
+{
+    // Create Scene
+    Scene* scene = sm->CreateScene("TestScene");
+
+    component::CameraComponent* cc = nullptr;
+    component::ModelComponent* mc = nullptr;
+    component::TransformComponent* tc = nullptr;
+    component::InputComponent* ic = nullptr;
+    component::BoundingBoxComponent* bbc = nullptr;
+    component::PointLightComponent* plc = nullptr;
+    component::DirectionalLightComponent* dlc = nullptr;
+    component::SpotLightComponent* slc = nullptr;
+
     AssetLoader* al = AssetLoader::Get();
 
-    // This will be loaded once from disk, then the next time the same function is called (with the same filepath),
-    // the function will just return the same pointer to the model that was loaded earlier.
-    std::vector<Mesh*>* floorModel = al->LoadModel(L"../Vendor/Resources/Models/Floor/floor.obj");
-    std::vector<Mesh*>* stoneModel = al->LoadModel(L"../Vendor/Resources/Models/Rock/rock.obj");
-    std::vector<Mesh*>* cubeModel  = al->LoadModel(L"../Vendor/Resources/Models/Cube/crate.obj");
+    // Get the models needed
+    Model* floorModel = al->LoadModel(L"../Vendor/Resources/Models/FloorPBR/floor.obj");
+    Model* sphereModel = al->LoadModel(L"../Vendor/Resources/Models/SpherePBR/ball.obj");
 
-#pragma region CreateScene0
-    // Create Scene
-    Scene* scene = sceneManager->CreateScene("scene0");
-    
-    // Add Entity to Scene
-    scene->AddEntity("player");
-    scene->AddEntity("floor");
-    scene->AddEntity("box");
-    scene->AddEntity("stone");
-    scene->AddEntity("transparentTestObject");
-    scene->AddEntity("directionalLight");
-    scene->AddEntity("spotLight");
-    scene->AddEntity("spotLight2");
+    /* ---------------------- Player ---------------------- */
+    Entity* entity = (scene->AddEntity("player"));
+    cc = entity->AddComponent<component::CameraComponent>(E_CAMERA_TYPE::PERSPECTIVE, true);
+    ic = entity->AddComponent<component::InputComponent>();
+    scene->SetPrimaryCamera(cc->GetCamera());
+    /* ---------------------- Player ---------------------- */
 
-    // Add Components to Entities
-    Entity* entity;
+    /* ---------------------- Floor ---------------------- */
+    entity = scene->AddEntity("floor");
+    mc = entity->AddComponent<component::ModelComponent>();
+    tc = entity->AddComponent<component::TransformComponent>();
 
-    entity = scene->GetEntity("player");
-    component::CameraComponent* cc = entity->AddComponent<component::CameraComponent>(hInstance, *window->GetHwnd(), true);
-
-    entity = scene->GetEntity("floor");
-    entity->AddComponent<component::MeshComponent>();
-    entity->AddComponent<component::TransformComponent>();
-    entity->AddComponent<component::BoundingBoxComponent>(false);
-
-    entity = scene->GetEntity("box");
-    entity->AddComponent<component::MeshComponent>();
-    entity->AddComponent<component::TransformComponent>();
-    entity->AddComponent<component::BoundingBoxComponent>(true);
-
-    entity = scene->GetEntity("stone");
-    entity->AddComponent<component::MeshComponent>();
-    entity->AddComponent<component::TransformComponent>();
-    entity->AddComponent<component::BoundingBoxComponent>(true);
-
-    entity = scene->GetEntity("transparentTestObject");
-    entity->AddComponent<component::MeshComponent>();
-    entity->AddComponent<component::TransformComponent>();
-    entity->AddComponent<component::BoundingBoxComponent>(false);
-
-    entity = scene->GetEntity("directionalLight");
-    entity->AddComponent<component::DirectionalLightComponent>(FLAG_LIGHT::CAST_SHADOW_ULTRA_RESOLUTION);
-
-    entity = scene->GetEntity("spotLight");
-    entity->AddComponent<component::MeshComponent>();
-    entity->AddComponent<component::TransformComponent>();
-    entity->AddComponent<component::BoundingBoxComponent>(true);
-    entity->AddComponent<component::SpotLightComponent>(FLAG_LIGHT::CAST_SHADOW_ULTRA_RESOLUTION | FLAG_LIGHT::USE_TRANSFORM_POSITION);
-
-    // Set the m_Components
-    component::MeshComponent* mc = scene->GetEntity("floor")->GetComponent<component::MeshComponent>();
-    mc->SetMeshes(floorModel);
-    mc->SetDrawFlag(FLAG_DRAW::ForwardRendering | FLAG_DRAW::Shadow);
-    mc->GetMesh(0)->GetMaterial()->SetShininess(300);
-    mc->GetMesh(0)->GetMaterial()->SetUVScale(2.0f, 2.0f);
-    component::TransformComponent* tc = scene->GetEntity("floor")->GetComponent<component::TransformComponent>();
-    tc->GetTransform()->SetScale(20, 1, 20);
-    tc->GetTransform()->SetPosition(0.0f, 0.0f, 0.0f);
-    scene->GetEntity("floor")->GetComponent<component::BoundingBoxComponent>()->Init();
-
-    mc = scene->GetEntity("box")->GetComponent<component::MeshComponent>();
-    mc->SetMeshes(cubeModel);
-    mc->SetDrawFlag(FLAG_DRAW::ForwardRendering | FLAG_DRAW::Shadow);
-    tc = scene->GetEntity("box")->GetComponent<component::TransformComponent>();
-    tc->GetTransform()->SetScale(0.5f);
-    tc->GetTransform()->SetPosition(-10.0f, 0.5f, 14.0f);
-    scene->GetEntity("box")->GetComponent<component::BoundingBoxComponent>()->Init();
-
-    mc = scene->GetEntity("stone")->GetComponent<component::MeshComponent>();
-    mc->SetMeshes(stoneModel);
-    mc->SetDrawFlag(FLAG_DRAW::ForwardRendering | FLAG_DRAW::Shadow);
-    mc->GetMesh(0)->GetMaterial()->SetShininess(300);
-    mc->GetMesh(0)->GetMaterial()->SetColorMul(COLOR_TYPE::LIGHT_SPECULAR, { 0.4f, 0.4f, 0.4f, 1.0f });
-    tc = scene->GetEntity("stone")->GetComponent<component::TransformComponent>();
-    tc->GetTransform()->SetScale(0.01f);
-    tc->GetTransform()->SetPosition(-8.0f, 0.0f, 0.0f);
-    scene->GetEntity("stone")->GetComponent<component::BoundingBoxComponent>()->Init();
-
-    mc = scene->GetEntity("transparentTestObject")->GetComponent<component::MeshComponent>();
-    mc->SetMeshes(floorModel);
-    mc->SetDrawFlag(FLAG_DRAW::Blend);
-
-    Texture* ambientDefault = al->LoadTexture(L"../Vendor/Resources/Textures/Default/default_ambient.png");
-    Texture* normalDefault  = al->LoadTexture(L"../Vendor/Resources/Textures/Default/default_normal.png");
-    mc->GetMesh(0)->GetMaterial()->SetTexture(TEXTURE_TYPE::AMBIENT , ambientDefault);
-    mc->GetMesh(0)->GetMaterial()->SetTexture(TEXTURE_TYPE::DIFFUSE , ambientDefault);
-    mc->GetMesh(0)->GetMaterial()->SetTexture(TEXTURE_TYPE::SPECULAR, ambientDefault);
-    mc->GetMesh(0)->GetMaterial()->SetTexture(TEXTURE_TYPE::NORMAL  , normalDefault);
-    
-    tc = scene->GetEntity("transparentTestObject")->GetComponent<component::TransformComponent>();
-    tc->GetTransform()->SetScale(5.0f);
-    tc->GetTransform()->SetPosition(0.0f, 5.0f, 1.0f);
-    tc->GetTransform()->RotateZ(3.141572f / 2.0f);
-    tc->GetTransform()->RotateX(3.141572f / 2.0f);
-    
-    entity = scene->GetEntity("transparentTestObject");
-    entity->GetComponent<component::BoundingBoxComponent>()->Init();
-
-    component::DirectionalLightComponent* dl = scene->GetEntity("directionalLight")->GetComponent<component::DirectionalLightComponent>();
-    dl->SetDirection({ -1.0f, -1.0f, -1.0f });
-    dl->SetColor(COLOR_TYPE::LIGHT_AMBIENT, { 0.05f, 0.05f, 0.05f, 1.0f });
-    dl->SetColor(COLOR_TYPE::LIGHT_DIFFUSE, { 0.4f, 0.4f, 0.4f, 1.0f });
-    dl->SetColor(COLOR_TYPE::LIGHT_SPECULAR, { 0.4f, 0.4f, 0.4f, 1.0f });
-
-    // Spotlight settings
-    entity = scene->GetEntity("spotLight");
-    mc = entity->GetComponent<component::MeshComponent>();
-    mc->SetMeshes(cubeModel);
-    mc->SetDrawFlag(FLAG_DRAW::ForwardRendering);
-
+    mc = entity->GetComponent<component::ModelComponent>();
+    mc->SetModel(floorModel);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
     tc = entity->GetComponent<component::TransformComponent>();
-    tc->GetTransform()->SetScale(0.3f);
-    tc->GetTransform()->SetPosition(-20.0f, 6.0f, -3.0f);
+    tc->GetTransform()->SetScale(50, 1, 50);
+    tc->GetTransform()->SetPosition(0.0f, 0.0f, 0.0f);
+    /* ---------------------- Floor ---------------------- */
 
-    entity->GetComponent<component::BoundingBoxComponent>()->Init();
+     /* ---------------------- Sphere ---------------------- */
+    entity = scene->AddEntity("sphere");
+    mc = entity->AddComponent<component::ModelComponent>();
+    tc = entity->AddComponent<component::TransformComponent>();
 
-    component::SpotLightComponent* sl = scene->GetEntity("spotLight")->GetComponent<component::SpotLightComponent>();
-    sl->SetPosition({ -20.0f, 6.0f, -3.0f });
-    sl->SetDirection({ 2.0, -1.0, 0.0f });
-    sl->SetColor(COLOR_TYPE::LIGHT_AMBIENT, { 0.05f, 0.00f, 0.05f, 1.0f });
-    sl->SetColor(COLOR_TYPE::LIGHT_DIFFUSE, { 1.0f, 0.00f, 1.0f, 1.0f });
-    sl->SetColor(COLOR_TYPE::LIGHT_SPECULAR, { 1.0f, 0.00f, 1.0f, 1.0f });
+    mc->SetModel(sphereModel);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
+    tc->GetTransform()->SetScale(1.0f);
+    tc->GetTransform()->SetPosition(0, 4, 30);
+    /* ---------------------- Sphere ---------------------- */
 
-#pragma endregion CreateScene0
-#pragma region CreateScene1
+    /* ---------------------- Poster ---------------------- */
+    //entity = scene->AddEntity("poster");
+    //mc = entity->AddComponent<component::ModelComponent>();
+    //tc = entity->AddComponent<component::TransformComponent>();
+    //
+    //mc = entity->GetComponent<component::ModelComponent>();
+    //mc->SetModel(posterModel);
+    //mc->SetDrawFlag(FLAG_DRAW::DRAW_OPAQUE | FLAG_DRAW::GIVE_SHADOW);
+    //tc = entity->GetComponent<component::TransformComponent>();
+    //tc->GetTransform()->SetScale(2, 1, 2);
+    //tc->GetTransform()->SetRotationZ(-PI / 2);
+    //tc->GetTransform()->SetPosition(28.5f, 2.0f, 34.0f);
+    /* ---------------------- Poster ---------------------- */
+
+    /* ---------------------- SpotLightDynamic ---------------------- */
+    //entity = scene->AddEntity("spotLightDynamic");
+    //mc = entity->AddComponent<component::ModelComponent>();
+    //tc = entity->AddComponent<component::TransformComponent>();
+    //slc = entity->AddComponent<component::SpotLightComponent>(FLAG_LIGHT::CAST_SHADOW);
+    //
+    //float3 pos = { 5.0f, 20.0f, 5.0f };
+    //mc->SetModel(sphereModel);
+    //mc->SetDrawFlag(FLAG_DRAW::DRAW_OPAQUE | FLAG_DRAW::GIVE_SHADOW);
+    //tc->GetTransform()->SetScale(0.3f);
+    //tc->GetTransform()->SetPosition(pos.x, pos.y, pos.z);
+    //
+    ////slc->SetColor({ 0.0f, 1.0f, 0.0f });
+    //slc->SetAttenuation({ 1.0, 0.09f, 0.032f });
+    //slc->SetPosition(pos);
+    //slc->SetDirection({ 0.0f, -1.0f, 0.5f });
+    //slc->SetOuterCutOff(50.0f);
+    /* ---------------------- SpotLightDynamic ---------------------- */
+
+    /* ---------------------- dirLight ---------------------- */
+    //entity = scene->AddEntity("dirLight");
+    //dlc = entity->AddComponent<component::DirectionalLightComponent>(FLAG_LIGHT::CAST_SHADOW);
+    //dlc->SetColor({ 0.6f, 0.6f, 0.6f });
+    //dlc->SetDirection({ 1.0f, -1.0f, 0.0f });
+    //dlc->SetCameraTop(30.0f);
+    //dlc->SetCameraBot(-30.0f);
+    //dlc->SetCameraLeft(-70.0f);
+    //dlc->SetCameraRight(70.0f);
+    /* ---------------------- dirLight ---------------------- */
+
+    /* ---------------------- Update Function ---------------------- */
+    scene->SetUpdateScene(&TestUpdateScene);
+    return scene;
+}
+
+Scene* SponzaScene(SceneManager* sm)
+{
     // Create Scene
-    sceneManager->CreateScene("scene1");
-    Scene* scene1 = sceneManager->GetScene("scene1");
+    Scene* scene = sm->CreateScene("SponzaScene");
 
-    // Use the same player as in the first scene
-    entity = scene->GetEntity("player");
-    scene1->AddEntityFromOther(entity);
+    component::CameraComponent* cc = nullptr;
+    component::ModelComponent* mc = nullptr;
+    component::TransformComponent* tc = nullptr;
+    component::InputComponent* ic = nullptr;
+    component::BoundingBoxComponent* bbc = nullptr;
+    component::PointLightComponent* plc = nullptr;
+    component::DirectionalLightComponent* dlc = nullptr;
+    component::SpotLightComponent* slc = nullptr;
+
+    AssetLoader* al = AssetLoader::Get();
+
+    // Get the models needed
+    Model* sponza = al->LoadModel(L"../Vendor/Resources/Scenes/Sponza/textures_pbr/sponza.obj");
+    Model* sphereModel = al->LoadModel(L"../Vendor/Resources/Models/SpherePBR/ball.obj");
+
+    /* ---------------------- Player ---------------------- */
+    Entity* entity = (scene->AddEntity("player"));
+    cc = entity->AddComponent<component::CameraComponent>(E_CAMERA_TYPE::PERSPECTIVE, true);
+    ic = entity->AddComponent<component::InputComponent>();
+    scene->SetPrimaryCamera(cc->GetCamera());
+    /* ---------------------- Player ---------------------- */
+
+    /* ---------------------- Sponza ---------------------- */
+    entity = scene->AddEntity("sponza");
+    mc = entity->AddComponent<component::ModelComponent>();
+    tc = entity->AddComponent<component::TransformComponent>();
     
-    scene1->AddEntity("cube1");
-    scene1->AddEntity("cube2");
-    scene1->AddEntity("directionalLight");
-    scene1->GetEntity("cube1")->AddComponent<component::MeshComponent>();
-    scene1->GetEntity("cube1")->AddComponent<component::TransformComponent>();
-    scene1->GetEntity("cube2")->AddComponent<component::MeshComponent>();
-    scene1->GetEntity("cube2")->AddComponent<component::TransformComponent>();
-    scene1->GetEntity("directionalLight")->AddComponent<component::DirectionalLightComponent>(FLAG_LIGHT::CAST_SHADOW_LOW_RESOLUTION);
+    mc->SetModel(sponza);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
+    tc->GetTransform()->SetPosition({0.0f, 0.0f, 0.0f});
+    tc->GetTransform()->SetScale(0.3f, 0.3f, 0.3f);
+    /* ---------------------- Sponza ---------------------- */
+
+    /* ---------------------- Sphere ---------------------- */
+    entity = scene->AddEntity("sphere1");
+    mc = entity->AddComponent<component::ModelComponent>();
+    tc = entity->AddComponent<component::TransformComponent>();
+    bbc = entity->AddComponent<component::BoundingBoxComponent>(F_BOUNDING_BOX_FLAGS::PICKING);
+
+    mc->SetModel(sphereModel);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
+    tc->GetTransform()->SetScale(1.0f);
+    tc->GetTransform()->SetPosition(5, 15, 5);
+    bbc->Init();
+
+    entity = scene->AddEntity("sphere2");
+    mc = entity->AddComponent<component::ModelComponent>();
+    tc = entity->AddComponent<component::TransformComponent>();
+    bbc = entity->AddComponent<component::BoundingBoxComponent>(F_BOUNDING_BOX_FLAGS::PICKING);
+
+    mc->SetModel(sphereModel);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
+    tc->GetTransform()->SetScale(1.0f);
+    tc->GetTransform()->SetPosition(5, 25, 10);
+    bbc->Init();
+
+    entity = scene->AddEntity("sphere3");
+    mc = entity->AddComponent<component::ModelComponent>();
+    tc = entity->AddComponent<component::TransformComponent>();
+    bbc = entity->AddComponent<component::BoundingBoxComponent>(F_BOUNDING_BOX_FLAGS::PICKING);
+
+    mc->SetModel(sphereModel);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
+    tc->GetTransform()->SetScale(1.0f);
+    tc->GetTransform()->SetPosition(5, 35, 15);
+    bbc->Init();
+    /* ---------------------- Sphere ---------------------- */
+
+    /* ---------------------- Braziers ---------------------- */
+    entity = scene->AddEntity("Brazier0");
+    mc = entity->AddComponent<component::ModelComponent>();
+    tc = entity->AddComponent<component::TransformComponent>();
+    plc = entity->AddComponent<component::PointLightComponent>(F_LIGHT_FLAGS::USE_TRANSFORM_POSITION);
     
-    mc = scene1->GetEntity("cube1")->GetComponent<component::MeshComponent>();
-    mc->SetMeshes(cubeModel);
-    mc->SetDrawFlag(FLAG_DRAW::ForwardRendering | FLAG_DRAW::Shadow);
+    mc->SetModel(sphereModel);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
+    tc->GetTransform()->SetScale(0.3f);
+    tc->GetTransform()->SetPosition({ -185.0f, 40.0f, 66.0f });
+    plc->SetColor({ 0.0f, 0.0f, 15.0f });
     
-    tc = scene1->GetEntity("cube1")->GetComponent<component::TransformComponent>();
-    tc->GetTransform()->SetScale(0.5f);
-    tc->GetTransform()->SetPosition(-15.0f, 1.0f, 0.0f);
+    entity = scene->AddEntity("Brazier1");
+    mc = entity->AddComponent<component::ModelComponent>();
+    tc = entity->AddComponent<component::TransformComponent>();
+    plc = entity->AddComponent<component::PointLightComponent>(F_LIGHT_FLAGS::USE_TRANSFORM_POSITION);
     
-    mc = scene1->GetEntity("cube2")->GetComponent<component::MeshComponent>();
-    mc->SetMeshes(cubeModel);
-    mc->SetDrawFlag(FLAG_DRAW::ForwardRendering | FLAG_DRAW::Shadow);
-    
-    tc = scene1->GetEntity("cube2")->GetComponent<component::TransformComponent>();
-    tc->GetTransform()->SetScale(0.5f);
-    tc->GetTransform()->SetPosition(-5.0f, 1.0f, 0.0f);
-   
-    dl = scene1->GetEntity("directionalLight")->GetComponent<component::DirectionalLightComponent>();
-    dl->SetDirection({ -1.0f, -1.0f, -1.0f });
-    dl->SetColor(COLOR_TYPE::LIGHT_AMBIENT, { 0.02f, 0.08f, 0.08f, 1.0f });
-    dl->SetColor(COLOR_TYPE::LIGHT_DIFFUSE, { 0.2f, 0.8f, 0.8f, 1.0f });
-    dl->SetColor(COLOR_TYPE::LIGHT_SPECULAR, { 0.2f, 0.8f, 0.8f, 1.0f });
+    mc->SetModel(sphereModel);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
+    tc->GetTransform()->SetScale(0.3f);
+    tc->GetTransform()->SetPosition({ -185.0f, 40.0f, -42.6f });
+    plc->SetColor({ 10.0f, 0.0f, 10.0f });
 
-#pragma endregion CreateScene1
-	char sceneName[10] = "scene0";
-	sceneManager->SetSceneToDraw(sceneManager->GetScene(sceneName));
-    while (!window->ExitWindow())
-    {
-        // ONLY HERE FOR TESTING
-		if (window->WasTabPressed())
-		{
-			// Test to change scene during runtime
-			//static int sceneSwapper = 1;
-			//sceneSwapper %= 2;
-			//sprintf(sceneName, "scene%d", sceneSwapper);
-			//Log::Print("Scene: %s\n", sceneName);
-			//sceneManager->SetSceneToDraw(sceneManager->GetScene(sceneName));
-			//sceneSwapper++;
+    entity = scene->AddEntity("Brazier2");
+    mc = entity->AddComponent<component::ModelComponent>();
+    tc = entity->AddComponent<component::TransformComponent>();
+    plc = entity->AddComponent<component::PointLightComponent>(F_LIGHT_FLAGS::USE_TRANSFORM_POSITION);
 
-            // Test to remove picked object
-            Entity* pickedEnt = renderer->GetPickedEntity();
-            if (pickedEnt != nullptr)
-            {
-				sceneManager->RemoveEntity(pickedEnt);
-				scene->RemoveEntity(pickedEnt->GetName());
-            }
-		}
-		if (window->WasSpacePressed())
-		{
-            // Test to add objects during runtime
-            char boxName[10];
-            static int boxisCounter = 0;
-			static int nrOfPolygons = 0;
-            sprintf(boxName, "boxis%d", boxisCounter);
-			nrOfPolygons += 12;
-            boxisCounter++;
-            
-            scene = sceneManager->GetScene(sceneName);
-            entity = scene->AddEntity(boxName);
-            entity->AddComponent<component::MeshComponent>();
-            entity->AddComponent<component::TransformComponent>();
-            component::BoundingBoxComponent* bbc = entity->AddComponent<component::BoundingBoxComponent>(true);
-            
-            mc = entity->GetComponent<component::MeshComponent>();
-            mc->SetMeshes(cubeModel);
-            mc->SetDrawFlag(FLAG_DRAW::ForwardRendering | FLAG_DRAW::Shadow);
-            bbc->Init();
-            
-            tc = entity->GetComponent<component::TransformComponent>();
-            tc->GetTransform()->SetScale(0.5f);
-            float3 spawnPosition = { cc->GetCamera()->GetPositionFloat3().x + cc->GetCamera()->GetLookAt().x * 10,
-                                     cc->GetCamera()->GetPositionFloat3().y + cc->GetCamera()->GetLookAt().y * 10, 
-                                     cc->GetCamera()->GetPositionFloat3().z + cc->GetCamera()->GetLookAt().z * 10, };
-            tc->GetTransform()->SetPosition(spawnPosition.x, spawnPosition.y, spawnPosition.z);
-            
-			sceneManager->AddEntity(entity);
+    mc->SetModel(sphereModel);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
+    tc->GetTransform()->SetScale(0.3f);
+    tc->GetTransform()->SetPosition({ 146.0f, 40.0f, 66.0f });
+    plc->SetColor({ 0.0f, 15.0f, 0.0f });
 
-			// Test to remove picked object
-			//Entity* pickedEnt = renderer->GetPickedEntity();
-			//if (pickedEnt != nullptr)
-			//{
-			//	sceneManager->RemoveEntity(pickedEnt);
-			//	scene->RemoveEntity(pickedEnt->GetName());
-			//}
-        }
+    entity = scene->AddEntity("Brazier3");
+    mc = entity->AddComponent<component::ModelComponent>();
+    tc = entity->AddComponent<component::TransformComponent>();
+    plc = entity->AddComponent<component::PointLightComponent>(F_LIGHT_FLAGS::USE_TRANSFORM_POSITION);
 
-        /* ------ Update ------ */
-        timer->Update();
-        renderer->Update(timer->GetDeltaTime());
+    mc->SetModel(sphereModel);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
+    tc->GetTransform()->SetScale(0.3f);
+    tc->GetTransform()->SetPosition({ 146.0f, 40.0f, -42.6f });
+    plc->SetColor({ 15.0f, 0.0f, 0.0f });
+    /* ---------------------- Braziers ---------------------- */
 
-        /* ------ Sort ------ */
-        renderer->SortObjectsByDistance();
+    /* ---------------------- dirLight ---------------------- */
+    entity = scene->AddEntity("dirLight");
+    dlc = entity->AddComponent<component::DirectionalLightComponent>(F_LIGHT_FLAGS::CAST_SHADOW);
+    dlc->SetColor({ 0.17, 0.25, 0.3f});
+    dlc->SetCameraDistance(300);
+    dlc->SetDirection({ -1.0f, -2.0f, 0.03f });
+    dlc->SetCameraTop(800.0f);
+    dlc->SetCameraBot(-550.0f);
+    dlc->SetCameraLeft(-550.0f);
+    dlc->SetCameraRight(550.0f);
+    dlc->SetCameraFarZ(5000);
+    /* ---------------------- dirLight ---------------------- */
 
-        /* ------ Draw ------ */
-        renderer->Execute();
-    }
+    /* ---------------------- Update Function ---------------------- */
+    scene->SetUpdateScene(&SponzaUpdateScene);
+    return scene;
+}
 
-    return 0;
+void TestUpdateScene(SceneManager* sm, double dt)
+{
+    //static float intensity = 0.0f;
+    //component::SpotLightComponent* slc = sm->GetScene("TestScene")->GetEntity("spotLightDynamic")->GetComponent<component::SpotLightComponent>();
+    //float col = abs(sinf(intensity)) * 30;
+    //
+    //slc->SetColor({ col * 0.2f, 0.0f, col });
+    //
+    //intensity += 0.5f * dt;
+}
+
+void SponzaUpdateScene(SceneManager* sm, double dt)
+{
+
 }

@@ -12,18 +12,25 @@ namespace component
 		SpotLightComponent(Entity* parent, unsigned int lightFlags = 0);
 		virtual ~SpotLightComponent();
 
-		void Update(double dt);
+		void Update(double dt) override;
+		void OnInitScene() override;
+		void OnUnInitScene() override;
 
-		void SetPosition(float3 position);
-		void SetCutOff(float cutOff);
-		void SetDirection(float3 direction);
-		void SetOuterCutOff(float outerCutOff);
+		void SetCutOff(float degrees);
 		void SetAttenuation(float3 attenuation);
 
-		void* GetLightData() const;
+		// Set functions which modifies the shadowCamera
+		void SetPosition(float3 position);
+		void SetDirection(float3 direction);
+		void SetOuterCutOff(float degrees);
+		void SetAspectRatio(float aspectRatio);
+		void SetNearPlaneDistance(float nearZ);
+		void SetFarPlaneDistance(float farZ);
+
+		void* GetLightData() const override;
 	
 	protected:
-		void UpdateLightData(COLOR_TYPE type);
+		void UpdateLightColor() override;
 
 	private:
 		SpotLight* m_pSpotLight = nullptr;
@@ -31,6 +38,5 @@ namespace component
 		void initFlagUsages();
 	};
 }
-
 
 #endif

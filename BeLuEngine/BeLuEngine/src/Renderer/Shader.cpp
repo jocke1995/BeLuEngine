@@ -1,7 +1,9 @@
 #include "stdafx.h"
 #include "Shader.h"
 
-Shader::Shader(LPCTSTR path, ShaderType type)
+#include "../Misc/Log.h"
+
+Shader::Shader(LPCTSTR path, E_SHADER_TYPE type)
 {
 	m_Path = path;
 	m_Type = type;
@@ -24,17 +26,17 @@ void Shader::compileShader()
 	std::string entryPoint;
 	std::string shaderModelTarget;
 
-	if (m_Type == ShaderType::VS)
+	if (m_Type == E_SHADER_TYPE::VS)
 	{
 		entryPoint = "VS_main";
 		shaderModelTarget = "vs_5_1";
 	}
-	else if (m_Type == ShaderType::PS)
+	else if (m_Type == E_SHADER_TYPE::PS)
 	{
 		entryPoint = "PS_main";
 		shaderModelTarget = "ps_5_1";
 	}
-	else if (m_Type == ShaderType::CS)
+	else if (m_Type == E_SHADER_TYPE::CS)
 	{
 		entryPoint = "CS_main";
 		shaderModelTarget = "cs_5_1";
@@ -67,13 +69,13 @@ void Shader::compileShader()
 
 	if (m_pBlob == nullptr)
 	{
-		Log::PrintSeverity(Log::Severity::CRITICAL, "blob is nullptr when loading shader with path: %S\n", m_Path);
+		BL_LOG_CRITICAL("blob is nullptr when loading shader with path: %S\n", m_Path);
 	}
 
 	if (FAILED(hr) && errorMessages)
 	{
 		const char* errorMsg = (const char*)errorMessages->GetBufferPointer();
 
-		Log::PrintSeverity(Log::Severity::CRITICAL, "%s\n", errorMsg);
+		BL_LOG_CRITICAL("%s\n", errorMsg);
 	}
 }

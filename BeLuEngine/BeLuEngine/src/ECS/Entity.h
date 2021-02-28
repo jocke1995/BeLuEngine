@@ -1,23 +1,27 @@
 #ifndef ENTITY_H
 #define ENTITY_H
+
 // Renderer
-#include "Components/MeshComponent.h"
+#include "Components/ModelComponent.h"
 #include "Components/TransformComponent.h"
 #include "Components/CameraComponent.h"
 #include "Components/BoundingBoxComponent.h"
+#include "Components/InputComponent.h"
 
 // Lights
-class DirectionalLightComponent;
-class PointLightComponent;
-class SpotLightComponent;
+#include "Components/Lights/PointLightComponent.h"
+#include "Components/Lights/DirectionalLightComponent.h"
+#include "Components/Lights/SpotLightComponent.h"
 
-static unsigned int staticID = 0;
 class Entity
 {
 public:
 	Entity(std::string entityName);
-	bool operator == (const Entity* rhs) const;
 	virtual ~Entity();
+
+	// Compared using a unique ID
+	bool operator == (const Entity& other) const;
+	bool operator != (const Entity& other) const;
 
 	template <class T, typename... Args>
 	T* AddComponent(Args... args);
@@ -30,21 +34,31 @@ public:
 
 	unsigned int GetID() const;
 	std::string GetName() const;
-	unsigned int GetRefCount() const;
 
-	void IncrementRefCount();
-	void DecrementRefCount();
 	void Update(double dt);
 
+	void OnInitScene();
+	void OnUnInitScene();
+
+	std::vector<Component*>* GetAllComponents();
+
+	void SetEntityState(bool dynamic);
+	bool IsEntityDynamic() const;
+
 private:
-	unsigned int m_Id = -1;
+	friend class SceneManager;
+
+	unsigned int m_Id = 0;
+	inline static unsigned int s_IdCounter = 0;
 	std::string m_Name = "";
 	
-	// Multiple m_pScenes can use the same entity (player for example).
-	// This is to make sure that the player doesn't get deleted if its still in use AND to not delete it twice
+	// Multiple m_pScenes can use the same entity (player for example) and only init/uninit once.
 	unsigned int m_ReferenceCount = 0;
 
 	std::vector<Component*> m_Components;
+
+	// All entities will be assumed to be dynamic
+	bool m_Dynamic = true;
 };
 
 template<class T, typename... Args>

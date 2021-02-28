@@ -2,7 +2,6 @@
 
 BeLuEngine/build/
 BeLuEngine/bin/
-BeLuEngine/*.bat
 
 **.sln
 **.vcxproj

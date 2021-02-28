@@ -1,11 +1,21 @@
 #include "stdafx.h"
 #include "DX12Task.h"
 
-#include "../CommandInterface.h"
+#include "../Misc/Log.h"
 
-DX12Task::DX12Task(ID3D12Device5* device, COMMAND_INTERFACE_TYPE interfaceType)
+// DX12 Specifics
+#include "../CommandInterface.h"
+#include "../DescriptorHeap.h"
+#include "../GPUMemory/GPUMemory.h"
+
+DX12Task::DX12Task(
+	ID3D12Device5* device,
+	E_COMMAND_INTERFACE_TYPE interfaceType,
+	unsigned int FLAG_THREAD,
+	const std::wstring& clName)
+	:MultiThreadedTask(FLAG_THREAD)
 {
-	m_pCommandInterface = new CommandInterface(device, interfaceType);
+	m_pCommandInterface = new CommandInterface(device, interfaceType, clName);
 }
 
 DX12Task::~DX12Task()
@@ -23,7 +33,24 @@ void DX12Task::SetCommandInterfaceIndex(int index)
 	m_CommandInterfaceIndex = index;
 }
 
-ID3D12GraphicsCommandList5* DX12Task::GetCommandList(unsigned int index) const
+void DX12Task::SetDescriptorHeaps(std::map<E_DESCRIPTOR_HEAP_TYPE, DescriptorHeap*> dhs)
 {
-	return m_pCommandInterface->GetCommandList(index);
+	m_DescriptorHeaps = dhs;
+}
+
+void DX12Task::AddResource(std::string id, const Resource* resource)
+{
+	if (m_Resources[id] == nullptr)
+	{
+		m_Resources[id] = resource;
+	}
+	else
+	{
+		BL_LOG_CRITICAL("Trying to add Resource with name: \'%s\' that already exists.\n", id);
+	}
+}
+
+CommandInterface* const DX12Task::GetCommandInterface() const
+{
+	return m_pCommandInterface;
 }

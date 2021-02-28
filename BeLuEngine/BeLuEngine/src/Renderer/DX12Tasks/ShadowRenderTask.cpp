@@ -1,25 +1,30 @@
 #include "stdafx.h"
 #include "ShadowRenderTask.h"
 
-#include "../DescriptorHeap.h"
-#include "../Resource.h"
-#include "../RenderView.h"
-#include "../DepthStencilView.h"
-#include "../RootSignature.h"
+// DX12 Specifics
+#include "../Camera/BaseCamera.h"
 #include "../CommandInterface.h"
-#include "../PipelineState.h"
-#include "../ShadowInfo.h"
-#include "../Renderer/Transform.h"
-#include "../Renderer/Mesh.h"
-#include "../Renderer/BaseCamera.h"
+#include "../GPUMemory/GPUMemory.h"
+#include "../DescriptorHeap.h"
+#include "../PipelineState/PipelineState.h"
+#include "../RenderView.h"
+#include "../RootSignature.h"
+
+// Techniques
+#include "../Techniques/ShadowInfo.h"
+
+// Model info
+#include "../Renderer/Model/Transform.h"
+#include "../Renderer/Model/Mesh.h"
 
 ShadowRenderTask::ShadowRenderTask(
 	ID3D12Device5* device,
 	RootSignature* rootSignature,
-	LPCWSTR VSName, LPCWSTR PSName,
+	const std::wstring& VSName, const std::wstring& PSName,
 	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*>* gpsds,
-	LPCTSTR psoName)
-	:RenderTask(device, rootSignature, VSName, PSName, gpsds, psoName)
+	const std::wstring& psoName,
+	unsigned int FLAG_THREAD)
+	:RenderTask(device, rootSignature, VSName, PSName, gpsds, psoName, FLAG_THREAD)
 {
 
 }
@@ -59,34 +64,34 @@ void ShadowRenderTask::Execute()
 	
 	commandList->SetGraphicsRootSignature(m_pRootSig);
 
-	DescriptorHeap* descriptorHeap_CBV_UAV_SRV = m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV];
+	DescriptorHeap* descriptorHeap_CBV_UAV_SRV = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV];
 	ID3D12DescriptorHeap* d3d12DescriptorHeap = descriptorHeap_CBV_UAV_SRV->GetID3D12DescriptorHeap();
 	commandList->SetDescriptorHeaps(1, &d3d12DescriptorHeap);
 
 	commandList->SetGraphicsRootDescriptorTable(RS::dtSRV, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
 
-	DescriptorHeap* depthBufferHeap = m_DescriptorHeaps[DESCRIPTOR_HEAP_TYPE::DSV];
+	DescriptorHeap* depthBufferHeap = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::DSV];
 
 	// Draw for every shadow-casting-light
-	for (auto pair : m_lights)
+	for (auto light : m_lights)
 	{
 		commandList->SetPipelineState(m_PipelineStates[0]->GetPSO());
 		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-		const D3D12_VIEWPORT* viewPort = pair.second->GetRenderView()->GetViewPort();
-		const D3D12_RECT* rect = pair.second->GetRenderView()->GetScissorRect();
+		const D3D12_VIEWPORT* viewPort = light.second->GetRenderView()->GetViewPort();
+		const D3D12_RECT* rect = light.second->GetRenderView()->GetScissorRect();
 		commandList->RSSetViewports(1, viewPort);
 		commandList->RSSetScissorRects(1, rect);
 
-		const DirectX::XMMATRIX* viewProjMatTrans = pair.first->GetCamera()->GetViewProjectionTranposed();
+		const DirectX::XMMATRIX* viewProjMatTrans = light.first->GetCamera()->GetViewProjectionTranposed();
 
-		commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-			pair.second->GetResource()->GetID3D12Resource1(),
+		light.second->GetResource()->TransResourceState(
+			commandList,
 			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-			D3D12_RESOURCE_STATE_DEPTH_WRITE));
+			D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
 		// Clear and set depthstencil
-		unsigned int dsvIndex = pair.second->GetDSV()->GetDescriptorHeapIndex();
+		unsigned int dsvIndex = light.second->GetDSV()->GetDescriptorHeapIndex();
 		D3D12_CPU_DESCRIPTOR_HANDLE dsh = depthBufferHeap->GetCPUHeapAt(dsvIndex);
 		commandList->ClearDepthStencilView(dsh, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 		commandList->OMSetRenderTargets(0, nullptr, true, &dsh);
@@ -94,37 +99,33 @@ void ShadowRenderTask::Execute()
 		// Draw for every Rendercomponent
 		for (int i = 0; i < m_RenderComponents.size(); i++)
 		{
-			component::MeshComponent* mc = m_RenderComponents.at(i).first;
+			component::ModelComponent* mc = m_RenderComponents.at(i).first;
 			component::TransformComponent* tc = m_RenderComponents.at(i).second;
 
-			// Check if the object is to be drawn in ShadowPass
-			if (mc->GetDrawFlag() & FLAG_DRAW::Shadow)
+			// Draw for every m_pMesh the meshComponent has
+			for (unsigned int i = 0; i < mc->GetNrOfMeshes(); i++)
 			{
-				// Draw for every m_pMesh the meshComponent has
-				for (unsigned int i = 0; i < mc->GetNrOfMeshes(); i++)
-				{
-					size_t num_Indices = mc->GetMesh(i)->GetNumIndices();
-					const SlotInfo* info = mc->GetMesh(i)->GetSlotInfo();
+				unsigned int num_Indices = mc->GetMeshAt(i)->GetNumIndices();
+				const SlotInfo* info = mc->GetSlotInfoAt(i);
 
-					Transform* transform = tc->GetTransform();
-					DirectX::XMMATRIX* WTransposed = transform->GetWorldMatrixTransposed();
-					DirectX::XMMATRIX WVPTransposed = (*viewProjMatTrans) * (*WTransposed);
+				Transform* transform = tc->GetTransform();
+				DirectX::XMMATRIX* WTransposed = transform->GetWorldMatrixTransposed();
+				DirectX::XMMATRIX WVPTransposed = (*viewProjMatTrans) * (*WTransposed);
 
-					// Create a CB_PER_OBJECT struct
-					CB_PER_OBJECT_STRUCT perObject = { *WTransposed, WVPTransposed, *info };
+				// Create a CB_PER_OBJECT struct
+				CB_PER_OBJECT_STRUCT perObject = { *WTransposed, WVPTransposed, *info };
 
-					commandList->SetGraphicsRoot32BitConstants(RS::CB_PER_OBJECT_CONSTANTS, sizeof(CB_PER_OBJECT_STRUCT) / sizeof(UINT), &perObject, 0);
+				commandList->SetGraphicsRoot32BitConstants(RS::CB_PER_OBJECT_CONSTANTS, sizeof(CB_PER_OBJECT_STRUCT) / sizeof(UINT), &perObject, 0);
 
-					commandList->IASetIndexBuffer(mc->GetMesh(i)->GetIndexBufferView());
-					commandList->DrawIndexedInstanced(num_Indices, 1, 0, 0, 0);
-				}
+				commandList->IASetIndexBuffer(mc->GetMeshAt(i)->GetIndexBufferView());
+				commandList->DrawIndexedInstanced(num_Indices, 1, 0, 0, 0);
 			}
 		}
 
-		commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-			pair.second->GetResource()->GetID3D12Resource1(),
+		light.second->GetResource()->TransResourceState(
+			commandList,
 			D3D12_RESOURCE_STATE_DEPTH_WRITE,
-			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	}
 	commandList->Close();
 }

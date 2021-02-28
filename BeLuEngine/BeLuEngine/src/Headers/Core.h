@@ -1,10 +1,14 @@
-#ifndef VECTORFLOATS_H
-#define VECTORFLOATS_H
+#ifndef CORE_H
+#define CORE_H
 
 #include <string>
-// For wstring convertion
+#include <filesystem>
+
 #include <locale>
 #include <codecvt>
+#include <vector>
+#include <Windows.h>
+
 static std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> strconverter;
 inline std::string to_string(std::wstring wstr)
 {
@@ -36,25 +40,43 @@ inline T Max(T a, T b)
 	return b;
 }
 
-enum class COLOR_TYPE
+inline std::string GetFileExtension(const std::string& FileName)
 {
-	LIGHT_AMBIENT,
-	LIGHT_DIFFUSE,
-	LIGHT_SPECULAR,
-	NUM_COLOR_TYPES
+	if (FileName.find_last_of(".") != std::string::npos)
+	{
+		return FileName.substr(FileName.find_last_of(".") + 1);
+	}
+	return "";
+}
+
+enum class E_WINDOW_MODE
+{
+	WINDOWED,
+	WINDOWED_FULLSCREEN,
+	FULLSCREEN
 };
 
-enum TEXTURE_TYPE
+enum class E_TEXTURE_TYPE
 {
-	AMBIENT,
-	DIFFUSE,
-	SPECULAR,
+	UNKNOWN,
+	TEXTURE2D,
+	TEXTURE2DGUI,
+	TEXTURECUBEMAP,
+	NUM_TYPES
+};
+
+enum class E_TEXTURE2D_TYPE
+{
+	ALBEDO,
+	ROUGHNESS,
+	METALLIC,
 	NORMAL,
 	EMISSIVE,
-	NUM_TEXTURE_TYPES
+	OPACITY,
+	NUM_TYPES
 };
 
-enum LIGHT_TYPE
+enum E_LIGHT_TYPE
 {
 	DIRECTIONAL_LIGHT,
 	POINT_LIGHT,
@@ -62,17 +84,16 @@ enum LIGHT_TYPE
 	NUM_LIGHT_TYPES
 };
 
-enum SHADOW_RESOLUTION
+enum E_SHADOW_RESOLUTION
 {
 	LOW,
 	MEDIUM,
 	HIGH,
-	ULTRA,
 	NUM_SHADOW_RESOLUTIONS,
 	UNDEFINED
 };
 
-enum class ShaderType
+enum class E_SHADER_TYPE
 {
 	VS = 0,
 	PS = 1,
@@ -80,7 +101,7 @@ enum class ShaderType
 	UNSPECIFIED = 3
 };
 
-enum class CAMERA_TYPE
+enum class E_CAMERA_TYPE
 {
 	PERSPECTIVE,
 	ORTHOGRAPHIC,
@@ -94,72 +115,38 @@ enum class CAMERA_TYPE
 	if ((*p))					\
 	{							\
 		(*p)->Release();		\
-		(*p) = NULL;			\
+		(*p) = nullptr;			\
 	}							\
 }
 
+// Debug
+#define SINGLE_THREADED_RENDERER true
+#define DX12VALIDATIONGLAYER false
+#define DEVELOPERMODE_DRAWBOUNDINGBOX false
+
+// Common
 #define NUM_SWAP_BUFFERS 2
 #define BIT(x) (1 << x)
 #define MAXNUMBER 10000000.0f
-#define DRAWBOUNDINGBOX false
 
-enum FLAG_DRAW
+enum F_DRAW_FLAGS
 {
-	ForwardRendering = BIT(1),
-	Blend = BIT(2),
-	Shadow = BIT(3),
-	// animation = BIT(4),
-	// etc..
+	NO_DEPTH = BIT(1),
+	DRAW_OPAQUE = BIT(2),
+	DRAW_TRANSPARENT_CONSTANT = BIT(3),
+	DRAW_TRANSPARENT_TEXTURE = BIT(4),
+	GIVE_SHADOW = BIT(5),
+	NUM_FLAG_DRAWS = 5,
 };
 
-namespace Log
+enum F_THREAD_FLAGS
 {
-	enum class Severity
-	{
-		WARNING,
-		CRITICAL,
-		OTHER
-	};
-
-	template <typename... Args>
-	inline void PrintSeverity(const Severity type, const std::string string, const Args&... args)
-	{
-		std::vector<char> inputBuffer;
-		inputBuffer.resize(256);
-		char typeBuffer[32] = {};
-
-		sprintf(inputBuffer.data(), string.c_str(), args...);
-
-		switch (type)
-		{
-		case Severity::CRITICAL:
-			sprintf(typeBuffer, "CRITICAL ERROR: ");
-			break;
-
-		case Severity::WARNING:
-			sprintf(typeBuffer, "WARNING: ");
-			break;
-
-		default:
-			sprintf(typeBuffer, "");
-			break;
-		}
-
-		std::string finalBuffer = std::string(typeBuffer) + inputBuffer.data();
-
-		OutputDebugStringA(finalBuffer.c_str());
-	}
-
-	template <typename... Args>
-	inline void Print(const std::string string, const Args&... args)
-	{
-		std::vector<char> inputBuffer;
-		inputBuffer.resize(256);
-
-		sprintf(inputBuffer.data(), string.c_str(), args...);
-
-		OutputDebugStringA(inputBuffer.data());
-	}
-}
+	RENDER = BIT(1),
+	// CopyTextures,
+	// PrepareNextScene ..
+	// etc
+	ALL = BIT(2)
+	// etc..
+};
 
 #endif

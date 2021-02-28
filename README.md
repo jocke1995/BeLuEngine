@@ -1,8 +1,18 @@
 # BeLuEngine
-This project is created by me (Joakim Sjöberg) as a way to learn how to create a game engine. 
+This project is created by me (Joakim Sjöberg) as a way to learn new features and techniques. 
 The project is developed on windows platform where I use Visual Studio 2019 (Community edition) as platform.
 
+## Screenshots
+### 22-02-2021_SPONZA
+![Alt](Screenshots/22-02-2021_SPONZA.png)
 ---
+## Roadmap
+##### Controllers in ImGui to change stuff in real time
+##### DXR shadows, reflections and ao
+##### Async data-streaming with the copy queue
+
+---
+
 ## The structure of the VS solution
 The solution is, as of the date of writing this document, divided into three(3) projects.
 The projects are: Engine, Game and Sandbox.
@@ -20,12 +30,13 @@ It is staticly linked to the library that Engine creates.
 
 ---
 ## API
-Currently the only API supported is DirectX12. In the future I will add support for other API's such as DirectX11 and Vulkan.
+Currently the only API supported is DirectX12. In the future I will add support for other API's such as Vulkan and DirectX 11.
 
 ---
 ## Feature List
 Here I will list all the features (that is worth mentioning) implemented in my engine.
 ##### Entity Component System
+##### PBR using roughness and metallic maps
 ##### Multi-threading
 ##### Shadow Mapping (Spotlights and DirectionalLights)
 ##### FPS-Picking (with Boundingboxes)

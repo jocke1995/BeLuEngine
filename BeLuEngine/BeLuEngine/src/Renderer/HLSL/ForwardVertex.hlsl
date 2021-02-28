@@ -1,4 +1,4 @@
-#include "../../Headers/structs.h"
+#include "../../Headers/GPU_Structs.h"
 
 struct VS_OUT
 {

@@ -1,13 +1,11 @@
 #ifndef COMMANDINTERFACE_H
 #define COMMANDINTERFACE_H
 
-#include "Core.h"
-
 // DX12 Forward Declarations
 struct ID3D12GraphicsCommandList5;
 struct ID3D12CommandAllocator;
 
-enum COMMAND_INTERFACE_TYPE
+enum E_COMMAND_INTERFACE_TYPE
 {
 	DIRECT_TYPE,
 	COPY_TYPE,
@@ -17,7 +15,10 @@ enum COMMAND_INTERFACE_TYPE
 class CommandInterface
 {
 public:
-	CommandInterface(ID3D12Device5* device, COMMAND_INTERFACE_TYPE interfaceType);
+	CommandInterface(
+		ID3D12Device5* device,
+		E_COMMAND_INTERFACE_TYPE interfaceType,
+		const std::wstring& clName);
 	~CommandInterface();
 
 	ID3D12GraphicsCommandList5* GetCommandList(unsigned int index) const;
@@ -29,7 +30,8 @@ private:
 	ID3D12GraphicsCommandList5* m_pCommandLists[NUM_SWAP_BUFFERS]{ nullptr };
 	ID3D12CommandAllocator* m_pCommandAllocators[NUM_SWAP_BUFFERS]{ nullptr };
 
-	void createCommandInterfaces(ID3D12Device5* device, COMMAND_INTERFACE_TYPE interfaceType);
+	std::wstring m_Name = L"CL_Default";
+	void createCommandInterfaces(ID3D12Device5* device, E_COMMAND_INTERFACE_TYPE interfaceType);
 };
 
 #endif

@@ -13,9 +13,10 @@ class WireframeRenderTask : public RenderTask
 public:
 	WireframeRenderTask(ID3D12Device5* device,
 		RootSignature* rootSignature,
-		LPCWSTR VSName, LPCWSTR PSName,
+		const std::wstring& VSName, const std::wstring& PSName,
 		std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*>* gpsds,
-		LPCTSTR psoName);
+		const std::wstring& psoName,
+		unsigned int FLAG_THREAD);
 	~WireframeRenderTask();
 
 	void AddObjectToDraw(component::BoundingBoxComponent* bbc);
@@ -23,7 +24,7 @@ public:
 	void Clear();
 	void ClearSpecific(component::BoundingBoxComponent* bbc);
 
-	void Execute();
+	void Execute() override final;
 
 private:
 	std::vector<component::BoundingBoxComponent*> m_ObjectsToDraw;

@@ -3,19 +3,24 @@
 
 #include "CopyTask.h"
 class Texture;
+class Mesh;
 
 class CopyOnDemandTask : public CopyTask
 {
 public:
-	CopyOnDemandTask(ID3D12Device5* device);
+	CopyOnDemandTask(
+		ID3D12Device5* device,
+		E_COMMAND_INTERFACE_TYPE interfaceType,
+		unsigned int FLAG_THREAD,
+		const std::wstring& clName);
 	virtual ~CopyOnDemandTask();
 
 	void SubmitTexture(Texture* texture);
 
 	// Removal
-	void Clear();
+	void Clear() override;
 
-	void Execute();
+	void Execute() override final;
 
 private:
 	std::vector<Texture*> m_Textures;

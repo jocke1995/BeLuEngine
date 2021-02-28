@@ -3,19 +3,17 @@
 
 #include "../../Entity.h"
 
-#include "../../../Renderer/OrthographicCamera.h"
-#include "../../../Renderer/PerspectiveCamera.h"
+#include "../../../Renderer/Camera/OrthographicCamera.h"
+#include "../../../Renderer/Camera/PerspectiveCamera.h"
 
-Light::Light(CAMERA_TYPE camType, unsigned int lightFlags)
+Light::Light(E_CAMERA_TYPE camType, unsigned int lightFlags)
 {
 	m_Id = s_LightIdCounter++;
 
 	m_LightFlags = lightFlags;
 
 	m_pBaseLight = new BaseLight();
-	m_pBaseLight->ambient = { 0.05f, 0.05f, 0.05f, 1.0f };
-	m_pBaseLight->diffuse = { 0.35f, 0.35f, 0.35f, 1.0f };
-	m_pBaseLight->specular = { 0.2f, 0.2f, 0.2f, 1.0f };
+	m_pBaseLight->color= { 1.0f, 1.0f, 1.0f };
 	m_pBaseLight->castShadow = false;
 	m_CameraType = camType;
 }
@@ -32,22 +30,11 @@ bool Light::operator==(const Light& other)
 	return m_Id == other.m_Id;
 }
 
-void Light::SetColor(COLOR_TYPE type, float4 color)
+void Light::SetColor(float3 color)
 {
-	switch (type)
-	{
-	case COLOR_TYPE::LIGHT_AMBIENT:
-		m_pBaseLight->ambient = color;
-		break;
-	case COLOR_TYPE::LIGHT_DIFFUSE:
-		m_pBaseLight->diffuse = color;
-		break;
-	case COLOR_TYPE::LIGHT_SPECULAR:
-		m_pBaseLight->specular = color;
-		break;
-	}
+	m_pBaseLight->color = color;
 
-	UpdateLightData(type);
+	UpdateLightColor();
 }
 
 unsigned int Light::GetLightFlags() const
@@ -60,20 +47,38 @@ BaseCamera* Light::GetCamera() const
 	return m_pCamera;
 }
 
-void Light::CreateCamera(float3 position, float3 lookAt)
+void Light::CreateOrthographicCamera(
+	float3 position, float3 direction,
+	float left,
+	float right,
+	float bot,
+	float top,
+	float nearZ,
+	float farZ)
 {
-	switch (m_CameraType)
-	{
-		case CAMERA_TYPE::ORTHOGRAPHIC:
-			m_pCamera = new OrthographicCamera(
-			{ position.x, position.y, position.z , 1.0f},
-			{ lookAt.x, lookAt.y, lookAt.z , 0.0f});
-			break; 
-		case CAMERA_TYPE::PERSPECTIVE:
-			m_pCamera = new PerspectiveCamera(
-				{ position.x, position.y, position.z, 1.0f},
-				{ lookAt.x, lookAt.y, lookAt.z , 0.0f},
-				60.0f);	// Field of view
-			break;
-	}
+	DirectX::XMVECTOR pos = { position.x, position.y, position.z , 1.0f };
+	DirectX::XMVECTOR dir = { direction.x, direction.y, direction.z , 0.0f };
+
+		m_pCamera = new OrthographicCamera(
+			pos, dir,
+			left, right,
+			bot, top,
+			nearZ, farZ);
+}
+
+void Light::CreatePerspectiveCamera(
+	float3 position, float3 direction,
+	float fov,
+	float aspectRatio,
+	float nearZ, float farZ)
+{
+	DirectX::XMVECTOR pos = { position.x, position.y, position.z , 1.0f };
+	DirectX::XMVECTOR dir = { direction.x, direction.y, direction.z , 0.0f };
+
+	m_pCamera = new PerspectiveCamera(
+		pos, dir,
+		fov,
+		aspectRatio,
+		nearZ,
+		farZ);
 }

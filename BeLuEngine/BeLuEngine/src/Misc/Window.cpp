@@ -1,17 +1,36 @@
 #include "stdafx.h"
 #include "Window.h"
 
+#include "../Input/Input.h"
+#include "../Misc/Log.h"
+
+
+#ifdef DEBUG
+	#include "../ImGui/imgui_impl_win32.h"
+	extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+#endif
+
 // callback function for windows messages
-LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK WndProc(HWND hWnd, unsigned int msg, WPARAM wParam, LPARAM lParam)
 {
+#ifdef DEBUG
+	ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
+#endif
 	switch (msg)
 	{
+	case WM_SYSKEYDOWN: // alt+enter
+		if (wParam == VK_RETURN && (lParam & 0x60000000) == 0x20000000)
+		{
+			//EventBus::GetInstance().Publish(&WindowChange());
+		}
+		return 0;
 	case WM_KEYDOWN:
 		if (wParam == VK_ESCAPE)
 		{
 			//if (MessageBox(0, L"Are you sure you want to exit?", L"Exit", MB_YESNO | MB_ICONQUESTION) == IDYES)
 			//{
-				DestroyWindow(hWnd);
+			PostQuitMessage(0);
+			//DestroyWindow(hWnd);
 			//}
 		}
 		// Temp to create objects during runtime
@@ -29,24 +48,100 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		return 0;
+
+	case WM_INPUT:
+		unsigned int dwSize = 0;
+
+		GetRawInputData((HRAWINPUT)lParam, RID_INPUT, NULL, &dwSize, sizeof(RAWINPUTHEADER));
+		unsigned char* charArr = new unsigned char[dwSize];
+		if (charArr == nullptr)
+		{
+			return 0;
+		}
+
+		if (GetRawInputData((HRAWINPUT)lParam, RID_INPUT, charArr, &dwSize, sizeof(RAWINPUTHEADER)) != dwSize)
+		{
+			BL_LOG_CRITICAL("GetRawInputData does not return correct size !\n");
+		}
+
+#pragma region HandleInput
+		// Check for input and set states in the Input class
+		RAWINPUT* raw = reinterpret_cast<RAWINPUT*>(charArr);
+		if (raw->header.dwType == RIM_TYPEKEYBOARD)
+		{
+			RAWKEYBOARD inputData = raw->data.keyboard;
+
+			int modifier = (inputData.Flags / 2 + 1) * 0x100;
+			SCAN_CODES key = static_cast<SCAN_CODES>(inputData.MakeCode + modifier);
+
+			Input::GetInstance().SetKeyState(key, !(inputData.Flags % 2));
+		}
+		else if (raw->header.dwType == RIM_TYPEMOUSE)
+		{
+			auto inputData = raw->data.mouse;
+			MOUSE_BUTTON button = static_cast<MOUSE_BUTTON>(inputData.usButtonFlags);
+
+			switch (button)
+			{
+			case MOUSE_BUTTON::WHEEL:
+				Input::GetInstance().SetMouseScroll(inputData.usButtonData);
+				break;
+			case MOUSE_BUTTON::LEFT_DOWN:
+				Input::GetInstance().SetMouseButtonState(button, true);
+				break;
+			case MOUSE_BUTTON::MIDDLE_DOWN:
+				break;
+			case MOUSE_BUTTON::RIGHT_DOWN:
+				Input::GetInstance().SetMouseButtonState(button, true);
+				break;
+			case MOUSE_BUTTON::LEFT_UP:
+				button = static_cast<MOUSE_BUTTON>(static_cast<int>(button) / 2);
+				Input::GetInstance().SetMouseButtonState(button, false);
+				break;
+			case MOUSE_BUTTON::MIDDLE_UP:
+				break;
+			case MOUSE_BUTTON::RIGHT_UP:
+				button = static_cast<MOUSE_BUTTON>(static_cast<int>(button) / 2);
+				Input::GetInstance().SetMouseButtonState(button, false);
+				break;
+			default:
+				break;
+			}
+
+			Input::GetInstance().SetMouseMovement(inputData.lLastX, inputData.lLastY);
+
+			// Enable this to lock mouse inside window
+			RECT win;
+			GetWindowRect(hWnd, &win);
+			ClipCursor(&win);
+		}
+#pragma endregion HandleInput
+		delete[] charArr;
+
+		return 0;
 	}
+
 	return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
 Window::Window(
 	HINSTANCE hInstance,
 	int nCmdShow,
-	bool fullScreen,
+	bool windowedFullScreen,
 	int screenWidth, int screenHeight,
 	LPCTSTR windowName, LPCTSTR windowTitle)
 {
 	m_ScreenWidth = screenWidth;
 	m_ScreenHeight = screenHeight;
-	m_FullScreen = fullScreen;
+	m_WindowedFullScreen = windowedFullScreen;
 	m_WindowName = windowName;
 	m_WindowTitle = windowTitle;
 
 	initWindow(hInstance, nCmdShow);
+
+	m_ShutDown = false;
+
+	ShowCursor(false);
 }
 
 
@@ -62,7 +157,7 @@ void Window::SetWindowTitle(std::wstring newTitle)
 
 bool Window::IsFullScreen() const
 {
-	return m_FullScreen;
+	return m_WindowedFullScreen;
 }
 
 int Window::GetScreenWidth() const
@@ -80,20 +175,29 @@ const HWND* Window::GetHwnd() const
 	return &m_Hwnd;
 }
 
+void Window::SetScreenWidth(int width)
+{
+	m_ScreenWidth = width;
+}
+
+void Window::SetScreenHeight(int height)
+{
+	m_ScreenHeight = height;
+}
+
 bool Window::ExitWindow()
 {
-	bool closeWindow = false;
+	bool closeWindow = m_ShutDown;
 	MSG msg = { 0 };
 
-	if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+	while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 	{
-
 		TranslateMessage(&msg);
-		DispatchMessage(&msg);	// Går in i "CALLBACK" funktionen
+		DispatchMessage(&msg);
 
 		if (msg.message == WM_QUIT)
 		{
-			closeWindow = true;
+			m_ShutDown = true;
 		}
 	}
 	return closeWindow;
@@ -121,14 +225,17 @@ bool Window::WasTabPressed()
 
 bool Window::initWindow(HINSTANCE hInstance, int nCmdShow)
 {
-	if (m_FullScreen)
-	{
-		HMONITOR hmon = MonitorFromWindow(m_Hwnd, MONITOR_DEFAULTTONEAREST);
-		MONITORINFO mi = { sizeof(mi) };
-		GetMonitorInfo(hmon, &mi);
+	HMONITOR hmon = MonitorFromWindow(m_Hwnd, MONITOR_DEFAULTTONEAREST);
+	MONITORINFO mi = { sizeof(mi) };
+	GetMonitorInfo(hmon, &mi);
 
-		m_ScreenWidth = mi.rcMonitor.right - mi.rcMonitor.left;
-		m_ScreenHeight = mi.rcMonitor.bottom - mi.rcMonitor.top;
+	int width = mi.rcMonitor.right - mi.rcMonitor.left;
+	int height = mi.rcMonitor.bottom - mi.rcMonitor.top;
+
+	if (m_WindowedFullScreen || (width < m_ScreenWidth || height < m_ScreenHeight))
+	{
+		m_ScreenWidth = width - 1;
+		m_ScreenHeight = height;
 	}
 
 	WNDCLASSEX wc;
@@ -170,11 +277,10 @@ bool Window::initWindow(HINSTANCE hInstance, int nCmdShow)
 		return false;
 	}
 
+#ifdef DEBUG
 	// Remove the topbar of the window if we are in fullscreen
-	if (m_FullScreen)
-	{
-		SetWindowLong(m_Hwnd, GWL_STYLE, 0);
-	}
+	SetWindowLong(m_Hwnd, GWL_STYLE, 0);
+#endif
 
 	ShowWindow(m_Hwnd, nCmdShow);
 	UpdateWindow(m_Hwnd);

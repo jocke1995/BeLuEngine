@@ -12,11 +12,9 @@
 #include <D3Dcompiler.h>
 #include <DirectXPackedVector.h>
 #include <DirectXColors.h>
+#include <dxgidebug.h>
 #include "EngineMath.h"
 #include "d3dx12.h"
-
-// Windows stuff
-#include <Windows.h>
 
 // Time
 #include <chrono>
@@ -28,6 +26,7 @@
 #include <utility>
 #include <algorithm>
 #include <functional>
+#include <fstream>
 
 // Threads
 #include <mutex>
@@ -36,16 +35,16 @@
 // Data Structures
 #include <sstream>
 #include <array>
-#include <vector>
 #include <map>
 #include <unordered_map>
 #include <set>
 #include <unordered_set>
 #include <queue>
+#include <deque>
 
 typedef DirectX::XMMATRIX float4x4;
 
 #include "Core.h"
-#include "structs.h"
+#include "GPU_Structs.h"
 
 #endif

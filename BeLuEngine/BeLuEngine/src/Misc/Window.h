@@ -2,6 +2,7 @@
 #define WINDOW_H
 #include <Windows.h>
 #include <string>
+
 // Temp
 static bool spacePressed = false;
 static bool tabPressed = false;
@@ -10,10 +11,10 @@ class Window
 {
 public:
 	// Varying screensize constructor
-	Window(
+	Window( // Default values
 		HINSTANCE hInstance,
 		int nCmdShow,
-		bool fullScreen = false,
+		bool windowedFullScreen = false,
 		int screenWidth = 800,
 		int screenHeight = 600,
 		LPCTSTR windowName = L"windowName",
@@ -28,19 +29,24 @@ public:
 	int GetScreenHeight() const;
 	const HWND* GetHwnd() const;
 
+	void SetScreenWidth(int width);
+	void SetScreenHeight(int height);
+
 	bool ExitWindow();
 
 	// Temp
 	bool WasSpacePressed();
 	bool WasTabPressed();
+
 private:
 	int m_ScreenWidth;
 	int m_ScreenHeight;
-	bool m_FullScreen;
+	bool m_WindowedFullScreen;
 	LPCTSTR m_WindowName;
 	LPCTSTR m_WindowTitle;
 
-	HWND m_Hwnd;
+	HWND m_Hwnd = nullptr;
+	bool m_ShutDown;
 
 	bool initWindow(HINSTANCE hInstance, int nCmdShow);
 };

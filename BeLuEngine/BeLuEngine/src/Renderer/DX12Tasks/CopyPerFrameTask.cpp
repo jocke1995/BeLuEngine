@@ -1,10 +1,15 @@
 #include "stdafx.h"
 #include "CopyPerFrameTask.h"
 
+// DX12 Specifics
 #include "../CommandInterface.h"
 
-CopyPerFrameTask::CopyPerFrameTask(ID3D12Device5* device)
-	:CopyTask(device)
+CopyPerFrameTask::CopyPerFrameTask(
+	ID3D12Device5* device,
+	E_COMMAND_INTERFACE_TYPE interfaceType,
+	unsigned int FLAG_THREAD,
+	const std::wstring& clName)
+	:CopyTask(device, interfaceType, FLAG_THREAD, clName)
 {
 
 }
@@ -17,6 +22,7 @@ CopyPerFrameTask::~CopyPerFrameTask()
 void CopyPerFrameTask::ClearSpecific(const Resource* uploadResource)
 {
 	unsigned int i = 0;
+
 	// Loop through all copyPerFrame tasks
 	for (auto& tuple : m_UploadDefaultData)
 	{

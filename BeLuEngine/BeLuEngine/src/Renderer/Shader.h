@@ -4,14 +4,14 @@
 class Shader
 {
 public:
-	Shader(LPCTSTR path, ShaderType type);
+	Shader(LPCTSTR path, E_SHADER_TYPE type);
 	virtual ~Shader();
 
 	ID3DBlob* GetBlob() const;
 
 private:
 	ID3DBlob* m_pBlob;
-	ShaderType m_Type;
+	E_SHADER_TYPE m_Type;
 	LPCTSTR m_Path;	// Ex: vertexShader1
 
 	void compileShader();

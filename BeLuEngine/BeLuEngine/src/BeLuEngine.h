@@ -1,15 +1,18 @@
-#ifndef BELUENGINE_H
-#define BELUENGINE_H
+#ifndef ENGINE_H
+#define ENGINE_H
 
 // Miscellaneous
 #include "Misc/Window.h"
 #include "Misc/Timer.h"
-#include "Misc/ThreadPool.h"
+#include "Misc/Log.h"
+#include "Misc/MultiThreading/ThreadPool.h"
+#include "Misc/AssetLoader.h"
 
 // Entity Component System
 #include "ECS/SceneManager.h"
+#include "ECS/Scene.h"
 #include "ECS/Entity.h"
-#include "ECS/Components/MeshComponent.h"
+#include "ECS/Components/ModelComponent.h"
 #include "ECS/Components/TransformComponent.h"
 #include "ECS/Components/Lights/DirectionalLightComponent.h"
 #include "ECS/Components/Lights/PointLightComponent.h"
@@ -18,14 +21,20 @@
 
 // Sub-engines
 #include "Renderer/Renderer.h"
-#include "Renderer/Mesh.h"
-#include "Renderer/Transform.h"
-#include "Renderer/Material.h"
-#include "Renderer/BaseCamera.h"
-// #include "physics"
-// #include "audio"
+#include "Renderer/Model/Transform.h"
+#include "Renderer/Model/Mesh.h"
+#include "Renderer/Camera/BaseCamera.h"
 
-#include "Misc/AssetLoader.h"
+// Textures
+#include "Renderer/Model/Material.h"
+#include "Renderer/Texture/TextureCubeMap.h"
+#include "Renderer/Texture/Texture2DGUI.h"
+
+// Event-handling
+#include "Events/EventBus.h"
+
+// Input
+#include "Input/Input.h"
 
 class BeLuEngine
 {
@@ -43,12 +52,12 @@ public:
 	SceneManager* const GetSceneHandler() const;
 
 private:
-	Window* m_Window = nullptr;
-	Timer* m_Timer = nullptr;
-	ThreadPool* m_ThreadPool = nullptr;
+	Window* m_pWindow = nullptr;
+	Timer* m_pTimer = nullptr;
+	ThreadPool* m_pThreadPool = nullptr;
 
-	Renderer* m_Renderer = nullptr;
-	SceneManager* m_SceneManager = nullptr;
+	Renderer* m_pRenderer = nullptr;
+	SceneManager* m_pSceneManager = nullptr;
 };
 
 #endif

@@ -1,5 +1,7 @@
 #include "stdafx.h"
 #include "Component.h"
+#include "../Renderer/Renderer.h"
+#include "../BeLuEngine.h"
 
 Component::Component(Entity* parent)
 {
@@ -7,6 +9,14 @@ Component::Component(Entity* parent)
 }
 
 Component::~Component()
+{
+}
+
+void Component::Update(double dt)
+{
+}
+
+void Component::Reset()
 {
 }
 

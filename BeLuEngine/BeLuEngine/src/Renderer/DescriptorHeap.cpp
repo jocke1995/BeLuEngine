@@ -1,22 +1,28 @@
 #include "stdafx.h"
 #include "DescriptorHeap.h"
 
-DescriptorHeap::DescriptorHeap(ID3D12Device5* device, DESCRIPTOR_HEAP_TYPE type)
+#include "../Misc/Log.h"
+
+DescriptorHeap::DescriptorHeap(ID3D12Device5* device, E_DESCRIPTOR_HEAP_TYPE type)
 {
 	// Create description
+	std::wstring dhName = L"";
 	switch (type)
 	{
-	case DESCRIPTOR_HEAP_TYPE::RTV:
+	case E_DESCRIPTOR_HEAP_TYPE::RTV:
 		m_Desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-		m_Desc.NumDescriptors = 10;
+		m_Desc.NumDescriptors = 200;
+		dhName = L"RTV_DescriptorHeap";
 		break;
-	case DESCRIPTOR_HEAP_TYPE::DSV:
+	case E_DESCRIPTOR_HEAP_TYPE::DSV:
 		m_Desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
 		m_Desc.NumDescriptors = 10;
+		dhName = L"DSV_DescriptorHeap";
 		break;
-	case DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV:
+	case E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV:
 		m_Desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 		m_Desc.NumDescriptors = 100000;
+		dhName = L"CBV_UAV_SRV_DescriptorHeap";
 		m_Desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 		break;
 	}
@@ -28,8 +34,10 @@ DescriptorHeap::DescriptorHeap(ID3D12Device5* device, DESCRIPTOR_HEAP_TYPE type)
 	HRESULT hr = device->CreateDescriptorHeap(&m_Desc, IID_PPV_ARGS(&m_pDescriptorHeap));
 	if (hr != S_OK)
 	{
-		Log::PrintSeverity(Log::Severity::CRITICAL, "Failed to create DescriptorHeap\n");
+		BL_LOG_CRITICAL("Failed to create DescriptorHeap\n");
 	}
+
+	m_pDescriptorHeap->SetName(dhName.c_str());
 
 	SetCPUGPUHeapStart();
 }
@@ -42,7 +50,11 @@ DescriptorHeap::~DescriptorHeap()
 void DescriptorHeap::SetCPUGPUHeapStart()
 {
 	m_CPUHeapStart = m_pDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
-	m_GPUHeapStart = m_pDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
+
+	if (m_Desc.Flags & D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE)
+	{
+		m_GPUHeapStart = m_pDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
+	}
 }
 
 void DescriptorHeap::IncrementDescriptorHeapIndex()
@@ -69,20 +81,20 @@ ID3D12DescriptorHeap* DescriptorHeap::GetID3D12DescriptorHeap() const
 	return m_pDescriptorHeap;
 }
 
-D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHeap::GetCPUHeapAt(UINT descriptorIndex)
+D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHeap::GetCPUHeapAt(unsigned int descriptorIndex)
 {
 	m_CPUHeapAt.ptr = m_CPUHeapStart.ptr + m_HandleIncrementSize * descriptorIndex;
 	return m_CPUHeapAt;
 }
 
-D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHeap::GetGPUHeapAt(UINT descriptorIndex)
+D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHeap::GetGPUHeapAt(unsigned int descriptorIndex)
 {
 	m_GPUHeapAt.ptr = m_GPUHeapStart.ptr + m_HandleIncrementSize * descriptorIndex;
 
 	return m_GPUHeapAt;
 }
 
-const UINT DescriptorHeap::GetHandleIncrementSize() const
+const unsigned int DescriptorHeap::GetHandleIncrementSize() const
 {
 	return m_HandleIncrementSize;
 }

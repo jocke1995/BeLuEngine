@@ -1,24 +1,24 @@
 #ifndef LIGHT_H
 #define LIGHT_H
-#include "Core.h"
-#include "structs.h"
+
+#include "EngineMath.h"
 
 class BaseCamera;
-enum FLAG_LIGHT
+
+enum F_LIGHT_FLAGS
 {
 	// Set flag to make the light position inherit the position of the corresponding m_pMesh
 	USE_TRANSFORM_POSITION = BIT(1),
 
 	// Option to make the light cast shadows or not with different resolutions
-	CAST_SHADOW_LOW_RESOLUTION = BIT(2),
-	CAST_SHADOW_MEDIUM_RESOLUTION = BIT(3),
-	CAST_SHADOW_HIGH_RESOLUTION = BIT(4),
-	CAST_SHADOW_ULTRA_RESOLUTION = BIT(5),
+	CAST_SHADOW = BIT(2),
 
-	// If this is set, m_pRenderer only need to copy data once to GPU
-	// STATIC_DATA .. = BIT(6),
+	// 1. If this is set, lightData is only copied once to VRAM (onInitScene)
+	// 2. Lights are interpreted as "DYNAMIC" as default
+	STATIC = BIT(3),
 
 	// etc..
+	NUM_FLAGS_LIGHT = 3
 };
 
 static unsigned int s_LightIdCounter = 0;
@@ -26,14 +26,14 @@ static unsigned int s_LightIdCounter = 0;
 class Light
 {
 public:
-	Light(CAMERA_TYPE camType, unsigned int lightFlags = 0);
+	Light(E_CAMERA_TYPE camType, unsigned int lightFlags = 0);
 	virtual ~Light();
 
 	bool operator== (const Light& other);
 
 	virtual void Update(double dt) = 0;
 
-	void SetColor(COLOR_TYPE type, float4 color);
+	void SetColor(float3 color);
 
 	// Gets
 	unsigned int GetLightFlags() const;
@@ -46,10 +46,27 @@ protected:
 	unsigned int m_Id = 0;
 
 	BaseCamera* m_pCamera = nullptr;
-	CAMERA_TYPE m_CameraType;
-	void CreateCamera(float3 position, float3 lookAt);
+	E_CAMERA_TYPE m_CameraType;
 
-	virtual void UpdateLightData(COLOR_TYPE type) = 0;
+	// Orthographic
+	void CreateOrthographicCamera(
+		float3 position, float3 direction,
+		float left = -30.0f,
+		float right = 30.0f,
+		float bot = -30.0f,
+		float top = 30.0f,
+		float nearZ = 0.01f,
+		float farZ = 1000.0f);
+
+	// Perspective
+	void CreatePerspectiveCamera(
+		float3 position, float3 direction,
+		float fov = 90.0f,
+		float aspectRatio = 1.0f,
+		float nearZ = 0.1f,
+		float farZ = 1000.0f);
+
+	virtual void UpdateLightColor() = 0;
 
 };
 
