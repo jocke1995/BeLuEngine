@@ -20,7 +20,6 @@
 
 // RenderTasks
 #include "../Renderer/DX12Tasks/WireframeRenderTask.h"
-#include "../Renderer/DX12Tasks/ShadowRenderTask.h"
 
 // Techniques
 #include "../Renderer/Techniques/BoundingBoxPool.h"

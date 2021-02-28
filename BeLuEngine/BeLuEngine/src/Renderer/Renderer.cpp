@@ -59,7 +59,6 @@
 #include "DX12Tasks/OutliningRenderTask.h"
 #include "DX12Tasks/ForwardRenderTask.h"
 #include "DX12Tasks/TransparentRenderTask.h"
-#include "DX12Tasks/ShadowRenderTask.h"
 #include "DX12Tasks/DownSampleRenderTask.h"
 #include "DX12Tasks/MergeRenderTask.h"
 
@@ -384,10 +383,6 @@ void Renderer::ExecuteMT()
 	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::DEPTH_PRE_PASS];
 	m_pThreadPool->AddTask(renderTask);
 
-	// Recording shadowmaps
-	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::SHADOW];
-	m_pThreadPool->AddTask(renderTask);
-
 	// Opaque draw
 	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::FORWARD_RENDER];
 	m_pThreadPool->AddTask(renderTask);
@@ -494,10 +489,6 @@ void Renderer::ExecuteST()
 
 	// Depth pre-pass
 	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::DEPTH_PRE_PASS];
-	renderTask->Execute();
-
-	// Recording shadowmaps
-	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::SHADOW];
 	renderTask->Execute();
 
 	// Opaque draw
@@ -627,45 +618,12 @@ void Renderer::InitDirectionalLightComponent(component::DirectionalLightComponen
 	// Check if the light is to cast shadows
 	E_SHADOW_RESOLUTION resolution = E_SHADOW_RESOLUTION::UNDEFINED;
 
-	int shadowRes = -1;
 	if (component->GetLightFlags() & static_cast<unsigned int>(F_LIGHT_FLAGS::CAST_SHADOW))
 	{
-		// Max resolution
-		shadowRes = 2;
+		
 	}
-
-	if (shadowRes == 0)
-	{
-		resolution = E_SHADOW_RESOLUTION::LOW;
-	}
-	else if (shadowRes == 1)
-	{
-		resolution = E_SHADOW_RESOLUTION::MEDIUM;
-	}
-	else if (shadowRes >= 2)
-	{
-		resolution = E_SHADOW_RESOLUTION::HIGH;
-	}
-
-	// Assign views required for shadows from the lightPool
-	ShadowInfo* si = nullptr;
-	if (resolution != E_SHADOW_RESOLUTION::UNDEFINED)
-	{
-		si = new ShadowInfo(
-			E_LIGHT_TYPE::DIRECTIONAL_LIGHT,
-			resolution,
-			m_pDevice5,
-			m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::DSV],
-			m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
-
-		static_cast<DirectionalLight*>(component->GetLightData())->textureShadowMap = si->GetSRV()->GetDescriptorHeapIndex();
-
-		ShadowRenderTask* srt = static_cast<ShadowRenderTask*>(m_RenderTasks[E_RENDER_TASK_TYPE::SHADOW]);
-		srt->AddShadowCastingLight(std::make_pair(component, si));
-	}
-
 	// Save in m_pRenderer
-	m_Lights[E_LIGHT_TYPE::DIRECTIONAL_LIGHT].push_back(std::make_tuple(component, cb, si));
+	m_Lights[E_LIGHT_TYPE::DIRECTIONAL_LIGHT].push_back(std::make_pair(component, cb));
 
 	
 	// Submit to gpu
@@ -698,7 +656,7 @@ void Renderer::InitPointLightComponent(component::PointLightComponent* component
 	ShadowInfo* si = nullptr;
 
 	// Save in m_pRenderer
-	m_Lights[E_LIGHT_TYPE::POINT_LIGHT].push_back(std::make_tuple(component, cb, si));
+	m_Lights[E_LIGHT_TYPE::POINT_LIGHT].push_back(std::make_pair(component, cb));
 
 	// Submit to gpu
 	CopyTask* copyTask = nullptr;
@@ -728,44 +686,13 @@ void Renderer::InitSpotLightComponent(component::SpotLightComponent* component)
 	// Check if the light is to cast shadows
 	E_SHADOW_RESOLUTION resolution = E_SHADOW_RESOLUTION::UNDEFINED;
 
-	int shadowRes = -1;
 	if (component->GetLightFlags() & static_cast<unsigned int>(F_LIGHT_FLAGS::CAST_SHADOW))
 	{
-		// Max resolution
-		shadowRes = 2;
+
 	}
 
-	if (shadowRes == 0)
-	{
-		resolution = E_SHADOW_RESOLUTION::LOW;
-	}
-	else if (shadowRes == 1)
-	{
-		resolution = E_SHADOW_RESOLUTION::MEDIUM;
-	}
-	else if (shadowRes >= 2)
-	{
-		resolution = E_SHADOW_RESOLUTION::HIGH;
-	}
-
-	// Assign views required for shadows from the lightPool
-	ShadowInfo* si = nullptr;
-	if (resolution != E_SHADOW_RESOLUTION::UNDEFINED)
-	{
-		si = new ShadowInfo(
-			E_LIGHT_TYPE::SPOT_LIGHT,
-			resolution,
-			m_pDevice5,
-			m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::DSV],
-			m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
-
-		static_cast<SpotLight*>(component->GetLightData())->textureShadowMap = si->GetSRV()->GetDescriptorHeapIndex();
-
-		ShadowRenderTask* srt = static_cast<ShadowRenderTask*>(m_RenderTasks[E_RENDER_TASK_TYPE::SHADOW]);
-		srt->AddShadowCastingLight(std::make_pair(component, si));
-	}
 	// Save in m_pRenderer
-	m_Lights[E_LIGHT_TYPE::SPOT_LIGHT].push_back(std::make_tuple(component, cb, si));
+	m_Lights[E_LIGHT_TYPE::SPOT_LIGHT].push_back(std::make_pair(component, cb));
 
 	// Submit to gpu
 	CopyTask* copyTask = nullptr;
@@ -852,20 +779,19 @@ void Renderer::UnInitDirectionalLightComponent(component::DirectionalLightCompon
 {
 	E_LIGHT_TYPE type = E_LIGHT_TYPE::DIRECTIONAL_LIGHT;
 	unsigned int count = 0;
-	for (auto& tuple : m_Lights[type])
+	for (auto& pair : m_Lights[type])
 	{
-		Light* light = std::get<0>(tuple);
+		Light* light = pair.first;
 
 		component::DirectionalLightComponent* dlc = static_cast<component::DirectionalLightComponent*>(light);
 
 		// Remove light if it matches the entity
 		if (component == dlc)
 		{
-			auto& [light, cb, si] = tuple;
+			auto& [light, cb] = pair;
 
 			// Free memory so other m_Entities can use it
 			delete cb;
-			delete si;
 			
 			// Remove from CopyPerFrame
 			CopyPerFrameTask* cpft = nullptr;
@@ -873,8 +799,6 @@ void Renderer::UnInitDirectionalLightComponent(component::DirectionalLightCompon
 			cpft->ClearSpecific(cb->GetUploadResource());
 
 			// Finally remove from m_pRenderer
-			ShadowRenderTask* srt = static_cast<ShadowRenderTask*>(m_RenderTasks[E_RENDER_TASK_TYPE::SHADOW]);
-			srt->ClearSpecificLight(light);
 			m_Lights[type].erase(m_Lights[type].begin() + count);
 
 			// Update cbPerScene
@@ -889,9 +813,9 @@ void Renderer::UnInitPointLightComponent(component::PointLightComponent* compone
 {
 	E_LIGHT_TYPE type = E_LIGHT_TYPE::POINT_LIGHT;
 	unsigned int count = 0;
-	for (auto& tuple : m_Lights[type])
+	for (auto& pair : m_Lights[type])
 	{
-		Light* light = std::get<0>(tuple);
+		Light* light = pair.first;
 
 		component::PointLightComponent* plc = static_cast<component::PointLightComponent*>(light);
 
@@ -899,7 +823,7 @@ void Renderer::UnInitPointLightComponent(component::PointLightComponent* compone
 		if (component == plc)
 		{
 			// Free memory so other m_Entities can use it
-			auto& [light, cb, si] = tuple;
+			auto& [light, cb] = pair;
 
 			delete cb;
 
@@ -923,9 +847,9 @@ void Renderer::UnInitSpotLightComponent(component::SpotLightComponent* component
 {
 	E_LIGHT_TYPE type = E_LIGHT_TYPE::SPOT_LIGHT;
 	unsigned int count = 0;
-	for (auto& tuple : m_Lights[type])
+	for (auto& pair : m_Lights[type])
 	{
-		Light* light = std::get<0>(tuple);
+		Light* light = pair.first;
 
 		component::SpotLightComponent* slc = static_cast<component::SpotLightComponent*>(light);
 
@@ -933,10 +857,9 @@ void Renderer::UnInitSpotLightComponent(component::SpotLightComponent* component
 		if (component == slc)
 		{
 			// Free memory so other m_Entities can use it
-			auto& [light, cb, si] = tuple;
+			auto& [light, cb] = pair;
 
 			delete cb;
-			delete si;
 
 			// Remove from CopyPerFrame
 			CopyPerFrameTask* cpft = nullptr;
@@ -944,8 +867,6 @@ void Renderer::UnInitSpotLightComponent(component::SpotLightComponent* component
 			cpft->ClearSpecific(cb->GetUploadResource());
 
 			// Finally remove from m_pRenderer
-			ShadowRenderTask* srt = static_cast<ShadowRenderTask*>(m_RenderTasks[E_RENDER_TASK_TYPE::SHADOW]);
-			srt->ClearSpecificLight(light);
 			m_Lights[type].erase(m_Lights[type].begin() + count);
 
 			// Update cbPerScene
@@ -1121,7 +1042,6 @@ void Renderer::setRenderTasksPrimaryCamera()
 	m_RenderTasks[E_RENDER_TASK_TYPE::FORWARD_RENDER]->SetCamera(m_pScenePrimaryCamera);
 	m_RenderTasks[E_RENDER_TASK_TYPE::TRANSPARENT_CONSTANT]->SetCamera(m_pScenePrimaryCamera);
 	m_RenderTasks[E_RENDER_TASK_TYPE::TRANSPARENT_TEXTURE]->SetCamera(m_pScenePrimaryCamera);
-	m_RenderTasks[E_RENDER_TASK_TYPE::SHADOW]->SetCamera(m_pScenePrimaryCamera);
 	m_RenderTasks[E_RENDER_TASK_TYPE::OUTLINE]->SetCamera(m_pScenePrimaryCamera);
 
 	if (DEVELOPERMODE_DRAWBOUNDINGBOX == true)
@@ -1737,57 +1657,6 @@ void Renderer::initRenderTasks()
 
 #pragma endregion Blend
 
-#pragma region ShadowPass
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsdShadow = { 0 };
-	gpsdShadow.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-
-	// RenderTarget
-	gpsdShadow.RTVFormats[0] = DXGI_FORMAT_UNKNOWN;
-	gpsdShadow.NumRenderTargets = 0;
-	// Depthstencil usage
-	gpsdShadow.SampleDesc.Count = 1;
-	gpsdShadow.SampleMask = UINT_MAX;
-	// Rasterizer behaviour
-	gpsdShadow.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
-	gpsdShadow.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
-	gpsdShadow.RasterizerState.DepthBias = 1000;
-	gpsdShadow.RasterizerState.DepthBiasClamp = 0.0f;
-	gpsdShadow.RasterizerState.SlopeScaledDepthBias = 3.0f;
-	gpsdShadow.RasterizerState.FrontCounterClockwise = false;
-
-	// Depth descriptor
-	D3D12_DEPTH_STENCIL_DESC dsdShadow = {};
-	dsdShadow.DepthEnable = true;
-	dsdShadow.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
-	dsdShadow.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
-	dsdShadow.StencilEnable = false;
-
-	gpsdShadow.DepthStencilState = dsdShadow;
-	gpsdShadow.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
-
-	// Specify Blend descriptions
-	D3D12_RENDER_TARGET_BLEND_DESC defaultShadowDesc = {
-		false, false,
-		D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
-		D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
-		D3D12_LOGIC_OP_NOOP, D3D12_COLOR_WRITE_ENABLE_ALL };
-	for (unsigned int i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; i++)
-		gpsdShadow.BlendState.RenderTarget[i] = defaultShadowDesc;
-
-	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*> gpsdShadowVector;
-	gpsdShadowVector.push_back(&gpsdShadow);
-
-	RenderTask* shadowRenderTask = new ShadowRenderTask(
-		m_pDevice5,
-		m_pRootSignature,
-		L"DepthVertex.hlsl", L"DepthPixel.hlsl",
-		&gpsdShadowVector,
-		L"ShadowPSO",
-		F_THREAD_FLAGS::RENDER);
-
-	shadowRenderTask->SetDescriptorHeaps(m_DescriptorHeaps);
-#pragma endregion ShadowPass
-
 #pragma region WireFrame
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsdWireFrame = {};
 	gpsdWireFrame.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
@@ -1920,7 +1789,6 @@ void Renderer::initRenderTasks()
 
 	/* ------------------------- DirectQueue Tasks ---------------------- */
 	m_RenderTasks[E_RENDER_TASK_TYPE::DEPTH_PRE_PASS] = DepthPrePassRenderTask;
-	m_RenderTasks[E_RENDER_TASK_TYPE::SHADOW] = shadowRenderTask;
 	m_RenderTasks[E_RENDER_TASK_TYPE::FORWARD_RENDER] = forwardRenderTask;
 	m_RenderTasks[E_RENDER_TASK_TYPE::TRANSPARENT_CONSTANT] = transparentConstantRenderTask;
 	m_RenderTasks[E_RENDER_TASK_TYPE::TRANSPARENT_TEXTURE] = transparentTextureRenderTask;
@@ -1944,11 +1812,6 @@ void Renderer::initRenderTasks()
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
 		m_DirectCommandLists[i].push_back(DepthPrePassRenderTask->GetCommandInterface()->GetCommandList(i));
-	}
-
-	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
-	{
-		m_DirectCommandLists[i].push_back(shadowRenderTask->GetCommandInterface()->GetCommandList(i));
 	}
 
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
@@ -2011,7 +1874,6 @@ void Renderer::setRenderTasksRenderComponents()
 	m_RenderTasks[E_RENDER_TASK_TYPE::FORWARD_RENDER]->SetRenderComponents(&m_RenderComponents[F_DRAW_FLAGS::DRAW_OPAQUE]);
 	m_RenderTasks[E_RENDER_TASK_TYPE::TRANSPARENT_CONSTANT]->SetRenderComponents(&m_RenderComponents[F_DRAW_FLAGS::DRAW_TRANSPARENT_CONSTANT]);
 	m_RenderTasks[E_RENDER_TASK_TYPE::TRANSPARENT_TEXTURE]->SetRenderComponents(&m_RenderComponents[F_DRAW_FLAGS::DRAW_TRANSPARENT_TEXTURE]);
-	m_RenderTasks[E_RENDER_TASK_TYPE::SHADOW]->SetRenderComponents(&m_RenderComponents[F_DRAW_FLAGS::GIVE_SHADOW]);
 }
 
 void Renderer::createDescriptorHeaps()

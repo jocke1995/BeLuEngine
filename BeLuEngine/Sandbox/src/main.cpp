@@ -144,50 +144,6 @@ Scene* TestScene(SceneManager* sm)
     tc->GetTransform()->SetPosition(0, 4, 30);
     /* ---------------------- Sphere ---------------------- */
 
-    /* ---------------------- Poster ---------------------- */
-    //entity = scene->AddEntity("poster");
-    //mc = entity->AddComponent<component::ModelComponent>();
-    //tc = entity->AddComponent<component::TransformComponent>();
-    //
-    //mc = entity->GetComponent<component::ModelComponent>();
-    //mc->SetModel(posterModel);
-    //mc->SetDrawFlag(FLAG_DRAW::DRAW_OPAQUE | FLAG_DRAW::GIVE_SHADOW);
-    //tc = entity->GetComponent<component::TransformComponent>();
-    //tc->GetTransform()->SetScale(2, 1, 2);
-    //tc->GetTransform()->SetRotationZ(-PI / 2);
-    //tc->GetTransform()->SetPosition(28.5f, 2.0f, 34.0f);
-    /* ---------------------- Poster ---------------------- */
-
-    /* ---------------------- SpotLightDynamic ---------------------- */
-    //entity = scene->AddEntity("spotLightDynamic");
-    //mc = entity->AddComponent<component::ModelComponent>();
-    //tc = entity->AddComponent<component::TransformComponent>();
-    //slc = entity->AddComponent<component::SpotLightComponent>(FLAG_LIGHT::CAST_SHADOW);
-    //
-    //float3 pos = { 5.0f, 20.0f, 5.0f };
-    //mc->SetModel(sphereModel);
-    //mc->SetDrawFlag(FLAG_DRAW::DRAW_OPAQUE | FLAG_DRAW::GIVE_SHADOW);
-    //tc->GetTransform()->SetScale(0.3f);
-    //tc->GetTransform()->SetPosition(pos.x, pos.y, pos.z);
-    //
-    ////slc->SetColor({ 0.0f, 1.0f, 0.0f });
-    //slc->SetAttenuation({ 1.0, 0.09f, 0.032f });
-    //slc->SetPosition(pos);
-    //slc->SetDirection({ 0.0f, -1.0f, 0.5f });
-    //slc->SetOuterCutOff(50.0f);
-    /* ---------------------- SpotLightDynamic ---------------------- */
-
-    /* ---------------------- dirLight ---------------------- */
-    //entity = scene->AddEntity("dirLight");
-    //dlc = entity->AddComponent<component::DirectionalLightComponent>(FLAG_LIGHT::CAST_SHADOW);
-    //dlc->SetColor({ 0.6f, 0.6f, 0.6f });
-    //dlc->SetDirection({ 1.0f, -1.0f, 0.0f });
-    //dlc->SetCameraTop(30.0f);
-    //dlc->SetCameraBot(-30.0f);
-    //dlc->SetCameraLeft(-70.0f);
-    //dlc->SetCameraRight(70.0f);
-    /* ---------------------- dirLight ---------------------- */
-
     /* ---------------------- Update Function ---------------------- */
     scene->SetUpdateScene(&TestUpdateScene);
     return scene;
@@ -316,13 +272,7 @@ Scene* SponzaScene(SceneManager* sm)
     entity = scene->AddEntity("dirLight");
     dlc = entity->AddComponent<component::DirectionalLightComponent>(F_LIGHT_FLAGS::CAST_SHADOW);
     dlc->SetColor({ 0.17, 0.25, 0.3f});
-    dlc->SetCameraDistance(300);
     dlc->SetDirection({ -1.0f, -2.0f, 0.03f });
-    dlc->SetCameraTop(800.0f);
-    dlc->SetCameraBot(-550.0f);
-    dlc->SetCameraLeft(-550.0f);
-    dlc->SetCameraRight(550.0f);
-    dlc->SetCameraFarZ(5000);
     /* ---------------------- dirLight ---------------------- */
 
     /* ---------------------- Update Function ---------------------- */

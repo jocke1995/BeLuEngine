@@ -11,44 +11,6 @@ SamplerState samplerTypeBorder	: register (s4);
 
 ConstantBuffer<CB_PER_SCENE_STRUCT>  cbPerScene  : register(b5, space3);
 
-float CalculateShadow(
-	in float4 fragPosLightSpace,
-	in float shadowMapIndex)
-{
-	// Perform perspective divide
-	float2 texCoord = fragPosLightSpace.xy / fragPosLightSpace.w;
-
-	// Transform to [0,1] range
-	texCoord = texCoord * 0.5 + 0.5;
-	texCoord.y = 1 - texCoord.y;
-
-	// Get depth of current fragment from light's perspective
-	float depthFromLightToFragPos = fragPosLightSpace.z / fragPosLightSpace.w;
-
-	// Check whether current fragPos is in shadow
-	float shadow = 0.0f;
-
-	// Anti aliasing
-	float2 texelSize = float2(0.0f, 0.0f);
-	textures[shadowMapIndex].GetDimensions(texelSize.x, texelSize.y);
-	texelSize = 1.0f / texelSize;
-
-	for (int x = -1; x <= 1; ++x)
-	{
-		for (int y = -1; y <= 1; ++y)
-		{
-			float pcfDepth = textures[shadowMapIndex].Sample(samplerTypeBorder, texCoord + float2(x,y) * texelSize).r;
-			if (depthFromLightToFragPos > pcfDepth)
-			{
-				shadow += 1.0f;
-			}
-		}
-	}
-	shadow = shadow / 9.0f;
-
-	return shadow;
-}
-
 float3 CalcDirLight(
 	in DirectionalLight dirLight,
 	in float3 camPos,
@@ -83,17 +45,8 @@ float3 CalcDirLight(
 	float3 kD = float3(1.0f, 1.0f, 1.0f) - F;
 	kD *= 1.0f - metallic;
 
-	// Shadows
-	float shadow = 0.0f;
-	if (dirLight.baseLight.castShadow == true)
-	{
-		float4 fragPosLightSpace = mul(fragPos, dirLight.viewProj);
-
-		shadow = CalculateShadow(fragPosLightSpace, dirLight.textureShadowMap);
-	}
-
 	DirLightContribution = (kD * albedo / PI + specular) * radiance * NdotL;
-	return DirLightContribution * (1.0f - shadow);
+	return DirLightContribution;
 }
 
 float3 CalcPointLight(
@@ -189,15 +142,6 @@ float3 CalcSpotLight(
 	float3 kD = float3(1.0f, 1.0f, 1.0f) - F;
 	kD *= 1.0f - metallic;
 
-	float shadow = 0.0f;
-	if (spotLight.baseLight.castShadow == true)
-	{
-		float4 fragPosLightSpace = mul(fragPos, spotLight.viewProj);
-
-		shadow = CalculateShadow(fragPosLightSpace, spotLight.textureShadowMap);
-	}
-
 	spotLightContribution = ((kD * albedo / PI + specular) * radiance * NdotL) * edgeIntensity;
-	spotLightContribution = spotLightContribution * (1.0f - shadow);
 	return spotLightContribution;
 }

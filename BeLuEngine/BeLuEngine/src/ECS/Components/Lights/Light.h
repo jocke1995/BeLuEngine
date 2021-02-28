@@ -10,7 +10,7 @@ enum F_LIGHT_FLAGS
 	// Set flag to make the light position inherit the position of the corresponding m_pMesh
 	USE_TRANSFORM_POSITION = BIT(1),
 
-	// Option to make the light cast shadows or not with different resolutions
+	// Option to make the light cast shadows or not. (CURRENTLY NO SHADOWS, will be used again when raytracing is implemented)
 	CAST_SHADOW = BIT(2),
 
 	// 1. If this is set, lightData is only copied once to VRAM (onInitScene)
@@ -26,7 +26,7 @@ static unsigned int s_LightIdCounter = 0;
 class Light
 {
 public:
-	Light(E_CAMERA_TYPE camType, unsigned int lightFlags = 0);
+	Light(unsigned int lightFlags = 0);
 	virtual ~Light();
 
 	bool operator== (const Light& other);
@@ -38,36 +38,13 @@ public:
 	// Gets
 	unsigned int GetLightFlags() const;
 	virtual void* GetLightData() const = 0;
-	BaseCamera* GetCamera() const;
 
 protected:
 	BaseLight* m_pBaseLight = nullptr;
 	unsigned int m_LightFlags = 0;
 	unsigned int m_Id = 0;
 
-	BaseCamera* m_pCamera = nullptr;
-	E_CAMERA_TYPE m_CameraType;
-
-	// Orthographic
-	void CreateOrthographicCamera(
-		float3 position, float3 direction,
-		float left = -30.0f,
-		float right = 30.0f,
-		float bot = -30.0f,
-		float top = 30.0f,
-		float nearZ = 0.01f,
-		float farZ = 1000.0f);
-
-	// Perspective
-	void CreatePerspectiveCamera(
-		float3 position, float3 direction,
-		float fov = 90.0f,
-		float aspectRatio = 1.0f,
-		float nearZ = 0.1f,
-		float farZ = 1000.0f);
-
 	virtual void UpdateLightColor() = 0;
-
 };
 
 #endif
