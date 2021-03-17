@@ -298,22 +298,23 @@ void Renderer::SortObjects()
 {
 	struct DistFromCamera
 	{
-		double distance;
-		component::ModelComponent* mc;
-		component::TransformComponent* tc;
+		double distance = 0.0f;
+		RenderComponent* rc = nullptr;
 	};
 
+	// Sort all vectors
 	for (auto& renderComponents : m_RenderComponents)
 	{
 		unsigned int numRenderComponents = static_cast<unsigned int>(renderComponents.second.size());
 
+		// Not the best practice to allocate on the heap every frame
 		DistFromCamera* distFromCamArr = new DistFromCamera[numRenderComponents];
 
 		// Get all the distances of each objects and store them by ID and distance
 		DirectX::XMFLOAT3 camPos = m_pScenePrimaryCamera->GetPosition();
 		for (unsigned int i = 0; i < numRenderComponents; i++)
 		{
-			DirectX::XMFLOAT3 objectPos = renderComponents.second.at(i).second->GetTransform()->GetPositionXMFLOAT3();
+			DirectX::XMFLOAT3 objectPos = renderComponents.second.at(i)->tc->GetTransform()->GetPositionXMFLOAT3();
 
 			double distance = sqrt(pow(camPos.x - objectPos.x, 2) +
 				pow(camPos.y - objectPos.y, 2) +
@@ -321,8 +322,8 @@ void Renderer::SortObjects()
 
 			// Save the object alongside its distance to the m_pCamera
 			distFromCamArr[i].distance = distance;
-			distFromCamArr[i].mc = renderComponents.second.at(i).first;
-			distFromCamArr[i].tc = renderComponents.second.at(i).second;
+			distFromCamArr[i].rc = renderComponents.second.at(i);
+
 		}
 
 		// InsertionSort (because its best case is O(N)), 
@@ -346,7 +347,7 @@ void Renderer::SortObjects()
 		renderComponents.second.clear();
 		for (unsigned int i = 0; i < numRenderComponents; i++)
 		{
-			renderComponents.second.push_back(std::make_pair(distFromCamArr[i].mc, distFromCamArr[i].tc));
+			renderComponents.second.push_back(distFromCamArr[i].rc);
 		}
 
 		// Free memory
@@ -581,30 +582,34 @@ void Renderer::InitModelComponent(component::ModelComponent* mc)
 	// Only add the m_Entities that actually should be drawn
 	if (tc != nullptr)
 	{
+		RenderComponent* rc = new RenderComponent();
+		rc->mc = mc;
+		rc->tc = tc;
+
 		// Finally store the object in the corresponding renderComponent vectors so it will be drawn
 		if (F_DRAW_FLAGS::DRAW_TRANSPARENT_CONSTANT & mc->GetDrawFlag())
 		{
-			m_RenderComponents[F_DRAW_FLAGS::DRAW_TRANSPARENT_CONSTANT].push_back(std::make_pair(mc, tc));
+			m_RenderComponents[F_DRAW_FLAGS::DRAW_TRANSPARENT_CONSTANT].push_back(rc);
 		}
 
 		if (F_DRAW_FLAGS::DRAW_TRANSPARENT_TEXTURE & mc->GetDrawFlag())
 		{
-			m_RenderComponents[F_DRAW_FLAGS::DRAW_TRANSPARENT_TEXTURE].push_back(std::make_pair(mc, tc));
+			m_RenderComponents[F_DRAW_FLAGS::DRAW_TRANSPARENT_TEXTURE].push_back(rc);
 		}
 
 		if (F_DRAW_FLAGS::DRAW_OPAQUE & mc->GetDrawFlag())
 		{
-			m_RenderComponents[F_DRAW_FLAGS::DRAW_OPAQUE].push_back(std::make_pair(mc, tc));
+			m_RenderComponents[F_DRAW_FLAGS::DRAW_OPAQUE].push_back(rc);
 		}
 
 		if (F_DRAW_FLAGS::NO_DEPTH & ~mc->GetDrawFlag())
 		{
-			m_RenderComponents[F_DRAW_FLAGS::NO_DEPTH].push_back(std::make_pair(mc, tc));
+			m_RenderComponents[F_DRAW_FLAGS::NO_DEPTH].push_back(rc);
 		}
 
 		if (F_DRAW_FLAGS::GIVE_SHADOW & mc->GetDrawFlag())
 		{
-			m_RenderComponents[F_DRAW_FLAGS::GIVE_SHADOW].push_back(std::make_pair(mc, tc));
+			m_RenderComponents[F_DRAW_FLAGS::GIVE_SHADOW].push_back(rc);
 		}
 	}
 }
@@ -763,9 +768,11 @@ void Renderer::UnInitModelComponent(component::ModelComponent* component)
 		{
 			// Remove from all renderComponent-vectors if they are there
 			component::ModelComponent* comp = nullptr;
-			comp = renderComponent.second[i].first;
+			comp = renderComponent.second[i]->mc;
 			if (comp == component)
 			{
+				delete renderComponent.second[i];
+				renderComponent.second[i] = nullptr;
 				renderComponent.second.erase(renderComponent.second.begin() + i);
 			}
 		}

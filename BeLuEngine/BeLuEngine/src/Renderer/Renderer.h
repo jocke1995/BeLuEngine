@@ -77,6 +77,8 @@ namespace component
 	class SpotLightComponent;
 }
 
+struct RenderComponent;
+
 // Events
 struct WindowChange;
 struct WindowSettingChange;
