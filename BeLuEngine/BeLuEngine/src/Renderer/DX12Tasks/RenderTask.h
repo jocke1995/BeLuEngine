@@ -26,6 +26,12 @@ class PipelineState;
 struct ID3D12RootSignature;
 struct D3D12_GRAPHICS_PIPELINE_STATE_DESC;
 
+struct RenderComponent
+{
+	component::ModelComponent* mc = nullptr;
+	component::TransformComponent* tc = nullptr;
+};
+
 class RenderTask : public DX12Task
 {
 public:
@@ -43,16 +49,14 @@ public:
 	
 	void AddRenderTargetView(std::string, const RenderTargetView* renderTargetView);
 	
-	void SetRenderComponents(
-		std::vector<std::pair<	component::ModelComponent*,
-								component::TransformComponent*>>* renderComponents);
+	void SetRenderComponents(std::vector<RenderComponent*>* renderComponents);
 	void SetMainDepthStencil(DepthStencil* depthStencil);
 
 	void SetCamera(BaseCamera* camera);
 	void SetSwapChain(SwapChain* swapChain);
 	
 protected:
-	std::vector<std::pair<component::ModelComponent*, component::TransformComponent*>> m_RenderComponents;
+	std::vector<RenderComponent*> m_RenderComponents;
 	std::map<std::string, const RenderTargetView*> m_RenderTargetViews;
 	
 	DepthStencil* m_pDepthStencil = nullptr;

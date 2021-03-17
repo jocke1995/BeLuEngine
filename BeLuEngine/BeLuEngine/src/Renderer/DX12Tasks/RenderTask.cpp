@@ -46,8 +46,7 @@ void RenderTask::AddRenderTargetView(std::string name, const RenderTargetView* r
 	m_RenderTargetViews[name] = renderTargetView;
 }
 
-void RenderTask::SetRenderComponents(std::vector<std::pair<	component::ModelComponent*,
-															component::TransformComponent*>>*renderComponents)
+void RenderTask::SetRenderComponents(std::vector<RenderComponent*> *renderComponents)
 {
 	m_RenderComponents = *renderComponents;
 }

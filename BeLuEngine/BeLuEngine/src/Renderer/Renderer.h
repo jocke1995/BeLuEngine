@@ -193,7 +193,7 @@ private:
 	Mesh* m_pFullScreenQuad = nullptr;
 
 	// Group of components that's needed for rendering:
-	std::map<F_DRAW_FLAGS, std::vector<std::pair<component::ModelComponent*, component::TransformComponent*>>> m_RenderComponents;
+	std::map<F_DRAW_FLAGS, std::vector<RenderComponent*>> m_RenderComponents;
 	std::vector<component::BoundingBoxComponent*> m_BoundingBoxesToBePicked;
 
 	ViewPool* m_pViewPool = nullptr;

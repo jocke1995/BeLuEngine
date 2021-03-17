@@ -100,9 +100,9 @@ PS_OUTPUT PS_main(VS_OUT input)
 	// Since hdr will lower the intensity of our emissive textures, our quick solution in this game is to
 	// just use plain colors as emissive textures (255, 0, 255) or (0, 255, 0) etc. So basicly we cannot
 	// use emissive textures like this(200, 50, 0). The intesity is increased so that a red emissive texture actually stays red after HDR.
-	finalColor += (emissive.rgb * 2);
+	//finalColor += (emissive.rgb * 2);
 
-	PS_OUTPUT output;
+	PS_OUTPUT output = (PS_OUTPUT)0;
 
 	//MaterialData mat = materials[info.matIndex];
 	//if (mat.m_HasRoughnessTexture == 1.0f)
