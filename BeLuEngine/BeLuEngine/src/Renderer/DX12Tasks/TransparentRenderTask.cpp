@@ -73,8 +73,8 @@ void TransparentRenderTask::Execute()
 	// Draw from opposite order from the sorted array
 	for(int i = m_RenderComponents.size() - 1; i >= 0; i--)
 	{
-		component::ModelComponent* mc = m_RenderComponents.at(i)->mc;
-		component::TransformComponent* tc = m_RenderComponents.at(i)->tc;
+		component::ModelComponent* mc = m_RenderComponents.at(i).mc;
+		component::TransformComponent* tc = m_RenderComponents.at(i).tc;
 
 		// Draw for every m_pMesh the MeshComponent has
 		for (unsigned int j = 0; j < mc->GetNrOfMeshes(); j++)

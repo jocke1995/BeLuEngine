@@ -120,7 +120,7 @@ enum class E_CAMERA_TYPE
 }
 
 // Debug
-#define SINGLE_THREADED_RENDERER true
+#define SINGLE_THREADED_RENDERER false
 #define DX12VALIDATIONGLAYER false
 #define DEVELOPERMODE_DRAWBOUNDINGBOX false
 
@@ -142,10 +142,11 @@ enum F_DRAW_FLAGS
 enum F_THREAD_FLAGS
 {
 	RENDER = BIT(1),
+	TEST = BIT(2),
 	// CopyTextures,
 	// PrepareNextScene ..
 	// etc
-	ALL = BIT(2)
+	ALL = BIT(3)
 	// etc..
 };
 

@@ -6,6 +6,25 @@ Scene* SponzaScene(SceneManager* sm);
 void TestUpdateScene(SceneManager* sm, double dt);
 void SponzaUpdateScene(SceneManager* sm, double dt);
 
+#include "Misc/Multithreading/MultiThreadedTask.h"
+
+class TestAsyncThread : public MultiThreadedTask
+{
+public:
+    TestAsyncThread()
+        :MultiThreadedTask(F_THREAD_FLAGS::TEST)
+    {};
+
+    void Execute()
+    {
+        while (true)
+        {
+            Sleep(200);
+            Log::Print("Async!\n");
+        }
+    }
+};
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
 {
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
@@ -30,6 +49,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
    // Set scene
    sceneManager->SetScene(scene);
    
+   TestAsyncThread test1 = TestAsyncThread();
+
+   //threadPool->AddTask(static_cast<MultiThreadedTask*>(&test1));
+   //test1.Execute();
+
    Log::Print("Entering Game-Loop ...\n\n");
    while (!window->ExitWindow())
    {

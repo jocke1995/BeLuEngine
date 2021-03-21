@@ -87,20 +87,20 @@ void ForwardRenderTask::Execute()
 	const DirectX::XMMATRIX* viewProjMatTrans = m_pCamera->GetViewProjectionTranposed();
 
 	// This pair for m_RenderComponents will be used for model-outlining in case any model is picked.
-	RenderComponent outlinedModel = {};
+	RenderComponent outlinedModel = {nullptr, nullptr};
 
 	// Draw for every Rendercomponent with stencil testing disabled
 	commandList->SetPipelineState(m_PipelineStates[0]->GetPSO());
 	for (int i = 0; i < m_RenderComponents.size(); i++)
 	{
-		component::ModelComponent* mc = m_RenderComponents.at(i)->mc;
-		component::TransformComponent* tc = m_RenderComponents.at(i)->tc;
+		component::ModelComponent* mc = m_RenderComponents.at(i).mc;
+		component::TransformComponent* tc = m_RenderComponents.at(i).tc;
 
 		// If the model is picked, we dont draw it with default stencil buffer.
 		// Instead we store it and draw it later with a different pso to allow for model-outlining
 		if (mc->IsPickedThisFrame() == true)
 		{
-			outlinedModel = *m_RenderComponents.at(i);
+			outlinedModel = m_RenderComponents.at(i);
 			continue;
 		}
 		commandList->OMSetStencilRef(1);

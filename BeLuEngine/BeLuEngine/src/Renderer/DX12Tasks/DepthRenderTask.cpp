@@ -66,8 +66,8 @@ void DepthRenderTask::Execute()
 	// Draw for every Rendercomponent
 	for (int i = 0; i < m_RenderComponents.size(); i++)
 	{
-		component::ModelComponent* mc = m_RenderComponents.at(i)->mc;
-		component::TransformComponent* tc = m_RenderComponents.at(i)->tc;
+		component::ModelComponent* mc = m_RenderComponents.at(i).mc;
+		component::TransformComponent* tc = m_RenderComponents.at(i).tc;
 
 		// Draws all entities with ModelComponent + TransformComponent
 		drawRenderComponent(mc, tc, viewProjMatTrans, commandList);

@@ -45,7 +45,7 @@ class Scene;
 class Light;
 
 // Graphics
-class RenderTask;
+#include "DX12Tasks/RenderTask.h"
 class WireframeRenderTask;
 class OutliningRenderTask;
 class BaseCamera;
@@ -195,7 +195,7 @@ private:
 	Mesh* m_pFullScreenQuad = nullptr;
 
 	// Group of components that's needed for rendering:
-	std::map<F_DRAW_FLAGS, std::vector<RenderComponent*>> m_RenderComponents;
+	std::map<F_DRAW_FLAGS, std::vector<RenderComponent>> m_RenderComponents;
 	std::vector<component::BoundingBoxComponent*> m_BoundingBoxesToBePicked;
 
 	ViewPool* m_pViewPool = nullptr;

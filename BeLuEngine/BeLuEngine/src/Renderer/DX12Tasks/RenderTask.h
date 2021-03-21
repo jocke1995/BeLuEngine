@@ -28,6 +28,10 @@ struct D3D12_GRAPHICS_PIPELINE_STATE_DESC;
 
 struct RenderComponent
 {
+public:
+	RenderComponent(component::ModelComponent* mc, component::TransformComponent* tc)
+		:mc(mc), tc(tc) {};
+
 	component::ModelComponent* mc = nullptr;
 	component::TransformComponent* tc = nullptr;
 };
@@ -49,14 +53,14 @@ public:
 	
 	void AddRenderTargetView(std::string, const RenderTargetView* renderTargetView);
 	
-	void SetRenderComponents(std::vector<RenderComponent*>* renderComponents);
+	void SetRenderComponents(std::vector<RenderComponent>* renderComponents);
 	void SetMainDepthStencil(DepthStencil* depthStencil);
 
 	void SetCamera(BaseCamera* camera);
 	void SetSwapChain(SwapChain* swapChain);
 	
 protected:
-	std::vector<RenderComponent*> m_RenderComponents;
+	std::vector<RenderComponent> m_RenderComponents;
 	std::map<std::string, const RenderTargetView*> m_RenderTargetViews;
 	
 	DepthStencil* m_pDepthStencil = nullptr;
