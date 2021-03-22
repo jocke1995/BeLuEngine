@@ -582,6 +582,8 @@ void Renderer::InitModelComponent(component::ModelComponent* mc)
 	// Only add the m_Entities that actually should be drawn
 	if (tc != nullptr)
 	{
+		tc->GetTransform()->m_pCB = new ConstantBuffer(m_pDevice5, sizeof(DirectX::XMMATRIX) * 2, L"Transform", m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
+
 		// Finally store the object in the corresponding renderComponent vectors so it will be drawn
 		if (F_DRAW_FLAGS::DRAW_TRANSPARENT_CONSTANT & mc->GetDrawFlag())
 		{
@@ -1538,6 +1540,7 @@ void Renderer::initRenderTasks()
 		L"OutlinedVertex.hlsl", L"OutlinedPixel.hlsl",
 		&gpsdOutliningVector,
 		L"outliningScaledPSO",
+		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV],
 		F_THREAD_FLAGS::RENDER);
 	
 	outliningRenderTask->SetMainDepthStencil(m_pMainDepthStencil);

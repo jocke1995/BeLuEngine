@@ -22,6 +22,8 @@ class PipelineState;
 #include "../../ECS/Components/Lights/PointLightComponent.h"
 #include "../../ECS/Components/Lights/SpotLightComponent.h"
 
+#include "../GPUMemory/ConstantBuffer.h"
+
 // DX12 Forward Declarations
 struct ID3D12RootSignature;
 struct D3D12_GRAPHICS_PIPELINE_STATE_DESC;
@@ -30,7 +32,7 @@ struct RenderComponent
 {
 public:
 	RenderComponent(component::ModelComponent* mc, component::TransformComponent* tc)
-		:mc(mc), tc(tc) {};
+		:mc(mc), tc(tc){};
 
 	component::ModelComponent* mc = nullptr;
 	component::TransformComponent* tc = nullptr;

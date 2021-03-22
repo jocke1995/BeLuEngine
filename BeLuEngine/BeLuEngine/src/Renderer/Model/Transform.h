@@ -1,6 +1,8 @@
 #ifndef TRANSFORM_H
 #define TRANSFORM_H
 
+class ConstantBuffer;
+
 class Transform
 {
 public:
@@ -43,9 +45,13 @@ public:
 	DirectX::XMFLOAT3 GetUpXMFLOAT3() const;
 	float3 GetUpFloat3() const;
 private:
+	friend class Renderer;
+	friend class OutliningRenderTask;
+
 	DirectX::XMMATRIX m_WorldMat;
 	DirectX::XMMATRIX m_WorldMatTransposed;
 
+	ConstantBuffer* m_pCB = nullptr;
 	DirectX::XMFLOAT3 m_Position;
 	DirectX::XMFLOAT3 m_Rot;
 	DirectX::XMFLOAT3 m_Scale;
