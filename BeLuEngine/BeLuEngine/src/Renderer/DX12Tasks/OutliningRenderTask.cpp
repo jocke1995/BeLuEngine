@@ -11,7 +11,6 @@
 #include "../RenderView.h"
 
 // Model info
-#include "../Renderer/Model/Transform.h"
 #include "../Renderer/Model/Mesh.h"
 
 OutliningRenderTask::OutliningRenderTask(
@@ -20,11 +19,14 @@ OutliningRenderTask::OutliningRenderTask(
 	const std::wstring& VSName, const std::wstring& PSName,
 	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*>* gpsds,
 	const std::wstring& psoName,
+	DescriptorHeap* cbvHeap,
 	unsigned int FLAG_THREAD)
 	:RenderTask(device, rootSignature, VSName, PSName, gpsds, psoName, FLAG_THREAD)
 {
 	// Init with nullptr
 	Clear();
+
+	//m_OutlineTransformToScale.m_pCB = new ConstantBuffer(device, sizeof(DirectX::XMMATRIX) * 2, L"OutlinedTransform", cbvHeap);
 }
 
 OutliningRenderTask::~OutliningRenderTask()

@@ -2,7 +2,7 @@
 #define OUTLININGRENDERTASK_H
 
 #include "RenderTask.h"
-
+#include "../Renderer/Model/Transform.h"
 class GraphicsState;
 class SwapChain;
 
@@ -14,6 +14,7 @@ public:
 		const std::wstring& VSName, const std::wstring& PSName,
 		std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*>* gpsds,
 		const std::wstring& psoName,
+		DescriptorHeap* cbvHeap,
 		unsigned int FLAG_THREAD);
 	~OutliningRenderTask();
 
@@ -23,6 +24,8 @@ public:
 	void Clear();
 private:
 	std::pair<component::ModelComponent*, component::TransformComponent*> m_ObjectToOutline;
+
+	//Transform m_OutlineTransformToScale = {};
 };
 
 #endif

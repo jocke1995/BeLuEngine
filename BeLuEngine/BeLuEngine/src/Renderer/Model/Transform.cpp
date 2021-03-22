@@ -14,12 +14,6 @@ Transform::Transform(bool invertDirection)
 
 Transform::~Transform()
 {
-	if (m_pCB != nullptr)
-	{
-		delete m_pCB;
-	}
-
-	m_pCB = nullptr;
 }
 
 void Transform::SetPosition(float x, float y, float z)

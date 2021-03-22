@@ -756,7 +756,7 @@ void Renderer::InitBoundingBoxComponent(component::BoundingBoxComponent* compone
 	}
 }
 
-void Renderer::UnInitModelComponent(component::ModelComponent* component)
+void Renderer::UnInitModelComponent(component::ModelComponent* mc)
 {
 	// Remove component from renderComponents
 	// TODO: change data structure to allow O(1) add and remove
@@ -768,11 +768,19 @@ void Renderer::UnInitModelComponent(component::ModelComponent* component)
 			// Remove from all renderComponent-vectors if they are there
 			component::ModelComponent* comp = nullptr;
 			comp = rcVec[i].mc;
-			if (comp == component)
+			if (comp == mc)
 			{
 				rcVec.erase(renderComponent.second.begin() + i);
 			}
 		}
+	}
+
+	// Delete constantBuffer for matrices
+	component::TransformComponent* tc = mc->GetParent()->GetComponent<component::TransformComponent>();
+	if (tc->GetTransform()->m_pCB != nullptr)
+	{
+		delete tc->GetTransform()->m_pCB;
+		tc->GetTransform()->m_pCB = nullptr;
 	}
 
 	// Update Render Tasks components (forward the change in renderComponents)
