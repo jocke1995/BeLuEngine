@@ -38,8 +38,7 @@ Here I will list all the features (that is worth mentioning) implemented in my e
 ##### Entity Component System
 ##### PBR using roughness and metallic maps
 ##### Multi-threading
-##### Shadow Mapping (Spotlights and DirectionalLights)
-##### FPS-Picking (with Boundingboxes)
+##### Picking (with Boundingboxes)
 ##### Stencil-buffer outlining
 
 ---
