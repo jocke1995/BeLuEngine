@@ -218,7 +218,7 @@ Scene* SponzaScene(SceneManager* sm)
     bbc = entity->AddComponent<component::BoundingBoxComponent>(F_BOUNDING_BOX_FLAGS::PICKING);
 
     mc->SetModel(sphereModel);
-    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_TRANSPARENT_CONSTANT | F_DRAW_FLAGS::NO_DEPTH );
     tc->GetTransform()->SetScale(1.0f);
     tc->GetTransform()->SetPosition(5, 15, 5);
     bbc->Init();

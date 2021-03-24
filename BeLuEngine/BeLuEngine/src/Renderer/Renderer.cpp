@@ -1558,7 +1558,7 @@ void Renderer::initRenderTasks()
 #pragma endregion ModelOutlining
 
 #pragma region Blend
-	// ------------------------ TASK 2: BLEND ---------------------------- FRONTCULL
+	// ------------------------ BLEND ---------------------------- FRONTCULL
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsdBlendFrontCull = {};
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsdBlendBackCull = {};
@@ -1609,7 +1609,7 @@ void Renderer::initRenderTasks()
 	gpsdBlendFrontCull.DepthStencilState = dsdBlend;
 	gpsdBlendFrontCull.DSVFormat = m_pMainDepthStencil->GetDSV()->GetDXGIFormat();
 
-	// ------------------------ TASK 2: BLEND ---------------------------- BACKCULL
+	// ------------------------ BLEND ---------------------------- BACKCULL
 
 	gpsdBlendBackCull.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 

@@ -25,7 +25,7 @@ public:
 private:
 	std::pair<component::ModelComponent*, component::TransformComponent*> m_ObjectToOutline;
 
-	//Transform m_OutlineTransformToScale = {};
+	Transform m_OutlineTransformToScale = {};
 };
 
 #endif

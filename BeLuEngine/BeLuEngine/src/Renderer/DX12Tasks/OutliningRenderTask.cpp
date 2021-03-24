@@ -26,11 +26,12 @@ OutliningRenderTask::OutliningRenderTask(
 	// Init with nullptr
 	Clear();
 
-	//m_OutlineTransformToScale.m_pCB = new ConstantBuffer(device, sizeof(DirectX::XMMATRIX) * 2, L"OutlinedTransform", cbvHeap);
+	m_OutlineTransformToScale.m_pCB = new ConstantBuffer(device, sizeof(DirectX::XMMATRIX) * 2, L"OutlinedTransform", cbvHeap);
 }
 
 OutliningRenderTask::~OutliningRenderTask()
 {
+	delete m_OutlineTransformToScale.m_pCB;
 }
 
 void OutliningRenderTask::Execute()
