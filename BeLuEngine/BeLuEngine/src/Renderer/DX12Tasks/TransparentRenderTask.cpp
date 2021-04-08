@@ -83,15 +83,10 @@ void TransparentRenderTask::Execute()
 			unsigned int num_Indices = m->GetNumIndices();
 			const SlotInfo* info = mc->GetSlotInfoAt(j);
 
-			Transform* transform = tc->GetTransform();
+			Transform* t = tc->GetTransform();
 
-			DirectX::XMMATRIX* WTransposed = transform->GetWorldMatrixTransposed();
-			DirectX::XMMATRIX WVPTransposed = (*viewProjMatTrans) * (*WTransposed);
-
-			// Create a CB_PER_OBJECT struct
-			CB_PER_OBJECT_STRUCT perObject = { *WTransposed, WVPTransposed , *info };
-
-			commandList->SetGraphicsRoot32BitConstants(RS::CB_PER_OBJECT_CONSTANTS, sizeof(CB_PER_OBJECT_STRUCT) / sizeof(UINT), &perObject, 0);
+			commandList->SetGraphicsRoot32BitConstants(RS::SLOTINFO_CONSTANTS, sizeof(SlotInfo) / sizeof(UINT), info, 0);
+			commandList->SetGraphicsRootConstantBufferView(RS::MATRICES_PER_OBJECT_CBV, t->m_pCB->GetDefaultResource()->GetGPUVirtualAdress());
 
 			commandList->IASetIndexBuffer(mc->GetMeshAt(j)->GetIndexBufferView());
 			// Draw each object twice with different PSO 

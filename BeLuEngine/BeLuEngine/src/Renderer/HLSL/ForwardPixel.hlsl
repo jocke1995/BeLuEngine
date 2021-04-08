@@ -18,13 +18,12 @@ ConstantBuffer<DirectionalLight> dirLight[]	: register(b0, space0);
 ConstantBuffer<PointLight> pointLight[]		: register(b0, space1);
 ConstantBuffer<SpotLight> spotLight[]		: register(b0, space2);
 
-ConstantBuffer<CB_PER_OBJECT_STRUCT> cbPerObject : register(b1, space3);
+ConstantBuffer<SlotInfo> info : register(b1, space3);
 ConstantBuffer<MaterialData>		 materials[] : register(b0, space4);
 ConstantBuffer<CB_PER_FRAME_STRUCT>  cbPerFrame  : register(b4, space3);
 
 PS_OUTPUT PS_main(VS_OUT input)
 {
-	SlotInfo info = cbPerObject.info;
 	// Sample from textures
 	float2 uvScaled = float2(input.uv.x, input.uv.y);
 	float4 albedo   = textures[info.textureAlbedo	].Sample(Anisotropic16_Wrap, uvScaled);

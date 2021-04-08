@@ -100,13 +100,8 @@ void WireframeRenderTask::Execute()
 			unsigned int num_Indices = m->GetNumIndices();
 			const SlotInfo* info = m_ObjectsToDraw[i]->GetSlotInfo(j);
 
-			DirectX::XMMATRIX* WTransposed = t->GetWorldMatrixTransposed();
-			DirectX::XMMATRIX WVPTransposed = (*viewProjMatTrans) * (*WTransposed);
-
-			// Create a CB_PER_OBJECT struct
-			CB_PER_OBJECT_STRUCT perObject = { *WTransposed, WVPTransposed,  *info };
-
-			commandList->SetGraphicsRoot32BitConstants(RS::CB_PER_OBJECT_CONSTANTS, sizeof(CB_PER_OBJECT_STRUCT) / sizeof(UINT), &perObject, 0);
+			commandList->SetGraphicsRoot32BitConstants(RS::SLOTINFO_CONSTANTS, sizeof(SlotInfo) / sizeof(UINT), info, 0);
+			commandList->SetGraphicsRootConstantBufferView(RS::MATRICES_PER_OBJECT_CBV, t->m_pCB->GetDefaultResource()->GetGPUVirtualAdress());
 
 			commandList->IASetIndexBuffer(m->GetIndexBufferView());
 			commandList->DrawIndexedInstanced(num_Indices, 1, 0, 0, 0);

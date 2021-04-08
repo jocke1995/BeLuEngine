@@ -79,7 +79,7 @@ void OutliningRenderTask::Execute()
 	const DirectX::XMMATRIX* viewProjMatTrans = m_pCamera->GetViewProjectionTranposed();
 
 	// Draw for every m_pMesh
-	for (int i = 0; i < m_ObjectToOutline.first->GetNrOfMeshes(); i++)
+	/*for (int i = 0; i < m_ObjectToOutline.first->GetNrOfMeshes(); i++)
 	{
 		Mesh* m = m_ObjectToOutline.first->GetMeshAt(i);
 		Transform* t = m_ObjectToOutline.second->GetTransform();
@@ -95,16 +95,14 @@ void OutliningRenderTask::Execute()
 		DirectX::XMMATRIX* WTransposed = newScaledTransform.GetWorldMatrixTransposed();
 		DirectX::XMMATRIX WVPTransposed = (*viewProjMatTrans) * (*WTransposed);
 
-		// Create a CB_PER_OBJECT struct
-		CB_PER_OBJECT_STRUCT perObject = { *WTransposed, WVPTransposed, *info };
-
-		commandList->SetGraphicsRoot32BitConstants(RS::CB_PER_OBJECT_CONSTANTS, sizeof(CB_PER_OBJECT_STRUCT) / sizeof(UINT), &perObject, 0);
+		commandList->SetGraphicsRoot32BitConstants(RS::SLOTINFO_CONSTANTS, sizeof(SlotInfo) / sizeof(UINT), info, 0);
+		commandList->SetGraphicsRootConstantBufferView(RS::MATRICES_PER_OBJECT_CBV, t->m_pCB->GetDefaultResource()->GetGPUVirtualAdress());
 
 		commandList->IASetIndexBuffer(m->GetIndexBufferView());
 
 		commandList->OMSetStencilRef(1);
 		commandList->DrawIndexedInstanced(num_Indices, 1, 0, 0, 0);
-	}
+	}*/
 
 	commandList->Close();
 }

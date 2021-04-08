@@ -76,12 +76,7 @@ void DownSampleRenderTask::Execute()
 
 	commandList->SetPipelineState(m_PipelineStates[0]->GetPSO());
 
-	DirectX::XMMATRIX identityMatrix = DirectX::XMMatrixIdentity();
-
-	// Create a CB_PER_OBJECT struct
-	CB_PER_OBJECT_STRUCT perObject = { identityMatrix, identityMatrix, m_Info };
-
-	commandList->SetGraphicsRoot32BitConstants(RS::CB_PER_OBJECT_CONSTANTS, sizeof(CB_PER_OBJECT_STRUCT) / sizeof(UINT), &perObject, 0);
+	commandList->SetGraphicsRoot32BitConstants(RS::SLOTINFO_CONSTANTS, sizeof(SlotInfo) / sizeof(UINT), &m_Info, 0);
 
 	commandList->IASetIndexBuffer(m_pFullScreenQuadMesh->GetIndexBufferView());
 

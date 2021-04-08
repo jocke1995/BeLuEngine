@@ -44,11 +44,10 @@ struct SlotInfo
 
 };
 
-struct CB_PER_OBJECT_STRUCT
+struct MATRICES_PER_OBJECT_STRUCT
 {
 	float4x4 worldMatrix;
 	float4x4 WVP;
-	SlotInfo info;
 };
 
 struct CB_PER_FRAME_STRUCT

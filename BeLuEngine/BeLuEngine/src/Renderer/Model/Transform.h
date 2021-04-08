@@ -47,6 +47,10 @@ public:
 private:
 	friend class Renderer;
 	friend class OutliningRenderTask;
+	friend class WireframeRenderTask;
+	friend class TransparentRenderTask;
+	friend class DepthRenderTask;
+	friend class ForwardRenderTask;
 
 	DirectX::XMMATRIX m_WorldMat;
 	DirectX::XMMATRIX m_WorldMatTransposed;

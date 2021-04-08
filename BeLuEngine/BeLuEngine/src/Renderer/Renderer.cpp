@@ -381,6 +381,11 @@ void Renderer::ExecuteMT()
 	copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME];
 	m_pThreadPool->AddTask(copyTask);
 
+	// Copy per frame (matrices, world and wvp)
+	copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME_MATRICES];
+	static_cast<CopyPerFrameMatricesTask*>(copyTask)->SetCamera(m_pScenePrimaryCamera);
+	m_pThreadPool->AddTask(copyTask);
+
 	// Depth pre-pass
 	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::DEPTH_PRE_PASS];
 	m_pThreadPool->AddTask(renderTask);
@@ -480,10 +485,6 @@ void Renderer::ExecuteST()
 	ComputeTask* computeTask = nullptr;
 	RenderTask* renderTask = nullptr;
 	/* --------------------- Record command lists --------------------- */
-
-	// TODO: Temp updating matrices here. should be in copyTask so it can be multithreaded.
-	
-
 	// Copy on demand
 	copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND];
 	copyTask->Execute();

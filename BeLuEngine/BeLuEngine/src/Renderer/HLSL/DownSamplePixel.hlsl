@@ -7,7 +7,7 @@ struct VS_OUT
 };
 
 // Source descriptorHeapIndex is stored in albedo
-ConstantBuffer<CB_PER_OBJECT_STRUCT> descriptorHeapIndices : register(b1, space3);
+ConstantBuffer<SlotInfo> info : register(b1, space3);
 
 Texture2D<float4> textures[]   : register (t0);
 
@@ -15,7 +15,7 @@ SamplerState linear_Wrap	: register (s5);
 
 float4 PS_main(VS_OUT input) : SV_TARGET0
 {
-	float4 outputFiltered = textures[descriptorHeapIndices.info.textureAlbedo].Sample(linear_Wrap, input.uv);
+	float4 outputFiltered = textures[info.textureAlbedo].Sample(linear_Wrap, input.uv);
 
 	return outputFiltered;
 }

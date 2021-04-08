@@ -13,7 +13,8 @@ struct vertex
 	float3 tang;
 };
 
-ConstantBuffer<CB_PER_OBJECT_STRUCT> cbPerObject : register(b1, space3);
+ConstantBuffer<SlotInfo> info : register(b1, space3);
+ConstantBuffer<MATRICES_PER_OBJECT_STRUCT> matricesPerObject : register(b3, space3);
 
 StructuredBuffer<vertex> meshes[] : register(t0);
 
@@ -21,10 +22,10 @@ VS_OUT VS_main(uint vID : SV_VertexID)
 {
 	VS_OUT output = (VS_OUT)0;
 
-	vertex mesh = meshes[cbPerObject.info.vertexDataIndex][vID];
+	vertex mesh = meshes[info.vertexDataIndex][vID];
 	float4 vertexPosition = float4(mesh.pos.xyz, 1.0f);
 
-	output.pos = mul(vertexPosition, cbPerObject.WVP);
+	output.pos = mul(vertexPosition, matricesPerObject.WVP);
 
 	return output;
 }
