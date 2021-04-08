@@ -19,22 +19,6 @@ CopyPerFrameTask::~CopyPerFrameTask()
 
 }
 
-void CopyPerFrameTask::ClearSpecific(const Resource* uploadResource)
-{
-	unsigned int i = 0;
-
-	// Loop through all copyPerFrame tasks
-	for (auto& tuple : m_UploadDefaultData)
-	{
-		if (std::get<0>(tuple) == uploadResource)
-		{
-			// Remove
-			m_UploadDefaultData.erase(m_UploadDefaultData.begin() + i);
-		}
-		i++;
-	}
-}
-
 void CopyPerFrameTask::Clear()
 {
 	m_UploadDefaultData.clear();

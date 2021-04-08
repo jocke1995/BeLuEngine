@@ -64,6 +64,7 @@
 
 // Copy 
 #include "DX12Tasks/CopyPerFrameTask.h"
+#include "DX12Tasks/CopyPerFrameMatricesTask.h"
 #include "DX12Tasks/CopyOnDemandTask.h"
 
 // Compute
@@ -480,12 +481,20 @@ void Renderer::ExecuteST()
 	RenderTask* renderTask = nullptr;
 	/* --------------------- Record command lists --------------------- */
 
+	// TODO: Temp updating matrices here. should be in copyTask so it can be multithreaded.
+	
+
 	// Copy on demand
 	copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND];
 	copyTask->Execute();
 
 	// Copy per frame
 	copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME];
+	copyTask->Execute();
+
+	// Copy per frame (matrices, world and wvp)
+	copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME_MATRICES];
+	static_cast<CopyPerFrameMatricesTask*>(copyTask)->SetCamera(m_pScenePrimaryCamera);
 	copyTask->Execute();
 
 	// Depth pre-pass
@@ -583,6 +592,10 @@ void Renderer::InitModelComponent(component::ModelComponent* mc)
 	if (tc != nullptr)
 	{
 		tc->GetTransform()->m_pCB = new ConstantBuffer(m_pDevice5, sizeof(DirectX::XMMATRIX) * 2, L"Transform", m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
+		ConstantBuffer* cb = tc->GetTransform()->m_pCB;
+
+
+		m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME_MATRICES]->Submit(&std::make_tuple(cb->GetUploadResource(), cb->GetDefaultResource(), static_cast<const void*>(tc->GetTransform())));
 
 		// Finally store the object in the corresponding renderComponent vectors so it will be drawn
 		if (F_DRAW_FLAGS::DRAW_TRANSPARENT_CONSTANT & mc->GetDrawFlag())
@@ -775,8 +788,12 @@ void Renderer::UnInitModelComponent(component::ModelComponent* mc)
 		}
 	}
 
-	// Delete constantBuffer for matrices
 	component::TransformComponent* tc = mc->GetParent()->GetComponent<component::TransformComponent>();
+
+	// Unsubmit from updating to GPU every frame
+	m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME_MATRICES]->ClearSpecific(tc->GetTransform()->m_pCB->GetUploadResource());
+
+	// Delete constantBuffer for matrices
 	if (tc->GetTransform()->m_pCB != nullptr)
 	{
 		delete tc->GetTransform()->m_pCB;
@@ -1784,6 +1801,7 @@ void Renderer::initRenderTasks()
 
 	// CopyTasks
 	CopyTask* copyPerFrameTask = new CopyPerFrameTask(m_pDevice5, E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE, F_THREAD_FLAGS::RENDER, L"copyPerFrameCL");
+	CopyTask* copyPerFrameMatricesTask = new CopyPerFrameMatricesTask(m_pDevice5, E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE, F_THREAD_FLAGS::RENDER, L"copyPerFrameMatricesCL");
 	CopyTask* copyOnDemandTask = new CopyOnDemandTask(m_pDevice5, E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE, F_THREAD_FLAGS::RENDER, L"copyOnDemandCL");
 
 #pragma endregion ComputeAndCopyTasks
@@ -1794,6 +1812,7 @@ void Renderer::initRenderTasks()
 	/* ------------------------- CopyQueue Tasks ------------------------ */
 
 	m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME] = copyPerFrameTask;
+	m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME_MATRICES] = copyPerFrameMatricesTask;
 	m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND] = copyOnDemandTask;
 
 	/* ------------------------- ComputeQueue Tasks ------------------------ */
@@ -1820,6 +1839,11 @@ void Renderer::initRenderTasks()
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
 		m_DirectCommandLists[i].push_back(copyPerFrameTask->GetCommandInterface()->GetCommandList(i));
+	}
+
+	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
+	{
+		m_DirectCommandLists[i].push_back(copyPerFrameMatricesTask->GetCommandInterface()->GetCommandList(i));
 	}
 
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)

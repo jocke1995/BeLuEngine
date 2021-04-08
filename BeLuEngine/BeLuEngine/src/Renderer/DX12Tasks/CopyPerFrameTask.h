@@ -13,10 +13,6 @@ public:
 		const std::wstring& clName);
 	virtual ~CopyPerFrameTask();
 
-	// The submit is inside CopyTask
-
-	// Removal
-	void ClearSpecific(const Resource* uploadResource);
 	void Clear() override;
 
 	void Execute();
