@@ -230,7 +230,7 @@ Scene* SponzaScene(SceneManager* sm)
 
     mc->SetModel(sphereModel);
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
-    tc->GetTransform()->SetScale(1.0f);
+    tc->GetTransform()->SetScale(2.0f);
     tc->GetTransform()->SetPosition(5, 25, 10);
     bbc->Init();
 
@@ -241,7 +241,7 @@ Scene* SponzaScene(SceneManager* sm)
 
     mc->SetModel(sphereModel);
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
-    tc->GetTransform()->SetScale(1.0f);
+    tc->GetTransform()->SetScale(2.0f);
     tc->GetTransform()->SetPosition(5, 35, 15);
     bbc->Init();
     /* ---------------------- Sphere ---------------------- */
