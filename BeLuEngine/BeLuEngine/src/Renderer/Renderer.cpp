@@ -398,11 +398,7 @@ void Renderer::ExecuteMT()
 	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::DOWNSAMPLE];
 	m_pThreadPool->AddTask(renderTask);
 
-	// Blending with constant value
-	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::TRANSPARENT_CONSTANT];
-	m_pThreadPool->AddTask(renderTask);
-
-	// Blending with opacity texture
+	// Blend
 	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::TRANSPARENT_TEXTURE];
 	m_pThreadPool->AddTask(renderTask);
 
@@ -510,11 +506,7 @@ void Renderer::ExecuteST()
 	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::DOWNSAMPLE];
 	renderTask->Execute();
 
-	// Blending with constant value
-	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::TRANSPARENT_CONSTANT];
-	renderTask->Execute();
-
-	// Blending with opacity texture
+	// Blend
 	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::TRANSPARENT_TEXTURE];
 	renderTask->Execute();
 
@@ -1070,7 +1062,6 @@ void Renderer::setRenderTasksPrimaryCamera()
 {
 	m_RenderTasks[E_RENDER_TASK_TYPE::DEPTH_PRE_PASS]->SetCamera(m_pScenePrimaryCamera);
 	m_RenderTasks[E_RENDER_TASK_TYPE::FORWARD_RENDER]->SetCamera(m_pScenePrimaryCamera);
-	m_RenderTasks[E_RENDER_TASK_TYPE::TRANSPARENT_CONSTANT]->SetCamera(m_pScenePrimaryCamera);
 	m_RenderTasks[E_RENDER_TASK_TYPE::TRANSPARENT_TEXTURE]->SetCamera(m_pScenePrimaryCamera);
 	m_RenderTasks[E_RENDER_TASK_TYPE::OUTLINE]->SetCamera(m_pScenePrimaryCamera);
 
@@ -1654,22 +1645,6 @@ void Renderer::initRenderTasks()
 	// Push back to vector
 	gpsdBlendVector.push_back(&gpsdBlendFrontCull);
 	gpsdBlendVector.push_back(&gpsdBlendBackCull);
-
-
-
-	RenderTask* transparentConstantRenderTask = new TransparentRenderTask(m_pDevice5,
-		m_pRootSignature,
-		L"TransparentConstantVertex.hlsl",
-		L"TransparentConstantPixel.hlsl",
-		&gpsdBlendVector,
-		L"BlendPSOConstant",
-		F_THREAD_FLAGS::RENDER);
-
-	transparentConstantRenderTask->AddResource("cbPerFrame", m_pCbPerFrame->GetDefaultResource());
-	transparentConstantRenderTask->AddResource("cbPerScene", m_pCbPerScene->GetDefaultResource());
-	transparentConstantRenderTask->SetMainDepthStencil(m_pMainDepthStencil);
-	transparentConstantRenderTask->AddRenderTargetView("mainColorTarget", m_pMainColorBuffer.first->GetRTV());
-	transparentConstantRenderTask->SetDescriptorHeaps(m_DescriptorHeaps);
 	
 	/*---------------------------------- TRANSPARENT_TEXTURE_RENDERTASK -------------------------------------*/
 	RenderTask* transparentTextureRenderTask = new TransparentRenderTask(m_pDevice5,
@@ -1823,7 +1798,6 @@ void Renderer::initRenderTasks()
 	/* ------------------------- DirectQueue Tasks ---------------------- */
 	m_RenderTasks[E_RENDER_TASK_TYPE::DEPTH_PRE_PASS] = DepthPrePassRenderTask;
 	m_RenderTasks[E_RENDER_TASK_TYPE::FORWARD_RENDER] = forwardRenderTask;
-	m_RenderTasks[E_RENDER_TASK_TYPE::TRANSPARENT_CONSTANT] = transparentConstantRenderTask;
 	m_RenderTasks[E_RENDER_TASK_TYPE::TRANSPARENT_TEXTURE] = transparentTextureRenderTask;
 	m_RenderTasks[E_RENDER_TASK_TYPE::WIREFRAME] = wireFrameRenderTask;
 	m_RenderTasks[E_RENDER_TASK_TYPE::OUTLINE] = outliningRenderTask;
@@ -1860,11 +1834,6 @@ void Renderer::initRenderTasks()
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
 		m_DirectCommandLists[i].push_back(downSampleTask->GetCommandInterface()->GetCommandList(i));
-	}
-
-	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
-	{
-		m_DirectCommandLists[i].push_back(transparentConstantRenderTask->GetCommandInterface()->GetCommandList(i));
 	}
 
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
@@ -1910,7 +1879,6 @@ void Renderer::setRenderTasksRenderComponents()
 {
 	m_RenderTasks[E_RENDER_TASK_TYPE::DEPTH_PRE_PASS]->SetRenderComponents(&m_RenderComponents[F_DRAW_FLAGS::NO_DEPTH]);
 	m_RenderTasks[E_RENDER_TASK_TYPE::FORWARD_RENDER]->SetRenderComponents(&m_RenderComponents[F_DRAW_FLAGS::DRAW_OPAQUE]);
-	m_RenderTasks[E_RENDER_TASK_TYPE::TRANSPARENT_CONSTANT]->SetRenderComponents(&m_RenderComponents[F_DRAW_FLAGS::DRAW_TRANSPARENT_CONSTANT]);
 	m_RenderTasks[E_RENDER_TASK_TYPE::TRANSPARENT_TEXTURE]->SetRenderComponents(&m_RenderComponents[F_DRAW_FLAGS::DRAW_TRANSPARENT_TEXTURE]);
 }
 

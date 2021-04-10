@@ -28,6 +28,7 @@ private:
 	std::vector<const ShaderResourceView*> m_SRVs;
 
 	SlotInfo m_Info;
+	DescriptorHeapIndices m_dhIndices;
 	unsigned int m_NumIndices;
 
 };

@@ -37,6 +37,10 @@ public:
     // Textures ------------
     Texture* LoadTexture2D(const std::wstring& path);
 
+    // Creates material from parameter.
+    // If no parameter is specified, a default material is created.
+    Material* CreateMaterial(std::wstring matName, const Material* mat = nullptr);
+
     // IsLoadedFunctions
     bool IsModelLoadedOnGpu(const std::wstring& name) const;
     bool IsModelLoadedOnGpu(const Model* model) const;

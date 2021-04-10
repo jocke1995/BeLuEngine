@@ -32,6 +32,8 @@ private:
 	Mesh* m_pFullScreenQuadMesh = nullptr;
 
 	SlotInfo m_Info;
+	DescriptorHeapIndices m_dhIndices;
+
 	unsigned int m_NumIndices;
 };
 

@@ -45,7 +45,7 @@ void DownSampleRenderTask::SetFullScreenQuadInSlotInfo()
 	m_Info.vertexDataIndex = m_pFullScreenQuadMesh->m_pSRV->GetDescriptorHeapIndex();
 
 	// The descriptorHeapIndices for the source&dest are currently put inside the textureSlots inside SlotInfo
-	m_Info.textureAlbedo = m_pSourceSRV->GetDescriptorHeapIndex();
+	m_dhIndices.index0 = m_pSourceSRV->GetDescriptorHeapIndex();
 }
 
 void DownSampleRenderTask::Execute()
@@ -76,6 +76,7 @@ void DownSampleRenderTask::Execute()
 
 	commandList->SetPipelineState(m_PipelineStates[0]->GetPSO());
 
+	commandList->SetGraphicsRoot32BitConstants(RS::DHINDICES_CONSTANTS, sizeof(DescriptorHeapIndices) / sizeof(UINT), &m_dhIndices, 0);
 	commandList->SetGraphicsRoot32BitConstants(RS::SLOTINFO_CONSTANTS, sizeof(SlotInfo) / sizeof(UINT), &m_Info, 0);
 
 	commandList->IASetIndexBuffer(m_pFullScreenQuadMesh->GetIndexBufferView());

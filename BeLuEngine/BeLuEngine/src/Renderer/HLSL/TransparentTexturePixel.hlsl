@@ -12,19 +12,22 @@ ConstantBuffer<DirectionalLight> dirLight[]	: register(b0, space0);
 ConstantBuffer<PointLight> pointLight[]		: register(b0, space1);
 ConstantBuffer<SpotLight> spotLight[]		: register(b0, space2);
 
-ConstantBuffer<SlotInfo> info : register(b1, space3);
+ConstantBuffer<SlotInfo>			 info		 : register(b1, space3);
+ConstantBuffer<MaterialData>		 materials[] : register(b0, space4);
 ConstantBuffer<CB_PER_FRAME_STRUCT>  cbPerFrame  : register(b4, space3);
 
 float4 PS_main(VS_OUT input) : SV_TARGET0
 {
+	MaterialData matData = materials[info.materialIndex];
+
 	// Sample from textures
 	float2 uvScaled = float2(input.uv.x, input.uv.y);
-	float4 albedo	= textures[info.textureAlbedo	].Sample(Anisotropic16_Wrap, uvScaled);
-	float roughness = textures[info.textureRoughness].Sample(Anisotropic16_Wrap, uvScaled).r;
-	float metallic	= textures[info.textureMetallic	].Sample(Anisotropic16_Wrap, uvScaled).r;
-	float4 emissive = textures[info.textureEmissive	].Sample(Anisotropic16_Wrap, uvScaled);
-	float opacity	= textures[info.textureOpacity	].Sample(Anisotropic16_Wrap, uvScaled).r;
-	float4 normal	= textures[info.textureNormal	].Sample(Anisotropic16_Wrap, uvScaled);
+	float4 albedo   = textures[0].Sample(Anisotropic16_Wrap, uvScaled);
+	float roughness = textures[0].Sample(Anisotropic16_Wrap, uvScaled).r;
+	float metallic  = textures[0].Sample(Anisotropic16_Wrap, uvScaled).r;
+	float4 emissive = textures[0].Sample(Anisotropic16_Wrap, uvScaled);
+	float4 normal	= textures[0].Sample(Anisotropic16_Wrap, uvScaled);
+	float opacity   = textures[0].Sample(Anisotropic16_Wrap, uvScaled).r;
 
 	normal = (2.0f * normal) - 1.0f;
 	normal = float4(normalize(mul(normal.xyz, input.tbn)), 1.0f);

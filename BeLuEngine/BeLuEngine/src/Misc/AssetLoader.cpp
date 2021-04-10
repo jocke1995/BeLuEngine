@@ -39,6 +39,11 @@ AssetLoader::AssetLoader(ID3D12Device5* device, DescriptorHeap* descriptorHeap_C
 	loadDefaultMaterial();
 }
 
+Material* AssetLoader::CreateMaterial(std::wstring matName, const Material* mat)
+{
+	return nullptr;
+}
+
 bool AssetLoader::IsModelLoadedOnGpu(const std::wstring& name) const
 {
 	return m_LoadedModels.at(name).first;

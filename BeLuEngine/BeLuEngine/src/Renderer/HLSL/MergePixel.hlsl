@@ -6,7 +6,7 @@ struct VS_OUT
 	float2 uv   : UV;
 };
 
-ConstantBuffer<SlotInfo> info : register(b1, space3);
+ConstantBuffer<DescriptorHeapIndices> dhIndices : register(b2, space3);
 
 Texture2D textures[]   : register (t0);
 
@@ -14,8 +14,8 @@ SamplerState point_Wrap	: register (s5);
 
 float4 PS_main(VS_OUT input) : SV_TARGET0
 {
-	float4 blurColor = textures[info.textureAlbedo].Sample(point_Wrap, input.uv);
-	float4 sceneColor = textures[info.textureMetallic].Sample(point_Wrap, input.uv);
+	float4 blurColor = textures[dhIndices.index0].Sample(point_Wrap, input.uv);
+	float4 sceneColor = textures[dhIndices.index1].Sample(point_Wrap, input.uv);
 
 	// Darken down the base image in areas where there is a lot of bloom
 	sceneColor *= (1 - saturate(blurColor));

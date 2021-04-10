@@ -48,8 +48,8 @@ void MergeRenderTask::CreateSlotInfo()
 
 	// Textures
 	// The descriptorHeapIndices for the SRVs are currently put inside the textureSlots inside SlotInfo
-	m_Info.textureAlbedo = m_SRVs[0]->GetDescriptorHeapIndex();	// Blurred srv
-	m_Info.textureMetallic = m_SRVs[1]->GetDescriptorHeapIndex();	// Main color buffer
+	m_dhIndices.index0 = m_SRVs[0]->GetDescriptorHeapIndex();	// Blurred srv
+	m_dhIndices.index1 = m_SRVs[1]->GetDescriptorHeapIndex();	// Main color buffer
 }
 
 void MergeRenderTask::Execute()
@@ -99,6 +99,7 @@ void MergeRenderTask::Execute()
 	commandList->SetPipelineState(m_PipelineStates[0]->GetPSO());
 
 	// Draw a fullscreen quad 
+	commandList->SetGraphicsRoot32BitConstants(RS::DHINDICES_CONSTANTS, sizeof(DescriptorHeapIndices) / sizeof(UINT), &m_dhIndices, 0);
 	commandList->SetGraphicsRoot32BitConstants(RS::SLOTINFO_CONSTANTS, sizeof(SlotInfo) / sizeof(UINT), &m_Info, 0);
 
 	commandList->IASetIndexBuffer(m_pFullScreenQuadMesh->GetIndexBufferView());

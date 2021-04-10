@@ -212,16 +212,16 @@ Scene* SponzaScene(SceneManager* sm)
     /* ---------------------- Sponza ---------------------- */
 
     /* ---------------------- Sphere ---------------------- */
-    entity = scene->AddEntity("sphere1");
-    mc = entity->AddComponent<component::ModelComponent>();
-    tc = entity->AddComponent<component::TransformComponent>();
-    bbc = entity->AddComponent<component::BoundingBoxComponent>(F_BOUNDING_BOX_FLAGS::PICKING);
-
-    mc->SetModel(sphereModel);
-    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_TRANSPARENT_CONSTANT | F_DRAW_FLAGS::NO_DEPTH );
-    tc->GetTransform()->SetScale(1.0f);
-    tc->GetTransform()->SetPosition(5, 15, 5);
-    bbc->Init();
+    //entity = scene->AddEntity("sphere1");
+    //mc = entity->AddComponent<component::ModelComponent>();
+    //tc = entity->AddComponent<component::TransformComponent>();
+    //bbc = entity->AddComponent<component::BoundingBoxComponent>(F_BOUNDING_BOX_FLAGS::PICKING);
+    //
+    //mc->SetModel(sphereModel);
+    //mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_TRANSPARENT_CONSTANT | F_DRAW_FLAGS::NO_DEPTH );
+    //tc->GetTransform()->SetScale(1.0f);
+    //tc->GetTransform()->SetPosition(5, 15, 5);
+    //bbc->Init();
 
     entity = scene->AddEntity("sphere2");
     mc = entity->AddComponent<component::ModelComponent>();
