@@ -399,7 +399,7 @@ void Renderer::ExecuteMT()
 	m_pThreadPool->AddTask(renderTask);
 
 	// Blend
-	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::TRANSPARENT_TEXTURE];
+	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::OPACITY];
 	m_pThreadPool->AddTask(renderTask);
 
 	// Blurring for bloom
@@ -507,7 +507,7 @@ void Renderer::ExecuteST()
 	renderTask->Execute();
 
 	// Blend
-	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::TRANSPARENT_TEXTURE];
+	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::OPACITY];
 	renderTask->Execute();
 
 	// Blurring for bloom
@@ -591,14 +591,9 @@ void Renderer::InitModelComponent(component::ModelComponent* mc)
 		m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME_MATRICES]->Submit(&std::make_tuple(cb->GetUploadResource(), cb->GetDefaultResource(), static_cast<const void*>(tc->GetTransform())));
 
 		// Finally store the object in the corresponding renderComponent vectors so it will be drawn
-		if (F_DRAW_FLAGS::DRAW_TRANSPARENT_CONSTANT & mc->GetDrawFlag())
+		if (F_DRAW_FLAGS::DRAW_TRANSPARENT & mc->GetDrawFlag())
 		{
-			m_RenderComponents[F_DRAW_FLAGS::DRAW_TRANSPARENT_CONSTANT].emplace_back(mc, tc);
-		}
-
-		if (F_DRAW_FLAGS::DRAW_TRANSPARENT_TEXTURE & mc->GetDrawFlag())
-		{
-			m_RenderComponents[F_DRAW_FLAGS::DRAW_TRANSPARENT_TEXTURE].emplace_back(mc, tc);
+			m_RenderComponents[F_DRAW_FLAGS::DRAW_TRANSPARENT].emplace_back(mc, tc);
 		}
 
 		if (F_DRAW_FLAGS::DRAW_OPAQUE & mc->GetDrawFlag())
@@ -1062,7 +1057,7 @@ void Renderer::setRenderTasksPrimaryCamera()
 {
 	m_RenderTasks[E_RENDER_TASK_TYPE::DEPTH_PRE_PASS]->SetCamera(m_pScenePrimaryCamera);
 	m_RenderTasks[E_RENDER_TASK_TYPE::FORWARD_RENDER]->SetCamera(m_pScenePrimaryCamera);
-	m_RenderTasks[E_RENDER_TASK_TYPE::TRANSPARENT_TEXTURE]->SetCamera(m_pScenePrimaryCamera);
+	m_RenderTasks[E_RENDER_TASK_TYPE::OPACITY]->SetCamera(m_pScenePrimaryCamera);
 	m_RenderTasks[E_RENDER_TASK_TYPE::OUTLINE]->SetCamera(m_pScenePrimaryCamera);
 
 	if (DEVELOPERMODE_DRAWBOUNDINGBOX == true)
@@ -1647,7 +1642,7 @@ void Renderer::initRenderTasks()
 	gpsdBlendVector.push_back(&gpsdBlendBackCull);
 	
 	/*---------------------------------- TRANSPARENT_TEXTURE_RENDERTASK -------------------------------------*/
-	RenderTask* transparentTextureRenderTask = new TransparentRenderTask(m_pDevice5,
+	RenderTask* transparentRenderTask = new TransparentRenderTask(m_pDevice5,
 		m_pRootSignature,
 		L"TransparentTextureVertex.hlsl",
 		L"TransparentTexturePixel.hlsl",
@@ -1655,11 +1650,11 @@ void Renderer::initRenderTasks()
 		L"BlendPSOTexture",
 		F_THREAD_FLAGS::RENDER);
 
-	transparentTextureRenderTask->AddResource("cbPerFrame", m_pCbPerFrame->GetDefaultResource());
-	transparentTextureRenderTask->AddResource("cbPerScene", m_pCbPerScene->GetDefaultResource());
-	transparentTextureRenderTask->SetMainDepthStencil(m_pMainDepthStencil);
-	transparentTextureRenderTask->AddRenderTargetView("mainColorTarget", m_pMainColorBuffer.first->GetRTV());
-	transparentTextureRenderTask->SetDescriptorHeaps(m_DescriptorHeaps);
+	transparentRenderTask->AddResource("cbPerFrame", m_pCbPerFrame->GetDefaultResource());
+	transparentRenderTask->AddResource("cbPerScene", m_pCbPerScene->GetDefaultResource());
+	transparentRenderTask->SetMainDepthStencil(m_pMainDepthStencil);
+	transparentRenderTask->AddRenderTargetView("mainColorTarget", m_pMainColorBuffer.first->GetRTV());
+	transparentRenderTask->SetDescriptorHeaps(m_DescriptorHeaps);
 
 #pragma endregion Blend
 
@@ -1798,7 +1793,7 @@ void Renderer::initRenderTasks()
 	/* ------------------------- DirectQueue Tasks ---------------------- */
 	m_RenderTasks[E_RENDER_TASK_TYPE::DEPTH_PRE_PASS] = DepthPrePassRenderTask;
 	m_RenderTasks[E_RENDER_TASK_TYPE::FORWARD_RENDER] = forwardRenderTask;
-	m_RenderTasks[E_RENDER_TASK_TYPE::TRANSPARENT_TEXTURE] = transparentTextureRenderTask;
+	m_RenderTasks[E_RENDER_TASK_TYPE::OPACITY] = transparentRenderTask;
 	m_RenderTasks[E_RENDER_TASK_TYPE::WIREFRAME] = wireFrameRenderTask;
 	m_RenderTasks[E_RENDER_TASK_TYPE::OUTLINE] = outliningRenderTask;
 	m_RenderTasks[E_RENDER_TASK_TYPE::MERGE] = mergeTask;
@@ -1838,11 +1833,6 @@ void Renderer::initRenderTasks()
 
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
-		m_DirectCommandLists[i].push_back(transparentTextureRenderTask->GetCommandInterface()->GetCommandList(i));
-	}
-
-	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
-	{
 		m_DirectCommandLists[i].push_back(outliningRenderTask->GetCommandInterface()->GetCommandList(i));
 	}
 
@@ -1852,6 +1842,11 @@ void Renderer::initRenderTasks()
 		{
 			m_DirectCommandLists[i].push_back(wireFrameRenderTask->GetCommandInterface()->GetCommandList(i));
 		}
+	}
+
+	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
+	{
+		m_DirectCommandLists[i].push_back(transparentRenderTask->GetCommandInterface()->GetCommandList(i));
 	}
 
 	// Compute shader to blur the RTV from forwardRenderTask
@@ -1879,7 +1874,7 @@ void Renderer::setRenderTasksRenderComponents()
 {
 	m_RenderTasks[E_RENDER_TASK_TYPE::DEPTH_PRE_PASS]->SetRenderComponents(&m_RenderComponents[F_DRAW_FLAGS::NO_DEPTH]);
 	m_RenderTasks[E_RENDER_TASK_TYPE::FORWARD_RENDER]->SetRenderComponents(&m_RenderComponents[F_DRAW_FLAGS::DRAW_OPAQUE]);
-	m_RenderTasks[E_RENDER_TASK_TYPE::TRANSPARENT_TEXTURE]->SetRenderComponents(&m_RenderComponents[F_DRAW_FLAGS::DRAW_TRANSPARENT_TEXTURE]);
+	m_RenderTasks[E_RENDER_TASK_TYPE::OPACITY]->SetRenderComponents(&m_RenderComponents[F_DRAW_FLAGS::DRAW_TRANSPARENT]);
 }
 
 void Renderer::createDescriptorHeaps()

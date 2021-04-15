@@ -13,6 +13,7 @@
 // Model info
 #include "../Renderer/Model/Transform.h"
 #include "../Renderer/Model/Mesh.h"
+#include "../Renderer/Model/Material.h"
 
 ForwardRenderTask::ForwardRenderTask(
 	ID3D12Device5* device,
@@ -132,6 +133,7 @@ void ForwardRenderTask::drawRenderComponent(
 		const SlotInfo* info = mc->GetSlotInfoAt(i);
 
 		Transform* t = tc->GetTransform();
+		cl->SetGraphicsRootConstantBufferView(RS::CBV0, mc->GetMaterialAt(i)->GetMaterialData()->first->GetDefaultResource()->GetGPUVirtualAdress());
 		cl->SetGraphicsRoot32BitConstants(RS::SLOTINFO_CONSTANTS, sizeof(SlotInfo) / sizeof(UINT), info, 0);
 		cl->SetGraphicsRootConstantBufferView(RS::MATRICES_PER_OBJECT_CBV, t->m_pCB->GetDefaultResource()->GetGPUVirtualAdress());
 

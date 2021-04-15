@@ -192,6 +192,9 @@ void ImGuiHandler::drawSelectedEntityInfo()
 					ImGui::DragFloat("##Y3", &rot.y, 0.1f);
 					ImGui::DragFloat("##Z3", &rot.z, 0.1f);
 
+					Log::Print("X: %f\n", rot.x);
+					Log::Print("Y: %f\n", rot.y);
+					Log::Print("Z: %f\n\n", rot.z);
 					// Nice and perfect set-functions.
 					tc->GetTransform()->SetPosition(pos);
 					tc->GetTransform()->SetScale(scale.x, scale.y, scale.z);

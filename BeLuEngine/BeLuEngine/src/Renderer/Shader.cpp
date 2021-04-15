@@ -49,7 +49,7 @@ void Shader::compileShader()
 
 
 	unsigned int flags = D3DCOMPILE_ENABLE_UNBOUNDED_DESCRIPTOR_TABLES;
-#if defined( DEBUG ) || defined( _DEBUG )
+#ifdef DEBUG
 	flags |= D3DCOMPILE_DEBUG;
 #endif
 

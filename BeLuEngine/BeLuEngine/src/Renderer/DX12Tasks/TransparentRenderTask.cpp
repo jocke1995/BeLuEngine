@@ -13,6 +13,7 @@
 // Model info
 #include "../Renderer/Model/Transform.h"
 #include "../Renderer/Model/Mesh.h"
+#include "../Renderer/Model/Material.h"
 
 TransparentRenderTask::TransparentRenderTask(	
 	ID3D12Device5* device,
@@ -85,6 +86,7 @@ void TransparentRenderTask::Execute()
 
 			Transform* t = tc->GetTransform();
 
+			commandList->SetGraphicsRootConstantBufferView(RS::CBV0, mc->GetMaterialAt(i)->GetMaterialData()->first->GetDefaultResource()->GetGPUVirtualAdress());
 			commandList->SetGraphicsRoot32BitConstants(RS::SLOTINFO_CONSTANTS, sizeof(SlotInfo) / sizeof(UINT), info, 0);
 			commandList->SetGraphicsRootConstantBufferView(RS::MATRICES_PER_OBJECT_CBV, t->m_pCB->GetDefaultResource()->GetGPUVirtualAdress());
 

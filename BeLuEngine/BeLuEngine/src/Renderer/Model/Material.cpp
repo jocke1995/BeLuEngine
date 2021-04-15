@@ -25,7 +25,7 @@ Material::Material(const std::wstring* name, std::map<E_TEXTURE2D_TYPE, Texture*
 			1,	// HasEmissiveTexture
 			1,	// HasRoughnessTexture
 			1,	// HasMetallicTexture
-			1,	// HasOpacityTexture
+			0,	// HasOpacityTexture
 			{0.0f, 0.0f, 0.0f}, // EmissiveColor (only if EmissiveTexture is disabled)
 			0.01f, // roughnessValue
 			0.01f, // metallicValue

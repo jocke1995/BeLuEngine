@@ -11,7 +11,6 @@ enum RS
 	dtCBV,
 	dtSRV,
 	dtUAV,
-	SRV0,
 	UAV0,
 	CBV0,
 	SLOTINFO_CONSTANTS,

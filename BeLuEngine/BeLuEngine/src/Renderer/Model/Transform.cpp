@@ -4,7 +4,7 @@
 Transform::Transform(bool invertDirection)
 {
 	m_Position = DirectX::XMFLOAT3(0.0, 0.0, 0.0);
-	m_Rot = DirectX::XMFLOAT3(1.0, 1.0, 1.0);
+	m_Rot = DirectX::XMFLOAT3(0.0, 0.0, 0.0);
 	m_Scale = DirectX::XMFLOAT3(1.0, 1.0, 1.0);
 
 	UpdateWorldMatrix();
