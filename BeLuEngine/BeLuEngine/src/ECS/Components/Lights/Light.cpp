@@ -14,6 +14,7 @@ Light::Light(unsigned int lightFlags)
 
 	m_pBaseLight = new BaseLight();
 	m_pBaseLight->color= { 1.0f, 1.0f, 1.0f };
+	m_pBaseLight->intensity = 1.0f;
 	m_pBaseLight->castShadow = false;
 }
 
@@ -32,6 +33,11 @@ void Light::SetColor(float3 color)
 	m_pBaseLight->color = color;
 
 	UpdateLightColor();
+}
+
+void Light::SetIntensity(float intensity)
+{
+	m_pBaseLight->intensity = intensity;
 }
 
 unsigned int Light::GetLightFlags() const

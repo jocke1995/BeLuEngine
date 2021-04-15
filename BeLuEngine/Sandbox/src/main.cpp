@@ -82,11 +82,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
            tc->GetTransform()->SetPosition(lightPos);
            bbc->Init();
    
-           plc->SetColor({ 10.0f, 5.0f, 5.0f });
+           plc->SetColor({ 0.5f, 0.25f, 0.25f });
    
            counter++;
    
            sceneManager->AddEntity(entity);
+
+           Log::Print("X: %f, Y:%f, Z: %f\n", position.x, position.y, position.z);
            /* ---------------------- SpotLightDynamic ---------------------- */
        }
        if (window->WasTabPressed() == true)
@@ -161,12 +163,21 @@ Scene* TestScene(SceneManager* sm)
     entity = scene->AddEntity("sphere");
     mc = entity->AddComponent<component::ModelComponent>();
     tc = entity->AddComponent<component::TransformComponent>();
+    bbc = entity->AddComponent <component::BoundingBoxComponent>(F_BOUNDING_BOX_FLAGS::PICKING);
 
     mc->SetModel(sphereModel);
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
     tc->GetTransform()->SetScale(1.0f);
-    tc->GetTransform()->SetPosition(0, 4, 30);
+    tc->GetTransform()->SetPosition(0, 4, 0);
+
+    bbc->Init();
     /* ---------------------- Sphere ---------------------- */
+
+    entity = scene->AddEntity("pl1");
+
+    plc = entity->AddComponent<component::PointLightComponent>();
+    plc->SetPosition({ 1.0f, 10.0f, 0.0f });
+    plc->SetColor({ 0.0f, 1.0f, 0.0f });
 
     /* ---------------------- Update Function ---------------------- */
     scene->SetUpdateScene(&TestUpdateScene);
@@ -219,7 +230,7 @@ Scene* SponzaScene(SceneManager* sm)
 
     mc->SetModel(boxModel);
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
-    tc->GetTransform()->SetPosition(0, 0, 1.0f);
+    tc->GetTransform()->SetPosition(0, 4.0f, 1.0f);
     bbc->Init();
 
     /* ---------------------- Sphere ---------------------- */
@@ -231,7 +242,7 @@ Scene* SponzaScene(SceneManager* sm)
     mc->SetModel(sphereModel);
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_TRANSPARENT | F_DRAW_FLAGS::NO_DEPTH );
     tc->GetTransform()->SetScale(1.0f);
-    tc->GetTransform()->SetPosition(5, 15, 5);
+    tc->GetTransform()->SetPosition(15, 1, 1);
     bbc->Init();
 
     entity = scene->AddEntity("sphere2");
@@ -241,8 +252,8 @@ Scene* SponzaScene(SceneManager* sm)
 
     mc->SetModel(sphereModel);
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
-    tc->GetTransform()->SetScale(2.0f);
-    tc->GetTransform()->SetPosition(5, 25, 10);
+    tc->GetTransform()->SetScale(1.0f);
+    tc->GetTransform()->SetPosition(15, 4, 4);
     bbc->Init();
 
     entity = scene->AddEntity("sphere3");
@@ -252,13 +263,13 @@ Scene* SponzaScene(SceneManager* sm)
 
     mc->SetModel(sphereModel);
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
-    tc->GetTransform()->SetScale(2.0f);
-    tc->GetTransform()->SetPosition(5, 35, 15);
+    tc->GetTransform()->SetScale(1.0f);
+    tc->GetTransform()->SetPosition(15, 7, 7);
     bbc->Init();
     /* ---------------------- Sphere ---------------------- */
 
     /* ---------------------- PLs ---------------------- */
-    entity = scene->AddEntity("Brazier1");
+    entity = scene->AddEntity("pl1");
     mc = entity->AddComponent<component::ModelComponent>();
     tc = entity->AddComponent<component::TransformComponent>();
     plc = entity->AddComponent<component::PointLightComponent>(F_LIGHT_FLAGS::USE_TRANSFORM_POSITION);
@@ -266,10 +277,10 @@ Scene* SponzaScene(SceneManager* sm)
     mc->SetModel(sphereModel);
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
     tc->GetTransform()->SetScale(0.5f);
-    tc->GetTransform()->SetPosition({ 146.0f, 40.0f, 66.0f });
-    plc->SetColor({ 0.0f, 1.5f, 0.0f });
+    tc->GetTransform()->SetPosition({ -30.0f, 10.0f, 4.5f });
+    plc->SetColor({ 0.0f, 0.3f, 0.0f });
 
-    entity = scene->AddEntity("Brazier2");
+    entity = scene->AddEntity("pl2");
     mc = entity->AddComponent<component::ModelComponent>();
     tc = entity->AddComponent<component::TransformComponent>();
     plc = entity->AddComponent<component::PointLightComponent>(F_LIGHT_FLAGS::USE_TRANSFORM_POSITION);
@@ -277,8 +288,8 @@ Scene* SponzaScene(SceneManager* sm)
     mc->SetModel(sphereModel);
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
     tc->GetTransform()->SetScale(0.5f);
-    tc->GetTransform()->SetPosition({ 146.0f, 40.0f, -42.6f });
-    plc->SetColor({ 1.5f, 0.0f, 0.0f });
+    tc->GetTransform()->SetPosition({ 23.0f, 20.0f, 1.0f });
+    plc->SetColor({ 0.3f, 0.0f, 0.0f });
     /* ---------------------- PLs ---------------------- */
 
     /* ---------------------- dirLight ---------------------- */

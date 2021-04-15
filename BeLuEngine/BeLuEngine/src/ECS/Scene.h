@@ -28,7 +28,7 @@ public:
 	void SetPrimaryCamera(BaseCamera* primaryCamera);
 
 	Entity* GetEntity(std::string entityName);
-	const std::map<std::string, Entity*>* GetEntities() const;
+	std::map<std::string, Entity*>* GetEntities();
 	bool EntityExists(std::string entityName) const;
 
 	unsigned int GetNrOfEntites() const;

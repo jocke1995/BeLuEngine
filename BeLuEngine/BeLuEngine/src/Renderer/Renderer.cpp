@@ -537,6 +537,10 @@ void Renderer::ExecuteST()
 
 	/* --------------------------------------------------------------- */
 
+	/*------------------- Post draw stuff -------------------*/
+	// Clear copy on demand
+	m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]->Clear();
+
 	// ImGui
 #ifdef DEBUG
 	// Have to update ImGui here to get all information that happens inside rendering
@@ -554,10 +558,6 @@ void Renderer::ExecuteST()
 	m_CommandQueues[E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->Signal(m_pFenceFrame, m_FenceFrameValue);
 	waitForFrame(0);
 	m_FenceFrameValue++;
-
-	/*------------------- Post draw stuff -------------------*/
-	// Clear copy on demand
-	m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]->Clear();
 
 	/*------------------- Present -------------------*/
 	HRESULT hr = dx12SwapChain->Present(0, 0);
@@ -998,14 +998,19 @@ void Renderer::submitMaterialToGPU(Model* model)
 		texture = mat->GetTexture(E_TEXTURE2D_TYPE::OPACITY);
 		submitTextureToCodt(texture);
 
-		// Submit material
-		CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]);
-		const void* data = static_cast<const void*>(&mat->GetMaterialData()->second);
-		codt->Submit(&std::make_tuple(mat->GetMaterialData()->first->GetUploadResource(), mat->GetMaterialData()->first->GetDefaultResource(), data));
+		// Submit materialData
+		submitMaterialDataToGPU(mat);
 
 		AssetLoader::Get()->m_LoadedMaterials.at(mat->GetName()).first = true;
 	}
 	
+}
+
+void Renderer::submitMaterialDataToGPU(Material* mat)
+{
+	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]);
+	const void* data = static_cast<const void*>(&mat->GetMaterialData()->second);
+	codt->Submit(&std::make_tuple(mat->GetMaterialData()->first->GetUploadResource(), mat->GetMaterialData()->first->GetDefaultResource(), data));
 }
 
 void Renderer::submitTextureToCodt(Texture* texture)
@@ -1928,6 +1933,7 @@ void Renderer::waitForFrame(unsigned int framesToBeAhead)
 
 void Renderer::prepareScene(Scene* activeScene)
 {
+	m_pCurrActiveScene = activeScene;
 	submitUploadPerFrameData();
 	submitUploadPerSceneData();
 

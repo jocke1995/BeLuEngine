@@ -27,7 +27,7 @@ float3 CalcDirLight(
 	float3 lightDir = normalize(-dirLight.direction.rgb);
 	float3 normalized_bisector = normalize(viewDir + lightDir);
 
-	float3 radiance = dirLight.baseLight.color.rgb;
+	float3 radiance = dirLight.baseLight.color.rgb * dirLight.baseLight.intensity;
 
 	// Cook-Torrance BRDF
 	float NdotV = max(dot(normal, viewDir), 0.0000001);
@@ -72,7 +72,7 @@ float3 CalcPointLight(
 	float distancePixelToLight = length(pointLight.position.xyz - fragPos);
 	float attenuation = 1.0f / (constantFactor + (linearFactor * distancePixelToLight) + (quadraticFactor * pow(distancePixelToLight, 2)));
 
-	float3 radiance = pointLight.baseLight.color.rgb * attenuation; 
+	float3 radiance = pointLight.baseLight.color.rgb * pointLight.baseLight.intensity * attenuation;
 
 	// Cook-Torrance BRDF
 	float NdotV = max(dot(normal, viewDir), 0.0000001);
@@ -124,7 +124,7 @@ float3 CalcSpotLight(
 	float distancePixelToLight = length(spotLight.position_cutOff.xyz - fragPos);
 	float attenuation = 1.0f / (constantFactor + (linearFactor * distancePixelToLight) + (quadraticFactor * pow(distancePixelToLight, 2)));
 
-	float3 radiance = spotLight.baseLight.color.rgb * attenuation;
+	float3 radiance = spotLight.baseLight.color.rgb * spotLight.baseLight.intensity * attenuation;
 
 	// Cook-Torrance BRDF
 	float NdotV = max(dot(normal, viewDir), 0.0000001);

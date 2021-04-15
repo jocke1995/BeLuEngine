@@ -89,7 +89,7 @@ struct CB_PER_SCENE_STRUCT
 struct BaseLight
 {
 	float3 color;
-	float pad1;
+	float intensity;
 
 	float castShadow;
 	float3 pad2;

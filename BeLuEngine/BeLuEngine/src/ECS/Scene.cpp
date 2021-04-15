@@ -106,7 +106,7 @@ Entity* Scene::GetEntity(std::string entityName)
     return nullptr;
 }
 
-const std::map<std::string, Entity*>* Scene::GetEntities() const
+std::map<std::string, Entity*>* Scene::GetEntities()
 {
     return &m_EntitiesToKeep;
 }

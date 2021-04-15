@@ -18,8 +18,14 @@
 #include "../Events/EventBus.h"
 #include "../Events/Events.h"
 
+// ECS
 #include "../ECS/Entity.h"
+#include "../ECS/Scene.h"
+
+// Geometry
 #include "../Renderer/Model/Transform.h"
+#include "../Renderer/Model/Material.h"
+
 #define DIV 1024
 
 ImGuiHandler& ImGuiHandler::GetInstance()
@@ -156,65 +162,125 @@ void ImGuiHandler::drawSelectedEntityInfo()
 	Renderer& r = Renderer::GetInstance();
 	const Window* window = r.GetWindow();
 
-	if (m_pSelectedEntity == nullptr)
-		return;
-	std::string imGuiTitle = "Entity: ";// + m_pSelectedEntity->GetName();
-	if (ImGui::Begin(imGuiTitle.c_str()))
+	ImGui::Begin("Scene");
+	if (ImGui::BeginTable("", 1))
 	{
-		for (Component* c : *m_pSelectedEntity->GetAllComponents())
+		for (auto& pair : *r.GetActiveScene()->GetEntities())
 		{
-			if (dynamic_cast<component::ModelComponent*>(c))
+			std::string imGuiTitle = "Entity: " + pair.second->GetName();
+
+			int headerFlags = 0;
+			if (pair.second == m_pSelectedEntity)
 			{
-				if (ImGui::CollapsingHeader("Model"))
-				{
-					//ImGui::Text("Build: %s", cStats.m_Build.c_str());
-				}
+				headerFlags = ImGuiTreeNodeFlags_DefaultOpen;
 			}
-			else if (dynamic_cast<component::TransformComponent*>(c))
+
+			if (ImGui::TableNextColumn() && ImGui::CollapsingHeader(imGuiTitle.c_str(), headerFlags))
 			{
-				component::TransformComponent* tc = dynamic_cast<component::TransformComponent*>(c);
-				if (ImGui::CollapsingHeader("Transform"))
+				if (ImGui::BeginTable("Components", 1))
 				{
-					DirectX::XMFLOAT3 pos	 = tc->GetTransform()->GetPositionXMFLOAT3();
-					DirectX::XMFLOAT3 scale  = tc->GetTransform()->GetScale();
-					DirectX::XMFLOAT3 rot	 = tc->GetTransform()->GetRot();
-
-					ImGui::Text("Translate");
-					ImGui::DragFloat("##X1", &pos.x, 0.5f);
-					ImGui::DragFloat("##Y1", &pos.y, 0.5f);
-					ImGui::DragFloat("##Z1", &pos.z, 0.5f);
-					ImGui::Text("Scale");
-					ImGui::DragFloat("##X2", &scale.x, 0.5f);
-					ImGui::DragFloat("##Y2", &scale.y, 0.5f);
-					ImGui::DragFloat("##Z2", &scale.z, 0.5f);
-					ImGui::Text("Rot");
-					ImGui::DragFloat("##X3", &rot.x, 0.1f);
-					ImGui::DragFloat("##Y3", &rot.y, 0.1f);
-					ImGui::DragFloat("##Z3", &rot.z, 0.1f);
-
-					Log::Print("X: %f\n", rot.x);
-					Log::Print("Y: %f\n", rot.y);
-					Log::Print("Z: %f\n\n", rot.z);
-					// Nice and perfect set-functions.
-					tc->GetTransform()->SetPosition(pos);
-					tc->GetTransform()->SetScale(scale.x, scale.y, scale.z);
-					tc->GetTransform()->SetRotationX(rot.x);
-					tc->GetTransform()->SetRotationY(rot.y);
-					tc->GetTransform()->SetRotationZ(rot.z);
+					ImGui::Indent();
+					for (Component* c : *pair.second->GetAllComponents())
+					{
+						if (component::ModelComponent* mc = dynamic_cast<component::ModelComponent*>(c))
+						{
+							if (ImGui::TableNextColumn() && ImGui::CollapsingHeader("Model"))
+							{
+								// Super unsafe atm
+								static int matIndex = 0;
+								ImGui::InputInt("Mesh Index", &matIndex);
+								
+								// Currently stuck to only changing materials on models with 1 mesh
+								Material* mat = mc->GetMaterialAt(matIndex);
+								MaterialData* matData = const_cast<MaterialData*>(&mat->GetMaterialData()->second);
+								
+								bool useRoughnessTexture = matData->hasRoughnessTexture;
+								bool useMetallicTexture = matData->hasMetallicTexture;
+								bool useOpacityTexture = matData->hasOpacityTexture;
+								bool useEmissiveTexture = matData->hasEmissiveTexture;
+								
+								float roughnessValue = matData->roughnessValue;
+								float metallicValue = matData->metallicValue;
+								float opacityValue = matData->opacityValue;
+								float3 emissiveValue = matData->emissiveValue;
+								
+								
+								ImGui::Checkbox("Use Roughness Texture", &useRoughnessTexture);
+								ImGui::Checkbox("Use Metallic Texture", &useMetallicTexture);
+								ImGui::Checkbox("Use Opacity Texture", &useOpacityTexture);
+								ImGui::Checkbox("Use Emissive Texture", &useEmissiveTexture);
+								
+								ImGui::DragFloat("Roughness", &roughnessValue, 0.01f, 0.01f, 1.0f);
+								ImGui::DragFloat("Metallic", &metallicValue, 0.01f, 0.01f, 1.0f);
+								ImGui::DragFloat("Opacity", &opacityValue, 0.01f, 0.01f, 1.0f);
+								
+								if (useEmissiveTexture == false)
+								{
+									ImGui::ColorEdit3("Emissive", &emissiveValue.r);
+									matData->emissiveValue = emissiveValue;
+								}
+								
+								matData->hasRoughnessTexture = useRoughnessTexture;
+								matData->hasMetallicTexture = useMetallicTexture;
+								matData->hasOpacityTexture = useOpacityTexture;
+								matData->hasEmissiveTexture = useEmissiveTexture;
+								
+								matData->roughnessValue = roughnessValue;
+								matData->metallicValue = metallicValue;
+								matData->opacityValue = opacityValue;
+								// Update data on VRAM
+								r.submitMaterialDataToGPU(mat);
+							}
+						}
+						else if (component::TransformComponent* tc = dynamic_cast<component::TransformComponent*>(c))
+						{
+							if (ImGui::TableNextColumn() && ImGui::CollapsingHeader("Transform"))
+							{
+								DirectX::XMFLOAT3 pos = tc->GetTransform()->GetPositionXMFLOAT3();
+								DirectX::XMFLOAT3 scale = tc->GetTransform()->GetScale();
+								DirectX::XMFLOAT3 rot = tc->GetTransform()->GetRot();
+						
+								ImGui::Text("Translate");
+								ImGui::DragFloat("##X1", &pos.x, 0.1f);
+								ImGui::DragFloat("##Y1", &pos.y, 0.1f);
+								ImGui::DragFloat("##Z1", &pos.z, 0.1f);
+								ImGui::Text("Scale");
+								ImGui::DragFloat("##X2", &scale.x, 0.1f);
+								ImGui::DragFloat("##Y2", &scale.y, 0.1f);
+								ImGui::DragFloat("##Z2", &scale.z, 0.1f);
+								ImGui::Text("Rot");
+								ImGui::DragFloat("##X3", &rot.x, 0.1f);
+								ImGui::DragFloat("##Y3", &rot.y, 0.1f);
+								ImGui::DragFloat("##Z3", &rot.z, 0.1f);
+						
+								// Nice consistensy :)
+								tc->GetTransform()->SetPosition(pos);
+								tc->GetTransform()->SetScale(scale.x, scale.y, scale.z);
+								tc->GetTransform()->SetRotationX(rot.x);
+								tc->GetTransform()->SetRotationY(rot.y);
+								tc->GetTransform()->SetRotationZ(rot.z);
+							}
+						}
+						else if (component::PointLightComponent* plc = dynamic_cast<component::PointLightComponent*>(c))
+						{
+							if (ImGui::TableNextColumn() && ImGui::CollapsingHeader("PointLight"))
+							{
+								PointLight* pl = static_cast<PointLight*>(plc->GetLightData());
+						
+								ImGui::DragFloat("Intensity", &pl->baseLight.intensity, 0.1f, 0.0f, 10.0f);
+								ImGui::ColorEdit3("", &pl->baseLight.color.r);
+							}
+						}
+					}
+					ImGui::Unindent();
 				}
-			}
-			else if (component::PointLightComponent * plc = dynamic_cast<component::PointLightComponent*>(c))
-			{
-				if (ImGui::CollapsingHeader("PointLight"))
-				{
-					PointLight* pl = static_cast<PointLight*>(plc->GetLightData());
-
-					ImGui::ColorEdit3("", &pl->baseLight.color.r);
-				}
+				ImGui::EndTable();
 			}
 		}
 	}
+	ImGui::EndTable();
 	ImGui::End();
+	
 }
 
 void ImGuiHandler::updateMemoryInfo()
