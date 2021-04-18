@@ -21,7 +21,7 @@ float4 PS_main(VS_OUT input) : SV_TARGET0
 	sceneColor *= (1 - saturate(blurColor));
 
 	// Adjust glowIntensity
-	float glowIntensity = 1.5f;
+	float glowIntensity = 1.0f;
 	blurColor = blurColor * glowIntensity;
 
 	// Combine

@@ -14,24 +14,21 @@ float3 CalculateFresnelEffect(float HdotV, float3 baseReflectivity)
 // In this case, we use Trowbridge-Reitz GGX normal distribution function
 float NormalDistributionGGX(float NdotH, float roughness)
 {
-	float r2 = roughness * roughness;
-	float NdotH2 = NdotH * NdotH;
-
-	float denominator = PI * pow((NdotH2 * (r2 - 1) + 1), 2);
+	float a = roughness * roughness;
+	float a2 = a * a;
 	
-	// Prevent division by zero
-	denominator = max(denominator, 0.00000001f);
-
-	return r2 / denominator;
+	float denom = NdotH * NdotH * (a2 - 1.0f) + 1.0f;
+	denom = PI * denom * denom;
+	return a2 / max(denom, 0.00000001f);
 }
 
 // Approximate the self-shadowing for each microsurface
 float GeometrySmith(float NdotV, float NdotL, float roughness)
 {
-	float k = pow(roughness + 1, 2) / 8;
+	float k = pow(roughness + 1.0f, 2) / 8.0f;
 
-	float ggx1 = NdotV / (NdotV * (1 - k) + k);
-	float ggx2 = NdotL / (NdotL * (1 - k) + k);
+	float ggx1 = NdotV / (NdotV * (1.0f - k) + k);
+	float ggx2 = NdotL / (NdotL * (1.0f - k) + k);
 
 	return ggx1 * ggx2;
 }

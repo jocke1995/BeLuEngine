@@ -21,16 +21,17 @@ Material::Material(const std::wstring* name, std::map<E_TEXTURE2D_TYPE, Texture*
 			textures->at(E_TEXTURE2D_TYPE::NORMAL)->GetDescriptorHeapIndex(),
 			textures->at(E_TEXTURE2D_TYPE::EMISSIVE)->GetDescriptorHeapIndex(),
 			textures->at(E_TEXTURE2D_TYPE::OPACITY)->GetDescriptorHeapIndex(),
-			0, 0, // padding
-			1,	// HasEmissiveTexture
-			1,	// HasRoughnessTexture
-			1,	// HasMetallicTexture
-			0,	// HasOpacityTexture
-			{0.0f, 0.0f, 0.0f}, // EmissiveColor (only if EmissiveTexture is disabled)
+			1,	// useEmissiveTexture
+			1,	// useRoughnessTexture
+			1,	// useMetallicTexture
+			0,	// useOpacityTexture
+			1,	// useNormalTexture
+			0,  // Glow
+			{0.0f, 0.0f, 0.0f, 1.0f}, // EmissiveColor + strength
 			0.01f, // roughnessValue
 			0.01f, // metallicValue
 			0.5f,  // opacityValue
-			0, 0 // padding
+			0, // padding
 	};
 	// copy the texture pointers
 	m_Textures = *textures;

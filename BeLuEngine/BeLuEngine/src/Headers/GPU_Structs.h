@@ -25,21 +25,20 @@ struct MaterialData
 
 	unsigned int textureEmissive;
 	unsigned int textureOpacity;
-	unsigned int pad1;
-	unsigned int pad2;
-
 	unsigned int hasEmissiveTexture;
 	unsigned int hasRoughnessTexture;
+
 	unsigned int hasMetallicTexture;
 	unsigned int hasOpacityTexture;
+	unsigned int hasNormalTexture;
+	unsigned int glow;
 
-	float3 emissiveValue;
+	float4 emissiveValue;
+
 	float roughnessValue;
-
 	float metallicValue;
 	float opacityValue;
 	float pad3;
-	float pad4;
 };
 
 // Indicies of where the descriptors are stored in the descriptorHeap

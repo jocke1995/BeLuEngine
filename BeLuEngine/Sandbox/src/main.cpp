@@ -17,11 +17,11 @@ public:
 
     void Execute()
     {
-        while (true)
-        {
+        //while (true)
+        //{
             Sleep(200);
-            Log::Print("Async!\n");
-        }
+            //Log::Print("Async!\n");
+        //}
     }
 };
 
@@ -51,12 +51,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
    
    TestAsyncThread test1 = TestAsyncThread();
 
-   //threadPool->AddTask(static_cast<MultiThreadedTask*>(&test1));
-   //test1.Execute();
 
    Log::Print("Entering Game-Loop ...\n\n");
    while (!window->ExitWindow())
    {
+       // Async Test
+       //threadPool->AddTask(static_cast<MultiThreadedTask*>(&test1));
+
        // Temporary functions to test functionalities in the engine
        if (window->WasSpacePressed() == true)
        {
@@ -272,13 +273,13 @@ Scene* SponzaScene(SceneManager* sm)
     entity = scene->AddEntity("pl1");
     mc = entity->AddComponent<component::ModelComponent>();
     tc = entity->AddComponent<component::TransformComponent>();
-    plc = entity->AddComponent<component::PointLightComponent>(F_LIGHT_FLAGS::USE_TRANSFORM_POSITION);
+    slc = entity->AddComponent<component::SpotLightComponent>(F_LIGHT_FLAGS::USE_TRANSFORM_POSITION);
 
     mc->SetModel(sphereModel);
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
     tc->GetTransform()->SetScale(0.5f);
     tc->GetTransform()->SetPosition({ -30.0f, 10.0f, 4.5f });
-    plc->SetColor({ 0.0f, 0.3f, 0.0f });
+    slc->SetColor({ 0.0f, 0.3f, 0.0f });
 
     entity = scene->AddEntity("pl2");
     mc = entity->AddComponent<component::ModelComponent>();

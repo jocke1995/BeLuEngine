@@ -20,7 +20,7 @@ private:
 	// On clicked event
 	void onEntityClicked(MouseClick* event);
 	Entity* m_pSelectedEntity = nullptr;
-	void drawSelectedEntityInfo();
+	void drawSceneHierarchy();
 
 	void updateMemoryInfo();
 	void resetThreadInfos();

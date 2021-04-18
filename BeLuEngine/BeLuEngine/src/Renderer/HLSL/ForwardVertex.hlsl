@@ -5,6 +5,7 @@ struct VS_OUT
 	float4 pos      : SV_Position;
 	float4 worldPos : WPos;
 	float2 uv       : UV;
+	float3 norm		: NORM;
 	float3x3 tbn	: TBN;
 };
 
@@ -40,9 +41,10 @@ VS_OUT VS_main(uint vID : SV_VertexID)
 	// Gram schmidt
 	T = normalize(T - dot(T, N) * N);
 
-	float3 B = cross(T, N);
+	float3 B = normalize(cross(N, T));
 
 	output.tbn = float3x3(T, B, N);
+	output.norm = N;
 
 	return output;
 }
