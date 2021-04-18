@@ -6,6 +6,7 @@ Scene* SponzaScene(SceneManager* sm);
 void TestUpdateScene(SceneManager* sm, double dt);
 void SponzaUpdateScene(SceneManager* sm, double dt);
 
+// Temp
 #include "Misc/Multithreading/MultiThreadedTask.h"
 
 class TestAsyncThread : public MultiThreadedTask
@@ -51,6 +52,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
    
    TestAsyncThread test1 = TestAsyncThread();
 
+   al->CreateMaterial(L"hej");
 
    Log::Print("Entering Game-Loop ...\n\n");
    while (!window->ExitWindow())

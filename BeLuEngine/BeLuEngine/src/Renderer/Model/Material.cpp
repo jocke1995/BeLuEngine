@@ -1,12 +1,51 @@
 #include "stdafx.h"
 #include "Material.h"
 
+#include "../Misc/Log.h"
+#include "../Misc/AssetLoader.h"
+
 #include "../Texture/Texture.h"
 
 #include "../Renderer/Renderer.h"
 #include "../Renderer/DescriptorHeap.h"
 
 #include "../Renderer/GPUMemory/GPUMemory.h"
+Material::Material(const std::wstring& name)
+{
+	AssetLoader* al = AssetLoader::Get();
+	
+	Material* defaultMat = al->LoadMaterial(L"DefaultMaterial");
+	
+#ifdef DEBUG
+	// Sanity check
+	if (defaultMat == nullptr)
+	{
+		BL_LOG_CRITICAL("Trying to create a material from the default material when it has not been created yet.\n");
+	}
+#endif 
+
+	m_MaterialData.second =
+	{
+			defaultMat->m_MaterialData.second.textureAlbedo,
+			defaultMat->m_MaterialData.second.textureRoughness,
+			defaultMat->m_MaterialData.second.textureMetallic,
+			defaultMat->m_MaterialData.second.textureNormal,
+			defaultMat->m_MaterialData.second.textureEmissive,
+			defaultMat->m_MaterialData.second.textureOpacity,
+			0,	// useEmissiveTexture
+			0,	// useRoughnessTexture
+			0,	// useMetallicTexture
+			0,	// useOpacityTexture
+			0,	// useNormalTexture
+			0,  // Glow
+			{0.0f, 0.0f, 0.0f, 1.0f}, // EmissiveColor + strength
+			0.5f, // roughnessValue
+			0.5f, // metallicValue
+			0.5f,  // opacityValue
+			0, // padding
+	};
+}
+
 Material::Material(const std::wstring* name, std::map<E_TEXTURE2D_TYPE, Texture*>* textures)
 {
 	m_Name = *name;
@@ -35,6 +74,16 @@ Material::Material(const std::wstring* name, std::map<E_TEXTURE2D_TYPE, Texture*
 	};
 	// copy the texture pointers
 	m_Textures = *textures;
+}
+
+Material::Material(const Material& other, const std::wstring& name)
+{
+	m_Name = name;
+
+	Renderer& r = Renderer::GetInstance();
+	m_MaterialData.first = new ConstantBuffer(r.m_pDevice5, sizeof(MaterialData), m_Name, r.m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
+
+	m_MaterialData.second = other.m_MaterialData.second;
 }
 
 Material::~Material()

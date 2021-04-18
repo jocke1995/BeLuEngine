@@ -40,6 +40,7 @@ public:
     // Creates material from parameter.
     // If no parameter is specified, a default material is created.
     Material* CreateMaterial(std::wstring matName, const Material* mat = nullptr);
+    Material* LoadMaterial(std::wstring matName);
 
     // IsLoadedFunctions
     bool IsModelLoadedOnGpu(const std::wstring& name) const;

@@ -41,6 +41,36 @@ AssetLoader::AssetLoader(ID3D12Device5* device, DescriptorHeap* descriptorHeap_C
 
 Material* AssetLoader::CreateMaterial(std::wstring matName, const Material* mat)
 {
+	// Check if material don't exists
+	if (m_LoadedMaterials.count(matName) == 0)
+	{
+		// Check if this material is to be created from other material
+		if (mat != nullptr)
+		{
+			m_LoadedMaterials[matName].first  = false;
+			m_LoadedMaterials[matName].second = new Material(*mat, matName);
+		}
+		else // Create a new material with starting values from the default material.
+		{
+			m_LoadedMaterials[matName].first = false;
+			m_LoadedMaterials[matName].second = new Material(matName);
+		}
+	}
+	else
+	{
+		BL_LOG_WARNING("Material with ID: '%S' already exists and wont be created.\n", matName.c_str());
+	}
+
+	return nullptr;
+}
+
+Material* AssetLoader::LoadMaterial(std::wstring matName)
+{
+	if (m_LoadedMaterials.count(matName) != 0)
+	{
+		return m_LoadedMaterials[matName].second;
+	}
+	BL_LOG_CRITICAL("Invalid material ID '%S' could not be loaded.\n", matName.c_str());
 	return nullptr;
 }
 
@@ -78,12 +108,12 @@ void AssetLoader::loadDefaultMaterial()
 {
 	// Load default textures
 	std::map<E_TEXTURE2D_TYPE, Texture*> matTextures;
-	matTextures[E_TEXTURE2D_TYPE::ALBEDO] = LoadTexture2D(m_FilePathDefaultTextures + L"default_albedo.dds");
+	matTextures[E_TEXTURE2D_TYPE::ALBEDO]	 = LoadTexture2D(m_FilePathDefaultTextures + L"default_albedo.dds");
 	matTextures[E_TEXTURE2D_TYPE::ROUGHNESS] = LoadTexture2D(m_FilePathDefaultTextures + L"default_roughness.dds");
-	matTextures[E_TEXTURE2D_TYPE::METALLIC] = LoadTexture2D(m_FilePathDefaultTextures + L"default_metallic.dds");
-	matTextures[E_TEXTURE2D_TYPE::NORMAL] = LoadTexture2D(m_FilePathDefaultTextures + L"default_normal.dds");
-	matTextures[E_TEXTURE2D_TYPE::EMISSIVE] = LoadTexture2D(m_FilePathDefaultTextures + L"default_emissive.dds");
-	matTextures[E_TEXTURE2D_TYPE::OPACITY] = LoadTexture2D(m_FilePathDefaultTextures + L"default_opacity.dds");
+	matTextures[E_TEXTURE2D_TYPE::METALLIC]  = LoadTexture2D(m_FilePathDefaultTextures + L"default_metallic.dds");
+	matTextures[E_TEXTURE2D_TYPE::NORMAL]	 = LoadTexture2D(m_FilePathDefaultTextures + L"default_normal.dds");
+	matTextures[E_TEXTURE2D_TYPE::EMISSIVE]  = LoadTexture2D(m_FilePathDefaultTextures + L"default_emissive.dds");
+	matTextures[E_TEXTURE2D_TYPE::OPACITY]	 = LoadTexture2D(m_FilePathDefaultTextures + L"default_opacity.dds");
 
 	std::wstring matName = L"DefaultMaterial";
 	Material* material = new Material(&matName, &matTextures);

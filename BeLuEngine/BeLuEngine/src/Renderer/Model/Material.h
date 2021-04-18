@@ -17,7 +17,9 @@ class ConstantBuffer;
 class Material
 {
 public:
-    Material(const std::wstring* path, std::map<E_TEXTURE2D_TYPE, Texture*>* textures);
+    Material(const std::wstring& name); // Default
+    Material(const std::wstring* path, std::map<E_TEXTURE2D_TYPE, Texture*>* textures); // From parameters (used when loading objects from files)
+    Material(const Material& other, const std::wstring& name); // Copy constructor
     virtual ~Material();
 
     bool operator == (const Material& other);
