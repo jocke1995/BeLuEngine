@@ -51,7 +51,9 @@ protected:
 
 private:
 	friend class Renderer;
+
 	static inline ShaderResource* m_pLightsRawBuffer = nullptr;
+	static inline unsigned char* m_pRawData			 = nullptr;
 };
 
 #endif

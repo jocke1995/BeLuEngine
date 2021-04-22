@@ -1888,8 +1888,18 @@ void Renderer::createRawBufferForLights()
 	//srvDesc.Buffer.StructureByteStride = sizeof(unsigned int);
 	srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
 
-	unsigned int rawBufferSize = sizeof(LightHeader) + sizeof(PointLight) + sizeof(DirectionalLight) + sizeof(PointLight);
+	unsigned int rawBufferSize   = sizeof(LightHeader)		+
+				MAX_DIR_LIGHTS	 * sizeof(DirectionalLight) +
+				MAX_POINT_LIGHTS * sizeof(PointLight)		+
+				MAX_SPOT_LIGHTS  * sizeof(SpotLight);
+
 	Light::m_pLightsRawBuffer = new ShaderResource(m_pDevice5, rawBufferSize, L"rawBufferLights", &srvDesc, m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
+
+	m_pCbPerSceneData->lightIndex = Light::m_pLightsRawBuffer->GetSRV()->GetDescriptorHeapIndex();
+
+	// Allocate memory on CPU
+	Light::m_pRawData = new unsigned char(rawBufferSize);
+	memset(Light::m_pRawData, 0, rawBufferSize);
 }
 
 void Renderer::setRenderTasksRenderComponents()

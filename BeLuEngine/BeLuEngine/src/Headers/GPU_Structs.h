@@ -82,7 +82,7 @@ struct CB_PER_SCENE_STRUCT
 	unsigned int Num_Dir_Lights;
 	unsigned int Num_Point_Lights;
 	unsigned int Num_Spot_Lights;
-	unsigned int pad1;
+	unsigned int lightIndex;
 };
 
 struct LightHeader
