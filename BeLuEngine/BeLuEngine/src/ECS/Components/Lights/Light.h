@@ -5,6 +5,8 @@
 
 class BaseCamera;
 
+class ShaderResource;
+
 enum F_LIGHT_FLAGS
 {
 	// Set flag to make the light position inherit the position of the corresponding m_pMesh
@@ -46,6 +48,10 @@ protected:
 	unsigned int m_Id = 0;
 
 	virtual void UpdateLightColor() = 0;
+
+private:
+	friend class Renderer;
+	static inline ShaderResource* m_pLightsRawBuffer = nullptr;
 };
 
 #endif

@@ -240,6 +240,7 @@ void ImGuiHandler::drawSceneHierarchy()
 
 										mc->SetMaterialAt(matIndex, newMat);
 									}
+
 									matData->hasRoughnessTexture = useRoughnessTexture;
 									matData->hasMetallicTexture = useMetallicTexture;
 									matData->hasOpacityTexture = useOpacityTexture;

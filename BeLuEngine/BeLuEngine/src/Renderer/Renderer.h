@@ -232,6 +232,7 @@ private:
 	void createFullScreenQuad();
 	void updateMousePicker();
 	void initRenderTasks();
+	void createRawBufferForLights();
 	void setRenderTasksRenderComponents();
 	void createDescriptorHeaps();
 	void createFences();

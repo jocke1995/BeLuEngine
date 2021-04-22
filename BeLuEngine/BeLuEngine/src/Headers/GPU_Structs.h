@@ -85,6 +85,14 @@ struct CB_PER_SCENE_STRUCT
 	unsigned int pad1;
 };
 
+struct LightHeader
+{
+	unsigned int numPointLights;
+	unsigned int numSpotLights;
+	unsigned int numDirectionalLights;
+	unsigned int pad;
+};
+
 struct BaseLight
 {
 	float3 color;

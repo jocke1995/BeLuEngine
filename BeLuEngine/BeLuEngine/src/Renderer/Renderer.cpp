@@ -148,6 +148,7 @@ void Renderer::deleteRenderer()
 	delete m_pCbPerSceneData;
 	delete m_pCbPerFrame;
 	delete m_pCbPerFrameData;
+	delete Light::m_pLightsRawBuffer;
 
 #ifdef DEBUG
 	// Cleanup ImGui
@@ -264,6 +265,8 @@ void Renderer::InitD3D12(Window *window, HINSTANCE hInstance, ThreadPool* thread
 		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]->GetGPUHeapAt(imGuiTextureIndex));
 #endif
 	initRenderTasks();
+
+	createRawBufferForLights();
 	
 	submitMeshToCodt(m_pFullScreenQuad);
 }
@@ -1872,6 +1875,21 @@ void Renderer::initRenderTasks()
 	{
 		m_ImGuiCommandLists[i].push_back(imGuiRenderTask->GetCommandInterface()->GetCommandList(i));
 	}
+}
+
+void Renderer::createRawBufferForLights()
+{
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+	srvDesc.Buffer.FirstElement = 0;
+	srvDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc.Buffer.NumElements = 1; // Wierd to specify this?? But crashes otherwise.
+	//srvDesc.Buffer.StructureByteStride = sizeof(unsigned int);
+	srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
+
+	unsigned int rawBufferSize = sizeof(LightHeader) + sizeof(PointLight) + sizeof(DirectionalLight) + sizeof(PointLight);
+	Light::m_pLightsRawBuffer = new ShaderResource(m_pDevice5, rawBufferSize, L"rawBufferLights", &srvDesc, m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
 }
 
 void Renderer::setRenderTasksRenderComponents()
