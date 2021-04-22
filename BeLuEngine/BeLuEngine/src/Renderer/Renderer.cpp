@@ -148,7 +148,9 @@ void Renderer::deleteRenderer()
 	delete m_pCbPerSceneData;
 	delete m_pCbPerFrame;
 	delete m_pCbPerFrameData;
+
 	delete Light::m_pLightsRawBuffer;
+	free(Light::m_pRawData);
 
 #ifdef DEBUG
 	// Cleanup ImGui
@@ -1898,8 +1900,16 @@ void Renderer::createRawBufferForLights()
 	m_pCbPerSceneData->lightIndex = Light::m_pLightsRawBuffer->GetSRV()->GetDescriptorHeapIndex();
 
 	// Allocate memory on CPU
-	Light::m_pRawData = new unsigned char(rawBufferSize);
+	Light::m_pRawData = (unsigned char*)malloc(rawBufferSize);
 	memset(Light::m_pRawData, 0, rawBufferSize);
+
+
+	// Submit data to update every frame
+	// Sending entire buffer (4kb as of writing this code), every frame for simplicity. Even if some lights might be static.
+	m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME]->Submit(&std::make_tuple(
+					Light::m_pLightsRawBuffer->GetUploadResource(),
+					Light::m_pLightsRawBuffer->GetDefaultResource(),
+					const_cast<const void*>(static_cast<void*>(Light::m_pRawData))));	// Yes, its great!
 }
 
 void Renderer::setRenderTasksRenderComponents()

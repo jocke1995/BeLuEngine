@@ -235,7 +235,7 @@ void ImGuiHandler::drawSceneHierarchy()
 										static int index = 0;
 										AssetLoader* al = AssetLoader::Get();
 										std::wstring matName = L"dynamicMaterial" + std::to_wstring(index);
-										Material* newMat = al->CreateMaterial(matName);
+										Material* newMat = al->CreateMaterial(matName, al->LoadMaterial(mc->GetMaterialAt(matIndex)->GetName()));
 										index++;
 
 										mc->SetMaterialAt(matIndex, newMat);
