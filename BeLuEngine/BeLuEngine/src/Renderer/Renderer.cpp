@@ -530,7 +530,6 @@ void Renderer::ExecuteST()
 	}
 
 	/* ----------------------------- DEVELOPERMODE CommandLists ----------------------------- */
-
 	m_CommandQueues[E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->ExecuteCommandLists(
 		m_DirectCommandLists[commandInterfaceIndex].size(),
 		m_DirectCommandLists[commandInterfaceIndex].data());

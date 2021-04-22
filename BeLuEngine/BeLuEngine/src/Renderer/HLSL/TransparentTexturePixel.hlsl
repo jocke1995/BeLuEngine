@@ -5,6 +5,7 @@ struct VS_OUT
 	float4 pos      : SV_Position;
 	float4 worldPos : WPos;
 	float2 uv       : UV;
+	float3 norm		: NORM;
 	float3x3 tbn	: TBN;
 };
 
@@ -23,16 +24,25 @@ float4 PS_main(VS_OUT input) : SV_TARGET0
 	float4 albedo = textures[material.textureAlbedo].Sample(Anisotropic16_Wrap, uvScaled);
 	float roughness = material.hasRoughnessTexture ? textures[material.textureRoughness].Sample(Anisotropic16_Wrap, uvScaled).r : material.roughnessValue;
 	float metallic = material.hasMetallicTexture ? textures[material.textureMetallic].Sample(Anisotropic16_Wrap, uvScaled).r : material.metallicValue;
-	float4 emissive = material.hasEmissiveTexture ? textures[material.textureEmissive].Sample(Anisotropic16_Wrap, uvScaled) : float4(material.emissiveValue.rgb, 1.0f);
-	float4 normal = textures[material.textureNormal].Sample(Anisotropic16_Wrap, uvScaled);
-	float opacity   = material.hasOpacityTexture ? textures[0].Sample(Anisotropic16_Wrap, uvScaled).r : material.opacityValue;
+	float4 emissive = material.hasEmissiveTexture ? textures[material.textureEmissive].Sample(Anisotropic16_Wrap, uvScaled) : material.emissiveValue;
+	float opacity   = material.hasOpacityTexture ? textures[material.textureOpacity].Sample(Anisotropic16_Wrap, uvScaled).r : material.opacityValue;
 
-	normal = (2.0f * normal) - 1.0f;
-	normal = float4(normalize(mul(normal.xyz, input.tbn)), 1.0f);
+	float3 normal = float3(0.0f, 0.0f, 0.0f);
+	if (material.hasNormalTexture)
+	{
+		normal = textures[material.textureNormal].Sample(Anisotropic16_Wrap, uvScaled).xyz;
+		normal = normalize((2.0f * normal) - 1.0f);
+		normal = float4(normalize(mul(normal.xyz, input.tbn)), 0.0f);
+	}
+	else
+	{
+		normal = float4(input.norm.xyz, 0.0f);
+	}
 
 	float3 camPos = cbPerFrame.camPos;
 	float3 finalColor = float3(0.0f, 0.0f, 0.0f);
 	float3 viewDir = normalize(camPos - input.worldPos.xyz);
+
 
 	// Linear interpolation
 	float3 baseReflectivity = lerp(float3(0.04f, 0.04f, 0.04f), albedo.rgb, metallic);
