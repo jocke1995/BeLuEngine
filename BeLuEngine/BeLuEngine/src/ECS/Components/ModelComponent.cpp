@@ -1,10 +1,14 @@
 #include "stdafx.h"
 #include "ModelComponent.h"
 
+#include "GPU_Structs.h"
 #include "../Renderer/Model/Model.h"
+#include "../Renderer/Model/Mesh.h"
 #include "../Renderer/Model/Material.h"
 #include "../Renderer/Renderer.h"
 #include "../Entity.h"
+
+#include "../Renderer/GPUMemory/GPUMemory.h"
 
 namespace component
 {
@@ -21,6 +25,12 @@ namespace component
 	void ModelComponent::SetModel(Model* model)
 	{
 		m_pModel = model;
+
+		// Start with values from the default material specified for that model
+		m_Materials = *m_pModel->GetOriginalMaterial();
+
+		m_SlotInfos.resize(m_pModel->GetSize());
+		updateSlotInfo();
 	}
 
 	void ModelComponent::SetDrawFlag(unsigned int drawFlag)
@@ -49,12 +59,31 @@ namespace component
 
 	Material* ModelComponent::GetMaterialAt(unsigned int index) const
 	{
-		return m_pModel->GetMaterialAt(index);
+		return m_Materials[index];
+	}
+
+	void ModelComponent::SetMaterialAt(unsigned int index, Material* material)
+	{
+		m_Materials[index] = material;
+		updateSlotInfo();
 	}
 
 	const SlotInfo* ModelComponent::GetSlotInfoAt(unsigned int index) const
 	{
-		return m_pModel->GetSlotInfoAt(index);
+		return &m_SlotInfos[index];
+	}
+
+	void ModelComponent::updateSlotInfo()
+	{
+		for (unsigned int i = 0; i < m_pModel->GetSize(); i++)
+		{
+			m_SlotInfos[i] =
+			{
+				m_pModel->GetMeshAt(i)->GetSRV()->GetDescriptorHeapIndex(),
+				m_Materials[i]->GetMaterialData()->first->GetCBV()->GetDescriptorHeapIndex(),
+				0, 0 // Padding
+			};
+		}
 	}
 
 	unsigned int ModelComponent::GetDrawFlag() const
@@ -81,4 +110,6 @@ namespace component
 	{
 		return m_pModel;
 	}
+
+
 }

@@ -578,7 +578,7 @@ void Renderer::InitModelComponent(component::ModelComponent* mc)
 
 	// Submit to codt
 	submitModelToGPU(mc->m_pModel);
-	submitMaterialToGPU(mc->m_pModel);
+	submitMaterialToGPU(mc);
 
 	// Only add the m_Entities that actually should be drawn
 	if (tc != nullptr)
@@ -970,12 +970,12 @@ void Renderer::submitModelToGPU(Model* model)
 	AssetLoader::Get()->m_LoadedModels.at(model->GetPath()).first = true;
 }
 
-void Renderer::submitMaterialToGPU(Model* model)
+void Renderer::submitMaterialToGPU(component::ModelComponent* mc)
 {
-	for (unsigned int i = 0; i < model->GetSize(); i++)
+	for (unsigned int i = 0; i < mc->GetNrOfMeshes(); i++)
 	{
 		Texture* texture;
-		Material* mat = model->GetMaterialAt(i);
+		Material* mat = mc->GetMaterialAt(i);
 
 		// Skip already loaded ones
 		if (AssetLoader::Get()->IsMaterialLoadedOnGpu(mat) == true)

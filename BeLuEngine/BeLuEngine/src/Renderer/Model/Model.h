@@ -28,27 +28,18 @@ public:
 
     // Mesh
     Mesh* GetMeshAt(unsigned int index) const;
-    void SetMeshAt(unsigned int index, Mesh* mesh);
 
-    // Material
-    Material* GetMaterialAt(unsigned int index) const;
-    void SetMaterialAt(unsigned int index, Material* material);
-
-    // SlotInfo
-    const SlotInfo* GetSlotInfoAt(unsigned int index) const;
+    const std::vector<Material*>* GetOriginalMaterial() const;
 
 protected:
     friend class Renderer;
     friend class AssetLoader;
 
-    void updateSlotInfo();
-
     std::wstring m_Path;
     unsigned int m_Size = 0;
 
     std::vector<Mesh*> m_Meshes;
-    std::vector<Material*> m_Materials;
-    std::vector<SlotInfo> m_SlotInfos; 
+    std::vector<Material*> m_OriginalMaterial;
 };
 
 #endif

@@ -24,6 +24,8 @@ Material::Material(const std::wstring& name)
 	}
 #endif 
 
+	Renderer& r = Renderer::GetInstance();
+	m_MaterialData.first = new ConstantBuffer(r.m_pDevice5, sizeof(MaterialData), m_Name, r.m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
 	m_MaterialData.second =
 	{
 			defaultMat->m_MaterialData.second.textureAlbedo,
@@ -44,6 +46,9 @@ Material::Material(const std::wstring& name)
 			0.5f,  // opacityValue
 			0, // padding
 	};
+
+	// copy the texture pointers
+	m_Textures = defaultMat->m_Textures;
 }
 
 Material::Material(const std::wstring* name, std::map<E_TEXTURE2D_TYPE, Texture*>* textures)
@@ -84,6 +89,9 @@ Material::Material(const Material& other, const std::wstring& name)
 	m_MaterialData.first = new ConstantBuffer(r.m_pDevice5, sizeof(MaterialData), m_Name, r.m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
 
 	m_MaterialData.second = other.m_MaterialData.second;
+
+
+	m_Textures = other.m_Textures;
 }
 
 Material::~Material()

@@ -16,11 +16,7 @@ Model::Model(const std::wstring* path, std::vector<Mesh*>* meshes, std::vector<M
 	m_Size = (*meshes).size();
 
 	m_Meshes = (*meshes);
-	m_Materials = (*materials);
-
-	// Fill slotinfo with empty slotinfos
-	m_SlotInfos.resize(m_Size);
-	updateSlotInfo();
+	m_OriginalMaterial = *materials;
 }
 
 Model::~Model()
@@ -52,45 +48,7 @@ Mesh* Model::GetMeshAt(unsigned int index) const
 	return m_Meshes[index];
 }
 
-void Model::SetMeshAt(unsigned int index, Mesh* mesh)
+const std::vector<Material*>* Model::GetOriginalMaterial() const
 {
-	m_Meshes[index] = mesh;
-	updateSlotInfo();
+	return &m_OriginalMaterial;
 }
-
-Material* Model::GetMaterialAt(unsigned int index) const
-{
-	return m_Materials[index];
-}
-
-void Model::SetMaterialAt(unsigned int index, Material* material)
-{
-	m_Materials[index] = material;
-	updateSlotInfo();
-}
-
-const SlotInfo* Model::GetSlotInfoAt(unsigned int index) const
-{
-	return &m_SlotInfos[index];
-}
-
-void Model::updateSlotInfo()
-{
-#ifdef DEBUG
-	if (m_Meshes[0]->m_pSRV == nullptr || m_Materials[0]->GetTexture(E_TEXTURE2D_TYPE::ALBEDO)->m_pSRV == nullptr)
-	{
-		BL_LOG_CRITICAL("Model.cpp::updateSlotInfo got unInit:ed variables\n");
-	}
-#endif // DEBUG
-
-	for (unsigned int i = 0; i < m_Size; i++)
-	{
-		m_SlotInfos[i] =
-		{
-			m_Meshes[i]->m_pSRV->GetDescriptorHeapIndex(),
-			m_Materials[i]->GetMaterialData()->first->GetCBV()->GetDescriptorHeapIndex(),
-			0, 0 // Padding
-		};
-	}
-}
-

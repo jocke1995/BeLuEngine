@@ -52,8 +52,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
    
    TestAsyncThread test1 = TestAsyncThread();
 
-   al->CreateMaterial(L"hej");
-
    Log::Print("Entering Game-Loop ...\n\n");
    while (!window->ExitWindow())
    {
@@ -236,7 +234,11 @@ Scene* SponzaScene(SceneManager* sm)
     tc->GetTransform()->SetPosition(0, 4.0f, 1.0f);
     bbc->Init();
 
+
     /* ---------------------- Sphere ---------------------- */
+    //Material* ballMatCopy = al->CreateMaterial(L"TestMat", al->Get()->LoadMaterial(L"ballmat"));
+
+
     entity = scene->AddEntity("sphere1");
     mc = entity->AddComponent<component::ModelComponent>();
     tc = entity->AddComponent<component::TransformComponent>();
@@ -254,6 +256,7 @@ Scene* SponzaScene(SceneManager* sm)
     bbc = entity->AddComponent<component::BoundingBoxComponent>(F_BOUNDING_BOX_FLAGS::PICKING);
 
     mc->SetModel(sphereModel);
+    //mc->SetMaterialAt(0, ballMatCopy);
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
     tc->GetTransform()->SetScale(1.0f);
     tc->GetTransform()->SetPosition(15, 4, 4);

@@ -8,6 +8,7 @@
 class Mesh;
 class Model;
 class Material;
+struct SlotInfo;
 
 namespace component
 {
@@ -25,15 +26,21 @@ namespace component
         void SetModel(Model* model);
         void SetDrawFlag(unsigned int drawFlag);
 
-        // Gets
+        // Model Stuff
         Mesh* GetMeshAt(unsigned int index) const;
-        Material* GetMaterialAt(unsigned int index) const;
-        const SlotInfo* GetSlotInfoAt(unsigned int index) const;
-        unsigned int GetDrawFlag() const;
         unsigned int GetNrOfMeshes() const;
+        unsigned int GetDrawFlag() const;
         const std::wstring& GetModelPath() const;
         bool IsPickedThisFrame() const;
         Model* GetModel() const;
+
+        // Material
+        Material* GetMaterialAt(unsigned int index) const;
+        void SetMaterialAt(unsigned int index, Material* material);
+
+        // SlotInfo
+        const SlotInfo* GetSlotInfoAt(unsigned int index) const;
+
 
     private:
         // The boundingBox will update the "m_IsPickedThisFrame"
@@ -43,6 +50,11 @@ namespace component
         bool m_IsPickedThisFrame = false;
 
         Model* m_pModel = nullptr;
+
+        std::vector<Material*> m_Materials;
+        std::vector<SlotInfo> m_SlotInfos;
+        void updateSlotInfo();
+
         unsigned int m_DrawFlag = 0;
     };
 }

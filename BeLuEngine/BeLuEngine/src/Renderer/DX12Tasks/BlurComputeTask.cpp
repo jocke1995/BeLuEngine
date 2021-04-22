@@ -32,7 +32,7 @@ BlurComputeTask::BlurComputeTask(
 	m_HorizontalThreadGroupsY = screenHeight;
 
 	m_VerticalThreadGroupsX = screenWidth;
-	m_VerticalThreadGroupsY = m_HorizontalThreadGroupsX;
+	m_VerticalThreadGroupsY = static_cast<unsigned int>(ceilf(static_cast<float>(screenHeight) / m_ThreadsPerGroup));
 }
 
 BlurComputeTask::~BlurComputeTask()

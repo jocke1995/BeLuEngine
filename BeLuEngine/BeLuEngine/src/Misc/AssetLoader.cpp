@@ -49,11 +49,13 @@ Material* AssetLoader::CreateMaterial(std::wstring matName, const Material* mat)
 		{
 			m_LoadedMaterials[matName].first  = false;
 			m_LoadedMaterials[matName].second = new Material(*mat, matName);
+			return m_LoadedMaterials[matName].second;
 		}
 		else // Create a new material with starting values from the default material.
 		{
 			m_LoadedMaterials[matName].first = false;
 			m_LoadedMaterials[matName].second = new Material(matName);
+			return m_LoadedMaterials[matName].second;
 		}
 	}
 	else
@@ -68,7 +70,8 @@ Material* AssetLoader::LoadMaterial(std::wstring matName)
 {
 	if (m_LoadedMaterials.count(matName) != 0)
 	{
-		return m_LoadedMaterials[matName].second;
+		Material* mat = m_LoadedMaterials[matName].second;
+		return  mat;
 	}
 	BL_LOG_CRITICAL("Invalid material ID '%S' could not be loaded.\n", matName.c_str());
 	return nullptr;

@@ -12,6 +12,7 @@
 #include "../Renderer/Renderer.h"
 #include "../Misc/Window.h"
 #include "../Misc/Log.h"
+#include "../Misc/AssetLoader.h"
 
 #include "../Renderer/Camera/BaseCamera.h"
 
@@ -40,11 +41,10 @@ ImGuiHandler& ImGuiHandler::GetInstance()
 void ImGuiHandler::NewFrame()
 {
 	static bool a = true;
-
 	if(a)
 		EventBus::GetInstance().Subscribe(this, &ImGuiHandler::onEntityClicked);
-
 	a = false;
+
 	this->resetThreadInfos();
 
 	ImGui_ImplDX12_NewFrame();
@@ -211,7 +211,7 @@ void ImGuiHandler::drawSceneHierarchy()
 									float opacityValue = matData->opacityValue;
 									float4 emissiveValue = matData->emissiveValue;
 
-
+									bool isPressed = ImGui::Button("Create Unique Material", { 200.0f, 100.0f });
 									ImGui::Checkbox("Use Roughness Texture", &useRoughnessTexture);
 									ImGui::Checkbox("Use Metallic Texture", &useMetallicTexture);
 									ImGui::Checkbox("Use Opacity Texture", &useOpacityTexture);
@@ -230,6 +230,16 @@ void ImGuiHandler::drawSceneHierarchy()
 										matData->emissiveValue = emissiveValue;
 									}
 
+									if (isPressed)
+									{
+										static int index = 0;
+										AssetLoader* al = AssetLoader::Get();
+										std::wstring matName = L"dynamicMaterial" + std::to_wstring(index);
+										Material* newMat = al->CreateMaterial(matName);
+										index++;
+
+										mc->SetMaterialAt(matIndex, newMat);
+									}
 									matData->hasRoughnessTexture = useRoughnessTexture;
 									matData->hasMetallicTexture = useMetallicTexture;
 									matData->hasOpacityTexture = useOpacityTexture;
