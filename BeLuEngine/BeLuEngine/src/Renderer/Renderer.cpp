@@ -635,23 +635,28 @@ void Renderer::InitDirectionalLightComponent(component::DirectionalLightComponen
 
 	
 	// Submit to gpu
-	CopyTask* copyTask = nullptr;
-
-	if (component->GetLightFlags() & static_cast<unsigned int>(F_LIGHT_FLAGS::STATIC))
-	{
-		copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND];
-	}
-	else
-	{
-		copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME];
-	}
-
+	CopyTask* copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME];
 	const void* data = static_cast<const void*>(component->GetLightData());
 	copyTask->Submit(&std::make_tuple(cb->GetUploadResource(), cb->GetDefaultResource(), data));
 	
 	// We also need to update the indexBuffer with lights if a light is added.
 	// The buffer with indices is inside cbPerSceneData, which is updated in the following function:
 	submitUploadPerSceneData();
+
+
+	// NEW STUFF FOR RAWBUFFER
+	unsigned int offset = sizeof(LightHeader);
+
+	unsigned int numDirLights = *Light::m_pRawData;		// First unsigned int in memory is numDirLights
+
+	offset += numDirLights * sizeof(DirectionalLight);
+
+	// Increase numLights by one, copy into buffer
+	numDirLights += 1;
+	memcpy(Light::m_pRawData, &numDirLights, sizeof(unsigned int));
+
+	// Copy lightData
+	memcpy(Light::m_pRawData + offset * sizeof(unsigned char), static_cast<DirectionalLight*>(component->GetLightData()), sizeof(DirectionalLight));
 }
 
 void Renderer::InitPointLightComponent(component::PointLightComponent* component)
@@ -660,29 +665,19 @@ void Renderer::InitPointLightComponent(component::PointLightComponent* component
 	std::wstring resourceName = L"PointLight";
 	ConstantBuffer* cb = new ConstantBuffer(m_pDevice5, sizeof(PointLight), resourceName, m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
 
-	// Assign views required for shadows from the lightPool
-	ShadowInfo* si = nullptr;
-
 	// Save in m_pRenderer
 	m_Lights[E_LIGHT_TYPE::POINT_LIGHT].push_back(std::make_pair(component, cb));
 
 	// Submit to gpu
-	CopyTask* copyTask = nullptr;
-	if (component->GetLightFlags() & static_cast<unsigned int>(F_LIGHT_FLAGS::STATIC))
-	{
-		copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND];
-	}
-	else
-	{
-		copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME];
-	}
-
+	CopyTask* copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME];;
 	const void* data = static_cast<const void*>(component->GetLightData());
 	copyTask->Submit(&std::make_tuple(cb->GetUploadResource(), cb->GetDefaultResource(), data));
 
 	// We also need to update the indexBuffer with lights if a light is added.
 	// The buffer with indices is inside cbPerSceneData, which is updated in the following function:
 	submitUploadPerSceneData();
+
+	// NEW STUFF FOR RAWBUFFER
 }
 
 void Renderer::InitSpotLightComponent(component::SpotLightComponent* component)
@@ -703,22 +698,15 @@ void Renderer::InitSpotLightComponent(component::SpotLightComponent* component)
 	m_Lights[E_LIGHT_TYPE::SPOT_LIGHT].push_back(std::make_pair(component, cb));
 
 	// Submit to gpu
-	CopyTask* copyTask = nullptr;
-	if (component->GetLightFlags() & static_cast<unsigned int>(F_LIGHT_FLAGS::STATIC))
-	{
-		copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND];
-	}
-	else
-	{
-		copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME];
-	}
-
+	CopyTask* copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME];
 	const void* data = static_cast<const void*>(component->GetLightData());
 	copyTask->Submit(&std::make_tuple(cb->GetUploadResource(), cb->GetDefaultResource(), data));
 
 	// We also need to update the indexBuffer with lights if a light is added.
 	// The buffer with indices is inside cbPerSceneData, which is updated in the following function:
 	submitUploadPerSceneData();
+
+	// NEW STUFF FOR RAWBUFFER
 }
 
 void Renderer::InitCameraComponent(component::CameraComponent* component)

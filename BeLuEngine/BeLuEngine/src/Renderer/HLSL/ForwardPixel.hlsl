@@ -19,6 +19,8 @@ ConstantBuffer<DirectionalLight> dirLight[]	: register(b0, space0);
 ConstantBuffer<PointLight> pointLight[]		: register(b0, space1);
 ConstantBuffer<SpotLight> spotLight[]		: register(b0, space2);
 
+ByteAddressBuffer rawBufferLights[]: register(t0, space1);
+
 ConstantBuffer<SlotInfo> info					 : register(b1, space3);
 ConstantBuffer<CB_PER_FRAME_STRUCT>  cbPerFrame  : register(b4, space3);
 ConstantBuffer<MaterialData> material			 : register(b6, space3);
@@ -37,11 +39,11 @@ PS_OUTPUT PS_main(VS_OUT input)
 	{
 		normal = textures[material.textureNormal].Sample(Anisotropic16_Wrap, uvScaled).xyz;
 		normal = normalize((2.0f * normal) - 1.0f);
-		normal = float4(normalize(mul(normal.xyz, input.tbn)), 0.0f);
+		normal = normalize(mul(normal, input.tbn));
 	}
 	else
 	{
-		normal = float4(input.norm.xyz, 0.0f);
+		normal = input.norm.xyz;
 	}
 
 	float3 camPos = cbPerFrame.camPos;
@@ -56,8 +58,15 @@ PS_OUTPUT PS_main(VS_OUT input)
 	{
 		int index = cbPerScene.dirLightIndices[i].x;
 	
+		//DirectionalLight asd = rawBufferLights[20].Load<DirectionalLight>(sizeof(LightHeader));
+
+
+		DirectionalLight dl;
+		dl.direction = float4(-1.0f, -2.0f, 0.03f, 0.0f);
+		dl.baseLight.color = float3(1.0f, 1.0f, 1.0f);
+		dl.baseLight.intensity = 3.0f;
 		finalColor += CalcDirLight(
-			dirLight[index],
+			dl,
 			camPos,
 			viewDir,
 			input.worldPos,
@@ -69,7 +78,7 @@ PS_OUTPUT PS_main(VS_OUT input)
 	}
 
 	// PointLight contributions
-	for (unsigned int i = 0; i < cbPerScene.Num_Point_Lights; i++)
+/*for (unsigned int i = 0; i < cbPerScene.Num_Point_Lights; i++)
 	{
 		int index = cbPerScene.pointLightIndices[i].x;
 
@@ -100,7 +109,7 @@ PS_OUTPUT PS_main(VS_OUT input)
 			roughness,
 			normal.rgb,
 			baseReflectivity);
-	}
+	}*/
 	
 	float3 ambient = float3(0.001f, 0.001f, 0.001f) * albedo;
 	finalColor += ambient;

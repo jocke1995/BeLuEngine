@@ -1,7 +1,7 @@
 #include "../../Headers/GPU_Structs.h"
 #include "PBRMath.hlsl"
 
-Texture2D textures[]   : register (t0);
+Texture2D textures[]   : register (t0, space0);
 
 SamplerState Anisotropic2_Wrap	: register (s0);
 SamplerState Anisotropic4_Wrap	: register (s1);
@@ -61,7 +61,7 @@ float3 CalcPointLight(
 	in float3 baseReflectivity)
 {
 	float3 pointLightContribution = float3(0.0f, 0.0f, 0.0f);
-	float3 lightDir = normalize(pointLight.position - fragPos.xyz);
+	float3 lightDir = normalize(pointLight.position.xyz - fragPos.xyz);
 
 	float3 normalized_bisector = normalize(viewDir + lightDir);
 
@@ -69,7 +69,7 @@ float3 CalcPointLight(
 	float constantFactor = pointLight.attenuation.x;
 	float linearFactor = pointLight.attenuation.y;
 	float quadraticFactor = pointLight.attenuation.z;
-	float distancePixelToLight = length(pointLight.position.xyz - fragPos);
+	float distancePixelToLight = length(pointLight.position.xyz - fragPos.xyz);
 	float attenuation = 1.0f / (constantFactor + (linearFactor * distancePixelToLight) + (quadraticFactor * pow(distancePixelToLight, 2)));
 	
 	float3 radiance = pointLight.baseLight.color.rgb * pointLight.baseLight.intensity * attenuation;
@@ -121,7 +121,7 @@ float3 CalcSpotLight(
 	float constantFactor = spotLight.attenuation.x;
 	float linearFactor = spotLight.attenuation.y;
 	float quadraticFactor = spotLight.attenuation.z;
-	float distancePixelToLight = length(spotLight.position_cutOff.xyz - fragPos);
+	float distancePixelToLight = length(spotLight.position_cutOff.xyz - fragPos.xyz);
 	float attenuation = 1.0f / (constantFactor + (linearFactor * distancePixelToLight) + (quadraticFactor * pow(distancePixelToLight, 2)));
 
 	float3 radiance = spotLight.baseLight.color.rgb * spotLight.baseLight.intensity * attenuation;

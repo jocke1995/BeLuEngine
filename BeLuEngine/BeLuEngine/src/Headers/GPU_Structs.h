@@ -87,9 +87,9 @@ struct CB_PER_SCENE_STRUCT
 
 struct LightHeader
 {
+	unsigned int numDirectionalLights;
 	unsigned int numPointLights;
 	unsigned int numSpotLights;
-	unsigned int numDirectionalLights;
 	unsigned int pad;
 };
 

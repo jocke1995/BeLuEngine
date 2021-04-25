@@ -51,8 +51,16 @@ float4 PS_main(VS_OUT input) : SV_TARGET0
 	for (unsigned int i = 0; i < cbPerScene.Num_Dir_Lights; i++)
 	{
 		int index = cbPerScene.dirLightIndices[i].x;
+
+		//DirectionalLight asd = rawBufferLights[20].Load<DirectionalLight>(sizeof(LightHeader));
+
+
+		DirectionalLight dl;
+		dl.direction = float4(-1.0f, -2.0f, 0.03f, 0.0f);
+		dl.baseLight.color = float3(1.0f, 1.0f, 1.0f);
+		dl.baseLight.intensity = 3.0f;
 		finalColor += CalcDirLight(
-			dirLight[index],
+			dl,
 			camPos,
 			viewDir,
 			input.worldPos,
@@ -64,7 +72,7 @@ float4 PS_main(VS_OUT input) : SV_TARGET0
 	}
 
 	// PointLight contributions
-	for (unsigned int i = 0; i < cbPerScene.Num_Point_Lights; i++)
+/*for (unsigned int i = 0; i < cbPerScene.Num_Point_Lights; i++)
 	{
 		int index = cbPerScene.pointLightIndices[i].x;
 
@@ -84,6 +92,7 @@ float4 PS_main(VS_OUT input) : SV_TARGET0
 	for (unsigned int i = 0; i < cbPerScene.Num_Spot_Lights; i++)
 	{
 		int index = cbPerScene.spotLightIndices[i].x;
+
 		finalColor += CalcSpotLight(
 			spotLight[index],
 			camPos,
@@ -94,7 +103,7 @@ float4 PS_main(VS_OUT input) : SV_TARGET0
 			roughness,
 			normal.rgb,
 			baseReflectivity);
-	}
+	}*/
 
 	float3 ambient = float3(0.03f, 0.03f, 0.03f) * albedo;
 	finalColor += ambient;
