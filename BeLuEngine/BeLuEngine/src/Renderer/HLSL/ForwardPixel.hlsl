@@ -19,7 +19,8 @@ ConstantBuffer<DirectionalLight> dirLight[]	: register(b0, space0);
 ConstantBuffer<PointLight> pointLight[]		: register(b0, space1);
 ConstantBuffer<SpotLight> spotLight[]		: register(b0, space2);
 
-ByteAddressBuffer rawBufferLights[]: register(t0, space1);
+ByteAddressBuffer rawBufferLights: register(t0, space4);
+//ByteAddressBuffer rawBufferLights[]: register(t0, space1); // TODO: not working to put rawBuffer in descriptorTable?
 
 ConstantBuffer<SlotInfo> info					 : register(b1, space3);
 ConstantBuffer<CB_PER_FRAME_STRUCT>  cbPerFrame  : register(b4, space3);
@@ -58,15 +59,16 @@ PS_OUTPUT PS_main(VS_OUT input)
 	{
 		int index = cbPerScene.dirLightIndices[i].x;
 	
-		//DirectionalLight asd = rawBufferLights[20].Load<DirectionalLight>(sizeof(LightHeader));
+		//DirectionalLight asd = rawBufferLights[19].Load<DirectionalLight>(sizeof(LightHeader));
+		DirectionalLight dirLight = rawBufferLights.Load<DirectionalLight>(sizeof(LightHeader));
 
 
-		DirectionalLight dl;
-		dl.direction = float4(-1.0f, -2.0f, 0.03f, 0.0f);
-		dl.baseLight.color = float3(1.0f, 1.0f, 1.0f);
-		dl.baseLight.intensity = 3.0f;
+		//DirectionalLight dl;
+		//dl.direction = float4(-1.0f, -2.0f, 0.03f, 0.0f);
+		//dl.baseLight.color = float3(1.0f, 1.0f, 1.0f);
+		//dl.baseLight.intensity = 3.0f;
 		finalColor += CalcDirLight(
-			dl,
+			dirLight,
 			camPos,
 			viewDir,
 			input.worldPos,

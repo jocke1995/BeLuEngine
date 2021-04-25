@@ -129,6 +129,11 @@ void RootSignature::createRootSignatureStructure()
 	rootParam[RS::DHINDICES_CONSTANTS].Constants.Num32BitValues = sizeof(DescriptorHeapIndices) / sizeof(UINT);
 	rootParam[RS::DHINDICES_CONSTANTS].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
+	rootParam[RS::RAWBUFFER_LIGHTS].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+	rootParam[RS::RAWBUFFER_LIGHTS].Constants.ShaderRegister = 0; // t0
+	rootParam[RS::RAWBUFFER_LIGHTS].Constants.RegisterSpace = 4; // space4
+	rootParam[RS::RAWBUFFER_LIGHTS].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
 	rootParam[RS::MATRICES_PER_OBJECT_CBV].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParam[RS::MATRICES_PER_OBJECT_CBV].Constants.ShaderRegister = 3; // b3
 	rootParam[RS::MATRICES_PER_OBJECT_CBV].Constants.RegisterSpace = 3; // space3

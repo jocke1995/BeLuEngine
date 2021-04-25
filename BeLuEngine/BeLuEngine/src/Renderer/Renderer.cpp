@@ -269,9 +269,9 @@ void Renderer::InitD3D12(Window *window, HINSTANCE hInstance, ThreadPool* thread
 		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]->GetCPUHeapAt(imGuiTextureIndex),
 		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]->GetGPUHeapAt(imGuiTextureIndex));
 #endif
+	createRawBufferForLights();
 	initRenderTasks();
 
-	createRawBufferForLights();
 	
 	submitMeshToCodt(m_pFullScreenQuad);
 }
@@ -1466,6 +1466,7 @@ void Renderer::initRenderTasks()
 
 	forwardRenderTask->AddResource("cbPerFrame", m_pCbPerFrame->GetDefaultResource());
 	forwardRenderTask->AddResource("cbPerScene", m_pCbPerScene->GetDefaultResource());
+	forwardRenderTask->AddResource("rawBufferLights", Light::m_pLightsRawBuffer->GetDefaultResource());
 	forwardRenderTask->SetMainDepthStencil(m_pMainDepthStencil);
 	forwardRenderTask->AddRenderTargetView("brightTarget", std::get<1>(*m_pBloomResources->GetBrightTuple()));
 	forwardRenderTask->AddRenderTargetView("mainColorTarget", m_pMainColorBuffer.first->GetRTV());
@@ -1893,14 +1894,6 @@ void Renderer::createRawBufferForLights()
 	// Allocate memory on CPU
 	Light::m_pRawData = (unsigned char*)malloc(rawBufferSize);
 	memset(Light::m_pRawData, 0, rawBufferSize);
-
-
-	// Submit data to update every frame
-	// Sending entire buffer (4kb as of writing this code), every frame for simplicity. Even if some lights might be static.
-	m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME]->Submit(&std::make_tuple(
-					Light::m_pLightsRawBuffer->GetUploadResource(),
-					Light::m_pLightsRawBuffer->GetDefaultResource(),
-					const_cast<const void*>(static_cast<void*>(Light::m_pRawData))));	// Yes, its great!
 }
 
 void Renderer::setRenderTasksRenderComponents()
@@ -2034,6 +2027,14 @@ void Renderer::submitUploadPerFrameData()
 		const void* data = static_cast<void*>(m_pCbPerFrameData);
 		cpft->Submit(&std::tuple(m_pCbPerFrame->GetUploadResource(), m_pCbPerFrame->GetDefaultResource(), data));
 	}
+
+	// All lights (data and header with information)
+	// Sending entire buffer (4kb as of writing this code), every frame for simplicity. Even if some lights might be static.
+	cpft->Submit(&std::make_tuple(
+		Light::m_pLightsRawBuffer->GetUploadResource(),
+		Light::m_pLightsRawBuffer->GetDefaultResource(),
+		const_cast<const void*>(static_cast<void*>(Light::m_pRawData))));	// Yes, its great!
+
 }
 
 void Renderer::toggleFullscreen(WindowChange* event)

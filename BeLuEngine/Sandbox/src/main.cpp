@@ -301,7 +301,7 @@ Scene* SponzaScene(SceneManager* sm)
     /* ---------------------- dirLight ---------------------- */
     entity = scene->AddEntity("dirLight");
     dlc = entity->AddComponent<component::DirectionalLightComponent>(F_LIGHT_FLAGS::CAST_SHADOW);
-    dlc->SetColor({ 0.17, 0.25, 0.3f});
+    dlc->SetColor({ 10.0, 0.25, 0.3f});
     dlc->SetDirection({ -1.0f, -2.0f, 0.03f });
     /* ---------------------- dirLight ---------------------- */
 
