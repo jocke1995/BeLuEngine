@@ -7,6 +7,7 @@
 #include "../Misc/MultiThreading/ThreadPool.h"
 #include "../Misc/MultiThreading/Thread.h"
 #include "../Misc/Window.h"
+#include "DXILShaderCompiler.h"
 
 // Headers
 #include "Core.h"
@@ -214,6 +215,8 @@ void Renderer::InitD3D12(Window *window, HINSTANCE hInstance, ThreadPool* thread
 	
 	// Create Rootsignature
 	createRootSignature();
+
+	DXILShaderCompiler::Get()->Init();
 
 	// FullScreenQuad
 	createFullScreenQuad();

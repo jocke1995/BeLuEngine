@@ -13,7 +13,7 @@ ComputeState::ComputeState(ID3D12Device5* device, RootSignature* rootSignature, 
 
 	m_pCS = createShader(CSName, E_SHADER_TYPE::CS);
 
-	ID3DBlob* csBlob = m_pCS->GetBlob();
+	IDxcBlob* csBlob = m_pCS->GetBlob();
 
 	m_Cpsd.CS.pShaderBytecode = csBlob->GetBufferPointer();
 	m_Cpsd.CS.BytecodeLength = csBlob->GetBufferSize();

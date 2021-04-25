@@ -24,16 +24,23 @@ void CS_main(uint3 dispatchThreadID : SV_DispatchThreadID, int3 groupThreadID : 
 		g_SharedMem[groupThreadID.y] = textures[readIndex][int2(dispatchThreadID.x, y)];
 	}
 
+
+	uint mipLevel;
+	uint width;
+	uint height;
+	uint numLevels;
+	textures[readIndex].GetDimensions(mipLevel, width, height, numLevels);
+
 	// bot side
 	if (groupThreadID.y >= g_NumThreads - g_BlurRadius)
 	{
-		int y = min(dispatchThreadID.y + g_BlurRadius, textures[readIndex].Length.y - 1);
+		int y = min(dispatchThreadID.y + g_BlurRadius, height - 1);
 		g_SharedMem[groupThreadID.y + 2 * g_BlurRadius] = textures[readIndex][int2(dispatchThreadID.x, y)];
 	}
 	/* -------------------- Clamp out of bound samples -------------------- */
 
 	// Fill the middle parts of the sharedMemory
-	g_SharedMem[groupThreadID.y + g_BlurRadius] = textures[readIndex][min(dispatchThreadID.xy, textures[readIndex].Length.xy - 1)];
+	g_SharedMem[groupThreadID.y + g_BlurRadius] = textures[readIndex][min(dispatchThreadID.xy, float2(width, height) - 1)];
 
 	// Wait for shared memory to be populated before reading from it
 	GroupMemoryBarrierWithGroupSync();

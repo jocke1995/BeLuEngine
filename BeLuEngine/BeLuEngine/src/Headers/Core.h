@@ -98,7 +98,8 @@ enum class E_SHADER_TYPE
 	VS = 0,
 	PS = 1,
 	CS = 2,
-	UNSPECIFIED = 3
+	DXR = 3,
+	UNSPECIFIED = 4
 };
 
 enum class E_CAMERA_TYPE

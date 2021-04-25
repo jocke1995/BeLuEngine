@@ -17,8 +17,8 @@ GraphicsState::GraphicsState(ID3D12Device5* device, RootSignature* rootSignature
 	m_pVS = createShader(VSName, E_SHADER_TYPE::VS);
 	m_pPS = createShader(PSName, E_SHADER_TYPE::PS);
 
-	ID3DBlob* vsBlob = m_pVS->GetBlob();
-	ID3DBlob* psBlob = m_pPS->GetBlob();
+	IDxcBlob* vsBlob = m_pVS->GetBlob();
+	IDxcBlob* psBlob = m_pPS->GetBlob();
 
 	m_pGPSD->VS.pShaderBytecode = vsBlob->GetBufferPointer();
 	m_pGPSD->VS.BytecodeLength = vsBlob->GetBufferSize();
