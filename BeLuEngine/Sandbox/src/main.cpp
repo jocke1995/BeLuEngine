@@ -84,7 +84,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
            bbc->Init();
    
            plc->SetColor({ 0.5f, 0.25f, 0.25f });
-   
+           entity->Update(0);
+
            counter++;
    
            sceneManager->AddEntity(entity);
@@ -274,8 +275,8 @@ Scene* SponzaScene(SceneManager* sm)
     bbc->Init();
     /* ---------------------- Sphere ---------------------- */
 
-    /* ---------------------- PLs ---------------------- */
-    entity = scene->AddEntity("pl1");
+    /* ---------------------- Lights ---------------------- */
+    entity = scene->AddEntity("sl1");
     mc = entity->AddComponent<component::ModelComponent>();
     tc = entity->AddComponent<component::TransformComponent>();
     slc = entity->AddComponent<component::SpotLightComponent>(F_LIGHT_FLAGS::USE_TRANSFORM_POSITION);
@@ -285,8 +286,9 @@ Scene* SponzaScene(SceneManager* sm)
     tc->GetTransform()->SetScale(0.5f);
     tc->GetTransform()->SetPosition({ -30.0f, 10.0f, 4.5f });
     slc->SetColor({ 0.0f, 0.3f, 0.0f });
+    entity->Update(0);
 
-    entity = scene->AddEntity("pl2");
+    entity = scene->AddEntity("pl1");
     mc = entity->AddComponent<component::ModelComponent>();
     tc = entity->AddComponent<component::TransformComponent>();
     plc = entity->AddComponent<component::PointLightComponent>(F_LIGHT_FLAGS::USE_TRANSFORM_POSITION);
@@ -296,14 +298,19 @@ Scene* SponzaScene(SceneManager* sm)
     tc->GetTransform()->SetScale(0.5f);
     tc->GetTransform()->SetPosition({ 23.0f, 20.0f, 1.0f });
     plc->SetColor({ 0.3f, 0.0f, 0.0f });
-    /* ---------------------- PLs ---------------------- */
+    entity->Update(0);
 
-    /* ---------------------- dirLight ---------------------- */
     entity = scene->AddEntity("dirLight");
     dlc = entity->AddComponent<component::DirectionalLightComponent>(F_LIGHT_FLAGS::CAST_SHADOW);
-    dlc->SetColor({ 10.0, 0.25, 0.3f});
+    dlc->SetColor({ 0.1f, 0.25f, 0.3f });
     dlc->SetDirection({ -1.0f, -2.0f, 0.03f });
-    /* ---------------------- dirLight ---------------------- */
+
+    //entity = scene->AddEntity("dirLight2");
+    //dlc = entity->AddComponent<component::DirectionalLightComponent>(F_LIGHT_FLAGS::CAST_SHADOW);
+    //dlc->SetColor({ 10.0, 0.25, 10.0 });
+    //dlc->SetDirection({ -1.0f, -2.0f, 0.03f });
+
+    /* ---------------------- Lights ---------------------- */
 
     /* ---------------------- Update Function ---------------------- */
     scene->SetUpdateScene(&SponzaUpdateScene);

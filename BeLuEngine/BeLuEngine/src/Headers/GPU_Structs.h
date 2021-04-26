@@ -73,16 +73,13 @@ struct CB_PER_FRAME_STRUCT
 	// etc ..
 };
 
+// Currently unused
 struct CB_PER_SCENE_STRUCT
 {
-	float4 dirLightIndices[MAX_DIR_LIGHTS];
-	float4 pointLightIndices[MAX_POINT_LIGHTS];
-	float4 spotLightIndices[MAX_SPOT_LIGHTS];
-
-	unsigned int Num_Dir_Lights;
-	unsigned int Num_Point_Lights;
-	unsigned int Num_Spot_Lights;
-	unsigned int lightIndex;
+	unsigned int pad1;
+	unsigned int pad2;
+	unsigned int pad3;
+	unsigned int pad4;
 };
 
 struct LightHeader
@@ -133,5 +130,9 @@ struct SpotLight
 	unsigned int textureShadowMap;	// Index to the shadowMap (srv)
 	unsigned int pad1[3];
 };
+
+#define DIR_LIGHT_MAXOFFSET MAX_DIR_LIGHTS * sizeof(DirectionalLight)
+#define POINT_LIGHT_MAXOFFSET MAX_POINT_LIGHTS * sizeof(PointLight)
+#define SPOT_LIGHT_MAXOFFSET  MAX_SPOT_LIGHTS * sizeof(SpotLight)
 
 #endif

@@ -292,6 +292,14 @@ void ImGuiHandler::drawSceneHierarchy()
 
 									ImGui::DragFloat("Intensity", &pl->baseLight.intensity, 0.1f, 0.0f, 10.0f);
 									ImGui::ColorEdit3("", &pl->baseLight.color.r);
+
+									// Copy to rawBuffer
+									unsigned int offset = sizeof(LightHeader) + DIR_LIGHT_MAXOFFSET;
+
+									offset += static_cast<Light*>(plc)->m_LightOffsetInArray * sizeof(PointLight);
+
+									// Copy lightData
+									memcpy(Light::m_pRawData + offset * sizeof(unsigned char), pl, sizeof(PointLight));
 								}
 							}
 							else if (component::SpotLightComponent* slc = dynamic_cast<component::SpotLightComponent*>(c))
@@ -303,6 +311,14 @@ void ImGuiHandler::drawSceneHierarchy()
 									ImGui::DragFloat("Intensity", &sl->baseLight.intensity, 0.1f, 0.0f, 10.0f);
 									ImGui::DragFloat3("Direction", &sl->direction_outerCutoff.r, 0.05f, -1.0f, 1.0f);
 									ImGui::ColorEdit3("", &sl->baseLight.color.r);
+
+									// Copy to rawBuffer
+									unsigned int offset = sizeof(LightHeader) + DIR_LIGHT_MAXOFFSET + POINT_LIGHT_MAXOFFSET;
+
+									offset += static_cast<Light*>(slc)->m_LightOffsetInArray * sizeof(SpotLight);
+
+									// Copy lightData
+									memcpy(Light::m_pRawData + offset * sizeof(unsigned char), sl, sizeof(SpotLight));
 								}
 							}
 							else if (component::DirectionalLightComponent* dlc = dynamic_cast<component::DirectionalLightComponent*>(c))
@@ -314,6 +330,13 @@ void ImGuiHandler::drawSceneHierarchy()
 									ImGui::DragFloat("Intensity", &dl->baseLight.intensity, 0.1f, 0.0f, 10.0f);
 									ImGui::DragFloat3("Direction", &dl->direction.r, 0.05f, -1.0f, 1.0f);
 									ImGui::ColorEdit3("", &dl->baseLight.color.r);
+
+									// Copy to rawBuffer
+									unsigned int offset = sizeof(LightHeader);
+
+									offset += static_cast<Light*>(dlc)->m_LightOffsetInArray * sizeof(DirectionalLight);
+									// Copy lightData
+									memcpy(Light::m_pRawData + offset * sizeof(unsigned char), dl, sizeof(DirectionalLight));
 								}
 							}
 						}

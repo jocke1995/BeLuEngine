@@ -8,7 +8,6 @@ class Window;
 // Renderer Engine
 class RootSignature;
 class SwapChain;
-class ViewPool;
 class BoundingBoxPool;
 class DescriptorHeap;
 class Mesh;
@@ -198,9 +197,6 @@ private:
 	// Group of components that's needed for rendering:
 	std::map<F_DRAW_FLAGS, std::vector<RenderComponent>> m_RenderComponents;
 	std::vector<component::BoundingBoxComponent*> m_BoundingBoxesToBePicked;
-
-	ViewPool* m_pViewPool = nullptr;
-	std::map<E_LIGHT_TYPE, std::vector<std::pair<Light*, ConstantBuffer*>>> m_Lights;
 
 	// Current scene to be drawn
 	Scene* m_pCurrActiveScene = nullptr;

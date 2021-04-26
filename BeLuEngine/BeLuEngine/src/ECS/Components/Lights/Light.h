@@ -45,11 +45,14 @@ protected:
 
 	virtual void UpdateLightColor() = 0;
 
+	// For usage in the lightRawBuffer (memory on GPU)
 private:
 	friend class Renderer;
+	friend class ImGuiHandler;
 
 	static inline ShaderResource* m_pLightsRawBuffer = nullptr;
 	static inline unsigned char* m_pRawData			 = nullptr;
+	unsigned int m_LightOffsetInArray = 0;
 };
 
 #endif

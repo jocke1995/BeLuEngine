@@ -9,9 +9,8 @@ struct VS_OUT
 	float3x3 tbn	: TBN;
 };
 
-ConstantBuffer<DirectionalLight> dirLight[]	: register(b0, space0);
-ConstantBuffer<PointLight> pointLight[]		: register(b0, space1);
-ConstantBuffer<SpotLight> spotLight[]		: register(b0, space2);
+ByteAddressBuffer rawBufferLights: register(t0, space4);
+//ByteAddressBuffer rawBufferLights[]: register(t0, space1); // TODO: not working to put rawBuffer in descriptorTable?
 
 ConstantBuffer<SlotInfo> info					 : register(b1, space3);
 ConstantBuffer<CB_PER_FRAME_STRUCT>  cbPerFrame  : register(b4, space3);
@@ -47,20 +46,14 @@ float4 PS_main(VS_OUT input) : SV_TARGET0
 	// Linear interpolation
 	float3 baseReflectivity = lerp(float3(0.04f, 0.04f, 0.04f), albedo.rgb, metallic);
 
+	LightHeader lHeader = rawBufferLights.Load<LightHeader>(0);
 	// DirectionalLight contributions
-	for (unsigned int i = 0; i < cbPerScene.Num_Dir_Lights; i++)
+	for (unsigned int i = 0; i < lHeader.numDirectionalLights; i++)
 	{
-		int index = cbPerScene.dirLightIndices[i].x;
+		DirectionalLight dirLight = rawBufferLights.Load<DirectionalLight>(sizeof(LightHeader) + i * sizeof(DirectionalLight));
 
-		//DirectionalLight asd = rawBufferLights[20].Load<DirectionalLight>(sizeof(LightHeader));
-
-
-		DirectionalLight dl;
-		dl.direction = float4(-1.0f, -2.0f, 0.03f, 0.0f);
-		dl.baseLight.color = float3(1.0f, 1.0f, 1.0f);
-		dl.baseLight.intensity = 3.0f;
 		finalColor += CalcDirLight(
-			dl,
+			dirLight,
 			camPos,
 			viewDir,
 			input.worldPos,
@@ -72,12 +65,12 @@ float4 PS_main(VS_OUT input) : SV_TARGET0
 	}
 
 	// PointLight contributions
-/*for (unsigned int i = 0; i < cbPerScene.Num_Point_Lights; i++)
+	for (unsigned int i = 0; i < lHeader.numPointLights; i++)
 	{
-		int index = cbPerScene.pointLightIndices[i].x;
+		PointLight pointLight = rawBufferLights.Load<PointLight>(sizeof(LightHeader) + DIR_LIGHT_MAXOFFSET + i * sizeof(PointLight));
 
 		finalColor += CalcPointLight(
-			pointLight[index],
+			pointLight,
 			camPos,
 			viewDir,
 			input.worldPos,
@@ -89,12 +82,12 @@ float4 PS_main(VS_OUT input) : SV_TARGET0
 	}
 
 	// SpotLight  contributions
-	for (unsigned int i = 0; i < cbPerScene.Num_Spot_Lights; i++)
+	for (unsigned int i = 0; i < lHeader.numSpotLights; i++)
 	{
-		int index = cbPerScene.spotLightIndices[i].x;
+		SpotLight spotLight = rawBufferLights.Load<SpotLight>(sizeof(LightHeader) + DIR_LIGHT_MAXOFFSET + POINT_LIGHT_MAXOFFSET + i * sizeof(SpotLight));
 
 		finalColor += CalcSpotLight(
-			spotLight[index],
+			spotLight,
 			camPos,
 			viewDir,
 			input.worldPos,
@@ -103,7 +96,7 @@ float4 PS_main(VS_OUT input) : SV_TARGET0
 			roughness,
 			normal.rgb,
 			baseReflectivity);
-	}*/
+	}
 
 	float3 ambient = float3(0.03f, 0.03f, 0.03f) * albedo;
 	finalColor += ambient;

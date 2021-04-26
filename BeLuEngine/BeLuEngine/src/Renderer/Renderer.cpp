@@ -144,7 +144,6 @@ void Renderer::deleteRenderer()
 
 	delete m_pMousePicker;
 
-	delete m_pViewPool;
 	delete m_pCbPerScene;
 	delete m_pCbPerSceneData;
 	delete m_pCbPerFrame;
@@ -622,40 +621,15 @@ void Renderer::InitModelComponent(component::ModelComponent* mc)
 
 void Renderer::InitDirectionalLightComponent(component::DirectionalLightComponent* component)
 {
-	// Assign CBV from the lightPool
-	std::wstring resourceName = L"DirectionalLight";
-	ConstantBuffer* cb = new ConstantBuffer(m_pDevice5, sizeof(DirectionalLight), resourceName, m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
-
-	// Check if the light is to cast shadows
-	E_SHADOW_RESOLUTION resolution = E_SHADOW_RESOLUTION::UNDEFINED;
-
-	if (component->GetLightFlags() & static_cast<unsigned int>(F_LIGHT_FLAGS::CAST_SHADOW))
-	{
-		
-	}
-	// Save in m_pRenderer
-	m_Lights[E_LIGHT_TYPE::DIRECTIONAL_LIGHT].push_back(std::make_pair(component, cb));
-
-	
-	// Submit to gpu
-	CopyTask* copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME];
-	const void* data = static_cast<const void*>(component->GetLightData());
-	copyTask->Submit(&std::make_tuple(cb->GetUploadResource(), cb->GetDefaultResource(), data));
-	
-	// We also need to update the indexBuffer with lights if a light is added.
-	// The buffer with indices is inside cbPerSceneData, which is updated in the following function:
-	submitUploadPerSceneData();
-
-
-	// NEW STUFF FOR RAWBUFFER
 	unsigned int offset = sizeof(LightHeader);
 
 	unsigned int numDirLights = *Light::m_pRawData;		// First unsigned int in memory is numDirLights
 
 	offset += numDirLights * sizeof(DirectionalLight);
-
+	static_cast<Light*>(component)->m_LightOffsetInArray = numDirLights;
 	// Increase numLights by one, copy into buffer
 	numDirLights += 1;
+
 	memcpy(Light::m_pRawData, &numDirLights, sizeof(unsigned int));
 
 	// Copy lightData
@@ -664,52 +638,40 @@ void Renderer::InitDirectionalLightComponent(component::DirectionalLightComponen
 
 void Renderer::InitPointLightComponent(component::PointLightComponent* component)
 {
-	// Assign CBV from the lightPool
-	std::wstring resourceName = L"PointLight";
-	ConstantBuffer* cb = new ConstantBuffer(m_pDevice5, sizeof(PointLight), resourceName, m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
+	unsigned int offset = sizeof(LightHeader);
 
-	// Save in m_pRenderer
-	m_Lights[E_LIGHT_TYPE::POINT_LIGHT].push_back(std::make_pair(component, cb));
+	unsigned int numPointLights = *(Light::m_pRawData + 4);// Second unsigned int in memory is numPointLights
+	
+	offset += DIR_LIGHT_MAXOFFSET;
+	offset += numPointLights * sizeof(PointLight);
 
-	// Submit to gpu
-	CopyTask* copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME];;
-	const void* data = static_cast<const void*>(component->GetLightData());
-	copyTask->Submit(&std::make_tuple(cb->GetUploadResource(), cb->GetDefaultResource(), data));
+	static_cast<Light*>(component)->m_LightOffsetInArray = numPointLights;
+	// Increase numLights by one, copy into buffer
+	numPointLights += 1;
 
-	// We also need to update the indexBuffer with lights if a light is added.
-	// The buffer with indices is inside cbPerSceneData, which is updated in the following function:
-	submitUploadPerSceneData();
+	memcpy(Light::m_pRawData + 4, &numPointLights, sizeof(unsigned int));
 
-	// NEW STUFF FOR RAWBUFFER
+	// Copy lightData
+	memcpy(Light::m_pRawData + offset * sizeof(unsigned char), static_cast<PointLight*>(component->GetLightData()), sizeof(PointLight));
 }
 
 void Renderer::InitSpotLightComponent(component::SpotLightComponent* component)
 {
-	// Assign CBV from the lightPool
-	std::wstring resourceName = L"SpotLight";
-	ConstantBuffer* cb = new ConstantBuffer(m_pDevice5, sizeof(SpotLight), resourceName, m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
+	unsigned int offset = sizeof(LightHeader);
 
-	// Check if the light is to cast shadows
-	E_SHADOW_RESOLUTION resolution = E_SHADOW_RESOLUTION::UNDEFINED;
+	unsigned int numSpotLights = *(Light::m_pRawData + 8);// Third unsigned int in memory is numSpotLights
 
-	if (component->GetLightFlags() & static_cast<unsigned int>(F_LIGHT_FLAGS::CAST_SHADOW))
-	{
+	offset += DIR_LIGHT_MAXOFFSET + POINT_LIGHT_MAXOFFSET;
+	offset += numSpotLights * sizeof(SpotLight);
 
-	}
+	static_cast<Light*>(component)->m_LightOffsetInArray = numSpotLights;
+	// Increase numLights by one, copy into buffer
+	numSpotLights += 1;
 
-	// Save in m_pRenderer
-	m_Lights[E_LIGHT_TYPE::SPOT_LIGHT].push_back(std::make_pair(component, cb));
+	memcpy(Light::m_pRawData + 8, &numSpotLights, sizeof(unsigned int));
 
-	// Submit to gpu
-	CopyTask* copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME];
-	const void* data = static_cast<const void*>(component->GetLightData());
-	copyTask->Submit(&std::make_tuple(cb->GetUploadResource(), cb->GetDefaultResource(), data));
-
-	// We also need to update the indexBuffer with lights if a light is added.
-	// The buffer with indices is inside cbPerSceneData, which is updated in the following function:
-	submitUploadPerSceneData();
-
-	// NEW STUFF FOR RAWBUFFER
+	// Copy lightData
+	memcpy(Light::m_pRawData + offset * sizeof(unsigned char), static_cast<SpotLight*>(component->GetLightData()), sizeof(SpotLight));
 }
 
 void Renderer::InitCameraComponent(component::CameraComponent* component)
@@ -789,104 +751,17 @@ void Renderer::UnInitModelComponent(component::ModelComponent* mc)
 
 void Renderer::UnInitDirectionalLightComponent(component::DirectionalLightComponent* component)
 {
-	E_LIGHT_TYPE type = E_LIGHT_TYPE::DIRECTIONAL_LIGHT;
-	unsigned int count = 0;
-	for (auto& pair : m_Lights[type])
-	{
-		Light* light = pair.first;
-
-		component::DirectionalLightComponent* dlc = static_cast<component::DirectionalLightComponent*>(light);
-
-		// Remove light if it matches the entity
-		if (component == dlc)
-		{
-			auto& [light, cb] = pair;
-
-			// Free memory so other m_Entities can use it
-			delete cb;
-			
-			// Remove from CopyPerFrame
-			CopyPerFrameTask* cpft = nullptr;
-			cpft = static_cast<CopyPerFrameTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME]);
-			cpft->ClearSpecific(cb->GetUploadResource());
-
-			// Finally remove from m_pRenderer
-			m_Lights[type].erase(m_Lights[type].begin() + count);
-
-			// Update cbPerScene
-			submitUploadPerSceneData();
-			break;
-		}
-		count++;
-	}
+	// TODO: Remove from rawBuffer
 }
 
 void Renderer::UnInitPointLightComponent(component::PointLightComponent* component)
 {
-	E_LIGHT_TYPE type = E_LIGHT_TYPE::POINT_LIGHT;
-	unsigned int count = 0;
-	for (auto& pair : m_Lights[type])
-	{
-		Light* light = pair.first;
-
-		component::PointLightComponent* plc = static_cast<component::PointLightComponent*>(light);
-
-		// Remove light if it matches the entity
-		if (component == plc)
-		{
-			// Free memory so other m_Entities can use it
-			auto& [light, cb] = pair;
-
-			delete cb;
-
-			// Remove from CopyPerFrame
-			CopyPerFrameTask* cpft = nullptr;
-			cpft = static_cast<CopyPerFrameTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME]);
-			cpft->ClearSpecific(cb->GetUploadResource());
-
-			// Finally remove from m_pRenderer
-			m_Lights[type].erase(m_Lights[type].begin() + count);
-
-			// Update cbPerScene
-			submitUploadPerSceneData();
-			break;
-		}
-		count++;
-	}
+	// TODO: Remove from rawBuffer
 }
 
 void Renderer::UnInitSpotLightComponent(component::SpotLightComponent* component)
 {
-	E_LIGHT_TYPE type = E_LIGHT_TYPE::SPOT_LIGHT;
-	unsigned int count = 0;
-	for (auto& pair : m_Lights[type])
-	{
-		Light* light = pair.first;
-
-		component::SpotLightComponent* slc = static_cast<component::SpotLightComponent*>(light);
-
-		// Remove light if it matches the entity
-		if (component == slc)
-		{
-			// Free memory so other m_Entities can use it
-			auto& [light, cb] = pair;
-
-			delete cb;
-
-			// Remove from CopyPerFrame
-			CopyPerFrameTask* cpft = nullptr;
-			cpft = static_cast<CopyPerFrameTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME]);
-			cpft->ClearSpecific(cb->GetUploadResource());
-
-			// Finally remove from m_pRenderer
-			m_Lights[type].erase(m_Lights[type].begin() + count);
-
-			// Update cbPerScene
-			submitUploadPerSceneData();
-			break;
-		}
-		count++;
-	}
+	// TODO: Remove from rawBuffer
 }
 
 void Renderer::UnInitCameraComponent(component::CameraComponent* component)
@@ -1653,6 +1528,7 @@ void Renderer::initRenderTasks()
 
 	transparentRenderTask->AddResource("cbPerFrame", m_pCbPerFrame->GetDefaultResource());
 	transparentRenderTask->AddResource("cbPerScene", m_pCbPerScene->GetDefaultResource());
+	transparentRenderTask->AddResource("rawBufferLights", Light::m_pLightsRawBuffer->GetDefaultResource());
 	transparentRenderTask->SetMainDepthStencil(m_pMainDepthStencil);
 	transparentRenderTask->AddRenderTargetView("mainColorTarget", m_pMainColorBuffer.first->GetRTV());
 	transparentRenderTask->SetDescriptorHeaps(m_DescriptorHeaps);
@@ -1889,8 +1765,6 @@ void Renderer::createRawBufferForLights()
 
 	Light::m_pLightsRawBuffer = new ShaderResource(m_pDevice5, rawBufferSize, L"rawBufferLights", &srvDesc, m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
 
-	m_pCbPerSceneData->lightIndex = Light::m_pLightsRawBuffer->GetSRV()->GetDescriptorHeapIndex();
-
 	// Allocate memory on CPU
 	Light::m_pRawData = (unsigned char*)malloc(rawBufferSize);
 	memset(Light::m_pRawData, 0, rawBufferSize);
@@ -1979,37 +1853,6 @@ void Renderer::prepareScene(Scene* activeScene)
 
 void Renderer::submitUploadPerSceneData()
 {
-	*m_pCbPerSceneData = {};
-	// ----- directional lights -----
-	m_pCbPerSceneData->Num_Dir_Lights = static_cast<unsigned int>(m_Lights[E_LIGHT_TYPE::DIRECTIONAL_LIGHT].size());
-	unsigned int index = 0;
-	for (auto& tuple : m_Lights[E_LIGHT_TYPE::DIRECTIONAL_LIGHT])
-	{
-		m_pCbPerSceneData->dirLightIndices[index].x = static_cast<float>(std::get<1>(tuple)->GetCBV()->GetDescriptorHeapIndex());
-		index++;
-	}
-	// ----- directional m_lights -----
-
-	// ----- point lights -----
-	m_pCbPerSceneData->Num_Point_Lights = static_cast<unsigned int>(m_Lights[E_LIGHT_TYPE::POINT_LIGHT].size());
-	index = 0;
-	for (auto& tuple : m_Lights[E_LIGHT_TYPE::POINT_LIGHT])
-	{
-		m_pCbPerSceneData->pointLightIndices[index].x = static_cast<float>(std::get<1>(tuple)->GetCBV()->GetDescriptorHeapIndex());
-		index++;
-	}
-	// ----- point m_lights -----
-
-	// ----- spot lights -----
-	m_pCbPerSceneData->Num_Spot_Lights = static_cast<unsigned int>(m_Lights[E_LIGHT_TYPE::SPOT_LIGHT].size());
-	index = 0;
-	for (auto& tuple : m_Lights[E_LIGHT_TYPE::SPOT_LIGHT])
-	{
-		m_pCbPerSceneData->spotLightIndices[index].x = static_cast<float>(std::get<1>(tuple)->GetCBV()->GetDescriptorHeapIndex());
-		index++;
-	}
-	// ----- spot m_lights -----
-	
 	// Submit CB_PER_SCENE to be uploaded to VRAM
 	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]);
 	const void* data = static_cast<const void*>(m_pCbPerSceneData);
