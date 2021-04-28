@@ -6,9 +6,9 @@ struct VS_OUT
 	float2 uv   : UV;
 };
 
-ConstantBuffer<DescriptorHeapIndices> dhIndices : register(b2, space3);
+ConstantBuffer<DescriptorHeapIndices> dhIndices : register(b2, space0);
 
-Texture2D textures[]   : register (t0);
+Texture2D textures[]   : register (t0, space1);
 
 SamplerState point_Wrap	: register (s5);
 

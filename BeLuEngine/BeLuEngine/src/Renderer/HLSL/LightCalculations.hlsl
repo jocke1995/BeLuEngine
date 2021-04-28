@@ -1,7 +1,7 @@
 #include "../../Headers/GPU_Structs.h"
 #include "PBRMath.hlsl"
 
-Texture2D textures[]   : register (t0, space0);
+Texture2D textures[]   : register (t0, space1);
 
 SamplerState Anisotropic2_Wrap	: register (s0);
 SamplerState Anisotropic4_Wrap	: register (s1);

@@ -182,6 +182,7 @@ private:
 
 	// Rootsignature
 	RootSignature* m_pRootSignature = nullptr;
+	ID3D12RootSignature* m_pGlobalRootSig = nullptr;
 
 	// Picking
 	MousePicker* m_pMousePicker = nullptr;

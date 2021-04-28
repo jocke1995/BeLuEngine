@@ -32,6 +32,7 @@
 
 // Renderer-Engine 
 #include "RootSignature.h"
+#include "RootSignatureGenerator.h"
 #include "SwapChain.h"
 #include "CommandInterface.h"
 #include "DescriptorHeap.h"
@@ -119,6 +120,8 @@ void Renderer::deleteRenderer()
 	SAFE_RELEASE(&m_CommandQueues[E_COMMAND_INTERFACE_TYPE::COPY_TYPE]);
 
 	delete m_pRootSignature;
+	SAFE_RELEASE(&m_pGlobalRootSig);
+
 	delete m_pFullScreenQuad;
 	delete m_pMainColorBuffer.first;
 	delete m_pMainColorBuffer.second;
@@ -219,6 +222,7 @@ void Renderer::InitD3D12(Window *window, HINSTANCE hInstance, ThreadPool* thread
 
 	// FullScreenQuad
 	createFullScreenQuad();
+
 	// Init Assetloader
 	AssetLoader* al = AssetLoader::Get(m_pDevice5, m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV], m_pWindow);
 
@@ -269,9 +273,9 @@ void Renderer::InitD3D12(Window *window, HINSTANCE hInstance, ThreadPool* thread
 		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]->GetGPUHeapAt(imGuiTextureIndex));
 #endif
 	createRawBufferForLights();
+
 	initRenderTasks();
 
-	
 	submitMeshToCodt(m_pFullScreenQuad);
 }
 
@@ -1120,6 +1124,13 @@ void Renderer::createMainDSV()
 void Renderer::createRootSignature()
 {
 	m_pRootSignature = new RootSignature(m_pDevice5);
+
+	//RootSignatureGenerator rsg = {};
+
+	//std::vector<D3D12_DESCRIPTOR_RANGE> ranges;
+
+	
+
 }
 
 void Renderer::createFullScreenQuad()

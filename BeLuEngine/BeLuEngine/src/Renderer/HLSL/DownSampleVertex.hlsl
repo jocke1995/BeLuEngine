@@ -14,9 +14,9 @@ struct vertex
 	float3 tang;
 };
 
-ConstantBuffer<SlotInfo> info : register(b1, space3);
+ConstantBuffer<SlotInfo> info : register(b1, space0);
 
-StructuredBuffer<vertex> meshes[] : register(t0);
+StructuredBuffer<vertex> meshes[] : register(t0, space1);
 
 VS_OUT VS_main(uint vID : SV_VertexID)
 {

@@ -7,9 +7,9 @@ struct VS_OUT
 };
 
 // Source descriptorHeapIndex is stored in albedo
-ConstantBuffer<DescriptorHeapIndices> dhIndices : register(b2, space3);
+ConstantBuffer<DescriptorHeapIndices> dhIndices : register(b2, space0);
 
-Texture2D<float4> textures[]   : register (t0);
+Texture2D<float4> textures[]   : register (t0, space1);
 
 SamplerState linear_Wrap	: register (s5);
 

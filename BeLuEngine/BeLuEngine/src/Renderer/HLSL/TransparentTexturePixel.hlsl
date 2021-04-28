@@ -9,12 +9,12 @@ struct VS_OUT
 	float3x3 tbn	: TBN;
 };
 
-ByteAddressBuffer rawBufferLights: register(t0, space4);
+ByteAddressBuffer rawBufferLights: register(t0, space0);
 //ByteAddressBuffer rawBufferLights[]: register(t0, space1); // TODO: not working to put rawBuffer in descriptorTable?
 
-ConstantBuffer<SlotInfo> info					 : register(b1, space3);
-ConstantBuffer<CB_PER_FRAME_STRUCT>  cbPerFrame  : register(b4, space3);
-ConstantBuffer<MaterialData> material			 : register(b6, space3);
+ConstantBuffer<SlotInfo> info					 : register(b1, space0);
+ConstantBuffer<CB_PER_FRAME_STRUCT>  cbPerFrame  : register(b4, space0);
+ConstantBuffer<MaterialData> material			 : register(b6, space0);
 
 float4 PS_main(VS_OUT input) : SV_TARGET0
 {

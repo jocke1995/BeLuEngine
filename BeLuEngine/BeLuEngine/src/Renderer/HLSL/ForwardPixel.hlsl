@@ -15,12 +15,12 @@ struct PS_OUTPUT
 	float4 brightColor: SV_TARGET1;
 };
 
-ByteAddressBuffer rawBufferLights: register(t0, space4);
+ByteAddressBuffer rawBufferLights: register(t0, space0);
 //ByteAddressBuffer rawBufferLights[]: register(t0, space1); // TODO: not working to put rawBuffer in descriptorTable?
 
-ConstantBuffer<SlotInfo> info					 : register(b1, space3);
-ConstantBuffer<CB_PER_FRAME_STRUCT>  cbPerFrame  : register(b4, space3);
-ConstantBuffer<MaterialData> material			 : register(b6, space3);
+ConstantBuffer<SlotInfo> info					 : register(b1, space0);
+ConstantBuffer<CB_PER_FRAME_STRUCT>  cbPerFrame  : register(b4, space0);
+ConstantBuffer<MaterialData> material			 : register(b6, space0);
 
 PS_OUTPUT PS_main(VS_OUT input)
 {

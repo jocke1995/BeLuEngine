@@ -1,9 +1,9 @@
 #include "../../Headers/GPU_Structs.h"
 
-Texture2D<float4> textures[]   : register (t0);
-RWTexture2D<float4> textureToBlur[] : register(u0);
+Texture2D<float4> textures[]   : register (t0, space1);
+RWTexture2D<float4> textureToBlur[] : register(u0, space1);
 
-ConstantBuffer<DescriptorHeapIndices> dhIndices : register(b2, space3);
+ConstantBuffer<DescriptorHeapIndices> dhIndices : register(b2, space0);
 
 static const int g_BlurRadius = 4;
 static const int g_NumThreads = 256;
