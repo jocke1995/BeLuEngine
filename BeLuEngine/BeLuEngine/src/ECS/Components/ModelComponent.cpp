@@ -2,9 +2,9 @@
 #include "ModelComponent.h"
 
 #include "GPU_Structs.h"
-#include "../Renderer/Model/Model.h"
-#include "../Renderer/Model/Mesh.h"
-#include "../Renderer/Model/Material.h"
+#include "../Renderer/Geometry/Model.h"
+#include "../Renderer/Geometry/Mesh.h"
+#include "../Renderer/Geometry/Material.h"
 #include "../Renderer/Renderer.h"
 #include "../Entity.h"
 

@@ -8,16 +8,15 @@
 #include "../GPUMemory/GPUMemory.h"
 #include "../PipelineState/PipelineState.h"
 #include "../RenderView.h"
-#include "../RootSignature.h"
 
 // Model info
-#include "../Renderer/Model/Transform.h"
-#include "../Renderer/Model/Mesh.h"
-#include "../Renderer/Model/Material.h"
+#include "../Renderer/Geometry/Transform.h"
+#include "../Renderer/Geometry/Mesh.h"
+#include "../Renderer/Geometry/Material.h"
 
 TransparentRenderTask::TransparentRenderTask(	
 	ID3D12Device5* device,
-	RootSignature* rootSignature,
+	ID3D12RootSignature* rootSignature,
 	const std::wstring& VSName, const std::wstring& PSName,
 	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*>* gpsds,
 	const std::wstring& psoName,
@@ -46,8 +45,8 @@ void TransparentRenderTask::Execute()
 	ID3D12DescriptorHeap* d3d12DescriptorHeap = descriptorHeap_CBV_UAV_SRV->GetID3D12DescriptorHeap();
 	commandList->SetDescriptorHeaps(1, &d3d12DescriptorHeap);
 
-	commandList->SetGraphicsRootDescriptorTable(RS::dtCBV, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
-	commandList->SetGraphicsRootDescriptorTable(RS::dtSRV, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
+	commandList->SetGraphicsRootDescriptorTable(0, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
+	commandList->SetGraphicsRootDescriptorTable(1, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
 
 	DescriptorHeap* renderTargetHeap = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV];
 	DescriptorHeap* depthBufferHeap  = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::DSV];
@@ -66,9 +65,9 @@ void TransparentRenderTask::Execute()
 
 	// Create a CB_PER_FRAME struct
 	CB_PER_FRAME_STRUCT perFrame = { m_pCamera->GetPosition().x, m_pCamera->GetPosition().y, m_pCamera->GetPosition().z };
-	commandList->SetGraphicsRootConstantBufferView(RS::CB_PER_FRAME, m_Resources["cbPerFrame"]->GetGPUVirtualAdress());
-	commandList->SetGraphicsRootConstantBufferView(RS::CB_PER_SCENE, m_Resources["cbPerScene"]->GetGPUVirtualAdress());
-	commandList->SetGraphicsRootShaderResourceView(RS::RAWBUFFER_LIGHTS, m_Resources["rawBufferLights"]->GetGPUVirtualAdress());
+	commandList->SetGraphicsRootConstantBufferView(7, m_Resources["cbPerFrame"]->GetGPUVirtualAdress());
+	commandList->SetGraphicsRootConstantBufferView(8, m_Resources["cbPerScene"]->GetGPUVirtualAdress());
+	commandList->SetGraphicsRootShaderResourceView(5, m_Resources["rawBufferLights"]->GetGPUVirtualAdress());
 
 	const DirectX::XMMATRIX * viewProjMatTrans = m_pCamera->GetViewProjectionTranposed();
 
@@ -87,9 +86,9 @@ void TransparentRenderTask::Execute()
 
 			Transform* t = tc->GetTransform();
 
-			commandList->SetGraphicsRootConstantBufferView(RS::CBV0, mc->GetMaterialAt(i)->GetMaterialData()->first->GetDefaultResource()->GetGPUVirtualAdress());
-			commandList->SetGraphicsRoot32BitConstants(RS::SLOTINFO_CONSTANTS, sizeof(SlotInfo) / sizeof(UINT), info, 0);
-			commandList->SetGraphicsRootConstantBufferView(RS::MATRICES_PER_OBJECT_CBV, t->m_pCB->GetDefaultResource()->GetGPUVirtualAdress());
+			commandList->SetGraphicsRootConstantBufferView(9, mc->GetMaterialAt(i)->GetMaterialData()->first->GetDefaultResource()->GetGPUVirtualAdress());
+			commandList->SetGraphicsRoot32BitConstants(3, sizeof(SlotInfo) / sizeof(UINT), info, 0);
+			commandList->SetGraphicsRootConstantBufferView(6, t->m_pCB->GetDefaultResource()->GetGPUVirtualAdress());
 
 			commandList->IASetIndexBuffer(mc->GetMeshAt(j)->GetIndexBufferView());
 			// Draw each object twice with different PSO 

@@ -6,7 +6,7 @@
 #include "../GPUMemory/GPUMemory.h"
 
 // Stuff to copy
-#include "../Renderer/Model/Mesh.h"
+#include "../Renderer/Geometry/Mesh.h"
 #include "../Texture/Texture.h"
 #include "../Texture/TextureCubeMap.h"
 

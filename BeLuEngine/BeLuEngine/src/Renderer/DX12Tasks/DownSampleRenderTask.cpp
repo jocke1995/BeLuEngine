@@ -7,14 +7,13 @@
 #include "../GPUMemory/GPUMemory.h"
 #include "../PipelineState/PipelineState.h"
 #include "../RenderView.h"
-#include "../RootSignature.h"
 
 // Model info
-#include "../Model/Mesh.h"
+#include "../Geometry/Mesh.h"
 
 DownSampleRenderTask::DownSampleRenderTask(
 	ID3D12Device5* device,
-	RootSignature* rootSignature,
+	ID3D12RootSignature* rootSignature,
 	const std::wstring& VSName, const std::wstring& PSName,
 	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*>* gpsds,
 	const std::wstring& psoName,
@@ -63,7 +62,7 @@ void DownSampleRenderTask::Execute()
 	ID3D12DescriptorHeap* d3d12DescriptorHeap = descriptorHeap_CBV_UAV_SRV->GetID3D12DescriptorHeap();
 	commandList->SetDescriptorHeaps(1, &d3d12DescriptorHeap);
 
-	commandList->SetGraphicsRootDescriptorTable(RS::dtSRV, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
+	commandList->SetGraphicsRootDescriptorTable(1, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
 
 	const D3D12_VIEWPORT* viewPort = m_pDestinationRTV->GetRenderView()->GetViewPort();
 	const D3D12_RECT* rect = m_pDestinationRTV->GetRenderView()->GetScissorRect();
@@ -76,8 +75,8 @@ void DownSampleRenderTask::Execute()
 
 	commandList->SetPipelineState(m_PipelineStates[0]->GetPSO());
 
-	commandList->SetGraphicsRoot32BitConstants(RS::DHINDICES_CONSTANTS, sizeof(DescriptorHeapIndices) / sizeof(UINT), &m_dhIndices, 0);
-	commandList->SetGraphicsRoot32BitConstants(RS::SLOTINFO_CONSTANTS, sizeof(SlotInfo) / sizeof(UINT), &m_Info, 0);
+	commandList->SetGraphicsRoot32BitConstants(4, sizeof(DescriptorHeapIndices) / sizeof(UINT), &m_dhIndices, 0);
+	commandList->SetGraphicsRoot32BitConstants(3, sizeof(SlotInfo) / sizeof(UINT), &m_Info, 0);
 
 	commandList->IASetIndexBuffer(m_pFullScreenQuadMesh->GetIndexBufferView());
 

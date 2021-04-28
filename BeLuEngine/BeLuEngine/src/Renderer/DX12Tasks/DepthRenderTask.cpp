@@ -8,15 +8,14 @@
 #include "../GPUMemory/GPUMemory.h"
 #include "../PipelineState/PipelineState.h"
 #include "../RenderView.h"
-#include "../RootSignature.h"
 #include "../SwapChain.h"
 
 // Model info
-#include "../Model/Mesh.h"
-#include "../Model/Transform.h"
+#include "../Geometry/Mesh.h"
+#include "../Geometry/Transform.h"
 
 DepthRenderTask::DepthRenderTask(ID3D12Device5* device, 
-	RootSignature* rootSignature, 
+	ID3D12RootSignature* rootSignature,
 	const std::wstring& VSName, const std::wstring& PSName,
 	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*>* gpsds, 
 	const std::wstring& psoName,
@@ -41,7 +40,7 @@ void DepthRenderTask::Execute()
 	ID3D12DescriptorHeap* d3d12DescriptorHeap = descriptorHeap_CBV_UAV_SRV->GetID3D12DescriptorHeap();
 	commandList->SetDescriptorHeaps(1, &d3d12DescriptorHeap);
 
-	commandList->SetGraphicsRootDescriptorTable(RS::dtSRV, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
+	commandList->SetGraphicsRootDescriptorTable(1, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
 
 	DescriptorHeap* depthBufferHeap = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::DSV];
 
@@ -86,8 +85,8 @@ void DepthRenderTask::drawRenderComponent(component::ModelComponent* mc, compone
 		const SlotInfo* info = mc->GetSlotInfoAt(i);
 
 		Transform* t = tc->GetTransform();
-		cl->SetGraphicsRoot32BitConstants(RS::SLOTINFO_CONSTANTS, sizeof(SlotInfo) / sizeof(UINT), info, 0);
-		cl->SetGraphicsRootConstantBufferView(RS::MATRICES_PER_OBJECT_CBV, t->m_pCB->GetDefaultResource()->GetGPUVirtualAdress());
+		cl->SetGraphicsRoot32BitConstants(3, sizeof(SlotInfo) / sizeof(UINT), info, 0);
+		cl->SetGraphicsRootConstantBufferView(6, t->m_pCB->GetDefaultResource()->GetGPUVirtualAdress());
 
 		cl->IASetIndexBuffer(m->GetIndexBufferView());
 		cl->DrawIndexedInstanced(num_Indices, 1, 0, 0, 0);

@@ -9,7 +9,7 @@ class ComputeState : public PipelineState
 {
 public:
 	ComputeState(	ID3D12Device5* device, 
-					RootSignature* rootSignature, 
+					ID3D12RootSignature* rootSignature,
 					std::wstring& CSName,
 					std::wstring& psoName);
 

@@ -6,10 +6,10 @@
 #include "../RootSignature.h"
 #include "../Shader.h"
 
-ComputeState::ComputeState(ID3D12Device5* device, RootSignature* rootSignature, std::wstring& CSName, std::wstring& psoName)
+ComputeState::ComputeState(ID3D12Device5* device, ID3D12RootSignature* rootSignature, std::wstring& CSName, std::wstring& psoName)
 	:PipelineState(psoName)
 {
-	m_Cpsd.pRootSignature = rootSignature->GetRootSig();
+	m_Cpsd.pRootSignature = rootSignature;
 
 	m_pCS = createShader(CSName, E_SHADER_TYPE::CS);
 

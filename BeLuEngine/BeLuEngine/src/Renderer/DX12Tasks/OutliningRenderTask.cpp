@@ -6,16 +6,15 @@
 #include "../CommandInterface.h"
 #include "../DescriptorHeap.h"
 #include "../GPUMemory/GPUMemory.h"
-#include "../RootSignature.h"
 #include "../PipelineState/GraphicsState.h"
 #include "../RenderView.h"
 
 // Model info
-#include "../Renderer/Model/Mesh.h"
+#include "../Renderer/Geometry/Mesh.h"
 
 OutliningRenderTask::OutliningRenderTask(
 	ID3D12Device5* device,
-	RootSignature* rootSignature,
+	ID3D12RootSignature* rootSignature,
 	const std::wstring& VSName, const std::wstring& PSName,
 	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*>* gpsds,
 	const std::wstring& psoName,
@@ -64,7 +63,7 @@ void OutliningRenderTask::Execute()
 	// else continue as usual
 
 	commandList->SetGraphicsRootSignature(m_pRootSig);
-	commandList->SetGraphicsRootDescriptorTable(RS::dtSRV, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
+	commandList->SetGraphicsRootDescriptorTable(1, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
 
 	commandList->OMSetRenderTargets(1, &cdh, true, &dsh);
 
@@ -97,8 +96,8 @@ void OutliningRenderTask::Execute()
 		w_wvp[1] = (*viewProjMatTrans) * w_wvp[0];
 
 		m_OutlineTransformToScale.m_pCB->GetUploadResource()->SetData(&w_wvp);
-		commandList->SetGraphicsRoot32BitConstants(RS::SLOTINFO_CONSTANTS, sizeof(SlotInfo) / sizeof(UINT), info, 0);
-		commandList->SetGraphicsRootConstantBufferView(RS::MATRICES_PER_OBJECT_CBV, m_OutlineTransformToScale.m_pCB->GetUploadResource()->GetGPUVirtualAdress());
+		commandList->SetGraphicsRoot32BitConstants(3, sizeof(SlotInfo) / sizeof(UINT), info, 0);
+		commandList->SetGraphicsRootConstantBufferView(6, m_OutlineTransformToScale.m_pCB->GetUploadResource()->GetGPUVirtualAdress());
 
 		commandList->IASetIndexBuffer(m->GetIndexBufferView());
 

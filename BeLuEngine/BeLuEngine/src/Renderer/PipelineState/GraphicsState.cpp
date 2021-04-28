@@ -6,13 +6,13 @@
 #include "../RootSignature.h"
 #include "../Shader.h"
 
-GraphicsState::GraphicsState(ID3D12Device5* device, RootSignature* rootSignature, const std::wstring& VSName, const std::wstring& PSName, D3D12_GRAPHICS_PIPELINE_STATE_DESC* gpsd, const std::wstring& psoName)
+GraphicsState::GraphicsState(ID3D12Device5* device, ID3D12RootSignature* rootSignature, const std::wstring& VSName, const std::wstring& PSName, D3D12_GRAPHICS_PIPELINE_STATE_DESC* gpsd, const std::wstring& psoName)
 	:PipelineState(psoName)
 {
 	// Set the rootSignature in the pipeline state object descriptor
 	m_pGPSD = gpsd;
 
-	m_pGPSD->pRootSignature = rootSignature->GetRootSig();
+	m_pGPSD->pRootSignature = rootSignature;
 
 	m_pVS = createShader(VSName, E_SHADER_TYPE::VS);
 	m_pPS = createShader(PSName, E_SHADER_TYPE::PS);

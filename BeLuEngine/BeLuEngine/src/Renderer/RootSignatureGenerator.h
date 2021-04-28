@@ -20,7 +20,7 @@ public:
 	void AddRootConstant(
 		unsigned int shaderRegister,
 		unsigned int registerSpace,
-		unsigned int numRootConstants ,
+		unsigned int sizeOfStruct,
 		D3D12_SHADER_VISIBILITY shaderVisibility = D3D12_SHADER_VISIBILITY_ALL);
 
 	void AddStaticSampler(
@@ -37,6 +37,8 @@ public:
 	ID3D12RootSignature* Generate(ID3D12Device* device, bool isLocal);
 
 private:
+	std::vector<std::vector<D3D12_DESCRIPTOR_RANGE>> m_DescriptorRanges;
+
 	std::vector<D3D12_ROOT_PARAMETER> m_RootParameters;
 
 	std::vector<D3D12_STATIC_SAMPLER_DESC> m_StaticSamplerDescs;

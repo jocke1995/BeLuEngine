@@ -13,7 +13,7 @@
 
 BlurComputeTask::BlurComputeTask(
 	ID3D12Device5* device,
-	RootSignature* rootSignature,
+	ID3D12RootSignature* rootSignature,
 	std::vector<std::pair< std::wstring, std::wstring>> csNamePSOName,
 	E_COMMAND_INTERFACE_TYPE interfaceType,
 	ShaderResourceView* brightSRV,
@@ -54,8 +54,8 @@ void BlurComputeTask::Execute()
 	ID3D12DescriptorHeap* d3d12DescriptorHeap = descriptorHeap_CBV_UAV_SRV->GetID3D12DescriptorHeap();
 	commandList->SetDescriptorHeaps(1, &d3d12DescriptorHeap);
 
-	commandList->SetComputeRootDescriptorTable(RS::dtUAV, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
-	commandList->SetComputeRootDescriptorTable(RS::dtSRV, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
+	commandList->SetComputeRootDescriptorTable(2, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
+	commandList->SetComputeRootDescriptorTable(1, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
 
 	// Descriptorheap indices for the textures to blur
 	// Horizontal pass
@@ -66,7 +66,7 @@ void BlurComputeTask::Execute()
 	m_DhIndices.index3 = m_PingPongResources[0]->GetUAV()->GetDescriptorHeapIndex();	// Write
 
 	// Send the indices to gpu
-	commandList->SetComputeRoot32BitConstants(RS::DHINDICES_CONSTANTS, sizeof(DescriptorHeapIndices) / sizeof(UINT), &m_DhIndices, 0);
+	commandList->SetComputeRoot32BitConstants(4, sizeof(DescriptorHeapIndices) / sizeof(UINT), &m_DhIndices, 0);
 
 	// The resource to read (Resource Barrier)
 	const_cast<Resource*>(m_PingPongResources[0]->GetSRV()->GetResource())->TransResourceState(
@@ -99,12 +99,6 @@ void BlurComputeTask::Execute()
 	// Blur vertical
 	commandList->SetPipelineState(m_PipelineStates[1]->GetPSO());
 	commandList->Dispatch(m_VerticalThreadGroupsX, m_VerticalThreadGroupsY, 1);
-
-	// Resource barrier back to original states
-	//const_cast<Resource*>(m_PingPongResources[1]->GetUAV()->GetResource())->TransResourceState(
-	//	commandList,
-	//	D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
-	//	D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 	
 	// Resource barrier back to original states
 	const_cast<Resource*>(m_PingPongResources[0]->GetSRV()->GetResource())->TransResourceState(

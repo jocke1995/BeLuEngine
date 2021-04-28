@@ -12,7 +12,7 @@ class DownSampleRenderTask : public RenderTask
 public:
 	DownSampleRenderTask(
 		ID3D12Device5* device,
-		RootSignature* rootSignature,
+		ID3D12RootSignature* rootSignature,
 		const std::wstring& VSName, const std::wstring& PSName,
 		std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*>* gpsds,
 		const std::wstring& psoName,

@@ -6,7 +6,7 @@
 
 // For updates
 #include "../Camera/BaseCamera.h"
-#include "../Model/Transform.h"
+#include "../Geometry/Transform.h"
 
 CopyPerFrameMatricesTask::CopyPerFrameMatricesTask(
 	ID3D12Device5* device,

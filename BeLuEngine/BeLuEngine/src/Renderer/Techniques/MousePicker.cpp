@@ -3,8 +3,8 @@
 
 #include "EngineMath.h"
 #include "../Camera/PerspectiveCamera.h"
-#include "../Renderer/Model/Transform.h"
-#include "../Renderer/Model/Mesh.h"
+#include "../Renderer/Geometry/Transform.h"
+#include "../Renderer/Geometry/Mesh.h"
 #include "../Renderer/Techniques/BoundingBoxPool.h"
 
 #include "../Renderer/Renderer.h"

@@ -5,10 +5,12 @@
 
 void RootSignatureGenerator::AddDescriptorTableRanges(const std::vector<D3D12_DESCRIPTOR_RANGE>& ranges)
 {
+	m_DescriptorRanges.push_back(ranges);
+
 	D3D12_ROOT_PARAMETER rootParam = {};
 	rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 	rootParam.DescriptorTable.NumDescriptorRanges = ranges.size();
-	rootParam.DescriptorTable.pDescriptorRanges = ranges.data();
+	rootParam.DescriptorTable.pDescriptorRanges = m_DescriptorRanges.back().data();
 
 	m_RootParameters.push_back(rootParam);
 }
@@ -31,14 +33,14 @@ void RootSignatureGenerator::AddRootDescriptor(
 void RootSignatureGenerator::AddRootConstant(
 	unsigned int shaderRegister,
 	unsigned int registerSpace,
-	unsigned int numRootConstants,
+	unsigned int sizeOfStruct,
 	D3D12_SHADER_VISIBILITY shaderVisibility)
 {
 	D3D12_ROOT_PARAMETER rootParam		= {};
 	rootParam.ParameterType				= D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
 	rootParam.Constants.ShaderRegister	= shaderRegister;
 	rootParam.Constants.RegisterSpace	= registerSpace;
-	rootParam.Constants.Num32BitValues  = numRootConstants;
+	rootParam.Constants.Num32BitValues  = sizeOfStruct / sizeof(unsigned int);
 	rootParam.ShaderVisibility			= shaderVisibility;
 
 	m_RootParameters.push_back(rootParam);
@@ -84,6 +86,32 @@ ID3D12RootSignature* RootSignatureGenerator::Generate(ID3D12Device* device, bool
 	rsDesc.NumStaticSamplers = m_StaticSamplerDescs.size();
 	rsDesc.pStaticSamplers	 = m_StaticSamplerDescs.data();
 
+#ifdef DEBUG
+	unsigned int size = 0;
+	for (const D3D12_ROOT_PARAMETER& param : m_RootParameters)
+	{
+		if (param.ParameterType == D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE)
+		{
+			size += 1;
+		}
+		else if (param.ParameterType == D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS)
+		{
+			size += param.Constants.Num32BitValues;
+		}
+		else if (param.ParameterType == D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_CBV ||
+				 param.ParameterType == D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_UAV || 
+				 param.ParameterType == D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_SRV)
+		{
+			size += 2;
+		}
+	}
+	
+	if (size > 64)
+	{
+		BL_LOG_CRITICAL("RootSignature size: %d DWORDS\n", size);
+		DebugBreak();
+	}
+#endif
 	ID3DBlob* errorMessages = nullptr;
 	ID3DBlob* pBlob = nullptr;
 

@@ -31,20 +31,19 @@
 #include "../ECS/Components/Lights/SpotLightComponent.h"
 
 // Renderer-Engine 
-#include "RootSignature.h"
 #include "RootSignatureGenerator.h"
 #include "SwapChain.h"
 #include "CommandInterface.h"
 #include "DescriptorHeap.h"
-#include "Model/Transform.h"
+#include "Geometry/Transform.h"
 #include "Camera/BaseCamera.h"
-#include "Model/Model.h"
-#include "Model/Mesh.h"
+#include "Geometry/Model.h"
+#include "Geometry/Mesh.h"
 #include "Texture/Texture.h"
 #include "Texture/Texture2D.h"
 #include "Texture/Texture2DGUI.h"
 #include "Texture/TextureCubeMap.h"
-#include "Model/Material.h"
+#include "Geometry/Material.h"
 
 #include "GPUMemory/GPUMemory.h"
 
@@ -119,7 +118,6 @@ void Renderer::deleteRenderer()
 	SAFE_RELEASE(&m_CommandQueues[E_COMMAND_INTERFACE_TYPE::COMPUTE_TYPE]);
 	SAFE_RELEASE(&m_CommandQueues[E_COMMAND_INTERFACE_TYPE::COPY_TYPE]);
 
-	delete m_pRootSignature;
 	SAFE_RELEASE(&m_pGlobalRootSig);
 
 	delete m_pFullScreenQuad;
@@ -1123,14 +1121,98 @@ void Renderer::createMainDSV()
 
 void Renderer::createRootSignature()
 {
-	m_pRootSignature = new RootSignature(m_pDevice5);
+	//m_pRootSignature = new RootSignature(m_pDevice5);
 
-	//RootSignatureGenerator rsg = {};
+	RootSignatureGenerator rsg = {};
 
-	//std::vector<D3D12_DESCRIPTOR_RANGE> ranges;
+	// Indexes in the RS are preserved in the order they are added in the rsg.
+	// 0, 1, 2
+#pragma region CBVTABLE
+	{
+		std::vector<D3D12_DESCRIPTOR_RANGE> ranges;
 
-	
+		const unsigned int numDescriptorRanges = 3;
+		for (unsigned int i = 0; i < numDescriptorRanges; i++)
+		{
+			D3D12_DESCRIPTOR_RANGE descriptorRange = {};
+			descriptorRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+			descriptorRange.NumDescriptors = -1;
+			descriptorRange.BaseShaderRegister = 0;	// b0
+			descriptorRange.RegisterSpace = i + 1;	// first range at space 1, space0 is for descriptors
+			descriptorRange.OffsetInDescriptorsFromTableStart = 0;
 
+			ranges.push_back(descriptorRange);
+		}
+
+		rsg.AddDescriptorTableRanges(ranges);
+	}
+#pragma endregion CBVTABLE	
+#pragma region SRVTABLE
+	{
+		std::vector<D3D12_DESCRIPTOR_RANGE> ranges;
+
+		const unsigned int numDescriptorRanges = 3;
+		for (unsigned int i = 0; i < numDescriptorRanges; i++)
+		{
+			D3D12_DESCRIPTOR_RANGE descriptorRange = {};
+			descriptorRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+			descriptorRange.NumDescriptors = -1;
+			descriptorRange.BaseShaderRegister = 0;	// t0
+			descriptorRange.RegisterSpace = i + 1;	// first range at space 1, space0 is for descriptors
+			descriptorRange.OffsetInDescriptorsFromTableStart = 0;
+
+			ranges.push_back(descriptorRange);
+		}
+
+		rsg.AddDescriptorTableRanges(ranges);
+	}
+#pragma endregion SRVTABLE
+#pragma region UAVTABLE
+	{
+		std::vector<D3D12_DESCRIPTOR_RANGE> ranges;
+
+		const unsigned int numDescriptorRanges = 3;
+		for (unsigned int i = 0; i < numDescriptorRanges; i++)
+		{
+			D3D12_DESCRIPTOR_RANGE descriptorRange = {};
+			descriptorRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+			descriptorRange.NumDescriptors = -1;
+			descriptorRange.BaseShaderRegister = 0;	// u0
+			descriptorRange.RegisterSpace = i + 1;	// first range at space 1, space0 is for descriptors
+			descriptorRange.OffsetInDescriptorsFromTableStart = 0;
+
+			ranges.push_back(descriptorRange);
+		}
+
+		rsg.AddDescriptorTableRanges(ranges);
+	}
+#pragma endregion UAVTABLE
+
+#pragma region CONSTANTS
+	rsg.AddRootConstant(1, 0, sizeof(SlotInfo));
+	rsg.AddRootConstant(2, 0, sizeof(DescriptorHeapIndices));
+#pragma endregion CONSTANTS
+#pragma region DESCRIPTORS
+	// TODO: add more srv descriptors
+	rsg.AddRootDescriptor(D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_SRV, 0, 0, D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_PIXEL);
+
+	rsg.AddRootDescriptor(D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_CBV, 3, 0, D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_ALL);
+	rsg.AddRootDescriptor(D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_CBV, 4, 0, D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_ALL);
+	rsg.AddRootDescriptor(D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_CBV, 5, 0, D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_ALL);
+	rsg.AddRootDescriptor(D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_CBV, 6, 0, D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_ALL);
+#pragma endregion DESCRIPTORS
+
+#pragma region SAMPLERS
+	// Anisotropic
+	rsg.AddStaticSampler(D3D12_FILTER_ANISOTROPIC, D3D12_TEXTURE_ADDRESS_MODE_WRAP, 0, 0, D3D12_COMPARISON_FUNC_LESS_EQUAL, 2);
+	rsg.AddStaticSampler(D3D12_FILTER_ANISOTROPIC, D3D12_TEXTURE_ADDRESS_MODE_WRAP, 1, 0, D3D12_COMPARISON_FUNC_LESS_EQUAL, 4);
+	rsg.AddStaticSampler(D3D12_FILTER_ANISOTROPIC, D3D12_TEXTURE_ADDRESS_MODE_WRAP, 2, 0, D3D12_COMPARISON_FUNC_LESS_EQUAL, 8);
+	rsg.AddStaticSampler(D3D12_FILTER_ANISOTROPIC, D3D12_TEXTURE_ADDRESS_MODE_WRAP, 3, 0, D3D12_COMPARISON_FUNC_LESS_EQUAL, 16);
+
+	rsg.AddStaticSampler(D3D12_FILTER_MIN_MAG_MIP_POINT, D3D12_TEXTURE_ADDRESS_MODE_BORDER, 5, 0, D3D12_COMPARISON_FUNC_ALWAYS, 0, D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE);
+	rsg.AddStaticSampler(D3D12_FILTER_MIN_MAG_MIP_LINEAR, D3D12_TEXTURE_ADDRESS_MODE_WRAP, 6, 0, D3D12_COMPARISON_FUNC_NEVER);
+#pragma endregion SAMPLERS
+	m_pGlobalRootSig = rsg.Generate(m_pDevice5, false);
 }
 
 void Renderer::createFullScreenQuad()
@@ -1266,7 +1348,7 @@ void Renderer::initRenderTasks()
 
 	RenderTask* DepthPrePassRenderTask = new DepthRenderTask(
 		m_pDevice5,
-		m_pRootSignature,
+		m_pGlobalRootSig,
 		L"DepthVertex.hlsl", L"DepthPixel.hlsl",
 		&gpsdDepthPrePassVector,
 		L"DepthPrePassPSO",
@@ -1344,7 +1426,7 @@ void Renderer::initRenderTasks()
 
 	RenderTask* forwardRenderTask = new ForwardRenderTask(
 		m_pDevice5,
-		m_pRootSignature,
+		m_pGlobalRootSig,
 		L"ForwardVertex.hlsl", L"ForwardPixel.hlsl",
 		&gpsdForwardRenderVector,
 		L"ForwardRenderingPSO",
@@ -1391,7 +1473,7 @@ void Renderer::initRenderTasks()
 
 	RenderTask* downSampleTask = new DownSampleRenderTask(
 		m_pDevice5,
-		m_pRootSignature,
+		m_pGlobalRootSig,
 		L"DownSampleVertex.hlsl", L"DownSamplePixel.hlsl",
 		&gpsdDownSampleTextureVector,
 		L"DownSampleTexturePSO",
@@ -1435,7 +1517,7 @@ void Renderer::initRenderTasks()
 
 	RenderTask* outliningRenderTask = new OutliningRenderTask(
 		m_pDevice5,
-		m_pRootSignature,
+		m_pGlobalRootSig,
 		L"OutlinedVertex.hlsl", L"OutlinedPixel.hlsl",
 		&gpsdOutliningVector,
 		L"outliningScaledPSO",
@@ -1530,7 +1612,7 @@ void Renderer::initRenderTasks()
 	
 	/*---------------------------------- TRANSPARENT_TEXTURE_RENDERTASK -------------------------------------*/
 	RenderTask* transparentRenderTask = new TransparentRenderTask(m_pDevice5,
-		m_pRootSignature,
+		m_pGlobalRootSig,
 		L"TransparentTextureVertex.hlsl",
 		L"TransparentTexturePixel.hlsl",
 		&gpsdBlendVector,
@@ -1569,7 +1651,7 @@ void Renderer::initRenderTasks()
 	gpsdWireFrameVector.push_back(&gpsdWireFrame);
 
 	RenderTask* wireFrameRenderTask = new WireframeRenderTask(m_pDevice5,
-		m_pRootSignature,
+		m_pGlobalRootSig,
 		L"WhiteVertex.hlsl", L"WhitePixel.hlsl",
 		&gpsdWireFrameVector,
 		L"WireFramePSO",
@@ -1609,7 +1691,7 @@ void Renderer::initRenderTasks()
 
 	RenderTask* mergeTask = new MergeRenderTask(
 		m_pDevice5,
-		m_pRootSignature,
+		m_pGlobalRootSig,
 		L"MergeVertex.hlsl", L"MergePixel.hlsl",
 		&gpsdMergePassVector,
 		L"MergePassPSO",
@@ -1626,7 +1708,7 @@ void Renderer::initRenderTasks()
 #pragma region IMGUIRENDERTASK
 	RenderTask* imGuiRenderTask = new ImGuiRenderTask(
 		m_pDevice5,
-		m_pRootSignature,
+		m_pGlobalRootSig,
 		L"", L"",
 		nullptr,
 		L"",
@@ -1647,7 +1729,7 @@ void Renderer::initRenderTasks()
 	csNamePSOName.push_back(std::make_pair(L"ComputeBlurHorizontal.hlsl", L"blurHorizontalPSO"));
 	csNamePSOName.push_back(std::make_pair(L"ComputeBlurVertical.hlsl", L"blurVerticalPSO"));
 	ComputeTask* blurComputeTask = new BlurComputeTask(
-		m_pDevice5, m_pRootSignature,
+		m_pDevice5, m_pGlobalRootSig,
 		csNamePSOName,
 		E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE,
 		std::get<2>(*m_pBloomResources->GetBrightTuple()),

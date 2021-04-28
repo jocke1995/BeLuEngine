@@ -12,7 +12,7 @@
 
 RenderTask::RenderTask(
 	ID3D12Device5* device,
-	RootSignature* rootSignature,
+	ID3D12RootSignature* rootSignature,
 	const std::wstring& VSName, const std::wstring& PSName,
 	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*>* gpsds,
 	const std::wstring& psoName,
@@ -27,7 +27,7 @@ RenderTask::RenderTask(
 		}
 	}
 	
-	m_pRootSig = rootSignature->GetRootSig();
+	m_pRootSig = rootSignature;
 }
 
 RenderTask::~RenderTask()

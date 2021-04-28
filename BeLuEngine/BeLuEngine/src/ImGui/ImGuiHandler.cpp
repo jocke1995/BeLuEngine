@@ -24,8 +24,8 @@
 #include "../ECS/Scene.h"
 
 // Geometry
-#include "../Renderer/Model/Transform.h"
-#include "../Renderer/Model/Material.h"
+#include "../Renderer/Geometry/Transform.h"
+#include "../Renderer/Geometry/Material.h"
 
 #define DIV 1024
 

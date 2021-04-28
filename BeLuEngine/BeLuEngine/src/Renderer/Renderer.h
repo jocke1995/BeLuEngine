@@ -6,7 +6,6 @@ class ThreadPool;
 class Window;
 
 // Renderer Engine
-class RootSignature;
 class SwapChain;
 class BoundingBoxPool;
 class DescriptorHeap;
@@ -181,7 +180,7 @@ private:
 	// -------------- RenderTargets -------------- 
 
 	// Rootsignature
-	RootSignature* m_pRootSignature = nullptr;
+	//RootSignature* m_pRootSignature = nullptr;
 	ID3D12RootSignature* m_pGlobalRootSig = nullptr;
 
 	// Picking

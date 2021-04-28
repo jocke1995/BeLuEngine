@@ -9,11 +9,11 @@
 
 #include "Window.h"
 #include "../Renderer/DescriptorHeap.h"
-#include "../Renderer/Model/Mesh.h"
-#include "../Renderer/Model/Model.h"
+#include "../Renderer/Geometry/Mesh.h"
+#include "../Renderer/Geometry/Model.h"
 #include "../Renderer/Shader.h"
-#include "../Renderer/Model/Material.h"
-#include "../Renderer/Model/Transform.h"
+#include "../Renderer/Geometry/Material.h"
+#include "../Renderer/Geometry/Transform.h"
 
 #include "assimp/Importer.hpp"
 #include "assimp/postprocess.h"
