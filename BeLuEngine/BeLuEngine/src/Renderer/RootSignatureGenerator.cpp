@@ -44,14 +44,45 @@ void RootSignatureGenerator::AddRootConstant(
 	m_RootParameters.push_back(rootParam);
 }
 
+void RootSignatureGenerator::AddStaticSampler(
+	D3D12_FILTER filter,
+	D3D12_TEXTURE_ADDRESS_MODE adressMode,
+	unsigned int shaderRegister, unsigned int registerSpace,
+	D3D12_COMPARISON_FUNC comparisonFunc,
+	unsigned int maxAnisotropy, // Only if Filter is Anisotropic
+	D3D12_STATIC_BORDER_COLOR borderColor) // Only if addressMode is Border
+{
+	D3D12_STATIC_SAMPLER_DESC samplerDesc = {};
+
+	// Settings from parameters
+	samplerDesc.Filter			= filter;
+	samplerDesc.AddressU		= adressMode;
+	samplerDesc.AddressV		= adressMode;
+	samplerDesc.AddressW		= adressMode;
+	samplerDesc.ComparisonFunc	= comparisonFunc;
+	samplerDesc.ShaderRegister	= shaderRegister;
+	samplerDesc.RegisterSpace	= registerSpace;
+
+	// Default settings
+	samplerDesc.MipLODBias = 0;	// offset in mipmap level
+	samplerDesc.MinLOD = 0;
+	samplerDesc.MaxLOD = D3D12_FLOAT32_MAX;
+
+	// Settings that may not be used in this static sampler, different depending on filter and/or adressMode
+	samplerDesc.MaxAnisotropy = maxAnisotropy;
+	samplerDesc.BorderColor = borderColor;
+
+	m_StaticSamplerDescs.push_back(samplerDesc);
+}
+
 ID3D12RootSignature* RootSignatureGenerator::Generate(ID3D12Device* device, bool isLocal)
 {
-	D3D12_ROOT_SIGNATURE_DESC rsDesc;
-	rsDesc.Flags = isLocal ? D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE : D3D12_ROOT_SIGNATURE_FLAG_NONE;
-	rsDesc.NumParameters = m_RootParameters.size();
-	rsDesc.pParameters = m_RootParameters.data();
-	rsDesc.NumStaticSamplers = 0;
-	rsDesc.pStaticSamplers = nullptr; // TODO
+	D3D12_ROOT_SIGNATURE_DESC rsDesc = {};
+	rsDesc.Flags			 = isLocal ? D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE : D3D12_ROOT_SIGNATURE_FLAG_NONE;
+	rsDesc.NumParameters	 = m_RootParameters.size();
+	rsDesc.pParameters		 = m_RootParameters.data();
+	rsDesc.NumStaticSamplers = m_StaticSamplerDescs.size();
+	rsDesc.pStaticSamplers	 = m_StaticSamplerDescs.data();
 
 	ID3DBlob* errorMessages = nullptr;
 	ID3DBlob* pBlob = nullptr;

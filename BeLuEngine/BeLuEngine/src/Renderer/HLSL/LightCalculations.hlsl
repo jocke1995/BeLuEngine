@@ -7,7 +7,6 @@ SamplerState Anisotropic2_Wrap	: register (s0);
 SamplerState Anisotropic4_Wrap	: register (s1);
 SamplerState Anisotropic8_Wrap	: register (s2);
 SamplerState Anisotropic16_Wrap	: register (s3);
-SamplerState samplerTypeBorder	: register (s4);
 
 //ConstantBuffer<CB_PER_SCENE_STRUCT>  cbPerScene  : register(b5, space3);
 

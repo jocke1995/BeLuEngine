@@ -219,8 +219,8 @@ void ImGuiHandler::drawSceneHierarchy()
 									ImGui::Checkbox("Use Normal Texture", &useNormalTexture);
 									ImGui::Checkbox("Glow", &glow);
 
-									ImGui::DragFloat("Roughness", &roughnessValue, 0.005f, 0.01f, 1.0f);
-									ImGui::DragFloat("Metallic", &metallicValue, 0.005f, 0.01f, 1.0f);
+									ImGui::DragFloat("Roughness", &roughnessValue, 0.005f, 0.1f, 1.0f);
+									ImGui::DragFloat("Metallic", &metallicValue, 0.005f, 0.1f, 1.0f);
 									ImGui::DragFloat("Opacity", &opacityValue, 0.005f, 0.01f, 1.0f);
 
 									if (useEmissiveTexture == false)

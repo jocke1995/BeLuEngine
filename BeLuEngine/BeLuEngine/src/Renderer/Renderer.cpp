@@ -1648,9 +1648,9 @@ void Renderer::initRenderTasks()
 	blurComputeTask->SetDescriptorHeaps(m_DescriptorHeaps);
 
 	// CopyTasks
-	CopyTask* copyPerFrameTask = new CopyPerFrameTask(m_pDevice5, E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE, F_THREAD_FLAGS::RENDER, L"copyPerFrameCL");
-	CopyTask* copyPerFrameMatricesTask = new CopyPerFrameMatricesTask(m_pDevice5, E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE, F_THREAD_FLAGS::RENDER, L"copyPerFrameMatricesCL");
-	CopyTask* copyOnDemandTask = new CopyOnDemandTask(m_pDevice5, E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE, F_THREAD_FLAGS::RENDER, L"copyOnDemandCL");
+	CopyTask* copyPerFrameTask			= new CopyPerFrameTask(m_pDevice5, E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE, F_THREAD_FLAGS::RENDER, L"copyPerFrameCL");
+	CopyTask* copyPerFrameMatricesTask  = new CopyPerFrameMatricesTask(m_pDevice5, E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE, F_THREAD_FLAGS::RENDER, L"copyPerFrameMatricesCL");
+	CopyTask* copyOnDemandTask			= new CopyOnDemandTask(m_pDevice5, E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE, F_THREAD_FLAGS::RENDER, L"copyOnDemandCL");
 
 #pragma endregion ComputeAndCopyTasks
 	// Add the tasks to desired vectors so they can be used in m_pRenderer
