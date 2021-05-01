@@ -12,12 +12,16 @@ struct SlotInfo;
 struct ID3D12Device5;
 struct D3D12_INDEX_BUFFER_VIEW;
 
+// DXR
+class BottomLevelAccelerationStructure;
+
 class Model
 {
 public:
     Model(const std::wstring* path,
         std::vector<Mesh*>* meshes,
-        std::vector<Material*>* materials);
+        std::vector<Material*>* materials,
+        ID3D12Device5* pdevice);
     virtual ~Model();
 
     bool operator == (const Model& other);
@@ -40,6 +44,8 @@ protected:
 
     std::vector<Mesh*> m_Meshes;
     std::vector<Material*> m_OriginalMaterial;
+
+    BottomLevelAccelerationStructure* m_pBLAS = nullptr;
 };
 
 #endif

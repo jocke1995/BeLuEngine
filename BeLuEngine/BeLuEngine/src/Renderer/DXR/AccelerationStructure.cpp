@@ -13,11 +13,6 @@ AccelerationStructure::~AccelerationStructure()
 	SAFE_DELETE(m_pResult);
 }
 
-const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC& AccelerationStructure::GetBuildDesc() const
-{
-	return m_BuildDesc;
-}
-
 void AccelerationStructure::BuildAccelerationStructure(ID3D12GraphicsCommandList4* commandList) const
 {
 	commandList->BuildRaytracingAccelerationStructure(&m_BuildDesc, 0, nullptr);

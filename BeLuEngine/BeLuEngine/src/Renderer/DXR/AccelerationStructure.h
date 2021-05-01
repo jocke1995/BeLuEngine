@@ -9,8 +9,6 @@ public:
     AccelerationStructure();
     virtual ~AccelerationStructure();
 
-    const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC& GetBuildDesc() const;
-
     // Setup the buildDesc after each element is added in the AS
     virtual void FinalizeAccelerationStructure(ID3D12Device5* pDevice) = 0;
 

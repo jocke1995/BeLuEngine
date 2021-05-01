@@ -8,7 +8,8 @@ Resource::Resource(
 	unsigned long long entrySize,
 	RESOURCE_TYPE type,
 	std::wstring name,
-	D3D12_RESOURCE_FLAGS flags)
+	D3D12_RESOURCE_FLAGS flags,
+	D3D12_RESOURCE_STATES* startState)
 {
 	m_Id = s_IdCounter++;
 
@@ -27,6 +28,11 @@ Resource::Resource(
 		d3d12HeapType = D3D12_HEAP_TYPE_DEFAULT;
 		m_CurrResourceState = D3D12_RESOURCE_STATE_COMMON;
 		break;
+	}
+
+	if (startState != nullptr)
+	{
+		m_CurrResourceState = *startState;
 	}
 
 	setupHeapProperties(d3d12HeapType);

@@ -9,11 +9,8 @@ public:
     virtual ~BottomLevelAccelerationStructure();
 
     void AddVertexBuffer(
-        ID3D12Resource* vertexBuffer,
-        uint32_t vertexCount,
-        ID3D12Resource* indexBuffer,
-        uint32_t indexCount,
-        bool isOpaque = true);
+        Resource* vertexBuffer, uint32_t vertexCount,
+        Resource* indexBuffer , uint32_t indexCount);
 
     void FinalizeAccelerationStructure(ID3D12Device5* pDevice) override;
 

@@ -4,23 +4,41 @@
 
 #include "../Misc/Log.h"
 
-
 #include "Mesh.h"
 #include "Material.h"
 #include "../Texture/Texture2D.h"
 #include "../GPUMemory/GPUMemory.h"
 
-Model::Model(const std::wstring* path, std::vector<Mesh*>* meshes, std::vector<Material*>* materials)
+#include "../DXR/BottomLevelAccelerationStructure.h"
+
+Model::Model(
+	const std::wstring* path,
+	std::vector<Mesh*>* meshes,
+	std::vector<Material*>* materials,
+	ID3D12Device5* pdevice)
 {
 	m_Path = *path;
 	m_Size = (*meshes).size();
 
 	m_Meshes = (*meshes);
 	m_OriginalMaterial = *materials;
+
+	// DXR
+	m_pBLAS = new BottomLevelAccelerationStructure();
+
+	for (const Mesh* mesh : m_Meshes)
+	{
+		m_pBLAS->AddVertexBuffer(
+			mesh->GetDefaultResourceVertices(), mesh->GetNumVertices(),
+			mesh->GetDefaultResourceIndices(), mesh->GetNumIndices());
+	}
+
+	m_pBLAS->FinalizeAccelerationStructure(pdevice);
 }
 
 Model::~Model()
 {
+	SAFE_DELETE(m_pBLAS);
 }
 
 bool Model::operator==(const Model& other)

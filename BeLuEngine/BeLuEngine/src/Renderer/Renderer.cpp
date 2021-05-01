@@ -71,6 +71,9 @@
 // Compute
 #include "DX12Tasks/BlurComputeTask.h"
 
+// DXR
+#include "DX12Tasks/BottomLevelRenderTask.h"
+
 // Event
 #include "../Events/EventBus.h"
 
@@ -80,6 +83,7 @@ Renderer::Renderer()
 	m_RenderTasks.resize(E_RENDER_TASK_TYPE::NR_OF_RENDERTASKS);
 	m_CopyTasks.resize(E_COPY_TASK_TYPE::NR_OF_COPYTASKS);
 	m_ComputeTasks.resize(E_COMPUTE_TASK_TYPE::NR_OF_COMPUTETASKS);
+	m_DXRTasks.resize(E_DXR_TASK_TYPE::NR_OF_DXRTASKS);
 
 	// Processinfo
 	// Create handle to process
@@ -140,6 +144,11 @@ void Renderer::deleteRenderer()
 
 	for (RenderTask* renderTask : m_RenderTasks)
 		delete renderTask;
+
+	for (DXRTask* dxrTask : m_DXRTasks)
+	{
+		delete dxrTask;
+	}
 
 	SAFE_RELEASE(&m_pDevice5);
 
@@ -380,6 +389,7 @@ void Renderer::ExecuteMT()
 	CopyTask* copyTask = nullptr;
 	ComputeTask* computeTask = nullptr;
 	RenderTask* renderTask = nullptr;
+	DXRTask* dxrTask = nullptr;
 	/* --------------------- Record command lists --------------------- */
 
 	// Copy on demand
@@ -394,6 +404,10 @@ void Renderer::ExecuteMT()
 	copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME_MATRICES];
 	static_cast<CopyPerFrameMatricesTask*>(copyTask)->SetCamera(m_pScenePrimaryCamera);
 	m_pThreadPool->AddTask(copyTask);
+
+	// Update BLASes if any...
+	dxrTask = m_DXRTasks[E_DXR_TASK_TYPE::BLAS];
+	m_pThreadPool->AddTask(dxrTask);
 
 	// Depth pre-pass
 	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::DEPTH_PRE_PASS];
@@ -489,6 +503,7 @@ void Renderer::ExecuteST()
 	CopyTask* copyTask = nullptr;
 	ComputeTask* computeTask = nullptr;
 	RenderTask* renderTask = nullptr;
+	DXRTask* dxrTask = nullptr;
 	/* --------------------- Record command lists --------------------- */
 	// Copy on demand
 	copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND];
@@ -502,6 +517,10 @@ void Renderer::ExecuteST()
 	copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME_MATRICES];
 	static_cast<CopyPerFrameMatricesTask*>(copyTask)->SetCamera(m_pScenePrimaryCamera);
 	copyTask->Execute();
+
+	// Update BLASes if any...
+	dxrTask = m_DXRTasks[E_DXR_TASK_TYPE::BLAS];
+	dxrTask->Execute();
 
 	// Depth pre-pass
 	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::DEPTH_PRE_PASS];
@@ -841,6 +860,10 @@ void Renderer::submitModelToGPU(Model* model)
 	}
 
 	AssetLoader::Get()->m_LoadedModels.at(model->GetPath()).first = true;
+
+	// TODO: Better structure instead of hardcoding here
+	// Submit model to BLAS
+	static_cast<BottomLevelRenderTask*>(m_DXRTasks[E_DXR_TASK_TYPE::BLAS])->SubmitBLAS(model->m_pBLAS);
 }
 
 void Renderer::submitMaterialToGPU(component::ModelComponent* mc)
@@ -1761,6 +1784,10 @@ void Renderer::initRenderTasks()
 	CopyTask* copyOnDemandTask			= new CopyOnDemandTask(m_pDevice5, E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE, F_THREAD_FLAGS::RENDER, L"copyOnDemandCL");
 
 #pragma endregion ComputeAndCopyTasks
+
+#pragma region DXRTasks
+	DXRTask* blasTask = new BottomLevelRenderTask(m_pDevice5, F_THREAD_FLAGS::RENDER, L"BL_RenderTask_CommandList");
+#pragma endregion DXRTasks
 	// Add the tasks to desired vectors so they can be used in m_pRenderer
 	/* -------------------------------------------------------------- */
 
@@ -1785,7 +1812,11 @@ void Renderer::initRenderTasks()
 	m_RenderTasks[E_RENDER_TASK_TYPE::IMGUI] = imGuiRenderTask;
 	m_RenderTasks[E_RENDER_TASK_TYPE::DOWNSAMPLE] = downSampleTask;
 
+	/* ------------------------- DXR Tasks ------------------------ */
+	m_DXRTasks[E_DXR_TASK_TYPE::BLAS] = blasTask;
+
 	// Pushback in the order of execution
+
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
 		m_DirectCommandLists[i].push_back(copyOnDemandTask->GetCommandInterface()->GetCommandList(i));
@@ -1799,6 +1830,12 @@ void Renderer::initRenderTasks()
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
 		m_DirectCommandLists[i].push_back(copyPerFrameMatricesTask->GetCommandInterface()->GetCommandList(i));
+	}
+
+	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
+	{
+		// Update the BLAS:es if any
+		m_DirectCommandLists[i].push_back(blasTask->GetCommandInterface()->GetCommandList(i));
 	}
 
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)

@@ -152,11 +152,11 @@ enum F_THREAD_FLAGS
 {
 	RENDER = BIT(1),
 	TEST = BIT(2),
-	// CopyTextures,
+	ASYNC_BLAS = BIT(3),
+	// CopyTextures
 	// PrepareNextScene ..
 	// etc
-	ALL = BIT(3)
-	// etc..
+	ALL = BIT(4)
 };
 
 #endif

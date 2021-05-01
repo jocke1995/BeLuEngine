@@ -55,6 +55,9 @@ class CopyTask;
 // Compute
 class ComputeTask;
 
+// DXR
+class DXRTask;
+
 // DX12 Forward Declarations
 struct ID3D12CommandQueue;
 struct ID3D12CommandList;
@@ -191,6 +194,7 @@ private:
 	std::vector<ComputeTask*> m_ComputeTasks;
 	std::vector<CopyTask*>    m_CopyTasks;
 	std::vector<RenderTask*>  m_RenderTasks;
+	std::vector<DXRTask*>	  m_DXRTasks;
 
 	Mesh* m_pFullScreenQuad = nullptr;
 

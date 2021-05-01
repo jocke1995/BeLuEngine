@@ -42,6 +42,12 @@ enum E_COPY_TASK_TYPE
 	NR_OF_COPYTASKS
 };
 
+enum E_DXR_TASK_TYPE
+{
+	BLAS,
+	NR_OF_DXRTASKS
+};
+
 class DX12Task : public MultiThreadedTask
 {
 public:
