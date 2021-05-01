@@ -3,7 +3,6 @@
 
 // DX12 Specifics
 #include "../PipelineState/ComputeState.h"
-#include "../RootSignature.h"
 
 ComputeTask::ComputeTask(
 	ID3D12Device5* device,

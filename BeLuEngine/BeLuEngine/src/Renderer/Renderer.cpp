@@ -998,15 +998,30 @@ bool Renderer::createDevice()
 			break; // No more adapters
 		}
 	
-		// Check to see if the adapter supports Direct3D 12, but don't create the actual m_pDevice yet.
-		if (SUCCEEDED(D3D12CreateDevice(adapter, D3D_FEATURE_LEVEL_12_1, __uuidof(ID3D12Device5), nullptr)))
+		// Check to see if the adapter supports Direct3D 12, but don't create the actual device yet.
+
+		ID3D12Device5* pDevice = nullptr;
+		HRESULT hr = D3D12CreateDevice(adapter, D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&pDevice));
+
+		if (SUCCEEDED(hr))
 		{
 			DXGI_ADAPTER_DESC adapterDesc = {};
 			adapter->GetDesc(&adapterDesc);
 			EngineStatistics::GetIM_CommonStats().m_Adapter = to_string(std::wstring(adapterDesc.Description));
 			EngineStatistics::GetIM_CommonStats().m_API = "DirectX 12"; // TEMP: Specifiy when creating application later
 
-			break;
+			D3D12_FEATURE_DATA_D3D12_OPTIONS5 features5 = {};
+			hr = pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &features5, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS5));
+			SAFE_RELEASE(&pDevice);
+
+			if (SUCCEEDED(hr))
+			{
+				if (features5.RaytracingTier == D3D12_RAYTRACING_TIER_1_1)
+				{
+					BL_LOG_INFO("Raytracing tier 1.1 supported!\n");
+					break; // found one!
+				}
+			}
 		}
 	
 		SAFE_RELEASE(&adapter);

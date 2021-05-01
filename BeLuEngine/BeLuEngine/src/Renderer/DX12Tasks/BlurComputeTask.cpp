@@ -6,7 +6,6 @@
 #include "../DescriptorHeap.h"
 #include "../GPUMemory/GPUMemory.h"
 #include "../PipelineState/ComputeState.h"
-#include "../RootSignature.h"
 
 // Techniques
 #include "../Techniques/PingPongResource.h"
