@@ -5,7 +5,6 @@
 #include "../SwapChain.h"
 #include "../GPUMemory/GPUMemory.h"
 
-#include "../RootSignature.h"
 #include "../DescriptorHeap.h"
 #include "../RenderView.h"
 

@@ -5,7 +5,6 @@
 #include "../CommandInterface.h"
 #include "../GPUMemory/GPUMemory.h"
 #include "../PipelineState/GraphicsState.h"
-#include "../RootSignature.h"
 #include "../SwapChain.h"
 
 

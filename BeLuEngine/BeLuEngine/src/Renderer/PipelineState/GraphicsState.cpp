@@ -3,7 +3,6 @@
 
 #include "../Misc/Log.h"
 
-#include "../RootSignature.h"
 #include "../Shader.h"
 
 GraphicsState::GraphicsState(ID3D12Device5* device, ID3D12RootSignature* rootSignature, const std::wstring& VSName, const std::wstring& PSName, D3D12_GRAPHICS_PIPELINE_STATE_DESC* gpsd, const std::wstring& psoName)

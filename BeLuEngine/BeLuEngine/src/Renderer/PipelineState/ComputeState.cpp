@@ -3,7 +3,6 @@
 
 #include "../Misc/Log.h"
 
-#include "../RootSignature.h"
 #include "../Shader.h"
 
 ComputeState::ComputeState(ID3D12Device5* device, ID3D12RootSignature* rootSignature, std::wstring& CSName, std::wstring& psoName)

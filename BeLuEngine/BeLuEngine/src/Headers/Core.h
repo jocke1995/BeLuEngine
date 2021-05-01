@@ -120,6 +120,15 @@ enum class E_CAMERA_TYPE
 	}							\
 }
 
+#define SAFE_DELETE(p)			\
+{								\
+	if (p != nullptr)			\
+	{							\
+		delete p;				\
+		p = nullptr;			\
+	}							\
+}
+
 // Debug
 #define SINGLE_THREADED_RENDERER true
 #define DX12VALIDATIONGLAYER false

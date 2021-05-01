@@ -5,7 +5,7 @@
 #include "../CommandInterface.h"
 #include "../DescriptorHeap.h"
 #include "../GPUMemory/GPUMemory.h"
-
+#include "../Renderer/Geometry/Mesh.h"
 
 DXR_BottomLevelRenderTask::DXR_BottomLevelRenderTask(
 	ID3D12Device5* device,
@@ -31,3 +31,4 @@ void DXR_BottomLevelRenderTask::Execute()
 
 	commandList->Close();
 }
+
