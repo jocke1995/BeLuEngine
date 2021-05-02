@@ -455,6 +455,9 @@ void Renderer::ExecuteMT()
 
 	/* --------------------------------------------------------------- */
 
+	// Clear copy on demand
+	m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]->Clear();
+
 	// ImGui
 #ifdef DEBUG
 	// Have to update ImGui here to get all information that happens inside rendering
@@ -472,10 +475,6 @@ void Renderer::ExecuteMT()
 	m_CommandQueues[E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->Signal(m_pFenceFrame, m_FenceFrameValue);
 	waitForFrame(0);
 	m_FenceFrameValue++;
-
-	/*------------------- Post draw stuff -------------------*/
-	// Clear copy on demand
-	m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]->Clear();
 
 	/*------------------- Present -------------------*/
 	HRESULT hr = dx12SwapChain->Present(0, 0);
