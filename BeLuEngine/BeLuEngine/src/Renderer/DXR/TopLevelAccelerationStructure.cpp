@@ -1,9 +1,10 @@
 #include "stdafx.h"
-#include "TopLevelAccelerationStructure .h"
+#include "TopLevelAccelerationStructure.h"
 
 #include "../Misc/Log.h"
 
 #include "../GPUMemory/Resource.h"
+#include "BottomLevelAccelerationStructure.h"
 TopLevelAccelerationStructure::TopLevelAccelerationStructure()
 {
 }
@@ -14,12 +15,12 @@ TopLevelAccelerationStructure::~TopLevelAccelerationStructure()
 }
 
 void TopLevelAccelerationStructure::AddInstance(
-	Resource* BLAS,
+	BottomLevelAccelerationStructure* BLAS,
 	const DirectX::XMMATRIX& m_Transform,
-	unsigned int instanceID,
 	unsigned int hitGroupIndex)
 {
-	m_Instances.emplace_back(Instance(BLAS, m_Transform, instanceID, hitGroupIndex));
+	unsigned int instanceID = m_Instances.size();
+	m_Instances.emplace_back(Instance(BLAS->m_pResult, m_Transform, instanceID, hitGroupIndex));
 }
 
 void TopLevelAccelerationStructure::Reset()
@@ -39,17 +40,14 @@ void TopLevelAccelerationStructure::GenerateBuffers(ID3D12Device5* pDevice)
 	prebuildDesc.NumDescs = static_cast<UINT>(m_Instances.size());
 	prebuildDesc.Flags = flags;
 
-	// This structure is used to hold the sizes of the required scratch memory and
-	// resulting AS
+	// This structure is used to hold the sizes of the required scratch memory and resulting AS
 	D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO info = {};
-
 	pDevice->GetRaytracingAccelerationStructurePrebuildInfo(&prebuildDesc, &info);
 
 	// Buffer sizes need to be 256-byte-aligned
 	unsigned int scratchSizeInBytes = (info.ScratchDataSizeInBytes + 255) & ~255;
 	unsigned int resultSizeInBytes = (info.ResultDataMaxSizeInBytes + 255) & ~255;
 	m_InstanceDescsSizeInBytes = (sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * static_cast<UINT64>(m_Instances.size() + 255)) & ~255;
-
 
 	// Create buffers for scratch, result and instance
 	SAFE_DELETE(m_pScratch);
@@ -78,6 +76,10 @@ void TopLevelAccelerationStructure::GenerateBuffers(ID3D12Device5* pDevice)
 
 void TopLevelAccelerationStructure::SetupAccelerationStructureForBuilding(ID3D12Device5* pDevice, bool update)
 {
+	// Ignore first
+	if (m_IsBuilt == false && update == true)
+		return;
+
 	D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
 	flags |= update ? D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE : D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
 
@@ -105,7 +107,7 @@ void TopLevelAccelerationStructure::SetupAccelerationStructureForBuilding(ID3D12
 		instanceDescs[i].InstanceID = m_Instances[i].m_ID;
 		instanceDescs[i].InstanceContributionToHitGroupIndex = m_Instances[i].m_HitGroupIndex;
 		instanceDescs[i].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
-		DirectX::XMMATRIX m = XMMatrixTranspose(m_Instances[i].m_Transform); // GLM is column major, the INSTANCE_DESC is row major
+		DirectX::XMMATRIX m = XMMatrixTranspose(m_Instances[i].m_Transform);
 		memcpy(instanceDescs[i].Transform, &m, sizeof(instanceDescs[i].Transform));
 		instanceDescs[i].AccelerationStructure = m_Instances[i].m_pBLAS->GetID3D12Resource1()->GetGPUVirtualAddress();
 
@@ -116,7 +118,7 @@ void TopLevelAccelerationStructure::SetupAccelerationStructureForBuilding(ID3D12
 	m_pInstanceDesc->GetID3D12Resource1()->Unmap(0, nullptr);
 
 	// If the TLAS is to be updated. Give it the old TLAS as source
-	D3D12_GPU_VIRTUAL_ADDRESS pSourceAS = update ? m_pInstanceDesc->GetID3D12Resource1()->GetGPUVirtualAddress() : 0;
+	D3D12_GPU_VIRTUAL_ADDRESS pSourceAS = update ? m_pResult->GetID3D12Resource1()->GetGPUVirtualAddress() : 0;
 
 	// Create a descriptor of the requested builder work, to generate a TLAS
 	m_BuildDesc = {};

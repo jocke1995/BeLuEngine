@@ -67,18 +67,21 @@ void BottomLevelAccelerationStructure::GenerateBuffers(ID3D12Device5* pDevice)
 	unsigned int scratchSizeInBytes = (info.ScratchDataSizeInBytes + 255) & ~255;
 	unsigned int resultSizeInBytes = (info.ResultDataMaxSizeInBytes + 255) & ~255;
 
+	static unsigned int idCounter = 0;
 	// Create buffers for scratch and result
 	m_pScratch = new Resource(
 		pDevice, scratchSizeInBytes,
-		RESOURCE_TYPE::DEFAULT, L"scratchBottomLevel",
+		RESOURCE_TYPE::DEFAULT, L"scratchBottomLevel" + std::to_wstring(idCounter),
 		D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
 	D3D12_RESOURCE_STATES stateRAS = D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE;
 	m_pResult = new Resource(
 		pDevice, resultSizeInBytes,
-		RESOURCE_TYPE::DEFAULT, L"resultBottomLevel",
+		RESOURCE_TYPE::DEFAULT, L"resultBottomLevel" + std::to_wstring(idCounter),
 		D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
 		&stateRAS);
+
+	idCounter++;
 }
 
 void BottomLevelAccelerationStructure::SetupAccelerationStructureForBuilding(ID3D12Device5* pDevice, bool update)

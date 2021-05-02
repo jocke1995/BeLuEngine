@@ -4,6 +4,7 @@
 #include "AccelerationStructure.h"
 
 class Resource;
+class BottomLevelAccelerationStructure;
 
 struct Instance
 {
@@ -28,25 +29,23 @@ public:
     virtual ~TopLevelAccelerationStructure();
 
     void AddInstance(
-        Resource* BLAS,
+        BottomLevelAccelerationStructure* BLAS,
         const DirectX::XMMATRIX& m_Transform,
-        unsigned int instanceID,
         unsigned int hitGroupIndex);
 
-    // Call to remove all instances currently in the TLAS
     void Reset() override;
-
-    // Call when adding or removing geometry from the TLAS
     void GenerateBuffers(ID3D12Device5* pDevice) override;
-
-    // Call every frame to update with world matrices
     void SetupAccelerationStructureForBuilding(ID3D12Device5* pDevice, bool update) override;
 
 private:
+    friend class TopLevelRenderTask;
+
     unsigned int m_InstanceDescsSizeInBytes = 0;
     Resource* m_pInstanceDesc = nullptr;
 
     std::vector<Instance> m_Instances;
+
+    bool m_IsBuilt = false;
 };
 
 #endif

@@ -180,10 +180,7 @@ private:
 
 	// Depthbuffer
 	DepthStencil* m_pMainDepthStencil = nullptr;
-	// -------------- RenderTargets -------------- 
 
-	// Rootsignature
-	//RootSignature* m_pRootSignature = nullptr;
 	ID3D12RootSignature* m_pGlobalRootSig = nullptr;
 
 	// Picking

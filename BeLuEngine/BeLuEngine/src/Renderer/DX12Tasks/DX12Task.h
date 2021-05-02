@@ -45,6 +45,7 @@ enum E_COPY_TASK_TYPE
 enum E_DXR_TASK_TYPE
 {
 	BLAS,
+	TLAS,
 	NR_OF_DXRTASKS
 };
 

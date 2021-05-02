@@ -17,6 +17,8 @@ public:
     void SetupAccelerationStructureForBuilding(ID3D12Device5* pDevice, bool update) override;
 
 private:
+    friend class TopLevelAccelerationStructure;
+
 	std::vector<D3D12_RAYTRACING_GEOMETRY_DESC> m_vertexBuffers = {};
 };
 

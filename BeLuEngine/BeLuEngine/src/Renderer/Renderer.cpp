@@ -73,6 +73,10 @@
 
 // DXR
 #include "DX12Tasks/BottomLevelRenderTask.h"
+#include "DX12Tasks/TopLevelRenderTask.h"
+
+#include "DXR/BottomLevelAccelerationStructure.h"
+#include "DXR/TopLevelAccelerationStructure.h"
 
 // Event
 #include "../Events/EventBus.h"
@@ -311,6 +315,10 @@ void Renderer::Update(double dt)
 #ifdef DEBUG
 	ImGuiHandler::GetInstance().NewFrame();
 #endif
+
+	// DXR
+	TopLevelAccelerationStructure* pTLAS = static_cast<TopLevelRenderTask*>(m_DXRTasks[E_DXR_TASK_TYPE::TLAS])->GetTLAS();
+	pTLAS->SetupAccelerationStructureForBuilding(m_pDevice5, true);
 }
 
 void Renderer::SortObjects()
@@ -412,6 +420,10 @@ void Renderer::ExecuteMT()
 	// Depth pre-pass
 	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::DEPTH_PRE_PASS];
 	m_pThreadPool->AddTask(renderTask);
+
+	// Update TLAS
+	dxrTask = m_DXRTasks[E_DXR_TASK_TYPE::TLAS];
+	m_pThreadPool->AddTask(dxrTask);
 
 	// Opaque draw
 	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::FORWARD_RENDER];
@@ -525,6 +537,10 @@ void Renderer::ExecuteST()
 	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::DEPTH_PRE_PASS];
 	renderTask->Execute();
 
+	// Update TLAS
+	dxrTask = m_DXRTasks[E_DXR_TASK_TYPE::TLAS];
+	dxrTask->Execute();
+
 	// Opaque draw
 	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::FORWARD_RENDER];
 	renderTask->Execute();
@@ -610,11 +626,11 @@ void Renderer::InitModelComponent(component::ModelComponent* mc)
 	// Only add the m_Entities that actually should be drawn
 	if (tc != nullptr)
 	{
-		tc->GetTransform()->m_pCB = new ConstantBuffer(m_pDevice5, sizeof(DirectX::XMMATRIX) * 2, L"Transform", m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
-		ConstantBuffer* cb = tc->GetTransform()->m_pCB;
+		Transform* t = tc->GetTransform();
+		t->m_pCB = new ConstantBuffer(m_pDevice5, sizeof(DirectX::XMMATRIX) * 2, L"Transform", m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
+		ConstantBuffer* cb = t->m_pCB;
 
-
-		m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME_MATRICES]->Submit(&std::make_tuple(cb->GetUploadResource(), cb->GetDefaultResource(), static_cast<const void*>(tc->GetTransform())));
+		m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME_MATRICES]->Submit(&std::make_tuple(cb->GetUploadResource(), cb->GetDefaultResource(), static_cast<const void*>(t)));
 
 		// Finally store the object in the corresponding renderComponent vectors so it will be drawn
 		if (F_DRAW_FLAGS::DRAW_TRANSPARENT & mc->GetDrawFlag())
@@ -636,6 +652,10 @@ void Renderer::InitModelComponent(component::ModelComponent* mc)
 		{
 			m_RenderComponents[F_DRAW_FLAGS::GIVE_SHADOW].emplace_back(mc, tc);
 		}
+
+		// DXR
+		TopLevelAccelerationStructure* pTLAS = static_cast<TopLevelRenderTask*>(m_DXRTasks[E_DXR_TASK_TYPE::TLAS])->GetTLAS();
+		pTLAS->AddInstance(mc->GetModel()->m_pBLAS, *t->GetWorldMatrix(), 0);
 	}
 }
 
@@ -1786,6 +1806,7 @@ void Renderer::initRenderTasks()
 
 #pragma region DXRTasks
 	DXRTask* blasTask = new BottomLevelRenderTask(m_pDevice5, F_THREAD_FLAGS::RENDER, L"BL_RenderTask_CommandList");
+	DXRTask* tlasTask = new TopLevelRenderTask(   m_pDevice5, F_THREAD_FLAGS::RENDER, L"TL_RenderTask_CommandList");
 #pragma endregion DXRTasks
 	// Add the tasks to desired vectors so they can be used in m_pRenderer
 	/* -------------------------------------------------------------- */
@@ -1813,6 +1834,7 @@ void Renderer::initRenderTasks()
 
 	/* ------------------------- DXR Tasks ------------------------ */
 	m_DXRTasks[E_DXR_TASK_TYPE::BLAS] = blasTask;
+	m_DXRTasks[E_DXR_TASK_TYPE::TLAS] = tlasTask;
 
 	// Pushback in the order of execution
 
@@ -1833,8 +1855,14 @@ void Renderer::initRenderTasks()
 
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
-		// Update the BLAS:es if any
+		// Update the BLAS:es if any (synced-version)
 		m_DirectCommandLists[i].push_back(blasTask->GetCommandInterface()->GetCommandList(i));
+	}
+
+	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
+	{
+		// Update the TLAS every frame
+		m_DirectCommandLists[i].push_back(tlasTask->GetCommandInterface()->GetCommandList(i));
 	}
 
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
@@ -1993,6 +2021,11 @@ void Renderer::prepareScene(Scene* activeScene)
 
 	setRenderTasksRenderComponents();
 	setRenderTasksPrimaryCamera();
+
+	// DXR, create buffers and create for the first time
+	TopLevelAccelerationStructure* pTLAS = static_cast<TopLevelRenderTask*>(m_DXRTasks[E_DXR_TASK_TYPE::TLAS])->GetTLAS();
+	pTLAS->GenerateBuffers(m_pDevice5);
+	pTLAS->SetupAccelerationStructureForBuilding(m_pDevice5, false);
 }
 
 void Renderer::submitUploadPerSceneData()
