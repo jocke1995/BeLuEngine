@@ -13,7 +13,7 @@ public:
         Resource* indexBuffer , uint32_t indexCount);
 
     void Reset() override;
-    void GenerateBuffers(ID3D12Device5* pDevice) override;
+    void GenerateBuffers(ID3D12Device5* pDevice, DescriptorHeap* dhHeap = nullptr) override;
     void SetupAccelerationStructureForBuilding(ID3D12Device5* pDevice, bool update) override;
 
 private:

@@ -81,8 +81,8 @@ void ForwardRenderTask::Execute()
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	// Set cbvs
-	commandList->SetGraphicsRootConstantBufferView(7, m_Resources["cbPerFrame"]->GetGPUVirtualAdress());
-	commandList->SetGraphicsRootConstantBufferView(8, m_Resources["cbPerScene"]->GetGPUVirtualAdress());
+	commandList->SetGraphicsRootConstantBufferView(12, m_Resources["cbPerFrame"]->GetGPUVirtualAdress());
+	commandList->SetGraphicsRootConstantBufferView(13, m_Resources["cbPerScene"]->GetGPUVirtualAdress());
 	commandList->SetGraphicsRootShaderResourceView(5, m_Resources["rawBufferLights"]->GetGPUVirtualAdress());
 
 	const DirectX::XMMATRIX* viewProjMatTrans = m_pCamera->GetViewProjectionTranposed();
@@ -119,6 +119,11 @@ void ForwardRenderTask::Execute()
 	commandList->Close();
 }
 
+void ForwardRenderTask::SetSceneBVHSRV(ShaderResourceView* srv)
+{
+	m_pRayTracingSRV = srv;
+}
+
 void ForwardRenderTask::drawRenderComponent(
 	component::ModelComponent* mc,
 	component::TransformComponent* tc,
@@ -133,9 +138,9 @@ void ForwardRenderTask::drawRenderComponent(
 		const SlotInfo* info = mc->GetSlotInfoAt(i);
 
 		Transform* t = tc->GetTransform();
-		cl->SetGraphicsRootConstantBufferView(9, mc->GetMaterialAt(i)->GetMaterialData()->first->GetDefaultResource()->GetGPUVirtualAdress());
+		cl->SetGraphicsRootConstantBufferView(14, mc->GetMaterialAt(i)->GetMaterialData()->first->GetDefaultResource()->GetGPUVirtualAdress());
 		cl->SetGraphicsRoot32BitConstants(3, sizeof(SlotInfo) / sizeof(UINT), info, 0);
-		cl->SetGraphicsRootConstantBufferView(6, t->m_pCB->GetDefaultResource()->GetGPUVirtualAdress());
+		cl->SetGraphicsRootConstantBufferView(11, t->m_pCB->GetDefaultResource()->GetGPUVirtualAdress());
 
 		cl->IASetIndexBuffer(m->GetIndexBufferView());
 		cl->DrawIndexedInstanced(num_Indices, 1, 0, 0, 0);

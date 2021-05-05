@@ -4,6 +4,7 @@
 #include "../Misc/Log.h"
 
 #include "../GPUMemory/Resource.h"
+#include "../GPUMemory/ShaderResourceView.h"
 #include "BottomLevelAccelerationStructure.h"
 TopLevelAccelerationStructure::TopLevelAccelerationStructure()
 {
@@ -12,6 +13,7 @@ TopLevelAccelerationStructure::TopLevelAccelerationStructure()
 TopLevelAccelerationStructure::~TopLevelAccelerationStructure()
 {
 	SAFE_DELETE(m_pInstanceDesc);
+	delete m_pSRV;
 }
 
 void TopLevelAccelerationStructure::AddInstance(
@@ -28,7 +30,7 @@ void TopLevelAccelerationStructure::Reset()
 	m_Instances.clear();
 }
 
-void TopLevelAccelerationStructure::GenerateBuffers(ID3D12Device5* pDevice)
+void TopLevelAccelerationStructure::GenerateBuffers(ID3D12Device5* pDevice, DescriptorHeap* dhHeap)
 {
 	// TODO: fast trace?
 	D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE;
@@ -54,24 +56,34 @@ void TopLevelAccelerationStructure::GenerateBuffers(ID3D12Device5* pDevice)
 	SAFE_DELETE(m_pResult);
 	SAFE_DELETE(m_pInstanceDesc);
 
+	D3D12_RESOURCE_STATES stateResourceAS = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	m_pScratch = new Resource(
 		pDevice, scratchSizeInBytes,
 		RESOURCE_TYPE::DEFAULT, L"scratchTopLevel",
-		D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+		D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
+		&stateResourceAS);
 
-	D3D12_RESOURCE_STATES stateRAS = D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE;
+	stateResourceAS = D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE;
 	m_pResult = new Resource(
 		pDevice, resultSizeInBytes,
 		RESOURCE_TYPE::DEFAULT, L"resultTopLevel",
 		D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
-		&stateRAS);
+		&stateResourceAS);
 
-	stateRAS = D3D12_RESOURCE_STATE_GENERIC_READ;
+	stateResourceAS = D3D12_RESOURCE_STATE_GENERIC_READ;
 	m_pInstanceDesc = new Resource(
 		pDevice, m_InstanceDescsSizeInBytes,
 		RESOURCE_TYPE::UPLOAD, L"instanceDescTopLevel",
 		D3D12_RESOURCE_FLAG_NONE,
-		&stateRAS);
+		&stateResourceAS);
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc.Format = DXGI_FORMAT_UNKNOWN;
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
+	srvDesc.RaytracingAccelerationStructure.Location = m_pResult->GetID3D12Resource1()->GetGPUVirtualAddress();
+
+	m_pSRV = new ShaderResourceView(pDevice, dhHeap, &srvDesc, m_pResult);
 }
 
 void TopLevelAccelerationStructure::SetupAccelerationStructureForBuilding(ID3D12Device5* pDevice, bool update)
@@ -80,15 +92,19 @@ void TopLevelAccelerationStructure::SetupAccelerationStructureForBuilding(ID3D12
 	if (m_IsBuilt == false && update == true)
 		return;
 
-	D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
+	if (update == true)
+		return;
+
+	D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;// D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
 	flags |= update ? D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE : D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
 
 	// Copy the descriptors in the target descriptor buffer
 	D3D12_RAYTRACING_INSTANCE_DESC* instanceDescs;
-	m_pInstanceDesc->GetID3D12Resource1()->Map(0, nullptr, reinterpret_cast<void**>(&instanceDescs));
+	HRESULT hr = m_pInstanceDesc->GetID3D12Resource1()->Map(0, nullptr, reinterpret_cast<void**>(&instanceDescs));
+
 
 #ifdef DEBUG
-	if (instanceDescs == nullptr)
+	if (instanceDescs == nullptr || FAILED(hr))
 	{
 		BL_LOG_CRITICAL("Failed to Map into the TLAS.\n");
 	}
@@ -117,18 +133,20 @@ void TopLevelAccelerationStructure::SetupAccelerationStructureForBuilding(ID3D12
 
 	m_pInstanceDesc->GetID3D12Resource1()->Unmap(0, nullptr);
 
-	// If the TLAS is to be updated. Give it the old TLAS as source
-	D3D12_GPU_VIRTUAL_ADDRESS pSourceAS = update ? m_pResult->GetID3D12Resource1()->GetGPUVirtualAddress() : 0;
-
 	// Create a descriptor of the requested builder work, to generate a TLAS
 	m_BuildDesc = {};
 	m_BuildDesc.Inputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
 	m_BuildDesc.Inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
 	m_BuildDesc.Inputs.InstanceDescs = m_pInstanceDesc->GetID3D12Resource1()->GetGPUVirtualAddress();
-	m_BuildDesc.Inputs.NumDescs = numInstances;
+	m_BuildDesc.Inputs.NumDescs = 7;//numInstances;
 	m_BuildDesc.Inputs.Flags = flags;
 
 	m_BuildDesc.DestAccelerationStructureData = { m_pResult->GetID3D12Resource1()->GetGPUVirtualAddress() };
 	m_BuildDesc.ScratchAccelerationStructureData = { m_pScratch->GetID3D12Resource1()->GetGPUVirtualAddress()};
-	m_BuildDesc.SourceAccelerationStructureData = pSourceAS;
+	m_BuildDesc.SourceAccelerationStructureData = update ? m_pResult->GetID3D12Resource1()->GetGPUVirtualAddress() : 0;
+}
+
+ShaderResourceView* TopLevelAccelerationStructure::GetSRV() const
+{
+	return m_pSRV;
 }

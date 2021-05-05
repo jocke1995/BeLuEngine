@@ -86,7 +86,7 @@ void DepthRenderTask::drawRenderComponent(component::ModelComponent* mc, compone
 
 		Transform* t = tc->GetTransform();
 		cl->SetGraphicsRoot32BitConstants(3, sizeof(SlotInfo) / sizeof(UINT), info, 0);
-		cl->SetGraphicsRootConstantBufferView(6, t->m_pCB->GetDefaultResource()->GetGPUVirtualAdress());
+		cl->SetGraphicsRootConstantBufferView(11, t->m_pCB->GetDefaultResource()->GetGPUVirtualAdress());
 
 		cl->IASetIndexBuffer(m->GetIndexBufferView());
 		cl->DrawIndexedInstanced(num_Indices, 1, 0, 0, 0);

@@ -97,7 +97,7 @@ void OutliningRenderTask::Execute()
 
 		m_OutlineTransformToScale.m_pCB->GetUploadResource()->SetData(&w_wvp);
 		commandList->SetGraphicsRoot32BitConstants(3, sizeof(SlotInfo) / sizeof(UINT), info, 0);
-		commandList->SetGraphicsRootConstantBufferView(6, m_OutlineTransformToScale.m_pCB->GetUploadResource()->GetGPUVirtualAdress());
+		commandList->SetGraphicsRootConstantBufferView(11, m_OutlineTransformToScale.m_pCB->GetUploadResource()->GetGPUVirtualAdress());
 
 		commandList->IASetIndexBuffer(m->GetIndexBufferView());
 

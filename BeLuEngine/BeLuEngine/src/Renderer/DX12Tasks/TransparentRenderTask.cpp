@@ -65,8 +65,8 @@ void TransparentRenderTask::Execute()
 
 	// Create a CB_PER_FRAME struct
 	CB_PER_FRAME_STRUCT perFrame = { m_pCamera->GetPosition().x, m_pCamera->GetPosition().y, m_pCamera->GetPosition().z };
-	commandList->SetGraphicsRootConstantBufferView(7, m_Resources["cbPerFrame"]->GetGPUVirtualAdress());
-	commandList->SetGraphicsRootConstantBufferView(8, m_Resources["cbPerScene"]->GetGPUVirtualAdress());
+	commandList->SetGraphicsRootConstantBufferView(12, m_Resources["cbPerFrame"]->GetGPUVirtualAdress());
+	commandList->SetGraphicsRootConstantBufferView(13, m_Resources["cbPerScene"]->GetGPUVirtualAdress());
 	commandList->SetGraphicsRootShaderResourceView(5, m_Resources["rawBufferLights"]->GetGPUVirtualAdress());
 
 	const DirectX::XMMATRIX * viewProjMatTrans = m_pCamera->GetViewProjectionTranposed();
@@ -86,9 +86,9 @@ void TransparentRenderTask::Execute()
 
 			Transform* t = tc->GetTransform();
 
-			commandList->SetGraphicsRootConstantBufferView(9, mc->GetMaterialAt(i)->GetMaterialData()->first->GetDefaultResource()->GetGPUVirtualAdress());
+			commandList->SetGraphicsRootConstantBufferView(14, mc->GetMaterialAt(i)->GetMaterialData()->first->GetDefaultResource()->GetGPUVirtualAdress());
 			commandList->SetGraphicsRoot32BitConstants(3, sizeof(SlotInfo) / sizeof(UINT), info, 0);
-			commandList->SetGraphicsRootConstantBufferView(6, t->m_pCB->GetDefaultResource()->GetGPUVirtualAdress());
+			commandList->SetGraphicsRootConstantBufferView(11, t->m_pCB->GetDefaultResource()->GetGPUVirtualAdress());
 
 			commandList->IASetIndexBuffer(mc->GetMeshAt(j)->GetIndexBufferView());
 			// Draw each object twice with different PSO 

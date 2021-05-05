@@ -8,7 +8,43 @@ SamplerState Anisotropic4_Wrap	: register (s1);
 SamplerState Anisotropic8_Wrap	: register (s2);
 SamplerState Anisotropic16_Wrap	: register (s3);
 
+// Raytracing acceleration structure, accessed as a SRV
+RaytracingAccelerationStructure SceneBVH[] : register(t0, space3);
+
 //ConstantBuffer<CB_PER_SCENE_STRUCT>  cbPerScene  : register(b5, space3);
+
+float RT_ShadowFactor(float3 worldPos, float tMin, float tMax, float3 rayDir)
+{
+	RayQuery<RAY_FLAG_SKIP_CLOSEST_HIT_SHADER | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH> q;
+
+	uint rayFlags = 0;
+	uint instanceMask = 0xff;
+
+	float shadowFactor = 1.0f;
+
+	RayDesc ray = (RayDesc)0;
+	ray.TMin = tMin;
+	ray.TMax = tMax;
+
+	ray.Direction = normalize(rayDir);
+	ray.Origin = float4(worldPos.xyz, 1.0f);
+
+	q.TraceRayInline(
+		SceneBVH[167],
+		rayFlags,
+		instanceMask,
+		ray
+	);
+
+	q.Proceed();
+
+	if (q.CommittedStatus() == COMMITTED_TRIANGLE_HIT)
+	{
+		shadowFactor = 0.0f;
+	}
+
+	return shadowFactor;
+}
 
 float3 CalcDirLight(
 	in DirectionalLight dirLight,
@@ -24,6 +60,7 @@ float3 CalcDirLight(
 	float3 DirLightContribution = float3(0.0f, 0.0f, 0.0f);
 
 	float3 lightDir = normalize(-dirLight.direction.rgb);
+
 	float3 normalized_bisector = normalize(normalize(viewDir) + lightDir);
 
 	float3 radiance = dirLight.baseLight.color.rgb * dirLight.baseLight.intensity;
@@ -62,6 +99,7 @@ float3 CalcPointLight(
 	float3 pointLightContribution = float3(0.0f, 0.0f, 0.0f);
 	float3 lightDir = normalize(pointLight.position.xyz - fragPos.xyz);
 
+	float shadowFactor = RT_ShadowFactor(fragPos.xyz, 0.00001f, length(pointLight.position.xyz - fragPos.xyz), lightDir);
 	float3 normalized_bisector = normalize(viewDir + lightDir);
 
 	// Attenuation
@@ -90,7 +128,7 @@ float3 CalcPointLight(
 	kD *= 1.0f - metallic;
 	
 	pointLightContribution = (kD * albedo / PI + specular) * radiance * NdotL;
-	return pointLightContribution;
+	return pointLightContribution * shadowFactor;
 }
 
 float3 CalcSpotLight(

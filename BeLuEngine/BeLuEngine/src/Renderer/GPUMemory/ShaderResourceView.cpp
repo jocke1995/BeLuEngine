@@ -37,5 +37,13 @@ void ShaderResourceView::createShaderResourceView(
 	D3D12_SHADER_RESOURCE_VIEW_DESC* srvDesc)
 {
 	D3D12_CPU_DESCRIPTOR_HANDLE cdh = descriptorHeap_CBV_UAV_SRV->GetCPUHeapAt(m_DescriptorHeapIndex);
-	device->CreateShaderResourceView(m_pResource->GetID3D12Resource1(), srvDesc, cdh);
+
+	ID3D12Resource1* resource = m_pResource->GetID3D12Resource1();
+
+	if (srvDesc->ViewDimension == D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE)
+	{
+		resource = nullptr;
+	}
+
+	device->CreateShaderResourceView(resource, srvDesc, cdh);
 }

@@ -43,7 +43,7 @@ void BottomLevelAccelerationStructure::Reset()
 {
 }
 
-void BottomLevelAccelerationStructure::GenerateBuffers(ID3D12Device5* pDevice)
+void BottomLevelAccelerationStructure::GenerateBuffers(ID3D12Device5* pDevice, DescriptorHeap* dhHeap)
 {
 	D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
 
@@ -64,8 +64,8 @@ void BottomLevelAccelerationStructure::GenerateBuffers(ID3D12Device5* pDevice)
 	pDevice->GetRaytracingAccelerationStructurePrebuildInfo(&prebuildDesc, &info);
 
 	// Buffer sizes need to be 256-byte-aligned
-	unsigned int scratchSizeInBytes = (info.ScratchDataSizeInBytes + 255) & ~255;
-	unsigned int resultSizeInBytes = (info.ResultDataMaxSizeInBytes + 255) & ~255;
+	unsigned int scratchSizeInBytes = (info.ScratchDataSizeInBytes   + 255) & ~255;
+	unsigned int resultSizeInBytes  = (info.ResultDataMaxSizeInBytes + 255) & ~255;
 
 	static unsigned int idCounter = 0;
 	// Create buffers for scratch and result

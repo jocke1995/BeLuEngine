@@ -3,6 +3,8 @@
 
 #include "RenderTask.h"
 
+class ShaderResourceView;
+
 class ForwardRenderTask : public RenderTask
 {
 public:
@@ -16,7 +18,11 @@ public:
 
 	void Execute() override final;
 
+	void SetSceneBVHSRV(ShaderResourceView* srv);
+
 private:
+	ShaderResourceView* m_pRayTracingSRV = nullptr;
+
 	void drawRenderComponent(
 		component::ModelComponent* mc,
 		component::TransformComponent* tc,

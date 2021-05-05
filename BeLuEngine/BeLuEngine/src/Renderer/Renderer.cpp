@@ -1246,13 +1246,20 @@ void Renderer::createRootSignature()
 #pragma endregion UAVTABLE
 
 #pragma region CONSTANTS
-	rsg.AddRootConstant(1, 0, sizeof(SlotInfo));
-	rsg.AddRootConstant(2, 0, sizeof(DescriptorHeapIndices));
+	rsg.AddRootConstant(1, 0, sizeof(SlotInfo));				// 3
+	rsg.AddRootConstant(2, 0, sizeof(DescriptorHeapIndices));	// 4
 #pragma endregion CONSTANTS
 #pragma region DESCRIPTORS
-	// TODO: add more srv descriptors
+	
+	// 5 -> 10
 	rsg.AddRootDescriptor(D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_SRV, 0, 0, D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_PIXEL);
+	rsg.AddRootDescriptor(D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_SRV, 1, 0, D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_ALL);
+	rsg.AddRootDescriptor(D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_SRV, 2, 0, D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_PIXEL);
+	rsg.AddRootDescriptor(D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_SRV, 3, 0, D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_PIXEL);
+	rsg.AddRootDescriptor(D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_SRV, 4, 0, D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_PIXEL);
+	rsg.AddRootDescriptor(D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_SRV, 5, 0, D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_PIXEL);
 
+	// 11 -> 14
 	rsg.AddRootDescriptor(D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_CBV, 3, 0, D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_ALL);
 	rsg.AddRootDescriptor(D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_CBV, 4, 0, D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_ALL);
 	rsg.AddRootDescriptor(D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_CBV, 5, 0, D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_ALL);
@@ -1359,6 +1366,11 @@ void Renderer::updateMousePicker()
 
 void Renderer::initRenderTasks()
 {
+
+#pragma region DXRTasks
+	DXRTask* blasTask = new BottomLevelRenderTask(m_pDevice5, F_THREAD_FLAGS::RENDER, L"BL_RenderTask_CommandList");
+	DXRTask* tlasTask = new TopLevelRenderTask(m_pDevice5, F_THREAD_FLAGS::RENDER, L"TL_RenderTask_CommandList");
+#pragma endregion DXRTasks
 
 #pragma region DepthPrePass
 
@@ -1804,10 +1816,6 @@ void Renderer::initRenderTasks()
 
 #pragma endregion ComputeAndCopyTasks
 
-#pragma region DXRTasks
-	DXRTask* blasTask = new BottomLevelRenderTask(m_pDevice5, F_THREAD_FLAGS::RENDER, L"BL_RenderTask_CommandList");
-	DXRTask* tlasTask = new TopLevelRenderTask(   m_pDevice5, F_THREAD_FLAGS::RENDER, L"TL_RenderTask_CommandList");
-#pragma endregion DXRTasks
 	// Add the tasks to desired vectors so they can be used in m_pRenderer
 	/* -------------------------------------------------------------- */
 
@@ -2024,8 +2032,10 @@ void Renderer::prepareScene(Scene* activeScene)
 
 	// DXR, create buffers and create for the first time
 	TopLevelAccelerationStructure* pTLAS = static_cast<TopLevelRenderTask*>(m_DXRTasks[E_DXR_TASK_TYPE::TLAS])->GetTLAS();
-	pTLAS->GenerateBuffers(m_pDevice5);
+	pTLAS->GenerateBuffers(m_pDevice5, m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
 	pTLAS->SetupAccelerationStructureForBuilding(m_pDevice5, false);
+
+	static_cast<ForwardRenderTask*>(m_RenderTasks[E_RENDER_TASK_TYPE::FORWARD_RENDER])->SetSceneBVHSRV(pTLAS->GetSRV());
 }
 
 void Renderer::submitUploadPerSceneData()

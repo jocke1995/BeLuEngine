@@ -32,10 +32,14 @@ void TopLevelRenderTask::Execute()
 
 	Resource* instanceResource = m_pTLAS->m_pInstanceDesc;
 
-	m_pTLAS->BuildAccelerationStructure(commandList);
+	static bool a = false;
+
+	if(!a)
+		m_pTLAS->BuildAccelerationStructure(commandList);
 
 	commandList->Close();
 
+	a = true;
 	m_pTLAS->m_IsBuilt = true;
 }
 
