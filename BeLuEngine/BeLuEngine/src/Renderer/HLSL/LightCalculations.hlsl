@@ -30,7 +30,7 @@ float RT_ShadowFactor(float3 worldPos, float tMin, float tMax, float3 rayDir)
 	ray.Origin = float4(worldPos.xyz, 1.0f);
 
 	q.TraceRayInline(
-		SceneBVH[167],
+		SceneBVH[166],
 		rayFlags,
 		instanceMask,
 		ray
@@ -99,7 +99,7 @@ float3 CalcPointLight(
 	float3 pointLightContribution = float3(0.0f, 0.0f, 0.0f);
 	float3 lightDir = normalize(pointLight.position.xyz - fragPos.xyz);
 
-	float shadowFactor = RT_ShadowFactor(fragPos.xyz, 0.00001f, length(pointLight.position.xyz - fragPos.xyz), lightDir);
+	float shadowFactor = RT_ShadowFactor(fragPos.xyz, 0.1f, length(pointLight.position.xyz - fragPos.xyz) - 3.0f, lightDir);
 	float3 normalized_bisector = normalize(viewDir + lightDir);
 
 	// Attenuation

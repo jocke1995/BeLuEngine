@@ -237,9 +237,6 @@ Scene* SponzaScene(SceneManager* sm)
 
 
     /* ---------------------- Sphere ---------------------- */
-    //Material* ballMatCopy = al->CreateMaterial(L"TestMat", al->Get()->LoadMaterial(L"ballmat"));
-
-
     entity = scene->AddEntity("sphere1");
     mc = entity->AddComponent<component::ModelComponent>();
     tc = entity->AddComponent<component::TransformComponent>();
@@ -276,18 +273,6 @@ Scene* SponzaScene(SceneManager* sm)
     /* ---------------------- Sphere ---------------------- */
 
     /* ---------------------- Lights ---------------------- */
-    entity = scene->AddEntity("sl1");
-    mc = entity->AddComponent<component::ModelComponent>();
-    tc = entity->AddComponent<component::TransformComponent>();
-    slc = entity->AddComponent<component::SpotLightComponent>(F_LIGHT_FLAGS::USE_TRANSFORM_POSITION);
-
-    mc->SetModel(sphereModel);
-    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
-    tc->GetTransform()->SetScale(0.5f);
-    tc->GetTransform()->SetPosition({ -30.0f, 10.0f, 4.5f });
-    slc->SetColor({ 0.0f, 0.3f, 0.0f });
-    entity->Update(0);
-
     entity = scene->AddEntity("pl1");
     mc = entity->AddComponent<component::ModelComponent>();
     tc = entity->AddComponent<component::TransformComponent>();
@@ -296,20 +281,15 @@ Scene* SponzaScene(SceneManager* sm)
     mc->SetModel(sphereModel);
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
     tc->GetTransform()->SetScale(0.5f);
-    tc->GetTransform()->SetPosition({ 23.0f, 20.0f, 1.0f });
-    plc->SetColor({ 0.3f, 0.0f, 0.0f });
+    tc->GetTransform()->SetPosition({ 25.0f, 16.2f, 7.5f});
+    plc->SetColor({ 0.5f, 0.0f, 0.5f });
+    plc->SetIntensity(5.0f);
     entity->Update(0);
 
     entity = scene->AddEntity("dirLight");
     dlc = entity->AddComponent<component::DirectionalLightComponent>(F_LIGHT_FLAGS::CAST_SHADOW);
     dlc->SetColor({ 0.1f, 0.25f, 0.3f });
     dlc->SetDirection({ -1.0f, -2.0f, 0.03f });
-
-    //entity = scene->AddEntity("dirLight2");
-    //dlc = entity->AddComponent<component::DirectionalLightComponent>(F_LIGHT_FLAGS::CAST_SHADOW);
-    //dlc->SetColor({ 10.0, 0.25, 10.0 });
-    //dlc->SetDirection({ -1.0f, -2.0f, 0.03f });
-
     /* ---------------------- Lights ---------------------- */
 
     /* ---------------------- Update Function ---------------------- */

@@ -33,8 +33,9 @@ void BottomLevelAccelerationStructure::AddVertexBuffer(
 	rtGeometryDesc.Triangles.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT;
 
 	// Index Buffer
-	rtGeometryDesc.Triangles.IndexBuffer = vertexBuffer->GetID3D12Resource1()->GetGPUVirtualAddress();
+	rtGeometryDesc.Triangles.IndexBuffer = indexBuffer->GetID3D12Resource1()->GetGPUVirtualAddress();
 	rtGeometryDesc.Triangles.IndexCount = indexCount;
+	rtGeometryDesc.Triangles.IndexFormat = DXGI_FORMAT_R32_UINT;
 
 	m_vertexBuffers.push_back(rtGeometryDesc);
 }

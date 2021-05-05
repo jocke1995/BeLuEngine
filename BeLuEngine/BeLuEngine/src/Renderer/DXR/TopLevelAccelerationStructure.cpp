@@ -23,6 +23,7 @@ void TopLevelAccelerationStructure::AddInstance(
 {
 	unsigned int instanceID = m_Instances.size();
 	m_Instances.emplace_back(Instance(BLAS->m_pResult, m_Transform, instanceID, hitGroupIndex));
+	BL_LOG_INFO("Added instance! %d\n", instanceID);
 }
 
 void TopLevelAccelerationStructure::Reset()
@@ -138,7 +139,7 @@ void TopLevelAccelerationStructure::SetupAccelerationStructureForBuilding(ID3D12
 	m_BuildDesc.Inputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
 	m_BuildDesc.Inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
 	m_BuildDesc.Inputs.InstanceDescs = m_pInstanceDesc->GetID3D12Resource1()->GetGPUVirtualAddress();
-	m_BuildDesc.Inputs.NumDescs = 7;//numInstances;
+	m_BuildDesc.Inputs.NumDescs = numInstances;
 	m_BuildDesc.Inputs.Flags = flags;
 
 	m_BuildDesc.DestAccelerationStructureData = { m_pResult->GetID3D12Resource1()->GetGPUVirtualAddress() };

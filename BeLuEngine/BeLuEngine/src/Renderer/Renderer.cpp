@@ -630,6 +630,7 @@ void Renderer::InitModelComponent(component::ModelComponent* mc)
 		t->m_pCB = new ConstantBuffer(m_pDevice5, sizeof(DirectX::XMMATRIX) * 2, L"Transform", m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
 		ConstantBuffer* cb = t->m_pCB;
 
+		t->UpdateWorldMatrix();
 		m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME_MATRICES]->Submit(&std::make_tuple(cb->GetUploadResource(), cb->GetDefaultResource(), static_cast<const void*>(t)));
 
 		// Finally store the object in the corresponding renderComponent vectors so it will be drawn
