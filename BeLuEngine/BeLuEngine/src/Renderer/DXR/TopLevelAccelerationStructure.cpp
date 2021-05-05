@@ -21,14 +21,14 @@ void TopLevelAccelerationStructure::AddInstance(
 	const DirectX::XMMATRIX& m_Transform,
 	unsigned int hitGroupIndex)
 {
-	unsigned int instanceID = m_Instances.size();
-	m_Instances.emplace_back(Instance(BLAS->m_pResult, m_Transform, instanceID, hitGroupIndex));
-	BL_LOG_INFO("Added instance! %d\n", instanceID);
+	m_Instances.emplace_back(Instance(BLAS->m_pResult, m_Transform, m_InstanceCounter++, hitGroupIndex));
+	BL_LOG_INFO("Added instance! %d\n", m_InstanceCounter);
 }
 
 void TopLevelAccelerationStructure::Reset()
 {
 	m_Instances.clear();
+	m_InstanceCounter = 0;
 }
 
 void TopLevelAccelerationStructure::GenerateBuffers(ID3D12Device5* pDevice, DescriptorHeap* dhHeap)

@@ -318,6 +318,15 @@ void Renderer::Update(double dt)
 
 	// DXR
 	TopLevelAccelerationStructure* pTLAS = static_cast<TopLevelRenderTask*>(m_DXRTasks[E_DXR_TASK_TYPE::TLAS])->GetTLAS();
+
+	pTLAS->Reset();
+
+	std::vector<RenderComponent> rcVec = m_RenderComponents[F_DRAW_FLAGS::RAY_TRACED];
+	for (RenderComponent rc : rcVec)
+	{
+		pTLAS->AddInstance(rc.mc->GetModel()->m_pBLAS, *rc.tc->GetTransform()->GetWorldMatrix(), 0);
+	}
+
 	pTLAS->SetupAccelerationStructureForBuilding(m_pDevice5, true);
 }
 
@@ -654,9 +663,7 @@ void Renderer::InitModelComponent(component::ModelComponent* mc)
 			m_RenderComponents[F_DRAW_FLAGS::GIVE_SHADOW].emplace_back(mc, tc);
 		}
 
-		// DXR
-		TopLevelAccelerationStructure* pTLAS = static_cast<TopLevelRenderTask*>(m_DXRTasks[E_DXR_TASK_TYPE::TLAS])->GetTLAS();
-		pTLAS->AddInstance(mc->GetModel()->m_pBLAS, *t->GetWorldMatrix(), 0);
+		m_RenderComponents[F_DRAW_FLAGS::RAY_TRACED].emplace_back(mc, tc);
 	}
 }
 
@@ -2033,6 +2040,12 @@ void Renderer::prepareScene(Scene* activeScene)
 
 	// DXR, create buffers and create for the first time
 	TopLevelAccelerationStructure* pTLAS = static_cast<TopLevelRenderTask*>(m_DXRTasks[E_DXR_TASK_TYPE::TLAS])->GetTLAS();
+
+	std::vector<RenderComponent> rcVec = m_RenderComponents[F_DRAW_FLAGS::RAY_TRACED];
+	for (RenderComponent rc : rcVec)
+	{
+		pTLAS->AddInstance(rc.mc->GetModel()->m_pBLAS, *rc.tc->GetTransform()->GetWorldMatrix(), 0);
+	}
 	pTLAS->GenerateBuffers(m_pDevice5, m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
 	pTLAS->SetupAccelerationStructureForBuilding(m_pDevice5, false);
 

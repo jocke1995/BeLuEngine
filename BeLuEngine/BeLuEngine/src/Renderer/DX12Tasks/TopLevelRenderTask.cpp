@@ -32,12 +32,12 @@ void TopLevelRenderTask::Execute()
 
 	static bool a = false;
 
-	//if(!a)
+	if(!a)
 		m_pTLAS->BuildAccelerationStructure(commandList);
 
 	commandList->Close();
 
-	//a = true;
+	a = true;
 	m_pTLAS->m_IsBuilt = true;
 }
 

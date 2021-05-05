@@ -99,7 +99,7 @@ float3 CalcPointLight(
 	float3 pointLightContribution = float3(0.0f, 0.0f, 0.0f);
 	float3 lightDir = normalize(pointLight.position.xyz - fragPos.xyz);
 
-	float shadowFactor = RT_ShadowFactor(fragPos.xyz, 0.1f, length(pointLight.position.xyz - fragPos.xyz) - 3.0f, lightDir);
+	float shadowFactor = RT_ShadowFactor(fragPos.xyz, 0.1f, length(pointLight.position.xyz - fragPos.xyz) - 1.0, lightDir);
 	float3 normalized_bisector = normalize(viewDir + lightDir);
 
 	// Attenuation

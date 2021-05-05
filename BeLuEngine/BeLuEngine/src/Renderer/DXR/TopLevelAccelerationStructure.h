@@ -50,6 +50,9 @@ private:
     std::vector<Instance> m_Instances;
 
     bool m_IsBuilt = false;
+
+    // Sets to 0 in Reset(), increments for each instance for unique IDs.
+    unsigned int m_InstanceCounter = 0;
 };
 
 #endif
