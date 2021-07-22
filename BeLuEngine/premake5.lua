@@ -30,6 +30,7 @@ project "BeLuEngine"
         "dxcompiler",
         "dxguid",
         "assimp-vc142-mt",
+        "GFSDK_Aftermath_Lib.x64",
     }
 
     postbuildcommands

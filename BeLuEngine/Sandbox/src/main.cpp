@@ -282,8 +282,8 @@ Scene* SponzaScene(SceneManager* sm)
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
     tc->GetTransform()->SetScale(0.5f);
     tc->GetTransform()->SetPosition({ 25.0f, 16.2f, 7.5f});
-    plc->SetColor({ 0.5f, 0.0f, 0.5f });
-    plc->SetIntensity(5.0f);
+    plc->SetColor({ 1.0f, 1.0f, 1.0f });
+    plc->SetIntensity(1.0f);
     entity->Update(0);
 
     entity = scene->AddEntity("dirLight");
