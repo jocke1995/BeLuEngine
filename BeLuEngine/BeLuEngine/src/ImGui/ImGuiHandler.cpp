@@ -78,12 +78,12 @@ void ImGuiHandler::UpdateFrame()
 		if (ImGui::CollapsingHeader("Common"))
 		{
 			ImGui::Text("Build: %s", cStats.m_Build.c_str());
-			ImGui::Text("DebugLayer Active: %s", cStats.m_DebugLayerActive ? "yes" : "no");
+			ImGui::Text("DebugLayer: %s", cStats.m_DebugLayerActive ? "on" : "off");
 			ImGui::Text("API: %s", cStats.m_API.c_str());
-			ImGui::Text("Multithreaded Rendering: %s", cStats.m_STRenderer ? "no" : "yes");
+			ImGui::Text("Multithreaded Rendering: %s", cStats.m_STRenderer ? "off" : "on");
 			ImGui::Text("Adapter: %s", cStats.m_Adapter.c_str());
 			ImGui::Text("CPU ID: %s", cStats.m_CPU.c_str());
-			ImGui::Text("Total Cpu Cores: %d", cStats.m_NumCpuCores);
+			ImGui::Text("Total Cpu Threads: %d", cStats.m_NumCpuCores);
 			ImGui::Text("Resolution: %d x %d", cStats.m_ResX, cStats.m_ResY);
 			ImGui::Text("FPS: %d", cStats.m_TotalFPS);
 			ImGui::Text("MS: %f", cStats.m_TotalMS);
