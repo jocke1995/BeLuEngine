@@ -33,7 +33,6 @@ Model::Model(
 			mesh->GetDefaultResourceIndices(), mesh->GetNumIndices());
 	}
 
-	//m_pBLAS->FinalizeAccelerationStructure(pdevice);
 	m_pBLAS->GenerateBuffers(pdevice);
 	m_pBLAS->SetupAccelerationStructureForBuilding(pdevice, false);
 }

@@ -130,9 +130,10 @@ enum class E_CAMERA_TYPE
 }
 
 // Debug
-#define SINGLE_THREADED_RENDERER true
+#define SINGLE_THREADED_RENDERER false
 #define DX12VALIDATIONGLAYER false
 #define DEVELOPERMODE_DRAWBOUNDINGBOX false
+//#define USE_NSIGHT_AFTERMATH
 
 // Common
 #define NUM_SWAP_BUFFERS 2

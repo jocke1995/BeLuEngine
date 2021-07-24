@@ -22,7 +22,7 @@ void TopLevelAccelerationStructure::AddInstance(
 	unsigned int hitGroupIndex)
 {
 	m_Instances.emplace_back(Instance(BLAS->m_pResult, m_Transform, m_InstanceCounter++, hitGroupIndex));
-	BL_LOG_INFO("Added instance! %d\n", m_InstanceCounter);
+	//BL_LOG_INFO("Added instance! %d\n", m_InstanceCounter);
 }
 
 void TopLevelAccelerationStructure::Reset()
@@ -97,7 +97,7 @@ void TopLevelAccelerationStructure::SetupAccelerationStructureForBuilding(ID3D12
 	//	return;
 
 	D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;// D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
-	flags |= update ? D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE : D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
+	//flags |= update ? D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE : D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
 
 	// Copy the descriptors in the target descriptor buffer
 	D3D12_RAYTRACING_INSTANCE_DESC* instanceDescs;
@@ -112,10 +112,10 @@ void TopLevelAccelerationStructure::SetupAccelerationStructureForBuilding(ID3D12
 #endif
 
 	// Initialize the memory to zero on the first time only
-	if (update == false)
-	{
+	//if (update == false)
+	//{
 		ZeroMemory(instanceDescs, m_InstanceDescsSizeInBytes);
-	}
+	//}
 
 	unsigned int numInstances = m_Instances.size();
 	// Create the description for each instance
@@ -144,7 +144,7 @@ void TopLevelAccelerationStructure::SetupAccelerationStructureForBuilding(ID3D12
 
 	m_BuildDesc.DestAccelerationStructureData = { m_pResult->GetID3D12Resource1()->GetGPUVirtualAddress() };
 	m_BuildDesc.ScratchAccelerationStructureData = { m_pScratch->GetID3D12Resource1()->GetGPUVirtualAddress()};
-	m_BuildDesc.SourceAccelerationStructureData = update ? m_pResult->GetID3D12Resource1()->GetGPUVirtualAddress() : 0;
+	m_BuildDesc.SourceAccelerationStructureData = 0;// update ? m_pResult->GetID3D12Resource1()->GetGPUVirtualAddress() : 0;
 }
 
 ShaderResourceView* TopLevelAccelerationStructure::GetSRV() const

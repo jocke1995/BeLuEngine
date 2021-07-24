@@ -500,7 +500,19 @@ void Renderer::ExecuteMT()
 	/*------------------- Present -------------------*/
 	HRESULT hr = dx12SwapChain->Present(0, 0);
 	
-#ifdef DEBUG
+#if defined(USE_NSIGHT_AFTERMATH)
+	if (FAILED(hr))
+	{
+		// DXGI_ERROR error notification is asynchronous to the NVIDIA display
+		// driver's GPU crash handling. Give the Nsight Aftermath GPU crash dump
+		// thread some time to do its work before terminating the process.
+		Sleep(3000);
+
+		// Terminate on failure
+		exit(-1);
+	}
+#elif DEBUG
+	
 	if (FAILED(hr))
 	{
 		BL_LOG_CRITICAL("Swapchain Failed to present\n");
@@ -613,11 +625,22 @@ void Renderer::ExecuteST()
 	/*------------------- Present -------------------*/
 	HRESULT hr = dx12SwapChain->Present(0, 0);
 
-#ifdef DEBUG
+#if defined(USE_NSIGHT_AFTERMATH)
 	if (FAILED(hr))
 	{
-		BL_LOG_CRITICAL("Swapchain Failed to present\n");
+		// DXGI_ERROR error notification is asynchronous to the NVIDIA display
+		// driver's GPU crash handling. Give the Nsight Aftermath GPU crash dump
+		// thread some time to do its work before terminating the process.
+		Sleep(3000);
+
+		// Terminate on failure
+		exit(-1);
 	}
+#elif DEBUG
+		if (FAILED(hr))
+		{
+			BL_LOG_CRITICAL("Swapchain Failed to present\n");
+		}
 
 	// Check to end ImGui if its active
 	ImGuiHandler::GetInstance().EndFrame();
@@ -1005,9 +1028,13 @@ bool Renderer::createDevice()
 		PFN_D3D12_GET_DEBUG_INTERFACE f = (PFN_D3D12_GET_DEBUG_INTERFACE)GetProcAddress(mD3D12, "D3D12GetDebugInterface");
 		if (SUCCEEDED(f(IID_PPV_ARGS(&debugController))))
 		{
+
+		// USE_NSIGHT_AFTERMATH
+#if !defined(USE_NSIGHT_AFTERMATH)
 			EngineStatistics::GetIM_CommonStats().m_DebugLayerActive = true;
 			debugController->EnableDebugLayer();
 			debugController->SetEnableGPUBasedValidation(DX12VALIDATIONGLAYER);
+#endif
 		}
 
 		IDXGIInfoQueue* dxgiInfoQueue = nullptr;
@@ -1084,11 +1111,29 @@ bool Renderer::createDevice()
 
 	if (adapter)
 	{
+#if defined(USE_NSIGHT_AFTERMATH)
+		m_GpuCrashTracker.Initialize();
+#endif
+
 		HRESULT hr = S_OK;
 		//Create the actual device.
 		if (SUCCEEDED(hr = D3D12CreateDevice(adapter, D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&m_pDevice5))))
 		{
 			deviceCreated = true;
+
+			// Init aftermathflags
+#if defined(USE_NSIGHT_AFTERMATH)
+		const uint32_t aftermathFlags =
+			GFSDK_Aftermath_FeatureFlags_EnableMarkers |             // Enable event marker tracking.
+			GFSDK_Aftermath_FeatureFlags_EnableResourceTracking |    // Enable tracking of resources.
+			GFSDK_Aftermath_FeatureFlags_CallStackCapturing |        // Capture call stacks for all draw calls, compute dispatches, and resource copies.
+			GFSDK_Aftermath_FeatureFlags_GenerateShaderDebugInfo;    // Generate debug information for shaders.
+
+		AFTERMATH_CHECK_ERROR(GFSDK_Aftermath_DX12_Initialize(
+			GFSDK_Aftermath_Version_API,
+			aftermathFlags,
+			m_pDevice5));
+#endif
 		}
 		else
 		{

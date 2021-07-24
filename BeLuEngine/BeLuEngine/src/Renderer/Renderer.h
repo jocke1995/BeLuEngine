@@ -1,6 +1,12 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
+// USE_NSIGHT_AFTERMATH
+#if defined(USE_NSIGHT_AFTERMATH)
+	#include "aftermath/GFSDK_Aftermath.h"
+	#include "../Misc/NvidiaAftermath/NsightAftermathGpuCrashTracker.h"
+#endif
+
 // Misc
 class ThreadPool;
 class Window;
@@ -247,6 +253,13 @@ private:
 	void toggleFullscreen(WindowChange* event);
 
 	SwapChain* getSwapChain() const;
+
+// USE_NSIGHT_AFTERMATH
+#if defined(USE_NSIGHT_AFTERMATH)
+	int32_t* m_pAfterMathContextHandle = nullptr;
+	GpuCrashTracker m_GpuCrashTracker = {};
+#endif
+
 };
 
 #endif

@@ -32,7 +32,7 @@ void TopLevelRenderTask::Execute()
 
 	static bool a = false;
 
-	if(!a)
+	//if(!a)
 		m_pTLAS->BuildAccelerationStructure(commandList);
 
 	commandList->Close();
