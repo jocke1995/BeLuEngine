@@ -11,7 +11,7 @@ SamplerState Anisotropic16_Wrap	: register (s3);
 // Raytracing acceleration structure, accessed as a SRV
 RaytracingAccelerationStructure SceneBVH[] : register(t0, space3);
 
-//ConstantBuffer<CB_PER_SCENE_STRUCT>  cbPerScene  : register(b5, space3);
+ConstantBuffer<CB_PER_SCENE_STRUCT>  cbPerScene  : register(b5, space0);
 
 float RT_ShadowFactor(float3 worldPos, float tMin, float tMax, float3 rayDir)
 {
@@ -29,8 +29,10 @@ float RT_ShadowFactor(float3 worldPos, float tMin, float tMax, float3 rayDir)
 	ray.Direction = normalize(rayDir);
 	ray.Origin = float4(worldPos.xyz, 1.0f);
 
+	uint dhIndexBVH = cbPerScene.rayTracingBVH;
+
 	q.TraceRayInline(
-		SceneBVH[166],
+		SceneBVH[dhIndexBVH],
 		rayFlags,
 		instanceMask,
 		ray

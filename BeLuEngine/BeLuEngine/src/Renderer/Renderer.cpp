@@ -2094,7 +2094,10 @@ void Renderer::prepareScene(Scene* activeScene)
 	pTLAS->GenerateBuffers(m_pDevice5, m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
 	pTLAS->SetupAccelerationStructureForBuilding(m_pDevice5, false);
 
+	// Currently unused inside forwardRenderTask
 	static_cast<ForwardRenderTask*>(m_RenderTasks[E_RENDER_TASK_TYPE::FORWARD_RENDER])->SetSceneBVHSRV(pTLAS->GetSRV());
+
+	m_pCbPerSceneData->rayTracingBVH = pTLAS->GetSRV()->GetDescriptorHeapIndex();
 }
 
 void Renderer::submitUploadPerSceneData()

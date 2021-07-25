@@ -8,6 +8,7 @@
 #include "BottomLevelAccelerationStructure.h"
 TopLevelAccelerationStructure::TopLevelAccelerationStructure()
 {
+	
 }
 
 TopLevelAccelerationStructure::~TopLevelAccelerationStructure()

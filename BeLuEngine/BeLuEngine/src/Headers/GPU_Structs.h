@@ -76,7 +76,7 @@ struct CB_PER_FRAME_STRUCT
 // Currently unused
 struct CB_PER_SCENE_STRUCT
 {
-	unsigned int pad1;
+	unsigned int rayTracingBVH;
 	unsigned int pad2;
 	unsigned int pad3;
 	unsigned int pad4;
