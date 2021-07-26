@@ -58,6 +58,7 @@
 #include "DX12Tasks/DepthRenderTask.h"
 #include "DX12Tasks/WireframeRenderTask.h"
 #include "DX12Tasks/OutliningRenderTask.h"
+#include "DX12Tasks/DeferredGeometryRenderTask.h"
 #include "DX12Tasks/DeferredLightRenderTask.h"
 #include "DX12Tasks/TransparentRenderTask.h"
 #include "DX12Tasks/DownSampleRenderTask.h"
@@ -464,9 +465,13 @@ void Renderer::ExecuteMT()
 	dxrTask = m_DXRTasks[E_DXR_TASK_TYPE::TLAS];
 	m_pThreadPool->AddTask(dxrTask);
 
-	// Opaque draw
-	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::FORWARD_RENDER];
-	m_pThreadPool->AddTask(renderTask);
+	// Geometry pass
+	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::DEFERRED_GEOMETRY];
+	renderTask->Execute();
+
+	// Light pass
+	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::DEFERRED_LIGHT];
+	renderTask->Execute();
 
 	// DownSample the texture used for bloom
 	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::DOWNSAMPLE];
@@ -592,8 +597,12 @@ void Renderer::ExecuteST()
 	dxrTask = m_DXRTasks[E_DXR_TASK_TYPE::TLAS];
 	dxrTask->Execute();
 
-	// Opaque draw
-	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::FORWARD_RENDER];
+	// Geometry pass
+	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::DEFERRED_GEOMETRY];
+	renderTask->Execute();
+
+	// Light pass
+	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::DEFERRED_LIGHT];
 	renderTask->Execute();
 
 	// DownSample the texture used for bloom
@@ -1036,7 +1045,8 @@ Window* const Renderer::GetWindow() const
 void Renderer::setRenderTasksPrimaryCamera()
 {
 	m_RenderTasks[E_RENDER_TASK_TYPE::DEPTH_PRE_PASS]->SetCamera(m_pScenePrimaryCamera);
-	m_RenderTasks[E_RENDER_TASK_TYPE::FORWARD_RENDER]->SetCamera(m_pScenePrimaryCamera);
+	m_RenderTasks[E_RENDER_TASK_TYPE::DEFERRED_GEOMETRY]->SetCamera(m_pScenePrimaryCamera);
+	m_RenderTasks[E_RENDER_TASK_TYPE::DEFERRED_LIGHT]->SetCamera(m_pScenePrimaryCamera);	// TEMP
 	m_RenderTasks[E_RENDER_TASK_TYPE::OPACITY]->SetCamera(m_pScenePrimaryCamera);
 	m_RenderTasks[E_RENDER_TASK_TYPE::OUTLINE]->SetCamera(m_pScenePrimaryCamera);
 
@@ -1512,22 +1522,76 @@ void Renderer::initRenderTasks()
 
 #pragma endregion DepthPrePass
 
-#pragma region ForwardRendering
-	/* Forward rendering without stencil testing */
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsdForwardRender = {};
-	gpsdForwardRender.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+#pragma region DeferredGeometryRendering
+	/* Depth Pre-Pass rendering without stencil testing */
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsdDeferredGeometryPass = {};
+	gpsdDeferredGeometryPass.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	// RenderTarget
+	gpsdDeferredGeometryPass.NumRenderTargets = 0;
+	gpsdDeferredGeometryPass.RTVFormats[0] = DXGI_FORMAT_UNKNOWN;
+	// Depthstencil usage
+	gpsdDeferredGeometryPass.SampleDesc.Count = 1;
+	gpsdDeferredGeometryPass.SampleMask = UINT_MAX;
+	// Rasterizer behaviour
+	gpsdDeferredGeometryPass.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
+	gpsdDeferredGeometryPass.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
+	gpsdDeferredGeometryPass.RasterizerState.DepthBias = 0;
+	gpsdDeferredGeometryPass.RasterizerState.DepthBiasClamp = 0.0f;
+	gpsdDeferredGeometryPass.RasterizerState.SlopeScaledDepthBias = 0.0f;
+	gpsdDeferredGeometryPass.RasterizerState.FrontCounterClockwise = false;
+
+	// Specify Blend descriptions
+	// copy of defaultRTdesc
+	D3D12_RENDER_TARGET_BLEND_DESC deferredGeometryRTdesc = {
+		false, false,
+		D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
+		D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
+		D3D12_LOGIC_OP_NOOP, D3D12_COLOR_WRITE_ENABLE_ALL };
+	for (unsigned int i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; i++)
+		gpsdDeferredGeometryPass.BlendState.RenderTarget[i] = deferredGeometryRTdesc;
+
+	// Depth descriptor
+	D3D12_DEPTH_STENCIL_DESC deferredGeometryDsd = {};
+	deferredGeometryDsd.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
+	deferredGeometryDsd.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+
+	// DepthStencil
+	deferredGeometryDsd.StencilEnable = false;
+	gpsdDeferredGeometryPass.DepthStencilState = deferredGeometryDsd;
+	gpsdDeferredGeometryPass.DSVFormat = m_pMainDepthStencil->GetDSV()->GetDXGIFormat();
+
+	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*> gpsdDeferredGeometryPassVector;
+	gpsdDeferredGeometryPassVector.push_back(&gpsdDeferredGeometryPass);
+
+	RenderTask* deferredGeometryRenderTask = new DeferredGeometryRenderTask(
+		m_pDevice5,
+		m_pGlobalRootSig,
+		L"DeferredGeometryVertex.hlsl", L"DeferredGeometryPixel.hlsl",
+		&gpsdDeferredGeometryPassVector,
+		L"DeferredGeometryRenderTaskPSO",
+		F_THREAD_FLAGS::RENDER);
+
+	deferredGeometryRenderTask->SetMainDepthStencil(m_pMainDepthStencil);
+	deferredGeometryRenderTask->SetSwapChain(m_pSwapChain);
+	deferredGeometryRenderTask->SetDescriptorHeaps(m_DescriptorHeaps);
+#pragma endregion DeferredGeometryRendering
+
+#pragma region DeferredRendering
+	/* Deferred rendering without stencil testing */
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsdDeferredLightRender = {};
+	gpsdDeferredLightRender.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 
 	// RenderTarget
-	gpsdForwardRender.NumRenderTargets = 2;
-	gpsdForwardRender.RTVFormats[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
-	gpsdForwardRender.RTVFormats[1] = DXGI_FORMAT_R16G16B16A16_FLOAT;
+	gpsdDeferredLightRender.NumRenderTargets = 2;
+	gpsdDeferredLightRender.RTVFormats[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
+	gpsdDeferredLightRender.RTVFormats[1] = DXGI_FORMAT_R16G16B16A16_FLOAT;
 	// Depthstencil usage
-	gpsdForwardRender.SampleDesc.Count = 1;
-	gpsdForwardRender.SampleMask = UINT_MAX;
+	gpsdDeferredLightRender.SampleDesc.Count = 1;
+	gpsdDeferredLightRender.SampleMask = UINT_MAX;
 	// Rasterizer behaviour
-	gpsdForwardRender.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
-	gpsdForwardRender.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
-	gpsdForwardRender.RasterizerState.FrontCounterClockwise = false;
+	gpsdDeferredLightRender.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
+	gpsdDeferredLightRender.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
+	gpsdDeferredLightRender.RasterizerState.FrontCounterClockwise = false;
 
 	// Specify Blend descriptions
 	D3D12_RENDER_TARGET_BLEND_DESC defaultRTdesc = {
@@ -1536,7 +1600,7 @@ void Renderer::initRenderTasks()
 		D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
 		D3D12_LOGIC_OP_NOOP, D3D12_COLOR_WRITE_ENABLE_ALL };
 	for (unsigned int i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; i++)
-		gpsdForwardRender.BlendState.RenderTarget[i] = defaultRTdesc;
+		gpsdDeferredLightRender.BlendState.RenderTarget[i] = defaultRTdesc;
 
 	// Depth descriptor
 	D3D12_DEPTH_STENCIL_DESC dsd = {};
@@ -1546,11 +1610,11 @@ void Renderer::initRenderTasks()
 
 	// DepthStencil
 	dsd.StencilEnable = false;
-	gpsdForwardRender.DepthStencilState = dsd;
-	gpsdForwardRender.DSVFormat = m_pMainDepthStencil->GetDSV()->GetDXGIFormat();
+	gpsdDeferredLightRender.DepthStencilState = dsd;
+	gpsdDeferredLightRender.DSVFormat = m_pMainDepthStencil->GetDSV()->GetDXGIFormat();
 
 	/* Forward rendering with stencil testing */
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsdForwardRenderStencilTest = gpsdForwardRender;
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsdForwardRenderStencilTest = gpsdDeferredLightRender;
 
 	// Only change stencil testing
 	dsd = {};
@@ -1573,15 +1637,15 @@ void Renderer::initRenderTasks()
 	gpsdForwardRenderStencilTest.DepthStencilState = dsd;
 
 	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*> gpsdDeferredLightRenderVector;
-	gpsdDeferredLightRenderVector.push_back(&gpsdForwardRender);
+	gpsdDeferredLightRenderVector.push_back(&gpsdDeferredLightRender);
 	gpsdDeferredLightRenderVector.push_back(&gpsdForwardRenderStencilTest);
 
 	RenderTask* deferredLightRenderTask = new DeferredLightRenderTask(
 		m_pDevice5,
 		m_pGlobalRootSig,
-		L"ForwardVertex.hlsl", L"ForwardPixel.hlsl",
+		L"DeferredLightVertex.hlsl", L"DeferredLightPixel.hlsl",
 		&gpsdDeferredLightRenderVector,
-		L"ForwardRenderingPSO",
+		L"DeferredLightRenderingPSO",
 		F_THREAD_FLAGS::RENDER);
 
 	deferredLightRenderTask->AddResource("cbPerFrame", m_pCbPerFrame->GetDefaultResource());
@@ -1594,7 +1658,7 @@ void Renderer::initRenderTasks()
 	deferredLightRenderTask->AddRenderTargetView("gBufferMaterialProperties", m_GBufferMaterialProperties.first->GetRTV());
 	deferredLightRenderTask->SetDescriptorHeaps(m_DescriptorHeaps);
 
-#pragma endregion ForwardRendering
+#pragma endregion DeferredRendering
 
 #pragma region DownSampleTextureTask
 	/* Forward rendering without stencil testing */
@@ -1917,7 +1981,8 @@ void Renderer::initRenderTasks()
 
 	/* ------------------------- DirectQueue Tasks ---------------------- */
 	m_RenderTasks[E_RENDER_TASK_TYPE::DEPTH_PRE_PASS] = DepthPrePassRenderTask;
-	m_RenderTasks[E_RENDER_TASK_TYPE::FORWARD_RENDER] = deferredLightRenderTask;
+	m_RenderTasks[E_RENDER_TASK_TYPE::DEFERRED_GEOMETRY] = deferredGeometryRenderTask;
+	m_RenderTasks[E_RENDER_TASK_TYPE::DEFERRED_LIGHT] = deferredLightRenderTask;
 	m_RenderTasks[E_RENDER_TASK_TYPE::OPACITY] = transparentRenderTask;
 	m_RenderTasks[E_RENDER_TASK_TYPE::WIREFRAME] = wireFrameRenderTask;
 	m_RenderTasks[E_RENDER_TASK_TYPE::OUTLINE] = outliningRenderTask;
@@ -1961,6 +2026,11 @@ void Renderer::initRenderTasks()
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
 		m_DirectCommandLists[i].push_back(DepthPrePassRenderTask->GetCommandInterface()->GetCommandList(i));
+	}
+
+	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
+	{
+		m_DirectCommandLists[i].push_back(deferredGeometryRenderTask->GetCommandInterface()->GetCommandList(i));
 	}
 
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
@@ -2038,7 +2108,8 @@ void Renderer::createRawBufferForLights()
 void Renderer::setRenderTasksRenderComponents()
 {
 	m_RenderTasks[E_RENDER_TASK_TYPE::DEPTH_PRE_PASS]->SetRenderComponents(&m_RenderComponents[F_DRAW_FLAGS::NO_DEPTH]);
-	m_RenderTasks[E_RENDER_TASK_TYPE::FORWARD_RENDER]->SetRenderComponents(&m_RenderComponents[F_DRAW_FLAGS::DRAW_OPAQUE]);
+	m_RenderTasks[E_RENDER_TASK_TYPE::DEFERRED_GEOMETRY]->SetRenderComponents(&m_RenderComponents[F_DRAW_FLAGS::DRAW_OPAQUE]);
+	m_RenderTasks[E_RENDER_TASK_TYPE::DEFERRED_LIGHT]->SetRenderComponents(&m_RenderComponents[F_DRAW_FLAGS::DRAW_OPAQUE]);	// TEMP
 	m_RenderTasks[E_RENDER_TASK_TYPE::OPACITY]->SetRenderComponents(&m_RenderComponents[F_DRAW_FLAGS::DRAW_TRANSPARENT]);
 }
 
@@ -2126,8 +2197,8 @@ void Renderer::prepareScene(Scene* activeScene)
 	pTLAS->GenerateBuffers(m_pDevice5, m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
 	pTLAS->SetupAccelerationStructureForBuilding(m_pDevice5, false);
 
-	// Currently unused inside forwardRenderTask
-	static_cast<DeferredLightRenderTask*>(m_RenderTasks[E_RENDER_TASK_TYPE::FORWARD_RENDER])->SetSceneBVHSRV(pTLAS->GetSRV());
+	// Currently unused
+	//static_cast<DeferredLightRenderTask*>(m_RenderTasks[E_RENDER_TASK_TYPE::DEFERRED_GEOMETRY])->SetSceneBVHSRV(pTLAS->GetSRV());
 
 	m_pCbPerSceneData->rayTracingBVH = pTLAS->GetSRV()->GetDescriptorHeapIndex();
 }
