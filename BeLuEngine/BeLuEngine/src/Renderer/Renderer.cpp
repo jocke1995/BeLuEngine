@@ -1522,13 +1522,15 @@ void Renderer::initRenderTasks()
 
 #pragma endregion DepthPrePass
 
-#pragma region DeferredGeometryRendering
+#pragma region DeferredRenderingGeometry
 	/* Depth Pre-Pass rendering without stencil testing */
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsdDeferredGeometryPass = {};
 	gpsdDeferredGeometryPass.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	// RenderTarget
-	gpsdDeferredGeometryPass.NumRenderTargets = 0;
-	gpsdDeferredGeometryPass.RTVFormats[0] = DXGI_FORMAT_UNKNOWN;
+	gpsdDeferredGeometryPass.NumRenderTargets = 3;
+	gpsdDeferredGeometryPass.RTVFormats[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
+	gpsdDeferredGeometryPass.RTVFormats[1] = DXGI_FORMAT_R16G16B16A16_FLOAT;
+	gpsdDeferredGeometryPass.RTVFormats[2] = DXGI_FORMAT_R16G16B16A16_FLOAT;
 	// Depthstencil usage
 	gpsdDeferredGeometryPass.SampleDesc.Count = 1;
 	gpsdDeferredGeometryPass.SampleMask = UINT_MAX;
@@ -1574,9 +1576,12 @@ void Renderer::initRenderTasks()
 	deferredGeometryRenderTask->SetMainDepthStencil(m_pMainDepthStencil);
 	deferredGeometryRenderTask->SetSwapChain(m_pSwapChain);
 	deferredGeometryRenderTask->SetDescriptorHeaps(m_DescriptorHeaps);
-#pragma endregion DeferredGeometryRendering
+	deferredGeometryRenderTask->AddRenderTargetView("gBufferAlbedo", m_GBufferAlbedo.first->GetRTV());
+	deferredGeometryRenderTask->AddRenderTargetView("gBufferNormal", m_GBufferNormal.first->GetRTV());
+	deferredGeometryRenderTask->AddRenderTargetView("gBufferMaterialProperties", m_GBufferMaterialProperties.first->GetRTV());
+#pragma endregion DeferredRenderingGeometry
 
-#pragma region DeferredRendering
+#pragma region DeferredRenderingLight
 	/* Deferred rendering without stencil testing */
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsdDeferredLightRender = {};
 	gpsdDeferredLightRender.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
@@ -1653,12 +1658,15 @@ void Renderer::initRenderTasks()
 	deferredLightRenderTask->AddResource("rawBufferLights", Light::m_pLightsRawBuffer->GetDefaultResource());
 	deferredLightRenderTask->SetMainDepthStencil(m_pMainDepthStencil);
 	deferredLightRenderTask->AddRenderTargetView("brightTarget", std::get<1>(*m_pBloomResources->GetBrightTuple()));
+
+	// TODO: Srvs
 	deferredLightRenderTask->AddRenderTargetView("gBufferAlbedo", m_GBufferAlbedo.first->GetRTV());
 	deferredLightRenderTask->AddRenderTargetView("gBufferNormal", m_GBufferNormal.first->GetRTV());
 	deferredLightRenderTask->AddRenderTargetView("gBufferMaterialProperties", m_GBufferMaterialProperties.first->GetRTV());
+
 	deferredLightRenderTask->SetDescriptorHeaps(m_DescriptorHeaps);
 
-#pragma endregion DeferredRendering
+#pragma endregion DeferredRenderingLight
 
 #pragma region DownSampleTextureTask
 	/* Forward rendering without stencil testing */

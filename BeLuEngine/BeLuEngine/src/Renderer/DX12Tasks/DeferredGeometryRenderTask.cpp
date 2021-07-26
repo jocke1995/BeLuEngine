@@ -34,43 +34,53 @@ void DeferredGeometryRenderTask::Execute()
 	ID3D12GraphicsCommandList5* commandList = m_pCommandInterface->GetCommandList(m_CommandInterfaceIndex);
 	m_pCommandInterface->Reset(m_CommandInterfaceIndex);
 
-	//commandList->SetGraphicsRootSignature(m_pRootSig);
-	//
-	//DescriptorHeap* descriptorHeap_CBV_UAV_SRV = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV];
-	//ID3D12DescriptorHeap* d3d12DescriptorHeap = descriptorHeap_CBV_UAV_SRV->GetID3D12DescriptorHeap();
-	//commandList->SetDescriptorHeaps(1, &d3d12DescriptorHeap);
-	//
-	//commandList->SetGraphicsRootDescriptorTable(1, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
-	//
-	//DescriptorHeap* depthBufferHeap = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::DSV];
-	//
-	//commandList->SetPipelineState(m_PipelineStates[0]->GetPSO());
-	//commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	//
-	//// TODO: Get Depth viewport, rightnow use swapchain since the view and rect is the same.
-	//const D3D12_VIEWPORT* viewPort = m_pSwapChain->GetRTV(0)->GetRenderView()->GetViewPort();
-	//const D3D12_RECT* rect = m_pSwapChain->GetRTV(0)->GetRenderView()->GetScissorRect();
-	//commandList->RSSetViewports(1, viewPort);
-	//commandList->RSSetScissorRects(1, rect);
-	//
-	//const DirectX::XMMATRIX* viewProjMatTrans = m_pCamera->GetViewProjectionTranposed();
-	//
-	//unsigned int index = m_pDepthStencil->GetDSV()->GetDescriptorHeapIndex();
-	//
-	//// Clear and set depth + stencil
-	//D3D12_CPU_DESCRIPTOR_HANDLE dsh = depthBufferHeap->GetCPUHeapAt(index);
-	//commandList->ClearDepthStencilView(dsh, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
-	//commandList->OMSetRenderTargets(0, nullptr, false, &dsh);
-	//
-	//// Draw for every Rendercomponent
-	//for (int i = 0; i < m_RenderComponents.size(); i++)
-	//{
-	//	component::ModelComponent* mc = m_RenderComponents.at(i).mc;
-	//	component::TransformComponent* tc = m_RenderComponents.at(i).tc;
-	//
-	//	// Draws all entities with ModelComponent + TransformComponent
-	//	drawRenderComponent(mc, tc, viewProjMatTrans, commandList);
-	//}
+	commandList->SetGraphicsRootSignature(m_pRootSig);
+	
+	DescriptorHeap* descriptorHeap_CBV_UAV_SRV = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV];
+	ID3D12DescriptorHeap* d3d12DescriptorHeap = descriptorHeap_CBV_UAV_SRV->GetID3D12DescriptorHeap();
+	commandList->SetDescriptorHeaps(1, &d3d12DescriptorHeap);
+	
+	commandList->SetGraphicsRootDescriptorTable(1, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
+	
+	DescriptorHeap* renderTargetHeap = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV];
+	DescriptorHeap* depthBufferHeap = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::DSV];
+	
+	commandList->SetPipelineState(m_PipelineStates[0]->GetPSO());
+	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	
+	// TODO: Get Depth viewport, rightnow use swapchain since the view and rect is the same.
+	const D3D12_VIEWPORT* viewPort = m_pSwapChain->GetRTV(0)->GetRenderView()->GetViewPort();
+	const D3D12_RECT* rect = m_pSwapChain->GetRTV(0)->GetRenderView()->GetScissorRect();
+	commandList->RSSetViewports(1, viewPort);
+	commandList->RSSetScissorRects(1, rect);
+	
+	const DirectX::XMMATRIX* viewProjMatTrans = m_pCamera->GetViewProjectionTranposed();
+	
+	// RenderTargets
+	const unsigned int gBufferAlbedoIndex	= m_RenderTargetViews["gBufferAlbedo"]->GetDescriptorHeapIndex();
+	const unsigned int gBufferNormalIndex	= m_RenderTargetViews["gBufferNormal"]->GetDescriptorHeapIndex();
+	const unsigned int gBufferMaterialIndex = m_RenderTargetViews["gBufferMaterialProperties"]->GetDescriptorHeapIndex();
+
+	D3D12_CPU_DESCRIPTOR_HANDLE cdhgBufferAlbedo	= renderTargetHeap->GetCPUHeapAt(gBufferAlbedoIndex);
+	D3D12_CPU_DESCRIPTOR_HANDLE cdhgBufferNormal	= renderTargetHeap->GetCPUHeapAt(gBufferNormalIndex);
+	D3D12_CPU_DESCRIPTOR_HANDLE cdhgBufferMaterial	= renderTargetHeap->GetCPUHeapAt(gBufferMaterialIndex);
+	D3D12_CPU_DESCRIPTOR_HANDLE cdhs[] = { cdhgBufferAlbedo, cdhgBufferNormal, cdhgBufferMaterial };
+
+	unsigned int index = m_pDepthStencil->GetDSV()->GetDescriptorHeapIndex();
+	// Clear and set depth + stencil
+	D3D12_CPU_DESCRIPTOR_HANDLE dsh = depthBufferHeap->GetCPUHeapAt(index);
+	commandList->ClearDepthStencilView(dsh, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+	commandList->OMSetRenderTargets(3, cdhs, false, &dsh);
+	
+	// Draw for every Rendercomponent
+	for (int i = 0; i < m_RenderComponents.size(); i++)
+	{
+		component::ModelComponent* mc = m_RenderComponents.at(i).mc;
+		component::TransformComponent* tc = m_RenderComponents.at(i).tc;
+	
+		// Draws all entities with ModelComponent + TransformComponent
+		drawRenderComponent(mc, tc, viewProjMatTrans, commandList);
+	}
 
 	commandList->Close();
 }
