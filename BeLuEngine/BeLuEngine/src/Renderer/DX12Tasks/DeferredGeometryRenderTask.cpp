@@ -13,6 +13,7 @@
 // Model info
 #include "../Geometry/Mesh.h"
 #include "../Geometry/Transform.h"
+#include "../Geometry/Material.h"
 
 DeferredGeometryRenderTask::DeferredGeometryRenderTask(ID3D12Device5* device,
 	ID3D12RootSignature* rootSignature,
@@ -39,7 +40,8 @@ void DeferredGeometryRenderTask::Execute()
 	DescriptorHeap* descriptorHeap_CBV_UAV_SRV = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV];
 	ID3D12DescriptorHeap* d3d12DescriptorHeap = descriptorHeap_CBV_UAV_SRV->GetID3D12DescriptorHeap();
 	commandList->SetDescriptorHeaps(1, &d3d12DescriptorHeap);
-	
+
+	commandList->SetGraphicsRootDescriptorTable(0, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
 	commandList->SetGraphicsRootDescriptorTable(1, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
 	
 	DescriptorHeap* renderTargetHeap = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV];
@@ -66,12 +68,19 @@ void DeferredGeometryRenderTask::Execute()
 	D3D12_CPU_DESCRIPTOR_HANDLE cdhgBufferMaterial	= renderTargetHeap->GetCPUHeapAt(gBufferMaterialIndex);
 	D3D12_CPU_DESCRIPTOR_HANDLE cdhs[] = { cdhgBufferAlbedo, cdhgBufferNormal, cdhgBufferMaterial };
 
-	unsigned int index = m_pDepthStencil->GetDSV()->GetDescriptorHeapIndex();
-	// Clear and set depth + stencil
-	D3D12_CPU_DESCRIPTOR_HANDLE dsh = depthBufferHeap->GetCPUHeapAt(index);
-	commandList->ClearDepthStencilView(dsh, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+	// Depth
+	unsigned int depthIndex = m_pDepthStencil->GetDSV()->GetDescriptorHeapIndex();
+	D3D12_CPU_DESCRIPTOR_HANDLE dsh = depthBufferHeap->GetCPUHeapAt(depthIndex);
+
+	float clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	commandList->ClearRenderTargetView(cdhgBufferAlbedo  , clearColor, 0, nullptr);
+	commandList->ClearRenderTargetView(cdhgBufferNormal  , clearColor, 0, nullptr);
+	commandList->ClearRenderTargetView(cdhgBufferMaterial, clearColor, 0, nullptr);
+
 	commandList->OMSetRenderTargets(3, cdhs, false, &dsh);
 	
+	commandList->SetGraphicsRootConstantBufferView(13, m_Resources["cbPerScene"]->GetGPUVirtualAdress());
+
 	// Draw for every Rendercomponent
 	for (int i = 0; i < m_RenderComponents.size(); i++)
 	{
@@ -95,6 +104,7 @@ void DeferredGeometryRenderTask::drawRenderComponent(component::ModelComponent* 
 		const SlotInfo* info = mc->GetSlotInfoAt(i);
 
 		Transform* t = tc->GetTransform();
+		cl->SetGraphicsRootConstantBufferView(14, mc->GetMaterialAt(i)->GetMaterialData()->first->GetDefaultResource()->GetGPUVirtualAdress());
 		cl->SetGraphicsRoot32BitConstants(3, sizeof(SlotInfo) / sizeof(UINT), info, 0);
 		cl->SetGraphicsRootConstantBufferView(11, t->m_pCB->GetDefaultResource()->GetGPUVirtualAdress());
 

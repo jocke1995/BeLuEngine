@@ -65,7 +65,6 @@ void DeferredLightRenderTask::Execute()
 	commandList->OMSetRenderTargets(2, cdhs, false, &dsh);
 
 	float clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-	commandList->ClearRenderTargetView(cdhgBufferAlbedo, clearColor, 0, nullptr);
 	commandList->ClearRenderTargetView(cdhBrightTarget, clearColor, 0, nullptr);
 
 	const D3D12_VIEWPORT viewPortgBufferAlbedo = *mainColorRenderTarget->GetRenderView()->GetViewPort();

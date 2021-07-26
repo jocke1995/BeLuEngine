@@ -1556,6 +1556,7 @@ void Renderer::initRenderTasks()
 	D3D12_DEPTH_STENCIL_DESC deferredGeometryDsd = {};
 	deferredGeometryDsd.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
 	deferredGeometryDsd.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+	deferredGeometryDsd.DepthEnable = true;
 
 	// DepthStencil
 	deferredGeometryDsd.StencilEnable = false;
@@ -1576,6 +1577,7 @@ void Renderer::initRenderTasks()
 	deferredGeometryRenderTask->SetMainDepthStencil(m_pMainDepthStencil);
 	deferredGeometryRenderTask->SetSwapChain(m_pSwapChain);
 	deferredGeometryRenderTask->SetDescriptorHeaps(m_DescriptorHeaps);
+	deferredGeometryRenderTask->AddResource("cbPerScene", m_pCbPerScene->GetDefaultResource());
 	deferredGeometryRenderTask->AddRenderTargetView("gBufferAlbedo", m_GBufferAlbedo.first->GetRTV());
 	deferredGeometryRenderTask->AddRenderTargetView("gBufferNormal", m_GBufferNormal.first->GetRTV());
 	deferredGeometryRenderTask->AddRenderTargetView("gBufferMaterialProperties", m_GBufferMaterialProperties.first->GetRTV());
