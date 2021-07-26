@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "ForwardRenderTask.h"
+#include "DeferredLightRenderTask.h"
 
 // DX12 Specifics
 #include "../Camera/BaseCamera.h"
@@ -14,7 +14,7 @@
 #include "../Renderer/Geometry/Mesh.h"
 #include "../Renderer/Geometry/Material.h"
 
-ForwardRenderTask::ForwardRenderTask(
+DeferredLightRenderTask::DeferredLightRenderTask(
 	ID3D12Device5* device,
 	ID3D12RootSignature* rootSignature,
 	const std::wstring& VSName, const std::wstring& PSName,
@@ -26,17 +26,17 @@ ForwardRenderTask::ForwardRenderTask(
 	
 }
 
-ForwardRenderTask::~ForwardRenderTask()
+DeferredLightRenderTask::~DeferredLightRenderTask()
 {
 }
 
-void ForwardRenderTask::Execute()
+void DeferredLightRenderTask::Execute()
 {
 	ID3D12CommandAllocator* commandAllocator = m_pCommandInterface->GetCommandAllocator(m_CommandInterfaceIndex);
 	ID3D12GraphicsCommandList5* commandList = m_pCommandInterface->GetCommandList(m_CommandInterfaceIndex);
 
-	const RenderTargetView* mainColorRenderTarget = m_RenderTargetViews["mainColorTarget"];
-	ID3D12Resource1* mainColorTargetResource = mainColorRenderTarget->GetResource()->GetID3D12Resource1();
+	const RenderTargetView* mainColorRenderTarget = m_RenderTargetViews["gBufferAlbedo"];
+	ID3D12Resource1* gBufferAlbedoResource = mainColorRenderTarget->GetResource()->GetID3D12Resource1();
 
 	m_pCommandInterface->Reset(m_CommandInterfaceIndex);
 
@@ -53,11 +53,11 @@ void ForwardRenderTask::Execute()
 	DescriptorHeap* depthBufferHeap  = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::DSV];
 
 	// RenderTargets
-	const unsigned int mainColorTargetIndex = mainColorRenderTarget->GetDescriptorHeapIndex();
+	const unsigned int gBufferAlbedoIndex = mainColorRenderTarget->GetDescriptorHeapIndex();
 	const unsigned int brightTargetIndex = m_RenderTargetViews["brightTarget"]->GetDescriptorHeapIndex();
-	D3D12_CPU_DESCRIPTOR_HANDLE cdhMainColorTarget = renderTargetHeap->GetCPUHeapAt(mainColorTargetIndex);
+	D3D12_CPU_DESCRIPTOR_HANDLE cdhgBufferAlbedo = renderTargetHeap->GetCPUHeapAt(gBufferAlbedoIndex);
 	D3D12_CPU_DESCRIPTOR_HANDLE cdhBrightTarget = renderTargetHeap->GetCPUHeapAt(brightTargetIndex);
-	D3D12_CPU_DESCRIPTOR_HANDLE cdhs[] = { cdhMainColorTarget, cdhBrightTarget };
+	D3D12_CPU_DESCRIPTOR_HANDLE cdhs[] = { cdhgBufferAlbedo, cdhBrightTarget };
 
 	// Depth
 	D3D12_CPU_DESCRIPTOR_HANDLE dsh = depthBufferHeap->GetCPUHeapAt(m_pDepthStencil->GetDSV()->GetDescriptorHeapIndex());
@@ -65,16 +65,16 @@ void ForwardRenderTask::Execute()
 	commandList->OMSetRenderTargets(2, cdhs, false, &dsh);
 
 	float clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-	commandList->ClearRenderTargetView(cdhMainColorTarget, clearColor, 0, nullptr);
+	commandList->ClearRenderTargetView(cdhgBufferAlbedo, clearColor, 0, nullptr);
 	commandList->ClearRenderTargetView(cdhBrightTarget, clearColor, 0, nullptr);
 
-	const D3D12_VIEWPORT viewPortMainColorTarget = *mainColorRenderTarget->GetRenderView()->GetViewPort();
+	const D3D12_VIEWPORT viewPortgBufferAlbedo = *mainColorRenderTarget->GetRenderView()->GetViewPort();
 	const D3D12_VIEWPORT viewPortBrightTarget = *m_RenderTargetViews["brightTarget"]->GetRenderView()->GetViewPort();
-	const D3D12_VIEWPORT viewPorts[2] = { viewPortMainColorTarget, viewPortBrightTarget };
+	const D3D12_VIEWPORT viewPorts[2] = { viewPortgBufferAlbedo, viewPortBrightTarget };
 
-	const D3D12_RECT rectMainColorTarget = *mainColorRenderTarget->GetRenderView()->GetScissorRect();
+	const D3D12_RECT rectgBufferAlbedo = *mainColorRenderTarget->GetRenderView()->GetScissorRect();
 	const D3D12_RECT rectBrightTarget = *m_RenderTargetViews["brightTarget"]->GetRenderView()->GetScissorRect();
-	const D3D12_RECT rects[2] = { rectMainColorTarget, rectBrightTarget };
+	const D3D12_RECT rects[2] = { rectgBufferAlbedo, rectBrightTarget };
 
 	commandList->RSSetViewports(2, viewPorts);
 	commandList->RSSetScissorRects(2, rects);
@@ -119,12 +119,12 @@ void ForwardRenderTask::Execute()
 	commandList->Close();
 }
 
-void ForwardRenderTask::SetSceneBVHSRV(ShaderResourceView* srv)
+void DeferredLightRenderTask::SetSceneBVHSRV(ShaderResourceView* srv)
 {
 	m_pRayTracingSRV = srv;
 }
 
-void ForwardRenderTask::drawRenderComponent(
+void DeferredLightRenderTask::drawRenderComponent(
 	component::ModelComponent* mc,
 	component::TransformComponent* tc,
 	const DirectX::XMMATRIX* viewProjTransposed,

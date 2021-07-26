@@ -10,8 +10,10 @@ class RootSignature;
 class Resource;
 
 class DepthStencil;
-class BaseCamera;
 class RenderTargetView;
+class ShaderResourceView;
+
+class BaseCamera;
 class SwapChain;
 class PipelineState;
 

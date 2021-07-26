@@ -1,5 +1,7 @@
 # BeLuEngine
-This project is created by me (Joakim Sjöberg) as a way to learn new features and techniques. 
+I began this project during the fourth year of my university program in order to have a starting point for the course "Large Game Project" which began at the start of year five.
+The engine was used in that course by me and nine fellow students to create a game called "Hell Loop". See [link](https://www.youtube.com/watch?v=EPoPFmjj784&ab_channel=CanalTenThousand). 
+Today, I mainly use this engine (more like a renderer) as a framework to learn features and techniques focused on rendering/graphics.
 The project is developed on windows platform where I use Visual Studio 2019 (Community edition) as platform.
 
 ## Screenshots
@@ -7,10 +9,10 @@ The project is developed on windows platform where I use Visual Studio 2019 (Com
 ![Alt](Screenshots/22-02-2021_SPONZA.png)
 ---
 ## Roadmap
-##### Controllers in ImGui to change stuff in real time
-##### DXR shadows, reflections and ao
-##### Async data-streaming with the copy queue
-
+##### Reflections using the raygen & closest-hit shaders
+##### Something with the geometry and tesselation shaders
+##### Decals
+##### Volumetric light
 ---
 
 ## The structure of the VS solution
@@ -30,16 +32,17 @@ It is staticly linked to the library that Engine creates.
 
 ---
 ## API
-Currently the only API supported is DirectX12. In the future I will add support for other API's such as Vulkan and DirectX 11.
+Currently the only API supported is DirectX12.
 
 ---
 ## Feature List
-Here I will list all the features (that is worth mentioning) implemented in my engine.
+Here I will list all the features (that is worth mentioning) implemented in my rendering framework.
 ##### Entity Component System
 ##### PBR using roughness and metallic maps
 ##### Multi-threading
 ##### Picking (with Boundingboxes)
 ##### Stencil-buffer outlining
+##### Hard Shadows with inline ray tracing
 
 ---
 ## Setting up the project, welcome to premake! (Thanks to Tim Johansson for setting up and making this guide)

@@ -50,7 +50,7 @@ private:
 	friend class WireframeRenderTask;
 	friend class TransparentRenderTask;
 	friend class DepthRenderTask;
-	friend class ForwardRenderTask;
+	friend class DeferredLightRenderTask;
 
 	DirectX::XMMATRIX m_WorldMat;
 	DirectX::XMMATRIX m_WorldMatTransposed;

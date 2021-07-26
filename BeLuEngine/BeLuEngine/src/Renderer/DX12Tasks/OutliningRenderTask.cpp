@@ -37,8 +37,8 @@ void OutliningRenderTask::Execute()
 {
 	ID3D12CommandAllocator* commandAllocator = m_pCommandInterface->GetCommandAllocator(m_CommandInterfaceIndex);
 	ID3D12GraphicsCommandList5* commandList = m_pCommandInterface->GetCommandList(m_CommandInterfaceIndex);
-	const RenderTargetView* mainColorTargetRenderTarget = m_RenderTargetViews["mainColorTarget"];
-	ID3D12Resource1* mainColorTargetResource = mainColorTargetRenderTarget->GetResource()->GetID3D12Resource1();
+	const RenderTargetView* gBufferAlbedoRenderTarget = m_RenderTargetViews["gBufferAlbedo"];
+	ID3D12Resource1* gBufferAlbedoResource = gBufferAlbedoRenderTarget->GetResource()->GetID3D12Resource1();
 
 	m_pCommandInterface->Reset(m_CommandInterfaceIndex);
 
@@ -49,8 +49,8 @@ void OutliningRenderTask::Execute()
 	DescriptorHeap* renderTargetHeap = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV];
 	DescriptorHeap* depthBufferHeap = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::DSV];
 
-	const unsigned int mainColorTargetIndex = mainColorTargetRenderTarget->GetDescriptorHeapIndex();
-	D3D12_CPU_DESCRIPTOR_HANDLE cdh = renderTargetHeap->GetCPUHeapAt(mainColorTargetIndex);
+	const unsigned int gBufferAlbedoIndex = gBufferAlbedoRenderTarget->GetDescriptorHeapIndex();
+	D3D12_CPU_DESCRIPTOR_HANDLE cdh = renderTargetHeap->GetCPUHeapAt(gBufferAlbedoIndex);
 	D3D12_CPU_DESCRIPTOR_HANDLE dsh = depthBufferHeap->GetCPUHeapAt(m_pDepthStencil->GetDSV()->GetDescriptorHeapIndex());
 
 	// Check if there is an object to outline
@@ -67,8 +67,8 @@ void OutliningRenderTask::Execute()
 
 	commandList->OMSetRenderTargets(1, &cdh, true, &dsh);
 
-	const D3D12_VIEWPORT* viewPort = mainColorTargetRenderTarget->GetRenderView()->GetViewPort();
-	const D3D12_RECT* rect = mainColorTargetRenderTarget->GetRenderView()->GetScissorRect();
+	const D3D12_VIEWPORT* viewPort = gBufferAlbedoRenderTarget->GetRenderView()->GetViewPort();
+	const D3D12_RECT* rect = gBufferAlbedoRenderTarget->GetRenderView()->GetScissorRect();
 	commandList->RSSetViewports(1, viewPort);
 	commandList->RSSetScissorRects(1, rect);
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);

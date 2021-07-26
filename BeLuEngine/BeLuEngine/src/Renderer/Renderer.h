@@ -176,7 +176,9 @@ private:
 	std::map<E_COMMAND_INTERFACE_TYPE, ID3D12CommandQueue*> m_CommandQueues;
 
 	// -------------- RenderTargets -------------- 
-	std::pair<RenderTarget*, ShaderResourceView*> m_pMainColorBuffer;
+	std::pair<RenderTarget*, ShaderResourceView*> m_GBufferAlbedo;
+	std::pair<RenderTarget*, ShaderResourceView*> m_GBufferNormal;
+	std::pair<RenderTarget*, ShaderResourceView*> m_GBufferMaterialProperties;
 
 	// Swapchain (inheriting from 'RenderTarget')
 	SwapChain* m_pSwapChain = nullptr;
@@ -188,7 +190,8 @@ private:
 	DepthStencil* m_pMainDepthStencil = nullptr;
 
 	ID3D12RootSignature* m_pGlobalRootSig = nullptr;
-
+	// -------------- RenderTargets -------------- 
+	// 
 	// Picking
 	MousePicker* m_pMousePicker = nullptr;
 	Entity* m_pPickedEntity = nullptr;

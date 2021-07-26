@@ -58,7 +58,7 @@
 #include "DX12Tasks/DepthRenderTask.h"
 #include "DX12Tasks/WireframeRenderTask.h"
 #include "DX12Tasks/OutliningRenderTask.h"
-#include "DX12Tasks/ForwardRenderTask.h"
+#include "DX12Tasks/DeferredLightRenderTask.h"
 #include "DX12Tasks/TransparentRenderTask.h"
 #include "DX12Tasks/DownSampleRenderTask.h"
 #include "DX12Tasks/MergeRenderTask.h"
@@ -129,8 +129,14 @@ void Renderer::deleteRenderer()
 	SAFE_RELEASE(&m_pGlobalRootSig);
 
 	delete m_pFullScreenQuad;
-	delete m_pMainColorBuffer.first;
-	delete m_pMainColorBuffer.second;
+
+	delete m_GBufferAlbedo.first;
+	delete m_GBufferAlbedo.second;
+	delete m_GBufferNormal.first;
+	delete m_GBufferNormal.second;
+	delete m_GBufferMaterialProperties.first;
+	delete m_GBufferMaterialProperties.second;
+
 	delete m_pSwapChain;
 	delete m_pBloomResources;
 	delete m_pMainDepthStencil;
@@ -197,17 +203,41 @@ void Renderer::InitD3D12(Window *window, HINSTANCE hInstance, ThreadPool* thread
 	
 #pragma region RenderTargets
 	// Main color renderTarget (used until the swapchain RT is drawn to)
-	m_pMainColorBuffer.first = new RenderTarget(
+	m_GBufferAlbedo.first = new RenderTarget(
 		m_pDevice5,
 		m_pWindow->GetScreenWidth(), m_pWindow->GetScreenHeight(),
-		L"mainColor_RESOURCE",
+		L"gBufferAlbedo_RESOURCE",
 		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV]);
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	m_pMainColorBuffer.second = new ShaderResourceView(
+	m_GBufferAlbedo.second = new ShaderResourceView(
 		m_pDevice5,
 		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV],
-		m_pMainColorBuffer.first->GetDefaultResource());
+		m_GBufferAlbedo.first->GetDefaultResource());
+
+	// Normal
+	m_GBufferNormal.first = new RenderTarget(
+		m_pDevice5,
+		m_pWindow->GetScreenWidth(), m_pWindow->GetScreenHeight(),
+		L"gBufferNormal_RESOURCE",
+		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV]);
+
+	m_GBufferNormal.second = new ShaderResourceView(
+		m_pDevice5,
+		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV],
+		m_GBufferNormal.first->GetDefaultResource());
+
+	// Material Properties (Roughness, Metallic
+	m_GBufferMaterialProperties.first = new RenderTarget(
+		m_pDevice5,
+		m_pWindow->GetScreenWidth(), m_pWindow->GetScreenHeight(),
+		L"gBufferMaterials_RESOURCE",
+		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV]);
+
+	m_GBufferMaterialProperties.second = new ShaderResourceView(
+		m_pDevice5,
+		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV],
+		m_GBufferMaterialProperties.first->GetDefaultResource());
 
 	// Swapchain
 	createSwapChain();
@@ -1542,25 +1572,27 @@ void Renderer::initRenderTasks()
 
 	gpsdForwardRenderStencilTest.DepthStencilState = dsd;
 
-	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*> gpsdForwardRenderVector;
-	gpsdForwardRenderVector.push_back(&gpsdForwardRender);
-	gpsdForwardRenderVector.push_back(&gpsdForwardRenderStencilTest);
+	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*> gpsdDeferredLightRenderVector;
+	gpsdDeferredLightRenderVector.push_back(&gpsdForwardRender);
+	gpsdDeferredLightRenderVector.push_back(&gpsdForwardRenderStencilTest);
 
-	RenderTask* forwardRenderTask = new ForwardRenderTask(
+	RenderTask* deferredLightRenderTask = new DeferredLightRenderTask(
 		m_pDevice5,
 		m_pGlobalRootSig,
 		L"ForwardVertex.hlsl", L"ForwardPixel.hlsl",
-		&gpsdForwardRenderVector,
+		&gpsdDeferredLightRenderVector,
 		L"ForwardRenderingPSO",
 		F_THREAD_FLAGS::RENDER);
 
-	forwardRenderTask->AddResource("cbPerFrame", m_pCbPerFrame->GetDefaultResource());
-	forwardRenderTask->AddResource("cbPerScene", m_pCbPerScene->GetDefaultResource());
-	forwardRenderTask->AddResource("rawBufferLights", Light::m_pLightsRawBuffer->GetDefaultResource());
-	forwardRenderTask->SetMainDepthStencil(m_pMainDepthStencil);
-	forwardRenderTask->AddRenderTargetView("brightTarget", std::get<1>(*m_pBloomResources->GetBrightTuple()));
-	forwardRenderTask->AddRenderTargetView("mainColorTarget", m_pMainColorBuffer.first->GetRTV());
-	forwardRenderTask->SetDescriptorHeaps(m_DescriptorHeaps);
+	deferredLightRenderTask->AddResource("cbPerFrame", m_pCbPerFrame->GetDefaultResource());
+	deferredLightRenderTask->AddResource("cbPerScene", m_pCbPerScene->GetDefaultResource());
+	deferredLightRenderTask->AddResource("rawBufferLights", Light::m_pLightsRawBuffer->GetDefaultResource());
+	deferredLightRenderTask->SetMainDepthStencil(m_pMainDepthStencil);
+	deferredLightRenderTask->AddRenderTargetView("brightTarget", std::get<1>(*m_pBloomResources->GetBrightTuple()));
+	deferredLightRenderTask->AddRenderTargetView("gBufferAlbedo", m_GBufferAlbedo.first->GetRTV());
+	deferredLightRenderTask->AddRenderTargetView("gBufferNormal", m_GBufferNormal.first->GetRTV());
+	deferredLightRenderTask->AddRenderTargetView("gBufferMaterialProperties", m_GBufferMaterialProperties.first->GetRTV());
+	deferredLightRenderTask->SetDescriptorHeaps(m_DescriptorHeaps);
 
 #pragma endregion ForwardRendering
 
@@ -1647,7 +1679,7 @@ void Renderer::initRenderTasks()
 		F_THREAD_FLAGS::RENDER);
 	
 	outliningRenderTask->SetMainDepthStencil(m_pMainDepthStencil);
-	outliningRenderTask->AddRenderTargetView("mainColorTarget", m_pMainColorBuffer.first->GetRTV());
+	outliningRenderTask->AddRenderTargetView("gBufferAlbedo", m_GBufferAlbedo.first->GetRTV());
 	outliningRenderTask->SetDescriptorHeaps(m_DescriptorHeaps);
 
 #pragma endregion ModelOutlining
@@ -1745,7 +1777,7 @@ void Renderer::initRenderTasks()
 	transparentRenderTask->AddResource("cbPerScene", m_pCbPerScene->GetDefaultResource());
 	transparentRenderTask->AddResource("rawBufferLights", Light::m_pLightsRawBuffer->GetDefaultResource());
 	transparentRenderTask->SetMainDepthStencil(m_pMainDepthStencil);
-	transparentRenderTask->AddRenderTargetView("mainColorTarget", m_pMainColorBuffer.first->GetRTV());
+	transparentRenderTask->AddRenderTargetView("gBufferAlbedo", m_GBufferAlbedo.first->GetRTV());
 	transparentRenderTask->SetDescriptorHeaps(m_DescriptorHeaps);
 
 #pragma endregion Blend
@@ -1779,7 +1811,7 @@ void Renderer::initRenderTasks()
 		L"WireFramePSO",
 		F_THREAD_FLAGS::RENDER);
 
-	wireFrameRenderTask->AddRenderTargetView("mainColorTarget", m_pMainColorBuffer.first->GetRTV());
+	wireFrameRenderTask->AddRenderTargetView("gBufferAlbedo", m_GBufferAlbedo.first->GetRTV());
 	wireFrameRenderTask->SetDescriptorHeaps(m_DescriptorHeaps);
 #pragma endregion WireFrame
 
@@ -1821,7 +1853,7 @@ void Renderer::initRenderTasks()
 
 	static_cast<MergeRenderTask*>(mergeTask)->SetFullScreenQuad(m_pFullScreenQuad);
 	static_cast<MergeRenderTask*>(mergeTask)->AddSRVToMerge(m_pBloomResources->GetPingPongResource(0)->GetSRV());
-	static_cast<MergeRenderTask*>(mergeTask)->AddSRVToMerge(m_pMainColorBuffer.second);
+	static_cast<MergeRenderTask*>(mergeTask)->AddSRVToMerge(m_GBufferAlbedo.second);
 	mergeTask->SetSwapChain(m_pSwapChain);
 	mergeTask->SetDescriptorHeaps(m_DescriptorHeaps);
 	static_cast<MergeRenderTask*>(mergeTask)->CreateSlotInfo();
@@ -1885,7 +1917,7 @@ void Renderer::initRenderTasks()
 
 	/* ------------------------- DirectQueue Tasks ---------------------- */
 	m_RenderTasks[E_RENDER_TASK_TYPE::DEPTH_PRE_PASS] = DepthPrePassRenderTask;
-	m_RenderTasks[E_RENDER_TASK_TYPE::FORWARD_RENDER] = forwardRenderTask;
+	m_RenderTasks[E_RENDER_TASK_TYPE::FORWARD_RENDER] = deferredLightRenderTask;
 	m_RenderTasks[E_RENDER_TASK_TYPE::OPACITY] = transparentRenderTask;
 	m_RenderTasks[E_RENDER_TASK_TYPE::WIREFRAME] = wireFrameRenderTask;
 	m_RenderTasks[E_RENDER_TASK_TYPE::OUTLINE] = outliningRenderTask;
@@ -1933,7 +1965,7 @@ void Renderer::initRenderTasks()
 
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
-		m_DirectCommandLists[i].push_back(forwardRenderTask->GetCommandInterface()->GetCommandList(i));
+		m_DirectCommandLists[i].push_back(deferredLightRenderTask->GetCommandInterface()->GetCommandList(i));
 	}
 
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
@@ -2095,7 +2127,7 @@ void Renderer::prepareScene(Scene* activeScene)
 	pTLAS->SetupAccelerationStructureForBuilding(m_pDevice5, false);
 
 	// Currently unused inside forwardRenderTask
-	static_cast<ForwardRenderTask*>(m_RenderTasks[E_RENDER_TASK_TYPE::FORWARD_RENDER])->SetSceneBVHSRV(pTLAS->GetSRV());
+	static_cast<DeferredLightRenderTask*>(m_RenderTasks[E_RENDER_TASK_TYPE::FORWARD_RENDER])->SetSceneBVHSRV(pTLAS->GetSRV());
 
 	m_pCbPerSceneData->rayTracingBVH = pTLAS->GetSRV()->GetDescriptorHeapIndex();
 }
