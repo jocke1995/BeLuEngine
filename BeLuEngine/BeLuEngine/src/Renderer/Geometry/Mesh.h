@@ -56,6 +56,8 @@ public:
 protected:
     friend class MergeRenderTask;
     friend class DownSampleRenderTask;
+    friend class DeferredLightRenderTask;
+
     friend class Renderer;
     friend class AssetLoader;
     friend class SceneManager;

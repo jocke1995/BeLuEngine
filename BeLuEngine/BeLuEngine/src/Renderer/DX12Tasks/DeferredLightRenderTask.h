@@ -5,6 +5,8 @@
 
 class ShaderResourceView;
 
+class mesh;
+
 class DeferredLightRenderTask : public RenderTask
 {
 public:
@@ -16,18 +18,14 @@ public:
 		unsigned int FLAG_THREAD);
 	~DeferredLightRenderTask();
 
+	void SetFullScreenQuad(Mesh* mesh);
+
 	void Execute() override final;
 
-	void SetSceneBVHSRV(ShaderResourceView* srv);
-
 private:
-	ShaderResourceView* m_pRayTracingSRV = nullptr;
+	SlotInfo m_Info;
+	Mesh* m_pFullScreenQuadMesh = nullptr;
 
-	void drawRenderComponent(
-		component::ModelComponent* mc,
-		component::TransformComponent* tc,
-		const DirectX::XMMATRIX* viewProjTransposed,
-		ID3D12GraphicsCommandList5* cl);
 };
 
 #endif

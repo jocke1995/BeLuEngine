@@ -30,6 +30,14 @@ DeferredLightRenderTask::~DeferredLightRenderTask()
 {
 }
 
+void DeferredLightRenderTask::SetFullScreenQuad(Mesh* mesh)
+{
+	m_pFullScreenQuadMesh = mesh;
+
+	//m_NumIndices = m_pFullScreenQuadMesh->GetNumIndices();
+	m_Info.vertexDataIndex = m_pFullScreenQuadMesh->m_pSRV->GetDescriptorHeapIndex();
+}
+
 void DeferredLightRenderTask::Execute()
 {
 	ID3D12CommandAllocator* commandAllocator = m_pCommandInterface->GetCommandAllocator(m_CommandInterfaceIndex);
@@ -85,64 +93,38 @@ void DeferredLightRenderTask::Execute()
 	commandList->SetGraphicsRootConstantBufferView(13, m_Resources["cbPerScene"]->GetGPUVirtualAdress());
 	commandList->SetGraphicsRootShaderResourceView(5, m_Resources["rawBufferLights"]->GetGPUVirtualAdress());
 
-	const DirectX::XMMATRIX* viewProjMatTrans = m_pCamera->GetViewProjectionTranposed();
 
 	// This pair for m_RenderComponents will be used for model-outlining in case any model is picked.
-	RenderComponent outlinedModel = {nullptr, nullptr};
+	//RenderComponent outlinedModel = {nullptr, nullptr};
 
 	// Draw for every Rendercomponent with stencil testing disabled
-	commandList->SetPipelineState(m_PipelineStates[0]->GetPSO());
-	for (int i = 0; i < m_RenderComponents.size(); i++)
-	{
-		component::ModelComponent* mc = m_RenderComponents.at(i).mc;
-		component::TransformComponent* tc = m_RenderComponents.at(i).tc;
 
-		// If the model is picked, we dont draw it with default stencil buffer.
-		// Instead we store it and draw it later with a different pso to allow for model-outlining
-		if (mc->IsPickedThisFrame() == true)
-		{
-			outlinedModel = m_RenderComponents.at(i);
-			continue;
-		}
-		commandList->OMSetStencilRef(1);
-		drawRenderComponent(mc, tc, viewProjMatTrans, commandList);
-	}
+	commandList->SetPipelineState(m_PipelineStates[0]->GetPSO());
+	//component::ModelComponent* mc = m_RenderComponents.at(i).mc;
+	//component::TransformComponent* tc = m_RenderComponents.at(i).tc;
+	//
+	//// If the model is picked, we dont draw it with default stencil buffer.
+	//// Instead we store it and draw it later with a different pso to allow for model-outlining
+	//if (mc->IsPickedThisFrame() == true)
+	//{
+	//	outlinedModel = m_RenderComponents.at(i);
+	//	continue;
+	//}
+	//commandList->OMSetStencilRef(1);
+
+	// Draw a fullscreen quad 
+	commandList->SetGraphicsRoot32BitConstants(3, sizeof(SlotInfo) / sizeof(UINT), &m_Info, 0);
+	commandList->IASetIndexBuffer(m_pFullScreenQuadMesh->GetIndexBufferView());
+
+	commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
 
 	// Draw Rendercomponent with stencil testing enabled
-	if (outlinedModel.mc != nullptr)
-	{
-		commandList->SetPipelineState(m_PipelineStates[1]->GetPSO());
-		commandList->OMSetStencilRef(1);
-		drawRenderComponent(outlinedModel.mc, outlinedModel.tc, viewProjMatTrans, commandList);
-	}
+	//if (outlinedModel.mc != nullptr)
+	//{
+	//	commandList->SetPipelineState(m_PipelineStates[1]->GetPSO());
+	//	commandList->OMSetStencilRef(1);
+	//	drawRenderComponent(outlinedModel.mc, outlinedModel.tc, viewProjMatTrans, commandList);
+	//}
 
 	commandList->Close();
-}
-
-void DeferredLightRenderTask::SetSceneBVHSRV(ShaderResourceView* srv)
-{
-	m_pRayTracingSRV = srv;
-}
-
-void DeferredLightRenderTask::drawRenderComponent(
-	component::ModelComponent* mc,
-	component::TransformComponent* tc,
-	const DirectX::XMMATRIX* viewProjTransposed,
-	ID3D12GraphicsCommandList5* cl)
-{
-	// Draw for every m_pMesh the meshComponent has
-	for (unsigned int i = 0; i < mc->GetNrOfMeshes(); i++)
-	{
-		Mesh* m = mc->GetMeshAt(i);
-		unsigned int num_Indices = m->GetNumIndices();
-		const SlotInfo* info = mc->GetSlotInfoAt(i);
-
-		Transform* t = tc->GetTransform();
-		cl->SetGraphicsRootConstantBufferView(14, mc->GetMaterialAt(i)->GetMaterialData()->first->GetDefaultResource()->GetGPUVirtualAdress());
-		cl->SetGraphicsRoot32BitConstants(3, sizeof(SlotInfo) / sizeof(UINT), info, 0);
-		cl->SetGraphicsRootConstantBufferView(11, t->m_pCB->GetDefaultResource()->GetGPUVirtualAdress());
-
-		cl->IASetIndexBuffer(m->GetIndexBufferView());
-		cl->DrawIndexedInstanced(num_Indices, 1, 0, 0, 0);
-	}
 }

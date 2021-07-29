@@ -1674,10 +1674,15 @@ void Renderer::initRenderTasks()
 	deferredLightRenderTask->AddResource("cbPerFrame", m_pCbPerFrame->GetDefaultResource());
 	deferredLightRenderTask->AddResource("cbPerScene", m_pCbPerScene->GetDefaultResource());
 	deferredLightRenderTask->AddResource("rawBufferLights", Light::m_pLightsRawBuffer->GetDefaultResource());
+	deferredLightRenderTask->AddResource("gBufferAlbedo", Light::m_pLightsRawBuffer->GetDefaultResource());
+	deferredLightRenderTask->AddResource("gBufferNormal", Light::m_pLightsRawBuffer->GetDefaultResource());
+	deferredLightRenderTask->AddResource("gBufferMaterialProperties", Light::m_pLightsRawBuffer->GetDefaultResource());
 	deferredLightRenderTask->SetMainDepthStencil(m_pMainDepthStencil);
 
 	deferredLightRenderTask->AddRenderTargetView("brightTarget", std::get<1>(*m_pBloomResources->GetBrightTuple()));
 	deferredLightRenderTask->AddRenderTargetView("finalColorBuffer", m_FinalColorBuffer.first->GetRTV());
+
+	static_cast<DeferredLightRenderTask*>(deferredLightRenderTask)->SetFullScreenQuad(m_pFullScreenQuad);
 
 	deferredLightRenderTask->SetDescriptorHeaps(m_DescriptorHeaps);
 
