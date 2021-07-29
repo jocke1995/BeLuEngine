@@ -77,9 +77,9 @@ struct CB_PER_FRAME_STRUCT
 struct CB_PER_SCENE_STRUCT
 {
 	unsigned int rayTracingBVH;
-	unsigned int pad2;
-	unsigned int pad3;
-	unsigned int pad4;
+	unsigned int gBufferAlbedo;
+	unsigned int gBufferNormal;
+	unsigned int gBufferMaterialProperties;
 };
 
 struct LightHeader

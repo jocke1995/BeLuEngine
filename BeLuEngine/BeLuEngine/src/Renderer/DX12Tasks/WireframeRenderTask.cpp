@@ -59,7 +59,7 @@ void WireframeRenderTask::Execute()
 	ID3D12CommandAllocator* commandAllocator = m_pCommandInterface->GetCommandAllocator(m_CommandInterfaceIndex);
 	ID3D12GraphicsCommandList5* commandList = m_pCommandInterface->GetCommandList(m_CommandInterfaceIndex);
 	
-	const RenderTargetView* mainColorRenderTarget = m_RenderTargetViews["mainColorTarget"];
+	const RenderTargetView* mainColorRenderTarget = m_RenderTargetViews["finalColorBuffer"];
 
 	m_pCommandInterface->Reset(m_CommandInterfaceIndex);
 

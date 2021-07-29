@@ -35,8 +35,8 @@ void DeferredLightRenderTask::Execute()
 	ID3D12CommandAllocator* commandAllocator = m_pCommandInterface->GetCommandAllocator(m_CommandInterfaceIndex);
 	ID3D12GraphicsCommandList5* commandList = m_pCommandInterface->GetCommandList(m_CommandInterfaceIndex);
 
-	const RenderTargetView* mainColorRenderTarget = m_RenderTargetViews["gBufferAlbedo"];
-	ID3D12Resource1* gBufferAlbedoResource = mainColorRenderTarget->GetResource()->GetID3D12Resource1();
+	const RenderTargetView* finalColorRTV = m_RenderTargetViews["finalColorBuffer"];
+	ID3D12Resource1* finalColorResource = finalColorRTV->GetResource()->GetID3D12Resource1();
 
 	m_pCommandInterface->Reset(m_CommandInterfaceIndex);
 
@@ -53,11 +53,11 @@ void DeferredLightRenderTask::Execute()
 	DescriptorHeap* depthBufferHeap  = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::DSV];
 
 	// RenderTargets
-	const unsigned int gBufferAlbedoIndex = mainColorRenderTarget->GetDescriptorHeapIndex();
+	const unsigned int finalColorTargetIndex = finalColorRTV->GetDescriptorHeapIndex();
 	const unsigned int brightTargetIndex = m_RenderTargetViews["brightTarget"]->GetDescriptorHeapIndex();
-	D3D12_CPU_DESCRIPTOR_HANDLE cdhgBufferAlbedo = renderTargetHeap->GetCPUHeapAt(gBufferAlbedoIndex);
+	D3D12_CPU_DESCRIPTOR_HANDLE cdhgFinalColorTarget = renderTargetHeap->GetCPUHeapAt(finalColorTargetIndex);
 	D3D12_CPU_DESCRIPTOR_HANDLE cdhBrightTarget = renderTargetHeap->GetCPUHeapAt(brightTargetIndex);
-	D3D12_CPU_DESCRIPTOR_HANDLE cdhs[] = { cdhgBufferAlbedo, cdhBrightTarget };
+	D3D12_CPU_DESCRIPTOR_HANDLE cdhs[] = { cdhgFinalColorTarget, cdhBrightTarget };
 
 	// Depth
 	D3D12_CPU_DESCRIPTOR_HANDLE dsh = depthBufferHeap->GetCPUHeapAt(m_pDepthStencil->GetDSV()->GetDescriptorHeapIndex());
@@ -66,14 +66,15 @@ void DeferredLightRenderTask::Execute()
 
 	float clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 	commandList->ClearRenderTargetView(cdhBrightTarget, clearColor, 0, nullptr);
+	commandList->ClearRenderTargetView(cdhgFinalColorTarget , clearColor, 0, nullptr);
 
-	const D3D12_VIEWPORT viewPortgBufferAlbedo = *mainColorRenderTarget->GetRenderView()->GetViewPort();
+	const D3D12_VIEWPORT viewPortFinalColorTarget = *finalColorRTV->GetRenderView()->GetViewPort();
 	const D3D12_VIEWPORT viewPortBrightTarget = *m_RenderTargetViews["brightTarget"]->GetRenderView()->GetViewPort();
-	const D3D12_VIEWPORT viewPorts[2] = { viewPortgBufferAlbedo, viewPortBrightTarget };
+	const D3D12_VIEWPORT viewPorts[2] = { viewPortFinalColorTarget, viewPortBrightTarget };
 
-	const D3D12_RECT rectgBufferAlbedo = *mainColorRenderTarget->GetRenderView()->GetScissorRect();
+	const D3D12_RECT rectFinalColorTarget = *finalColorRTV->GetRenderView()->GetScissorRect();
 	const D3D12_RECT rectBrightTarget = *m_RenderTargetViews["brightTarget"]->GetRenderView()->GetScissorRect();
-	const D3D12_RECT rects[2] = { rectgBufferAlbedo, rectBrightTarget };
+	const D3D12_RECT rects[2] = { rectFinalColorTarget, rectBrightTarget };
 
 	commandList->RSSetViewports(2, viewPorts);
 	commandList->RSSetScissorRects(2, rects);

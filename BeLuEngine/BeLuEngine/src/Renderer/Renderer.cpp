@@ -131,6 +131,9 @@ void Renderer::deleteRenderer()
 
 	delete m_pFullScreenQuad;
 
+	delete m_FinalColorBuffer.first;
+	delete m_FinalColorBuffer.second;
+
 	delete m_GBufferAlbedo.first;
 	delete m_GBufferAlbedo.second;
 	delete m_GBufferNormal.first;
@@ -204,13 +207,26 @@ void Renderer::InitD3D12(Window *window, HINSTANCE hInstance, ThreadPool* thread
 	
 #pragma region RenderTargets
 	// Main color renderTarget (used until the swapchain RT is drawn to)
+	m_FinalColorBuffer.first = new RenderTarget(
+		m_pDevice5,
+		m_pWindow->GetScreenWidth(), m_pWindow->GetScreenHeight(),
+		L"finalColorBuffer_RESOURCE",
+		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV]);
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	m_FinalColorBuffer.second = new ShaderResourceView(
+		m_pDevice5,
+		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV],
+		m_FinalColorBuffer.first->GetDefaultResource());
+
+	// GBufferAlbedo
 	m_GBufferAlbedo.first = new RenderTarget(
 		m_pDevice5,
 		m_pWindow->GetScreenWidth(), m_pWindow->GetScreenHeight(),
 		L"gBufferAlbedo_RESOURCE",
 		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV]);
 
-	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc = {};
 	m_GBufferAlbedo.second = new ShaderResourceView(
 		m_pDevice5,
 		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV],
@@ -1659,12 +1675,9 @@ void Renderer::initRenderTasks()
 	deferredLightRenderTask->AddResource("cbPerScene", m_pCbPerScene->GetDefaultResource());
 	deferredLightRenderTask->AddResource("rawBufferLights", Light::m_pLightsRawBuffer->GetDefaultResource());
 	deferredLightRenderTask->SetMainDepthStencil(m_pMainDepthStencil);
-	deferredLightRenderTask->AddRenderTargetView("brightTarget", std::get<1>(*m_pBloomResources->GetBrightTuple()));
 
-	// TODO: Srvs
-	deferredLightRenderTask->AddRenderTargetView("gBufferAlbedo", m_GBufferAlbedo.first->GetRTV());
-	deferredLightRenderTask->AddRenderTargetView("gBufferNormal", m_GBufferNormal.first->GetRTV());
-	deferredLightRenderTask->AddRenderTargetView("gBufferMaterialProperties", m_GBufferMaterialProperties.first->GetRTV());
+	deferredLightRenderTask->AddRenderTargetView("brightTarget", std::get<1>(*m_pBloomResources->GetBrightTuple()));
+	deferredLightRenderTask->AddRenderTargetView("finalColorBuffer", m_FinalColorBuffer.first->GetRTV());
 
 	deferredLightRenderTask->SetDescriptorHeaps(m_DescriptorHeaps);
 
@@ -1753,7 +1766,7 @@ void Renderer::initRenderTasks()
 		F_THREAD_FLAGS::RENDER);
 	
 	outliningRenderTask->SetMainDepthStencil(m_pMainDepthStencil);
-	outliningRenderTask->AddRenderTargetView("gBufferAlbedo", m_GBufferAlbedo.first->GetRTV());
+	outliningRenderTask->AddRenderTargetView("finalColorBuffer", m_FinalColorBuffer.first->GetRTV());
 	outliningRenderTask->SetDescriptorHeaps(m_DescriptorHeaps);
 
 #pragma endregion ModelOutlining
@@ -1851,7 +1864,7 @@ void Renderer::initRenderTasks()
 	transparentRenderTask->AddResource("cbPerScene", m_pCbPerScene->GetDefaultResource());
 	transparentRenderTask->AddResource("rawBufferLights", Light::m_pLightsRawBuffer->GetDefaultResource());
 	transparentRenderTask->SetMainDepthStencil(m_pMainDepthStencil);
-	transparentRenderTask->AddRenderTargetView("gBufferAlbedo", m_GBufferAlbedo.first->GetRTV());
+	transparentRenderTask->AddRenderTargetView("finalColorBuffer", m_FinalColorBuffer.first->GetRTV());
 	transparentRenderTask->SetDescriptorHeaps(m_DescriptorHeaps);
 
 #pragma endregion Blend
@@ -1885,7 +1898,7 @@ void Renderer::initRenderTasks()
 		L"WireFramePSO",
 		F_THREAD_FLAGS::RENDER);
 
-	wireFrameRenderTask->AddRenderTargetView("gBufferAlbedo", m_GBufferAlbedo.first->GetRTV());
+	wireFrameRenderTask->AddRenderTargetView("finalColorBuffer", m_FinalColorBuffer.first->GetRTV());
 	wireFrameRenderTask->SetDescriptorHeaps(m_DescriptorHeaps);
 #pragma endregion WireFrame
 
@@ -1927,7 +1940,7 @@ void Renderer::initRenderTasks()
 
 	static_cast<MergeRenderTask*>(mergeTask)->SetFullScreenQuad(m_pFullScreenQuad);
 	static_cast<MergeRenderTask*>(mergeTask)->AddSRVToMerge(m_pBloomResources->GetPingPongResource(0)->GetSRV());
-	static_cast<MergeRenderTask*>(mergeTask)->AddSRVToMerge(m_GBufferAlbedo.second);
+	static_cast<MergeRenderTask*>(mergeTask)->AddSRVToMerge(m_FinalColorBuffer.second);
 	mergeTask->SetSwapChain(m_pSwapChain);
 	mergeTask->SetDescriptorHeaps(m_DescriptorHeaps);
 	static_cast<MergeRenderTask*>(mergeTask)->CreateSlotInfo();
@@ -2210,7 +2223,11 @@ void Renderer::prepareScene(Scene* activeScene)
 	// Currently unused
 	//static_cast<DeferredLightRenderTask*>(m_RenderTasks[E_RENDER_TASK_TYPE::DEFERRED_GEOMETRY])->SetSceneBVHSRV(pTLAS->GetSRV());
 
+	// PerSceneData 
 	m_pCbPerSceneData->rayTracingBVH = pTLAS->GetSRV()->GetDescriptorHeapIndex();
+	m_pCbPerSceneData->gBufferAlbedo = m_GBufferAlbedo.second->GetDescriptorHeapIndex();
+	m_pCbPerSceneData->gBufferNormal = m_GBufferNormal.second->GetDescriptorHeapIndex();
+	m_pCbPerSceneData->gBufferMaterialProperties = m_GBufferMaterialProperties.second->GetDescriptorHeapIndex();
 }
 
 void Renderer::submitUploadPerSceneData()

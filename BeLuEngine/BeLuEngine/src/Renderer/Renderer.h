@@ -176,6 +176,7 @@ private:
 	std::map<E_COMMAND_INTERFACE_TYPE, ID3D12CommandQueue*> m_CommandQueues;
 
 	// -------------- RenderTargets -------------- 
+	std::pair<RenderTarget*, ShaderResourceView*> m_FinalColorBuffer;
 	std::pair<RenderTarget*, ShaderResourceView*> m_GBufferAlbedo;
 	std::pair<RenderTarget*, ShaderResourceView*> m_GBufferNormal;
 	std::pair<RenderTarget*, ShaderResourceView*> m_GBufferMaterialProperties;

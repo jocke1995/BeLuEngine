@@ -34,7 +34,7 @@ void TransparentRenderTask::Execute()
 {
 	ID3D12CommandAllocator* commandAllocator = m_pCommandInterface->GetCommandAllocator(m_CommandInterfaceIndex);
 	ID3D12GraphicsCommandList5* commandList = m_pCommandInterface->GetCommandList(m_CommandInterfaceIndex);
-	const RenderTargetView* gBufferAlbedoRenderTarget = m_RenderTargetViews["gBufferAlbedo"];
+	const RenderTargetView* gBufferAlbedoRenderTarget = m_RenderTargetViews["finalColorBuffer"];
 	ID3D12Resource1* gBufferAlbedoResource = gBufferAlbedoRenderTarget->GetResource()->GetID3D12Resource1();
 
 	m_pCommandInterface->Reset(m_CommandInterfaceIndex);
