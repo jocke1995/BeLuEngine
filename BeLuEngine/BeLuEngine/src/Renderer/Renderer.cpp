@@ -1264,7 +1264,7 @@ void Renderer::createSwapChain()
 void Renderer::createMainDSV()
 {
 	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
-	dsvDesc.Format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
+	dsvDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
 	dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
 
@@ -1282,7 +1282,8 @@ void Renderer::createMainDSV()
 		resolutionWidth, resolutionHeight,
 		L"MainDSV",
 		&dsvDesc,
-		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::DSV]);
+		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::DSV],
+		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
 }
 
 void Renderer::createRootSignature()
@@ -1627,7 +1628,7 @@ void Renderer::initRenderTasks()
 
 	// Depth descriptor
 	D3D12_DEPTH_STENCIL_DESC dsd = {};
-	dsd.DepthEnable = true;
+	dsd.DepthEnable = false;
 	dsd.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
 	dsd.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
 
@@ -1674,9 +1675,6 @@ void Renderer::initRenderTasks()
 	deferredLightRenderTask->AddResource("cbPerFrame", m_pCbPerFrame->GetDefaultResource());
 	deferredLightRenderTask->AddResource("cbPerScene", m_pCbPerScene->GetDefaultResource());
 	deferredLightRenderTask->AddResource("rawBufferLights", Light::m_pLightsRawBuffer->GetDefaultResource());
-	deferredLightRenderTask->AddResource("gBufferAlbedo", Light::m_pLightsRawBuffer->GetDefaultResource());
-	deferredLightRenderTask->AddResource("gBufferNormal", Light::m_pLightsRawBuffer->GetDefaultResource());
-	deferredLightRenderTask->AddResource("gBufferMaterialProperties", Light::m_pLightsRawBuffer->GetDefaultResource());
 	deferredLightRenderTask->SetMainDepthStencil(m_pMainDepthStencil);
 
 	deferredLightRenderTask->AddRenderTargetView("brightTarget", std::get<1>(*m_pBloomResources->GetBrightTuple()));
@@ -2233,6 +2231,7 @@ void Renderer::prepareScene(Scene* activeScene)
 	m_pCbPerSceneData->gBufferAlbedo = m_GBufferAlbedo.second->GetDescriptorHeapIndex();
 	m_pCbPerSceneData->gBufferNormal = m_GBufferNormal.second->GetDescriptorHeapIndex();
 	m_pCbPerSceneData->gBufferMaterialProperties = m_GBufferMaterialProperties.second->GetDescriptorHeapIndex();
+	//m_pCbPerSceneData->depth = m_pMainDepthStencil->GetSRV()->GetDescriptorHeapIndex();
 }
 
 void Renderer::submitUploadPerSceneData()

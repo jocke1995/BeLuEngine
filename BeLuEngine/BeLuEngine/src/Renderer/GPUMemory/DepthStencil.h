@@ -4,6 +4,7 @@
 class Resource;
 class DescriptorHeap;
 class DepthStencilView;
+class ShaderResourceView;
 
 static unsigned int s_DsCounter = 0;
 class DepthStencil
@@ -15,7 +16,8 @@ public:
 		unsigned int height,
 		std::wstring resourceName,
 		D3D12_DEPTH_STENCIL_VIEW_DESC* dsvDesc,
-		DescriptorHeap* descriptorHeap_DSV);
+		DescriptorHeap* descriptorHeap_DSV,
+		DescriptorHeap* descriptorHeap_CBV_UAV_SRV);
 
 	virtual ~DepthStencil();
 
@@ -24,10 +26,12 @@ public:
 
 	const Resource* const GetDefaultResource() const;
 	const DepthStencilView* const GetDSV() const;
+	ShaderResourceView* const GetSRV() const;
 
 private:
 	Resource* m_pDefaultResource = nullptr;
 	DepthStencilView* m_pDSV = nullptr;
+	ShaderResourceView* m_pSRV = nullptr;
 
 	unsigned int m_Id = 0;
 	void createResource(

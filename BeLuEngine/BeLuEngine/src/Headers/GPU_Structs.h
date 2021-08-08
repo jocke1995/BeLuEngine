@@ -73,13 +73,17 @@ struct CB_PER_FRAME_STRUCT
 	// etc ..
 };
 
-// Currently unused
 struct CB_PER_SCENE_STRUCT
 {
 	unsigned int rayTracingBVH;
 	unsigned int gBufferAlbedo;
 	unsigned int gBufferNormal;
 	unsigned int gBufferMaterialProperties;
+
+	unsigned int depth;
+	unsigned int pad1;
+	unsigned int pad2;
+	unsigned int pad3;
 };
 
 struct LightHeader
