@@ -33,6 +33,8 @@ void OrthographicCamera::updateProjectionMatrix()
 		m_Top,
 		m_NearZ,
 		m_FarZ);
+
+	m_ProjMatrixInverse = DirectX::XMMatrixInverse(nullptr, m_ProjMatrix);
 }
 
 void OrthographicCamera::updateSpecific(double dt)
@@ -40,6 +42,16 @@ void OrthographicCamera::updateSpecific(double dt)
 	updateProjectionMatrix();
 	m_ViewProjMatrix = m_ViewMatrix * m_ProjMatrix;
 	m_ViewProjTranposedMatrix = DirectX::XMMatrixTranspose(m_ViewProjMatrix);
+}
+
+const DirectX::XMMATRIX* OrthographicCamera::GetProjMatrix() const
+{
+	return &m_ProjMatrix;
+}
+
+const DirectX::XMMATRIX* OrthographicCamera::GetProjMatrixInverse() const
+{
+	return &m_ProjMatrixInverse;
 }
 
 const DirectX::XMMATRIX* OrthographicCamera::GetViewProjection() const

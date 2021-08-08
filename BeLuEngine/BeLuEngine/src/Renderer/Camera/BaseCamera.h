@@ -25,6 +25,9 @@ public:
 	// Matrices
 	const DirectX::XMMATRIX* GetViewMatrix() const;
 	const DirectX::XMMATRIX* GetViewMatrixInverse() const;
+	virtual const DirectX::XMMATRIX* GetProjMatrix() const = 0;
+	virtual const DirectX::XMMATRIX* GetProjMatrixInverse() const = 0;
+
 	virtual const DirectX::XMMATRIX* GetViewProjection() const = 0;
 	virtual const DirectX::XMMATRIX* GetViewProjectionTranposed() const = 0;
 

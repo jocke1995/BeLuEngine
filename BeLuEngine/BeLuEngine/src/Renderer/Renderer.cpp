@@ -355,6 +355,11 @@ void Renderer::Update(double dt)
 	m_pCbPerFrameData->camUp = up;
 	m_pCbPerFrameData->camForward = forward;
 
+	m_pCbPerFrameData->projection	= *m_pScenePrimaryCamera->GetProjMatrix();
+	m_pCbPerFrameData->projectionI	= *m_pScenePrimaryCamera->GetProjMatrixInverse();
+	m_pCbPerFrameData->view			= *m_pScenePrimaryCamera->GetViewMatrix();
+	m_pCbPerFrameData->viewI		= *m_pScenePrimaryCamera->GetViewMatrixInverse();
+
 	// Picking
 	updateMousePicker();
 

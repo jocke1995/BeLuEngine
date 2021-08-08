@@ -68,6 +68,10 @@ struct CB_PER_FRAME_STRUCT
 	float3 camForward;
 	float pad3;
 
+	float4x4 view;
+	float4x4 projection;
+	float4x4 viewI;
+	float4x4 projectionI;
 
 	// deltaTime ..
 	// etc ..
