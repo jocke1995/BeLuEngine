@@ -9,6 +9,11 @@ void SponzaUpdateScene(SceneManager* sm, double dt);
 // Temp
 #include "Misc/Multithreading/MultiThreadedTask.h"
 
+/* 
+--------- TODO --------- 
+Start on reflections with DXR
+*/
+
 class TestAsyncThread : public MultiThreadedTask
 {
 public:
