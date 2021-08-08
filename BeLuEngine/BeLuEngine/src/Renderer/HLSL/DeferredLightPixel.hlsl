@@ -31,7 +31,7 @@ PS_OUTPUT PS_main(VS_OUT input)
 	//float4 emissive = float4(0.0f, 0.0f, 0.0f, 0.0f);// textures[cbPerScene.textureEmissive].Sample(Anisotropic16_Wrap, uvScaled);
 
 	float depthVal = textures[cbPerScene.depth].Sample(Anisotropic16_Wrap, uvScaled).r;
-	float4 worldPos = float4(WorldPosFromDepth(depthVal, uvScaled, cbPerFrame.projectionI, cbPerFrame.viewI).xyz, 1.0f);
+	float4 worldPos = float4(WorldPosFromDepth(depthVal, uvScaled, cbPerFrame.projectionI, cbPerFrame.viewI).xyz, 0.0f);
 	float3 camPos = cbPerFrame.camPos;
 	float3 finalColor = float3(0.0f, 0.0f, 0.0f);
 	float3 viewDir = normalize(camPos - worldPos.xyz);
