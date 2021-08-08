@@ -140,6 +140,8 @@ void Renderer::deleteRenderer()
 	delete m_GBufferNormal.second;
 	delete m_GBufferMaterialProperties.first;
 	delete m_GBufferMaterialProperties.second;
+	delete m_GBufferEmissive.first;
+	delete m_GBufferEmissive.second;
 
 	delete m_pSwapChain;
 	delete m_pBloomResources;
@@ -244,7 +246,7 @@ void Renderer::InitD3D12(Window *window, HINSTANCE hInstance, ThreadPool* thread
 		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV],
 		m_GBufferNormal.first->GetDefaultResource());
 
-	// Material Properties (Roughness, Metallic
+	// Material Properties (Roughness, Metallic, glow..
 	m_GBufferMaterialProperties.first = new RenderTarget(
 		m_pDevice5,
 		m_pWindow->GetScreenWidth(), m_pWindow->GetScreenHeight(),
@@ -255,6 +257,18 @@ void Renderer::InitD3D12(Window *window, HINSTANCE hInstance, ThreadPool* thread
 		m_pDevice5,
 		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV],
 		m_GBufferMaterialProperties.first->GetDefaultResource());
+	
+	// Emissive Color
+	m_GBufferEmissive.first = new RenderTarget(
+			m_pDevice5,
+			m_pWindow->GetScreenWidth(), m_pWindow->GetScreenHeight(),
+			L"gBufferEmissive_RESOURCE",
+			m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV]);
+
+	m_GBufferEmissive.second = new ShaderResourceView(
+		m_pDevice5,
+		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV],
+		m_GBufferEmissive.first->GetDefaultResource());
 
 	// Swapchain
 	createSwapChain();
@@ -1548,11 +1562,12 @@ void Renderer::initRenderTasks()
 	/* Depth Pre-Pass rendering without stencil testing */
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsdDeferredGeometryPass = {};
 	gpsdDeferredGeometryPass.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-	// RenderTarget
-	gpsdDeferredGeometryPass.NumRenderTargets = 3;
+	// RenderTarget (TODO: Formats are way to big atm)
+	gpsdDeferredGeometryPass.NumRenderTargets = 4;
 	gpsdDeferredGeometryPass.RTVFormats[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
 	gpsdDeferredGeometryPass.RTVFormats[1] = DXGI_FORMAT_R16G16B16A16_FLOAT;
 	gpsdDeferredGeometryPass.RTVFormats[2] = DXGI_FORMAT_R16G16B16A16_FLOAT;
+	gpsdDeferredGeometryPass.RTVFormats[3] = DXGI_FORMAT_R16G16B16A16_FLOAT;
 	// Depthstencil usage
 	gpsdDeferredGeometryPass.SampleDesc.Count = 1;
 	gpsdDeferredGeometryPass.SampleMask = UINT_MAX;
@@ -1603,6 +1618,7 @@ void Renderer::initRenderTasks()
 	deferredGeometryRenderTask->AddRenderTargetView("gBufferAlbedo", m_GBufferAlbedo.first->GetRTV());
 	deferredGeometryRenderTask->AddRenderTargetView("gBufferNormal", m_GBufferNormal.first->GetRTV());
 	deferredGeometryRenderTask->AddRenderTargetView("gBufferMaterialProperties", m_GBufferMaterialProperties.first->GetRTV());
+	deferredGeometryRenderTask->AddRenderTargetView("gBufferEmissive", m_GBufferEmissive.first->GetRTV());
 #pragma endregion DeferredRenderingGeometry
 
 #pragma region DeferredRenderingLight
@@ -2232,11 +2248,12 @@ void Renderer::prepareScene(Scene* activeScene)
 	//static_cast<DeferredLightRenderTask*>(m_RenderTasks[E_RENDER_TASK_TYPE::DEFERRED_GEOMETRY])->SetSceneBVHSRV(pTLAS->GetSRV());
 
 	// PerSceneData 
-	m_pCbPerSceneData->rayTracingBVH = pTLAS->GetSRV()->GetDescriptorHeapIndex();
-	m_pCbPerSceneData->gBufferAlbedo = m_GBufferAlbedo.second->GetDescriptorHeapIndex();
-	m_pCbPerSceneData->gBufferNormal = m_GBufferNormal.second->GetDescriptorHeapIndex();
+	m_pCbPerSceneData->rayTracingBVH			 = pTLAS->GetSRV()->GetDescriptorHeapIndex();
+	m_pCbPerSceneData->gBufferAlbedo			 = m_GBufferAlbedo.second->GetDescriptorHeapIndex();
+	m_pCbPerSceneData->gBufferNormal			 = m_GBufferNormal.second->GetDescriptorHeapIndex();
 	m_pCbPerSceneData->gBufferMaterialProperties = m_GBufferMaterialProperties.second->GetDescriptorHeapIndex();
-	m_pCbPerSceneData->depth = m_pMainDepthStencil->GetSRV()->GetDescriptorHeapIndex();
+	m_pCbPerSceneData->gBufferEmissive			 = m_GBufferEmissive.second->GetDescriptorHeapIndex();
+	m_pCbPerSceneData->depth					 = m_pMainDepthStencil->GetSRV()->GetDescriptorHeapIndex();
 }
 
 void Renderer::submitUploadPerSceneData()

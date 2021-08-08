@@ -26,9 +26,9 @@ PS_OUTPUT PS_main(VS_OUT input)
 	float4 albedo   = textures[cbPerScene.gBufferAlbedo].Sample(Anisotropic16_Wrap, uvScaled);
 	float roughness = textures[cbPerScene.gBufferMaterialProperties].Sample(Anisotropic16_Wrap, uvScaled).r;
 	float metallic  = textures[cbPerScene.gBufferMaterialProperties].Sample(Anisotropic16_Wrap, uvScaled).g;
+	float glow		= textures[cbPerScene.gBufferMaterialProperties].Sample(Anisotropic16_Wrap, uvScaled).b;
 	float4 normal	= textures[cbPerScene.gBufferNormal].Sample(Anisotropic16_Wrap, uvScaled);
-
-	//float4 emissive = float4(0.0f, 0.0f, 0.0f, 0.0f);// textures[cbPerScene.textureEmissive].Sample(Anisotropic16_Wrap, uvScaled);
+	float4 emissive = textures[cbPerScene.gBufferEmissive].Sample(Anisotropic16_Wrap, uvScaled);
 
 	float depthVal = textures[cbPerScene.depth].Sample(Anisotropic16_Wrap, uvScaled).r;
 	float4 worldPos = float4(WorldPosFromDepth(depthVal, uvScaled, cbPerFrame.projectionI, cbPerFrame.viewI).xyz, 0.0f);
@@ -93,18 +93,14 @@ PS_OUTPUT PS_main(VS_OUT input)
 	
 	float3 ambient = float3(0.001f, 0.001f, 0.001f) * albedo;
 	finalColor += ambient;
-	
-	//finalColor += emissive.rgb * emissive.a;
 
 	PS_OUTPUT output = (PS_OUTPUT)0;
 
 	output.sceneColor = float4(finalColor.rgb, 1.0f);
-	//output.sceneColor = normal;
 
-	float brightness = dot(output.sceneColor.rgb, float3(0.2126, 0.7152, 0.0722));
-	if (brightness > 1.0f /*&& material.glow == true*/)
+	if (glow == 1.0f)
 	{
-		output.brightColor = output.sceneColor;
+		output.brightColor = emissive;
 	}
 	else
 	{

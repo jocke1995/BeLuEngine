@@ -62,11 +62,13 @@ void DeferredGeometryRenderTask::Execute()
 	const unsigned int gBufferAlbedoIndex	= m_RenderTargetViews["gBufferAlbedo"]->GetDescriptorHeapIndex();
 	const unsigned int gBufferNormalIndex	= m_RenderTargetViews["gBufferNormal"]->GetDescriptorHeapIndex();
 	const unsigned int gBufferMaterialIndex = m_RenderTargetViews["gBufferMaterialProperties"]->GetDescriptorHeapIndex();
+	const unsigned int gBufferEmissiveIndex = m_RenderTargetViews["gBufferEmissive"]->GetDescriptorHeapIndex();
 
 	D3D12_CPU_DESCRIPTOR_HANDLE cdhgBufferAlbedo	= renderTargetHeap->GetCPUHeapAt(gBufferAlbedoIndex);
 	D3D12_CPU_DESCRIPTOR_HANDLE cdhgBufferNormal	= renderTargetHeap->GetCPUHeapAt(gBufferNormalIndex);
 	D3D12_CPU_DESCRIPTOR_HANDLE cdhgBufferMaterial	= renderTargetHeap->GetCPUHeapAt(gBufferMaterialIndex);
-	D3D12_CPU_DESCRIPTOR_HANDLE cdhs[] = { cdhgBufferAlbedo, cdhgBufferNormal, cdhgBufferMaterial };
+	D3D12_CPU_DESCRIPTOR_HANDLE cdhgBufferEmissive	= renderTargetHeap->GetCPUHeapAt(gBufferEmissiveIndex);
+	D3D12_CPU_DESCRIPTOR_HANDLE cdhs[] = { cdhgBufferAlbedo, cdhgBufferNormal, cdhgBufferMaterial, cdhgBufferEmissive };
 
 	// Depth
 	unsigned int depthIndex = m_pDepthStencil->GetDSV()->GetDescriptorHeapIndex();
@@ -76,8 +78,9 @@ void DeferredGeometryRenderTask::Execute()
 	commandList->ClearRenderTargetView(cdhgBufferAlbedo  , clearColor, 0, nullptr);
 	commandList->ClearRenderTargetView(cdhgBufferNormal  , clearColor, 0, nullptr);
 	commandList->ClearRenderTargetView(cdhgBufferMaterial, clearColor, 0, nullptr);
+	commandList->ClearRenderTargetView(cdhgBufferEmissive, clearColor, 0, nullptr);
 
-	commandList->OMSetRenderTargets(3, cdhs, false, &dsh);
+	commandList->OMSetRenderTargets(4, cdhs, false, &dsh);
 	
 	commandList->SetGraphicsRootConstantBufferView(13, m_Resources["cbPerScene"]->GetGPUVirtualAdress());
 

@@ -180,6 +180,7 @@ private:
 	std::pair<RenderTarget*, ShaderResourceView*> m_GBufferAlbedo;
 	std::pair<RenderTarget*, ShaderResourceView*> m_GBufferNormal;
 	std::pair<RenderTarget*, ShaderResourceView*> m_GBufferMaterialProperties;
+	std::pair<RenderTarget*, ShaderResourceView*> m_GBufferEmissive;
 
 	// Swapchain (inheriting from 'RenderTarget')
 	SwapChain* m_pSwapChain = nullptr;

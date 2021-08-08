@@ -11,9 +11,10 @@ struct VS_OUT
 
 struct PS_OUTPUT
 {
-	float4 AlbedoColor	: SV_TARGET0;
-	float4 NormalColor	: SV_TARGET1;
-	float4 MatColor		: SV_TARGET2;
+	float4 AlbedoColor		: SV_TARGET0;
+	float4 NormalColor		: SV_TARGET1;
+	float4 MatColor			: SV_TARGET2;
+	float4 EmissiveColor	: SV_TARGET3;
 };
 
 ConstantBuffer<SlotInfo> info					 : register(b1, space0);
@@ -43,9 +44,10 @@ PS_OUTPUT PS_main(VS_OUT input)
 		normal = input.norm.xyz;
 	}
 
-	output.AlbedoColor = albedo;
-	output.NormalColor	= float4(normal, 1.0f);
-	output.MatColor		= float4(roughness, metallic, 0.0f, 0.0f);
+	output.AlbedoColor	 = albedo;
+	output.NormalColor	 = float4(normal, 1.0f);
+	output.MatColor		 = float4(roughness, metallic, material.glow, 0.0f);
+	output.EmissiveColor = emissive;
 
 	return output;
 }
