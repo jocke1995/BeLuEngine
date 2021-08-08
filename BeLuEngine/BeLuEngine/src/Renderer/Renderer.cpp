@@ -2236,7 +2236,7 @@ void Renderer::prepareScene(Scene* activeScene)
 	m_pCbPerSceneData->gBufferAlbedo = m_GBufferAlbedo.second->GetDescriptorHeapIndex();
 	m_pCbPerSceneData->gBufferNormal = m_GBufferNormal.second->GetDescriptorHeapIndex();
 	m_pCbPerSceneData->gBufferMaterialProperties = m_GBufferMaterialProperties.second->GetDescriptorHeapIndex();
-	//m_pCbPerSceneData->depth = m_pMainDepthStencil->GetSRV()->GetDescriptorHeapIndex();
+	m_pCbPerSceneData->depth = m_pMainDepthStencil->GetSRV()->GetDescriptorHeapIndex();
 }
 
 void Renderer::submitUploadPerSceneData()
