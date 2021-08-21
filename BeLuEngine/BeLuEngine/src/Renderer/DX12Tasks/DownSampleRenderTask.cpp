@@ -41,7 +41,7 @@ void DownSampleRenderTask::SetFullScreenQuadInSlotInfo()
 {
 	// Mesh
 	m_NumIndices = m_pFullScreenQuadMesh->GetNumIndices();
-	m_Info.vertexDataIndex = m_pFullScreenQuadMesh->m_pSRV->GetDescriptorHeapIndex();
+	m_Info.vertexDataIndex = m_pFullScreenQuadMesh->m_pVertexBufferSRV->GetDescriptorHeapIndex();
 
 	// The descriptorHeapIndices for the source&dest are currently put inside the textureSlots inside SlotInfo
 	m_dhIndices.index0 = m_pSourceSRV->GetDescriptorHeapIndex();

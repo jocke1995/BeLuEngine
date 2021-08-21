@@ -63,6 +63,9 @@ class ComputeTask;
 
 // DXR
 class DXRTask;
+class ShaderBindingTableGenerator;
+class ID3D12StateObject;
+class ID3D12StateObjectProperties;
 
 // DX12 Forward Declarations
 struct ID3D12CommandQueue;
@@ -136,6 +139,8 @@ private:
 	friend class SceneManager;
 	friend class ImGuiHandler;
 	friend class Material;
+	friend class component::ModelComponent;
+
 	Renderer();
 
 	// For control of safe release of DirectX resources
@@ -144,6 +149,7 @@ private:
 	// SubmitToCodt functions
 	void submitToCodt(std::tuple<Resource*, Resource*, const void*>* Upload_Default_Data);
 	void submitModelToGPU(Model* model);
+	void submitSlotInfoRawBufferToGPU(component::ModelComponent* mc);
 	void submitMaterialToGPU(component::ModelComponent* mc);
 	void submitMaterialDataToGPU(Material* mat);
 	void submitMeshToCodt(Mesh* mesh);
@@ -225,6 +231,15 @@ private:
 
 	// DescriptorHeaps
 	std::map<E_DESCRIPTOR_HEAP_TYPE, DescriptorHeap*> m_DescriptorHeaps = {};
+
+	// PipelineState (DXR)
+	ID3D12StateObject* m_pRTStateObject = nullptr;
+	ID3D12StateObjectProperties* m_pRTStateObjectProps = nullptr;
+
+	// ShaderTable
+	void CreateShaderBindingTable();
+	ShaderBindingTableGenerator* m_pSbtGenerator;
+	Resource* m_pSbtStorage;
 
 	// Fences
 	HANDLE m_EventHandle = nullptr;

@@ -45,10 +45,9 @@ struct MaterialData
 struct SlotInfo
 {
 	unsigned int vertexDataIndex;
+	unsigned int indicesDataIndex;
 	unsigned int materialIndex;
 	unsigned int pad1;
-	unsigned int pad2;
-	// Will be more stuff here later, such as index for indicies etc
 };
 
 struct MATRICES_PER_OBJECT_STRUCT

@@ -10,6 +10,8 @@ class Model;
 class Material;
 struct SlotInfo;
 
+class ShaderResource;
+
 namespace component
 {
     class ModelComponent : public Component
@@ -40,7 +42,7 @@ namespace component
 
         // SlotInfo
         const SlotInfo* GetSlotInfoAt(unsigned int index) const;
-
+        ShaderResource* GetByteAdressInfoDXR() const;
 
     private:
         // The boundingBox will update the "m_IsPickedThisFrame"
@@ -56,6 +58,9 @@ namespace component
         void updateSlotInfo();
 
         unsigned int m_DrawFlag = 0;
+
+        // DXR
+        ShaderResource* m_SlotInfoByteAdressBuffer;
     };
 }
 #endif

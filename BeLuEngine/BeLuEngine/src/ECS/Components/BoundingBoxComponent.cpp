@@ -80,7 +80,7 @@ namespace component
 
 		m_SlotInfos.push_back(new SlotInfo());
 
-		m_SlotInfos.back()->vertexDataIndex = mesh->m_pSRV->GetDescriptorHeapIndex();
+		m_SlotInfos.back()->vertexDataIndex = mesh->m_pVertexBufferSRV->GetDescriptorHeapIndex();
 		// Textures are not used in the WireframeRenderTask
 	}
 

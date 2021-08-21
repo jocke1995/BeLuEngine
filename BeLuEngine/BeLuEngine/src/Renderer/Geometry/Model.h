@@ -45,6 +45,7 @@ protected:
     std::vector<Mesh*> m_Meshes;
     std::vector<Material*> m_OriginalMaterial;
 
+    // DXR
     BottomLevelAccelerationStructure* m_pBLAS = nullptr;
 };
 

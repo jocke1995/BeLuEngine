@@ -75,9 +75,12 @@
 // DXR
 #include "DX12Tasks/BottomLevelRenderTask.h"
 #include "DX12Tasks/TopLevelRenderTask.h"
-
+#include "DX12Tasks/DXRReflectionTask.h"
 #include "DXR/BottomLevelAccelerationStructure.h"
 #include "DXR/TopLevelAccelerationStructure.h"
+
+#include "DXR/ShaderBindingTableGenerator.h"
+#include "DXR/RaytracingPipelineGenerator.h"
 
 // Event
 #include "../Events/EventBus.h"
@@ -165,6 +168,9 @@ void Renderer::deleteRenderer()
 	{
 		delete dxrTask;
 	}
+
+	delete m_pSbtGenerator;
+	delete m_pSbtStorage;
 
 	SAFE_RELEASE(&m_pDevice5);
 
@@ -761,6 +767,8 @@ void Renderer::InitModelComponent(component::ModelComponent* mc)
 		}
 
 		m_RenderComponents[F_DRAW_FLAGS::RAY_TRACED].emplace_back(mc, tc);
+
+		submitSlotInfoRawBufferToGPU(mc);
 	}
 }
 
@@ -990,6 +998,16 @@ void Renderer::submitModelToGPU(Model* model)
 	static_cast<BottomLevelRenderTask*>(m_DXRTasks[E_DXR_TASK_TYPE::BLAS])->SubmitBLAS(model->m_pBLAS);
 }
 
+void Renderer::submitSlotInfoRawBufferToGPU(component::ModelComponent* mc)
+{
+	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]);
+	const void* data = static_cast<const void*>(mc->m_SlotInfos.data());
+	codt->Submit(&std::make_tuple(
+		mc->m_SlotInfoByteAdressBuffer->GetUploadResource(),
+		mc->m_SlotInfoByteAdressBuffer->GetDefaultResource(),
+		data));
+}
+
 void Renderer::submitMaterialToGPU(component::ModelComponent* mc)
 {
 	for (unsigned int i = 0; i < mc->GetNrOfMeshes(); i++)
@@ -1075,6 +1093,62 @@ Scene* const Renderer::GetActiveScene() const
 Window* const Renderer::GetWindow() const
 {
 	return m_pWindow;
+}
+
+void Renderer::CreateShaderBindingTable()
+{
+	m_pSbtGenerator = new ShaderBindingTableGenerator();
+
+	// The SBT helper class collects calls to Add*Program.  If called several
+	// times, the helper must be emptied before re-adding shaders.
+	m_pSbtGenerator->Reset();
+	
+	// The ray generation only uses heap data
+	m_pSbtGenerator->AddRayGenerationProgram(L"RayGen", {});
+	
+	// The miss and hit shaders do not access any external resources: instead they
+	// communicate their results through the ray payload
+	m_pSbtGenerator->AddMissProgram(L"Miss", {});
+	
+	// Adding the triangle hit shader
+	for (const RenderComponent& rc : m_RenderComponents[F_DRAW_FLAGS::RAY_TRACED])
+	{
+		m_pSbtGenerator->AddHitGroup(L"HitGroup",
+			{
+				(void*)rc.tc->GetTransform()->m_pCB->GetDefaultResource()->GetGPUVirtualAdress(),	// Unique per instance
+				(void*)rc.mc->GetByteAdressInfoDXR()->GetDefaultResource()->GetGPUVirtualAdress()	// Unique per modelComponent
+			});
+	}
+	
+	
+	// Compute the size of the SBT given the number of shaders and their
+	// parameters
+	uint32_t sbtSize = m_pSbtGenerator->ComputeSBTSize();
+	
+	// Create the SBT on the upload heap. This is required as the helper will use
+	// mapping to write the SBT contents. After the SBT compilation it could be
+	// copied to the default heap for performance.
+
+	D3D12_RESOURCE_DESC bufDesc = {};
+	bufDesc.Alignment = 0;
+	bufDesc.DepthOrArraySize = 1;
+	bufDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+	bufDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+	bufDesc.Format = DXGI_FORMAT_UNKNOWN;
+	bufDesc.Height = 1;
+	bufDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+	bufDesc.MipLevels = 1;
+	bufDesc.SampleDesc.Count = 1;
+	bufDesc.SampleDesc.Quality = 0;
+	bufDesc.Width = sbtSize;
+
+	D3D12_RESOURCE_STATES startState = D3D12_RESOURCE_STATE_GENERIC_READ;
+	m_pSbtStorage = new Resource(m_pDevice5, sbtSize, RESOURCE_TYPE::UPLOAD, L"ShaderBindingTable_Resource", D3D12_RESOURCE_FLAG_NONE, &startState);
+
+	
+	// TODO: Add after stateObject is completed
+	// Compile the SBT from the shader and parameters info
+	//m_pSbtGenerator->Generate(m_pSbtStorage->GetID3D12Resource1(), m_pRTStateObjectProps);
 }
 
 void Renderer::setRenderTasksPrimaryCamera()
@@ -1499,6 +1573,84 @@ void Renderer::initRenderTasks()
 #pragma region DXRTasks
 	DXRTask* blasTask = new BottomLevelRenderTask(m_pDevice5, F_THREAD_FLAGS::RENDER, L"BL_RenderTask_CommandList");
 	DXRTask* tlasTask = new TopLevelRenderTask(m_pDevice5, F_THREAD_FLAGS::RENDER, L"TL_RenderTask_CommandList");
+	/*
+	RayTracingPipelineGenerator pipeline(m_pDevice5);
+
+
+	// In a way similar to DLLs, each library is associated with a number of
+	// exported symbols. This
+	// has to be done explicitly in the lines below. Note that a single library
+	// can contain an arbitrary number of symbols, whose semantic is given in HLSL
+	// using the [shader("xxx")] syntax
+	pipeline.AddLibrary(m_pRayGenShader->GetBlob(), { L"RayGen" });
+	pipeline.AddLibrary(m_pHitShader->GetBlob(), { L"ClosestHit" });
+	pipeline.AddLibrary(m_pMissShader->GetBlob(), { L"Miss" });
+
+	// To be used, each DX12 shader needs a root signature defining which
+	// parameters and buffers will be accessed.
+	m_pRayGenSignature	= CreateRayGenSignature();
+	m_pHitSignature		= CreateHitSignature();
+	m_pMissSignature	= CreateMissSignature();
+
+	// 3 different shaders can be invoked to obtain an intersection: an
+	// intersection shader is called
+	// when hitting the bounding box of non-triangular geometry. This is beyond
+	// the scope of this tutorial. An any-hit shader is called on potential
+	// intersections. This shader can, for example, perform alpha-testing and
+	// discard some intersections. Finally, the closest-hit program is invoked on
+	// the intersection point closest to the ray origin. Those 3 shaders are bound
+	// together into a hit group.
+
+	// Note that for triangular geometry the intersection shader is built-in. An
+	// empty any-hit shader is also defined by default, so in our simple case each
+	// hit group contains only the closest hit shader. Note that since the
+	// exported symbols are defined above the shaders can be simply referred to by
+	// name.
+
+	// Hit group for the triangles, with a shader simply interpolating vertex
+	// colors
+	pipeline.AddHitGroup(L"HitGroup", L"ClosestHit");
+
+	// The following section associates the root signature to each shader.Note
+	// that we can explicitly show that some shaders share the same root signature
+	// (eg. Miss and ShadowMiss). Note that the hit shaders are now only referred
+	// to as hit groups, meaning that the underlying intersection, any-hit and
+	// closest-hit shaders share the same root signature.
+	pipeline.AddRootSignatureAssociation(m_pRayGenSignature, { L"RayGen" });
+	pipeline.AddRootSignatureAssociation(m_pHitSignature, { L"HitGroup" });
+	pipeline.AddRootSignatureAssociation(m_pMissSignature, { L"Miss", L"ShadowMiss" });
+	// The payload size defines the maximum size of the data carried by the rays,
+	// ie. the the data
+	// exchanged between shaders, such as the HitInfo structure in the HLSL code.
+	// It is important to keep this value as low as possible as a too high value
+	// would result in unnecessary memory consumption and cache trashing.
+	pipeline.SetMaxPayloadSize(4 * sizeof(float)); // RGB + distance
+
+	// Upon hitting a surface, DXR can provide several attributes to the hit. In
+	// our sample we just use the barycentric coordinates defined by the weights
+	// u,v of the last two vertices of the triangle. The actual barycentrics can
+	// be obtained using float3 barycentrics = float3(1.f-u-v, u, v);
+	pipeline.SetMaxAttributeSize(2 * sizeof(float)); // barycentric coordinates
+
+	// The raytracing process can shoot rays from existing hit points, resulting
+	// in nested TraceRay calls. Our sample code traces only primary rays, which
+	// then requires a trace depth of 1. Note that this recursion depth should be
+	// kept to a minimum for best performance. Path tracing algorithms can be
+	// easily flattened into a simple loop in the ray generation.
+	pipeline.SetMaxRecursionDepth(2);
+
+	// Compile the pipeline for execution on the GPU
+	m_pRTStateObject = pipeline.Generate(m_pGlobalRootSig);
+
+	// Cast the state object into a properties object, allowing to later access
+	// the shader pointers by name
+	m_pRTStateObject->QueryInterface(IID_PPV_ARGS(&m_pRTStateObjectProps)));
+
+	DXRTask* reflectionTask = new DXRReflectionTask(m_pDevice5, m_pGlobalRootSig,
+		L"RayGen.hlsl", L"Hit.hlsl", L"Miss.hlsl", 
+		m_pRTStateObject,
+		L"ReflectionPSO", 
+		F_THREAD_FLAGS::RENDER);*/
 #pragma endregion DXRTasks
 
 #pragma region DepthPrePass
@@ -2040,6 +2192,7 @@ void Renderer::initRenderTasks()
 	/* ------------------------- DXR Tasks ------------------------ */
 	m_DXRTasks[E_DXR_TASK_TYPE::BLAS] = blasTask;
 	m_DXRTasks[E_DXR_TASK_TYPE::TLAS] = tlasTask;
+	//m_DXRTasks[E_DXR_TASK_TYPE::REFLECTION] = reflectionTask;
 
 	// Pushback in the order of execution
 
@@ -2084,6 +2237,12 @@ void Renderer::initRenderTasks()
 	{
 		m_DirectCommandLists[i].push_back(deferredLightRenderTask->GetCommandInterface()->GetCommandList(i));
 	}
+
+	// TODO: ReflectionPass here?
+	//for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
+	//{
+	//	m_DirectCommandLists[i].push_back(reflectionTask->GetCommandInterface()->GetCommandList(i));
+	//}
 
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
@@ -2239,10 +2398,12 @@ void Renderer::prepareScene(Scene* activeScene)
 	std::vector<RenderComponent> rcVec = m_RenderComponents[F_DRAW_FLAGS::RAY_TRACED];
 	for (RenderComponent rc : rcVec)
 	{
-		pTLAS->AddInstance(rc.mc->GetModel()->m_pBLAS, *rc.tc->GetTransform()->GetWorldMatrix(), 0);
+		pTLAS->AddInstance(rc.mc->GetModel()->m_pBLAS, *rc.tc->GetTransform()->GetWorldMatrix(), 0);	// TODO: HitgroupID
 	}
 	pTLAS->GenerateBuffers(m_pDevice5, m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
 	pTLAS->SetupAccelerationStructureForBuilding(m_pDevice5, false);
+
+	CreateShaderBindingTable();
 
 	// Currently unused
 	//static_cast<DeferredLightRenderTask*>(m_RenderTasks[E_RENDER_TASK_TYPE::DEFERRED_GEOMETRY])->SetSceneBVHSRV(pTLAS->GetSRV());

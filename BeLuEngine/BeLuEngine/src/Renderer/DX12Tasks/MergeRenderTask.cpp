@@ -43,7 +43,7 @@ void MergeRenderTask::CreateSlotInfo()
 {
 	// Mesh
 	m_NumIndices = m_pFullScreenQuadMesh->GetNumIndices();
-	m_Info.vertexDataIndex = m_pFullScreenQuadMesh->m_pSRV->GetDescriptorHeapIndex();
+	m_Info.vertexDataIndex = m_pFullScreenQuadMesh->m_pVertexBufferSRV->GetDescriptorHeapIndex();
 
 	// Textures
 	// The descriptorHeapIndices for the SRVs are currently put inside the textureSlots inside SlotInfo

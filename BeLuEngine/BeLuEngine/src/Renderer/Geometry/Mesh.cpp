@@ -39,9 +39,14 @@ Mesh::~Mesh()
 		delete m_pDefaultResourceIndices;
 	}
 
-	if (m_pSRV != nullptr)
+	if (m_pVertexBufferSRV != nullptr)
 	{
-		delete m_pSRV;
+		delete m_pVertexBufferSRV;
+	}
+
+	if (m_pIndexBufferSRV != nullptr)
+	{
+		delete m_pIndexBufferSRV;
 	}
 
 	if (m_pIndexBufferView != nullptr)
@@ -79,7 +84,7 @@ void Mesh::Init(ID3D12Device5* m_pDevice5, DescriptorHeap* CBV_UAV_SRV_heap)
 	dsrv.Buffer.StructureByteStride = sizeof(Vertex);
 
 	// Set view to mesh
-	m_pSRV = new ShaderResourceView(
+	m_pVertexBufferSRV = new ShaderResourceView(
 		m_pDevice5,
 		CBV_UAV_SRV_heap,
 		&dsrv,
@@ -94,6 +99,21 @@ void Mesh::Init(ID3D12Device5* m_pDevice5, DescriptorHeap* CBV_UAV_SRV_heap)
 	m_pIndexBufferView->BufferLocation = m_pDefaultResourceIndices->GetGPUVirtualAdress();
 	m_pIndexBufferView->Format = DXGI_FORMAT_R32_UINT;
 	m_pIndexBufferView->SizeInBytes = GetSizeOfIndices();
+
+	// Create IB SRV
+	dsrv = {};
+	dsrv.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+	dsrv.Buffer.FirstElement = 0;
+	dsrv.Format = DXGI_FORMAT_UNKNOWN;
+	dsrv.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	dsrv.Buffer.NumElements = GetNumIndices();
+	dsrv.Buffer.StructureByteStride = sizeof(unsigned int);
+
+	m_pIndexBufferSRV = new ShaderResourceView(
+		m_pDevice5,
+		CBV_UAV_SRV_heap,
+		&dsrv,
+		m_pDefaultResourceIndices);
 }
 
 
@@ -147,7 +167,12 @@ const std::wstring& Mesh::GetPath() const
 	return m_Path;
 }
 
-ShaderResourceView* const Mesh::GetSRV() const
+ShaderResourceView* const Mesh::GetVBSRV() const
 {
-	return m_pSRV;
+	return m_pVertexBufferSRV;
+}
+
+ShaderResourceView* const Mesh::GetIBSRV() const
+{
+	return m_pIndexBufferSRV;
 }

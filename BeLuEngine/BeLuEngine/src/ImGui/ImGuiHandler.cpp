@@ -239,6 +239,8 @@ void ImGuiHandler::drawSceneHierarchy()
 										index++;
 
 										mc->SetMaterialAt(matIndex, newMat);
+
+										r.submitSlotInfoRawBufferToGPU(mc);
 									}
 
 									matData->hasRoughnessTexture = useRoughnessTexture;
@@ -251,6 +253,7 @@ void ImGuiHandler::drawSceneHierarchy()
 									matData->roughnessValue = roughnessValue;
 									matData->metallicValue = metallicValue;
 									matData->opacityValue = opacityValue;
+
 									// Update data on VRAM
 									r.submitMaterialDataToGPU(mat);
 								}

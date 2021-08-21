@@ -11,7 +11,11 @@ void SponzaUpdateScene(SceneManager* sm, double dt);
 
 /* 
 --------- TODO --------- 
-Start on reflections with DXR
+***Reflections with DXR in the works***
+*  Pipeline state
+*  ReflectionTask
+*  Create Shaders
+*  
 */
 
 class TestAsyncThread : public MultiThreadedTask

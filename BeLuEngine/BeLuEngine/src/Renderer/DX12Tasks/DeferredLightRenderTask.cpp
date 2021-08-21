@@ -35,7 +35,7 @@ void DeferredLightRenderTask::SetFullScreenQuad(Mesh* mesh)
 	m_pFullScreenQuadMesh = mesh;
 
 	//m_NumIndices = m_pFullScreenQuadMesh->GetNumIndices();
-	m_Info.vertexDataIndex = m_pFullScreenQuadMesh->m_pSRV->GetDescriptorHeapIndex();
+	m_Info.vertexDataIndex = m_pFullScreenQuadMesh->m_pVertexBufferSRV->GetDescriptorHeapIndex();
 }
 
 void DeferredLightRenderTask::Execute()
