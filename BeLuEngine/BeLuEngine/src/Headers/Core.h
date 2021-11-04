@@ -49,6 +49,9 @@ inline std::string GetFileExtension(const std::string& FileName)
 	return "";
 }
 
+#define concat(x,y) concat2(x,y)
+#define concat2(x,y) x##y
+
 enum class E_WINDOW_MODE
 {
 	WINDOWED,

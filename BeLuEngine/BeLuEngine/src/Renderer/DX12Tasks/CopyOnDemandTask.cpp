@@ -41,23 +41,25 @@ void CopyOnDemandTask::Execute()
 	ID3D12GraphicsCommandList5* commandList = m_pCommandInterface->GetCommandList(m_CommandInterfaceIndex);
 
 	m_pCommandInterface->Reset(m_CommandInterfaceIndex);
-
-	// record the "small" data, such as constantbuffers..
-	for (auto& tuple : m_UploadDefaultData)
 	{
-		copyResource(
-			commandList,
-			std::get<0>(tuple),		// UploadHeap
-			std::get<1>(tuple),		// DefaultHeap
-			std::get<2>(tuple));	// Data
-	}
+		ScopedPixEvent(CopyOnDemand, commandList);
 
-	// record texturedata
-	for (Texture* texture : m_Textures)
-	{
-		copyTexture(commandList, texture);
-	}
+		// record the "small" data, such as constantbuffers..
+		for (auto& tuple : m_UploadDefaultData)
+		{
+			copyResource(
+				commandList,
+				std::get<0>(tuple),		// UploadHeap
+				std::get<1>(tuple),		// DefaultHeap
+				std::get<2>(tuple));	// Data
+		}
 
+		// record texturedata
+		for (Texture* texture : m_Textures)
+		{
+			copyTexture(commandList, texture);
+		}
+	}
 	commandList->Close();
 }
 

@@ -42,9 +42,10 @@ void DXRReflectionTask::Execute()
 {
 	ID3D12CommandAllocator* commandAllocator = m_pCommandInterface->GetCommandAllocator(m_CommandInterfaceIndex);
 	ID3D12GraphicsCommandList5* commandList = m_pCommandInterface->GetCommandList(m_CommandInterfaceIndex);
+
 	m_pCommandInterface->Reset(m_CommandInterfaceIndex);
-
-
-
+	{
+		ScopedPixEvent(RaytracedReflections, commandList);
+	}
 	commandList->Close();
 }

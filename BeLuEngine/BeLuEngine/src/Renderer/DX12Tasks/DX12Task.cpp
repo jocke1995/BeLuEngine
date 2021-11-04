@@ -8,6 +8,24 @@
 #include "../DescriptorHeap.h"
 #include "../GPUMemory/GPUMemory.h"
 
+
+// PIX Events
+#include "WinPixEventRuntime/pix3.h"
+ScopedPIXEvent::ScopedPIXEvent(const char* nameOfTask, ID3D12GraphicsCommandList* cl)
+{
+	assert(cl);
+
+	m_pCommandList = cl;
+	UINT64 col = 0;
+	PIXBeginEvent(m_pCommandList, col, nameOfTask);
+}
+
+ScopedPIXEvent::~ScopedPIXEvent()
+{
+	PIXEndEvent(m_pCommandList);
+}
+
+// DX12 TASK
 DX12Task::DX12Task(
 	ID3D12Device5* device,
 	E_COMMAND_INTERFACE_TYPE interfaceType,

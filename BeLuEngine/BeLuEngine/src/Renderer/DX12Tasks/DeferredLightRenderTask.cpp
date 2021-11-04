@@ -47,84 +47,86 @@ void DeferredLightRenderTask::Execute()
 	ID3D12Resource1* finalColorResource = finalColorRTV->GetResource()->GetID3D12Resource1();
 
 	m_pCommandInterface->Reset(m_CommandInterfaceIndex);
+	{
+		ScopedPixEvent(LightPass, commandList);
 
-	commandList->SetGraphicsRootSignature(m_pRootSig);
-	
-	DescriptorHeap* descriptorHeap_CBV_UAV_SRV = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV];
-	ID3D12DescriptorHeap* d3d12DescriptorHeap = descriptorHeap_CBV_UAV_SRV->GetID3D12DescriptorHeap();
-	commandList->SetDescriptorHeaps(1, &d3d12DescriptorHeap);
+		commandList->SetGraphicsRootSignature(m_pRootSig);
 
-	commandList->SetGraphicsRootDescriptorTable(0, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
-	commandList->SetGraphicsRootDescriptorTable(1, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
+		DescriptorHeap* descriptorHeap_CBV_UAV_SRV = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV];
+		ID3D12DescriptorHeap* d3d12DescriptorHeap = descriptorHeap_CBV_UAV_SRV->GetID3D12DescriptorHeap();
+		commandList->SetDescriptorHeaps(1, &d3d12DescriptorHeap);
 
-	DescriptorHeap* renderTargetHeap = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV];
-	DescriptorHeap* depthBufferHeap  = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::DSV];
+		commandList->SetGraphicsRootDescriptorTable(0, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
+		commandList->SetGraphicsRootDescriptorTable(1, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
 
-	// RenderTargets
-	const unsigned int finalColorTargetIndex = finalColorRTV->GetDescriptorHeapIndex();
-	const unsigned int brightTargetIndex = m_RenderTargetViews["brightTarget"]->GetDescriptorHeapIndex();
-	D3D12_CPU_DESCRIPTOR_HANDLE cdhgFinalColorTarget = renderTargetHeap->GetCPUHeapAt(finalColorTargetIndex);
-	D3D12_CPU_DESCRIPTOR_HANDLE cdhBrightTarget = renderTargetHeap->GetCPUHeapAt(brightTargetIndex);
-	D3D12_CPU_DESCRIPTOR_HANDLE cdhs[] = { cdhgFinalColorTarget, cdhBrightTarget };
+		DescriptorHeap* renderTargetHeap = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV];
+		DescriptorHeap* depthBufferHeap = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::DSV];
 
-	// Depth
-	D3D12_CPU_DESCRIPTOR_HANDLE dsh = depthBufferHeap->GetCPUHeapAt(m_pDepthStencil->GetDSV()->GetDescriptorHeapIndex());
+		// RenderTargets
+		const unsigned int finalColorTargetIndex = finalColorRTV->GetDescriptorHeapIndex();
+		const unsigned int brightTargetIndex = m_RenderTargetViews["brightTarget"]->GetDescriptorHeapIndex();
+		D3D12_CPU_DESCRIPTOR_HANDLE cdhgFinalColorTarget = renderTargetHeap->GetCPUHeapAt(finalColorTargetIndex);
+		D3D12_CPU_DESCRIPTOR_HANDLE cdhBrightTarget = renderTargetHeap->GetCPUHeapAt(brightTargetIndex);
+		D3D12_CPU_DESCRIPTOR_HANDLE cdhs[] = { cdhgFinalColorTarget, cdhBrightTarget };
 
-	commandList->OMSetRenderTargets(2, cdhs, false, &dsh);
+		// Depth
+		D3D12_CPU_DESCRIPTOR_HANDLE dsh = depthBufferHeap->GetCPUHeapAt(m_pDepthStencil->GetDSV()->GetDescriptorHeapIndex());
 
-	float clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-	commandList->ClearRenderTargetView(cdhBrightTarget, clearColor, 0, nullptr);
-	commandList->ClearRenderTargetView(cdhgFinalColorTarget , clearColor, 0, nullptr);
+		commandList->OMSetRenderTargets(2, cdhs, false, &dsh);
 
-	const D3D12_VIEWPORT viewPortFinalColorTarget = *finalColorRTV->GetRenderView()->GetViewPort();
-	const D3D12_VIEWPORT viewPortBrightTarget = *m_RenderTargetViews["brightTarget"]->GetRenderView()->GetViewPort();
-	const D3D12_VIEWPORT viewPorts[2] = { viewPortFinalColorTarget, viewPortBrightTarget };
+		float clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+		commandList->ClearRenderTargetView(cdhBrightTarget, clearColor, 0, nullptr);
+		commandList->ClearRenderTargetView(cdhgFinalColorTarget, clearColor, 0, nullptr);
 
-	const D3D12_RECT rectFinalColorTarget = *finalColorRTV->GetRenderView()->GetScissorRect();
-	const D3D12_RECT rectBrightTarget = *m_RenderTargetViews["brightTarget"]->GetRenderView()->GetScissorRect();
-	const D3D12_RECT rects[2] = { rectFinalColorTarget, rectBrightTarget };
+		const D3D12_VIEWPORT viewPortFinalColorTarget = *finalColorRTV->GetRenderView()->GetViewPort();
+		const D3D12_VIEWPORT viewPortBrightTarget = *m_RenderTargetViews["brightTarget"]->GetRenderView()->GetViewPort();
+		const D3D12_VIEWPORT viewPorts[2] = { viewPortFinalColorTarget, viewPortBrightTarget };
 
-	commandList->RSSetViewports(2, viewPorts);
-	commandList->RSSetScissorRects(2, rects);
-	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		const D3D12_RECT rectFinalColorTarget = *finalColorRTV->GetRenderView()->GetScissorRect();
+		const D3D12_RECT rectBrightTarget = *m_RenderTargetViews["brightTarget"]->GetRenderView()->GetScissorRect();
+		const D3D12_RECT rects[2] = { rectFinalColorTarget, rectBrightTarget };
 
-	// Set cbvs
-	commandList->SetGraphicsRootConstantBufferView(12, m_Resources["cbPerFrame"]->GetGPUVirtualAdress());
-	commandList->SetGraphicsRootConstantBufferView(13, m_Resources["cbPerScene"]->GetGPUVirtualAdress());
-	commandList->SetGraphicsRootShaderResourceView(5, m_Resources["rawBufferLights"]->GetGPUVirtualAdress());
+		commandList->RSSetViewports(2, viewPorts);
+		commandList->RSSetScissorRects(2, rects);
+		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+		// Set cbvs
+		commandList->SetGraphicsRootConstantBufferView(12, m_Resources["cbPerFrame"]->GetGPUVirtualAdress());
+		commandList->SetGraphicsRootConstantBufferView(13, m_Resources["cbPerScene"]->GetGPUVirtualAdress());
+		commandList->SetGraphicsRootShaderResourceView(5, m_Resources["rawBufferLights"]->GetGPUVirtualAdress());
 
 
-	// This pair for m_RenderComponents will be used for model-outlining in case any model is picked.
-	//RenderComponent outlinedModel = {nullptr, nullptr};
+		// This pair for m_RenderComponents will be used for model-outlining in case any model is picked.
+		//RenderComponent outlinedModel = {nullptr, nullptr};
 
-	// Draw for every Rendercomponent with stencil testing disabled
+		// Draw for every Rendercomponent with stencil testing disabled
 
-	commandList->SetPipelineState(m_PipelineStates[0]->GetPSO());
-	//component::ModelComponent* mc = m_RenderComponents.at(i).mc;
-	//component::TransformComponent* tc = m_RenderComponents.at(i).tc;
-	//
-	//// If the model is picked, we dont draw it with default stencil buffer.
-	//// Instead we store it and draw it later with a different pso to allow for model-outlining
-	//if (mc->IsPickedThisFrame() == true)
-	//{
-	//	outlinedModel = m_RenderComponents.at(i);
-	//	continue;
-	//}
-	//commandList->OMSetStencilRef(1);
+		commandList->SetPipelineState(m_PipelineStates[0]->GetPSO());
+		//component::ModelComponent* mc = m_RenderComponents.at(i).mc;
+		//component::TransformComponent* tc = m_RenderComponents.at(i).tc;
+		//
+		//// If the model is picked, we dont draw it with default stencil buffer.
+		//// Instead we store it and draw it later with a different pso to allow for model-outlining
+		//if (mc->IsPickedThisFrame() == true)
+		//{
+		//	outlinedModel = m_RenderComponents.at(i);
+		//	continue;
+		//}
+		//commandList->OMSetStencilRef(1);
 
-	// Draw a fullscreen quad 
-	commandList->SetGraphicsRoot32BitConstants(3, sizeof(SlotInfo) / sizeof(UINT), &m_Info, 0);
-	commandList->IASetIndexBuffer(m_pFullScreenQuadMesh->GetIndexBufferView());
+		// Draw a fullscreen quad 
+		commandList->SetGraphicsRoot32BitConstants(3, sizeof(SlotInfo) / sizeof(UINT), &m_Info, 0);
+		commandList->IASetIndexBuffer(m_pFullScreenQuadMesh->GetIndexBufferView());
 
-	commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
+		commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
 
-	// Draw Rendercomponent with stencil testing enabled
-	//if (outlinedModel.mc != nullptr)
-	//{
-	//	commandList->SetPipelineState(m_PipelineStates[1]->GetPSO());
-	//	commandList->OMSetStencilRef(1);
-	//	drawRenderComponent(outlinedModel.mc, outlinedModel.tc, viewProjMatTrans, commandList);
-	//}
-
+		// Draw Rendercomponent with stencil testing enabled
+		//if (outlinedModel.mc != nullptr)
+		//{
+		//	commandList->SetPipelineState(m_PipelineStates[1]->GetPSO());
+		//	commandList->OMSetStencilRef(1);
+		//	drawRenderComponent(outlinedModel.mc, outlinedModel.tc, viewProjMatTrans, commandList);
+		//}
+	}
 	commandList->Close();
 }

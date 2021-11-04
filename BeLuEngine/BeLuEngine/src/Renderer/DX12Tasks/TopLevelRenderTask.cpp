@@ -29,16 +29,20 @@ void TopLevelRenderTask::Execute()
 	ID3D12GraphicsCommandList5* commandList = m_pCommandInterface->GetCommandList(m_CommandInterfaceIndex);
 
 	m_pCommandInterface->Reset(m_CommandInterfaceIndex);
+	{
+		ScopedPixEvent(Build_TLAS, commandList);
 
-	static bool a = false;
+		static bool a = false;
 
-	//if(!a)
-		m_pTLAS->BuildAccelerationStructure(commandList);
+		//if(!a)
+			m_pTLAS->BuildAccelerationStructure(commandList);
 
+		a = true;
+		m_pTLAS->m_IsBuilt = true;
+	}
 	commandList->Close();
 
-	a = true;
-	m_pTLAS->m_IsBuilt = true;
+	
 }
 
 TopLevelAccelerationStructure* TopLevelRenderTask::GetTLAS() const

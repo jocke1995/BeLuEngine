@@ -1,8 +1,8 @@
 #ifndef DX12TASK_H
 #define DX12TASK_H
+#include "Core.h"
 
 #include "../../Misc/MultiThreading/MultiThreadedTask.h"
-
 class CommandInterface;
 class Resource;
 class DescriptorHeap;
@@ -50,6 +50,24 @@ enum E_DXR_TASK_TYPE
 	REFLECTION,
 	NR_OF_DXRTASKS
 };
+
+// Dont create this class immediatly, use the #define below
+struct ID3D12GraphicsCommandList;
+class ScopedPIXEvent
+{
+public:
+	ScopedPIXEvent(const char* nameOfTask, ID3D12GraphicsCommandList* cl);
+	~ScopedPIXEvent();
+
+private:
+	ID3D12GraphicsCommandList* m_pCommandList = nullptr;
+};
+
+#ifdef DEBUG	// This is both for Debug and Release, not for Dist
+#define ScopedPixEvent(name, commandList) ScopedPIXEvent concat(PIX_Event_Marker, __LINE__)(#name, commandList);
+#else
+	#define ScopedPixEvent(name, commandList)
+#endif
 
 class DX12Task : public MultiThreadedTask
 {

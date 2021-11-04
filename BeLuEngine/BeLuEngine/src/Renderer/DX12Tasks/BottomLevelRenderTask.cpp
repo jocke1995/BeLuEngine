@@ -33,12 +33,14 @@ void BottomLevelRenderTask::Execute()
 	ID3D12GraphicsCommandList5* commandList = m_pCommandInterface->GetCommandList(m_CommandInterfaceIndex);
 
 	m_pCommandInterface->Reset(m_CommandInterfaceIndex);
-
-	for (BottomLevelAccelerationStructure* pBLAS : m_BLASesToUpdate)
 	{
-		pBLAS->BuildAccelerationStructure(commandList);
-	}
+		ScopedPixEvent(Build_BLAS, commandList);
 
+		for (BottomLevelAccelerationStructure* pBLAS : m_BLASesToUpdate)
+		{
+			pBLAS->BuildAccelerationStructure(commandList);
+		}
+	}
 	commandList->Close();
 
 	// Flush list so that the bottom levels aren't updated again next frame.

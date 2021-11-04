@@ -30,15 +30,17 @@ void CopyPerFrameTask::Execute()
 	ID3D12GraphicsCommandList5* commandList = m_pCommandInterface->GetCommandList(m_CommandInterfaceIndex);
 
 	m_pCommandInterface->Reset(m_CommandInterfaceIndex);
-
-	for (auto& tuple : m_UploadDefaultData)
 	{
-		copyResource(
-			commandList,
-			std::get<0>(tuple),		// UploadHeap
-			std::get<1>(tuple),		// DefaultHeap
-			std::get<2>(tuple));	// Data
-	}
+		ScopedPixEvent(CopyPerFrame, commandList);
 
+		for (auto& tuple : m_UploadDefaultData)
+		{
+			copyResource(
+				commandList,
+				std::get<0>(tuple),		// UploadHeap
+				std::get<1>(tuple),		// DefaultHeap
+				std::get<2>(tuple));	// Data
+		}
+	}
 	commandList->Close();
 }

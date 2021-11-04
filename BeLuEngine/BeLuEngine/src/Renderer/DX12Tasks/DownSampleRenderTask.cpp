@@ -52,47 +52,47 @@ void DownSampleRenderTask::Execute()
 	ID3D12CommandAllocator* commandAllocator = m_pCommandInterface->GetCommandAllocator(m_CommandInterfaceIndex);
 	ID3D12GraphicsCommandList5* commandList = m_pCommandInterface->GetCommandList(m_CommandInterfaceIndex);
 
-	commandAllocator->Reset();
-	commandList->Reset(commandAllocator, NULL);
+	m_pCommandInterface->Reset(m_CommandInterfaceIndex);
+	{
+		ScopedPixEvent(DownSamplePass, commandList);
 
-	commandList->SetGraphicsRootSignature(m_pRootSig);
+		commandList->SetGraphicsRootSignature(m_pRootSig);
 
-	DescriptorHeap* descriptorHeap_RTV = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV];
-	DescriptorHeap* descriptorHeap_CBV_UAV_SRV = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV];
-	ID3D12DescriptorHeap* d3d12DescriptorHeap = descriptorHeap_CBV_UAV_SRV->GetID3D12DescriptorHeap();
-	commandList->SetDescriptorHeaps(1, &d3d12DescriptorHeap);
+		DescriptorHeap* descriptorHeap_RTV = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV];
+		DescriptorHeap* descriptorHeap_CBV_UAV_SRV = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV];
+		ID3D12DescriptorHeap* d3d12DescriptorHeap = descriptorHeap_CBV_UAV_SRV->GetID3D12DescriptorHeap();
+		commandList->SetDescriptorHeaps(1, &d3d12DescriptorHeap);
 
-	commandList->SetGraphicsRootDescriptorTable(1, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
+		commandList->SetGraphicsRootDescriptorTable(1, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
 
-	const D3D12_VIEWPORT* viewPort = m_pDestinationRTV->GetRenderView()->GetViewPort();
-	const D3D12_RECT* rect = m_pDestinationRTV->GetRenderView()->GetScissorRect();
-	commandList->RSSetViewports(1, viewPort);
-	commandList->RSSetScissorRects(1, rect);
-	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		const D3D12_VIEWPORT* viewPort = m_pDestinationRTV->GetRenderView()->GetViewPort();
+		const D3D12_RECT* rect = m_pDestinationRTV->GetRenderView()->GetScissorRect();
+		commandList->RSSetViewports(1, viewPort);
+		commandList->RSSetScissorRects(1, rect);
+		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	D3D12_CPU_DESCRIPTOR_HANDLE cdh = descriptorHeap_RTV->GetCPUHeapAt(m_pDestinationRTV->GetDescriptorHeapIndex());
-	commandList->OMSetRenderTargets(1, &cdh, false, nullptr);
+		D3D12_CPU_DESCRIPTOR_HANDLE cdh = descriptorHeap_RTV->GetCPUHeapAt(m_pDestinationRTV->GetDescriptorHeapIndex());
+		commandList->OMSetRenderTargets(1, &cdh, false, nullptr);
 
-	commandList->SetPipelineState(m_PipelineStates[0]->GetPSO());
+		commandList->SetPipelineState(m_PipelineStates[0]->GetPSO());
 
-	commandList->SetGraphicsRoot32BitConstants(3, sizeof(SlotInfo) / sizeof(UINT), &m_Info, 0);
-	commandList->SetGraphicsRoot32BitConstants(4, sizeof(DescriptorHeapIndices) / sizeof(UINT), &m_dhIndices, 0);
+		commandList->SetGraphicsRoot32BitConstants(3, sizeof(SlotInfo) / sizeof(UINT), &m_Info, 0);
+		commandList->SetGraphicsRoot32BitConstants(4, sizeof(DescriptorHeapIndices) / sizeof(UINT), &m_dhIndices, 0);
 
-	commandList->IASetIndexBuffer(m_pFullScreenQuadMesh->GetIndexBufferView());
+		commandList->IASetIndexBuffer(m_pFullScreenQuadMesh->GetIndexBufferView());
 
+		m_pSourceSRV->GetResource()->TransResourceState(
+			commandList,
+			D3D12_RESOURCE_STATE_RENDER_TARGET,
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-	m_pSourceSRV->GetResource()->TransResourceState(
-		commandList,
-		D3D12_RESOURCE_STATE_RENDER_TARGET,
-		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		// Draw a fullscreen quad
+		commandList->DrawIndexedInstanced(m_NumIndices, 1, 0, 0, 0);
 
-	// Draw a fullscreen quad
-	commandList->DrawIndexedInstanced(m_NumIndices, 1, 0, 0, 0);
-
-	m_pSourceSRV->GetResource()->TransResourceState(
-		commandList,
-		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-		D3D12_RESOURCE_STATE_RENDER_TARGET);
-
+		m_pSourceSRV->GetResource()->TransResourceState(
+			commandList,
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+			D3D12_RESOURCE_STATE_RENDER_TARGET);
+	}
 	commandList->Close();
 }

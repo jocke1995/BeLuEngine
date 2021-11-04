@@ -31,6 +31,7 @@ project "BeLuEngine"
         "dxguid",
         "assimp-vc142-mt",
         "GFSDK_Aftermath_Lib.x64",
+        "WinPixEventRuntime",
     }
 
     postbuildcommands

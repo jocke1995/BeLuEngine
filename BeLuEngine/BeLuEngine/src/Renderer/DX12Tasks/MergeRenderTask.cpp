@@ -57,71 +57,73 @@ void MergeRenderTask::Execute()
 	ID3D12GraphicsCommandList5* commandList = m_pCommandInterface->GetCommandList(m_CommandInterfaceIndex);
 
 	m_pCommandInterface->Reset(m_CommandInterfaceIndex);
+	{
+		ScopedPixEvent(MergePass, commandList);
 
-	// Get renderTarget
-	const RenderTargetView* swapChainRenderTarget = m_pSwapChain->GetRTV(m_BackBufferIndex);
-	ID3D12Resource1* swapChainResource = swapChainRenderTarget->GetResource()->GetID3D12Resource1();
+		// Get renderTarget
+		const RenderTargetView* swapChainRenderTarget = m_pSwapChain->GetRTV(m_BackBufferIndex);
+		ID3D12Resource1* swapChainResource = swapChainRenderTarget->GetResource()->GetID3D12Resource1();
 
-	DescriptorHeap* descriptorHeap_CBV_UAV_SRV = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV];
-	ID3D12DescriptorHeap* d3d12DescriptorHeap = descriptorHeap_CBV_UAV_SRV->GetID3D12DescriptorHeap();
-	commandList->SetDescriptorHeaps(1, &d3d12DescriptorHeap);
+		DescriptorHeap* descriptorHeap_CBV_UAV_SRV = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV];
+		ID3D12DescriptorHeap* d3d12DescriptorHeap = descriptorHeap_CBV_UAV_SRV->GetID3D12DescriptorHeap();
+		commandList->SetDescriptorHeaps(1, &d3d12DescriptorHeap);
 
-	DescriptorHeap* renderTargetHeap = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV];
+		DescriptorHeap* renderTargetHeap = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV];
 
-	const unsigned int SwapChainIndex = swapChainRenderTarget->GetDescriptorHeapIndex();
-	D3D12_CPU_DESCRIPTOR_HANDLE cdh = renderTargetHeap->GetCPUHeapAt(SwapChainIndex);
+		const unsigned int SwapChainIndex = swapChainRenderTarget->GetDescriptorHeapIndex();
+		D3D12_CPU_DESCRIPTOR_HANDLE cdh = renderTargetHeap->GetCPUHeapAt(SwapChainIndex);
 
-	commandList->SetGraphicsRootSignature(m_pRootSig);
+		commandList->SetGraphicsRootSignature(m_pRootSig);
 
-	commandList->SetGraphicsRootDescriptorTable(1, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
+		commandList->SetGraphicsRootDescriptorTable(1, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
 
-	// Change state on front/backbuffer
-	swapChainRenderTarget->GetResource()->TransResourceState(
-		commandList,
-		D3D12_RESOURCE_STATE_PRESENT,
-		D3D12_RESOURCE_STATE_RENDER_TARGET);
+		// Change state on front/backbuffer
+		swapChainRenderTarget->GetResource()->TransResourceState(
+			commandList,
+			D3D12_RESOURCE_STATE_PRESENT,
+			D3D12_RESOURCE_STATE_RENDER_TARGET);
 
-	// Change state on mainColorBuffer
-	m_SRVs[1]->GetResource()->TransResourceState(
-		commandList,
-		D3D12_RESOURCE_STATE_RENDER_TARGET,
-		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		// Change state on mainColorBuffer
+		m_SRVs[1]->GetResource()->TransResourceState(
+			commandList,
+			D3D12_RESOURCE_STATE_RENDER_TARGET,
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-	commandList->OMSetRenderTargets(1, &cdh, true, nullptr);
+		commandList->OMSetRenderTargets(1, &cdh, true, nullptr);
 
-	const D3D12_VIEWPORT* viewPort = swapChainRenderTarget->GetRenderView()->GetViewPort();
-	const D3D12_RECT* rect = swapChainRenderTarget->GetRenderView()->GetScissorRect();
-	commandList->RSSetViewports(1, viewPort);
-	commandList->RSSetScissorRects(1, rect);
-	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		const D3D12_VIEWPORT* viewPort = swapChainRenderTarget->GetRenderView()->GetViewPort();
+		const D3D12_RECT* rect = swapChainRenderTarget->GetRenderView()->GetScissorRect();
+		commandList->RSSetViewports(1, viewPort);
+		commandList->RSSetScissorRects(1, rect);
+		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	commandList->SetPipelineState(m_PipelineStates[0]->GetPSO());
+		commandList->SetPipelineState(m_PipelineStates[0]->GetPSO());
 
-	// Draw a fullscreen quad 
-	commandList->SetGraphicsRoot32BitConstants(3, sizeof(SlotInfo) / sizeof(UINT), &m_Info, 0);
-	commandList->SetGraphicsRoot32BitConstants(4, sizeof(DescriptorHeapIndices) / sizeof(UINT), &m_dhIndices, 0);
+		// Draw a fullscreen quad 
+		commandList->SetGraphicsRoot32BitConstants(3, sizeof(SlotInfo) / sizeof(UINT), &m_Info, 0);
+		commandList->SetGraphicsRoot32BitConstants(4, sizeof(DescriptorHeapIndices) / sizeof(UINT), &m_dhIndices, 0);
 
-	commandList->IASetIndexBuffer(m_pFullScreenQuadMesh->GetIndexBufferView());
+		commandList->IASetIndexBuffer(m_pFullScreenQuadMesh->GetIndexBufferView());
 
-	commandList->DrawIndexedInstanced(m_NumIndices, 1, 0, 0, 0);
+		commandList->DrawIndexedInstanced(m_NumIndices, 1, 0, 0, 0);
 
-	// Change state on bloomBuffer for next frame
-	m_SRVs[0]->GetResource()->TransResourceState(
-		commandList,
-		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-		D3D12_RESOURCE_STATE_RENDER_TARGET);
+		// Change state on bloomBuffer for next frame
+		m_SRVs[0]->GetResource()->TransResourceState(
+			commandList,
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+			D3D12_RESOURCE_STATE_RENDER_TARGET);
 
-	// Change state on mainColorBuffer
-	m_SRVs[1]->GetResource()->TransResourceState(
-		commandList,
-		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-		D3D12_RESOURCE_STATE_RENDER_TARGET);
+		// Change state on mainColorBuffer
+		m_SRVs[1]->GetResource()->TransResourceState(
+			commandList,
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+			D3D12_RESOURCE_STATE_RENDER_TARGET);
 
-	// Change state on front/backbuffer
-	swapChainRenderTarget->GetResource()->TransResourceState(
-		commandList,
-		D3D12_RESOURCE_STATE_RENDER_TARGET,
-		D3D12_RESOURCE_STATE_PRESENT);
-
+		// Change state on front/backbuffer
+		swapChainRenderTarget->GetResource()->TransResourceState(
+			commandList,
+			D3D12_RESOURCE_STATE_RENDER_TARGET,
+			D3D12_RESOURCE_STATE_PRESENT);
+	}
 	commandList->Close();
 }
