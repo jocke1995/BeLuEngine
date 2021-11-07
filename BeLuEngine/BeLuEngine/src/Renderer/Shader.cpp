@@ -61,7 +61,12 @@ void Shader::compileShader()
 	shaderCompilerDesc.targetProfile = shaderModelTarget.c_str();
 
 
-	DXILShaderCompiler::Get()->CompileFromFile(&shaderCompilerDesc, &m_pBlob);
+	HRESULT hr = DXILShaderCompiler::Get()->CompileFromFile(&shaderCompilerDesc, &m_pBlob);
+
+	if (FAILED(hr))
+	{
+		BL_ASSERT_MESSAGE(SUCCEEDED(hr), "Could not create shader %S", m_Path)
+	}
 
 	if (m_pBlob == nullptr)
 	{

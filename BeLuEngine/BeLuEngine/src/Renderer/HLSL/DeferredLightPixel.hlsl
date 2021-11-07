@@ -14,7 +14,6 @@ struct PS_OUTPUT
 };
 
 ByteAddressBuffer rawBufferLights: register(t0, space0);
-//ByteAddressBuffer rawBufferLights[]: register(t0, space1); // TODO: not working to put rawBuffer in descriptorTable?
 
 ConstantBuffer<SlotInfo> info					 : register(b1, space0);
 ConstantBuffer<CB_PER_FRAME_STRUCT>  cbPerFrame  : register(b4, space0);

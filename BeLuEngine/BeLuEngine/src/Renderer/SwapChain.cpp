@@ -17,7 +17,7 @@ SwapChain::SwapChain(
 	DescriptorHeap* descriptorHeap_CBV_UAV_SRV)
 {
 
-	m_WindowMode = static_cast<int>(E_WINDOW_MODE::WINDOWED);
+	m_WindowMode = static_cast<int>(E_WINDOW_MODE::WINDOWED_FULLSCREEN);
 
 	IDXGIFactory4* factory = nullptr;
 	HRESULT hr = CreateDXGIFactory(IID_PPV_ARGS(&factory));

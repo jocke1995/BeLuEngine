@@ -1,4 +1,3 @@
-
 // Calculate world pos from DepthBuffer
 float3 WorldPosFromDepth(float depth, float2 TexCoord, float4x4 projectionInverse, float4x4 viewInverse)
 {

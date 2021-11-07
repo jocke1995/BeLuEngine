@@ -95,8 +95,8 @@ struct WindowSettingChange;
 
 enum E_GLOBAL_ROOTSIGNATURE
 {
-	dtCBV,
 	dtSRV,
+	dtCBV,
 	dtUAV,
 	Constants_SlotInfo,
 	Constants_DH_Indices,
@@ -110,15 +110,15 @@ enum E_GLOBAL_ROOTSIGNATURE
 	RootParam_CBV1,
 	RootParam_CBV2,
 	RootParam_CBV3,
-	//RootParam_CBV4,
-	//RootParam_CBV5,
-	//RootParam_UAV0,
-	//RootParam_UAV1,
-	//RootParam_UAV2,
-	//RootParam_UAV3,
-	//RootParam_UAV4,
-	//RootParam_UAV5,
-	//RootParam_UAV6,
+	RootParam_CBV4,
+	RootParam_CBV5,
+	RootParam_UAV0,
+	RootParam_UAV1,
+	RootParam_UAV2,
+	RootParam_UAV3,
+	RootParam_UAV4,
+	RootParam_UAV5,
+	RootParam_UAV6,
 	NUM_PARAMS
 };
 
@@ -228,7 +228,6 @@ private:
 
 	ID3D12RootSignature* m_pGlobalRootSig = nullptr;
 	// -------------- RenderTargets -------------- 
-	// 
 	// Picking
 	MousePicker* m_pMousePicker = nullptr;
 	Entity* m_pPickedEntity = nullptr;
@@ -261,15 +260,6 @@ private:
 
 	// DescriptorHeaps
 	std::map<E_DESCRIPTOR_HEAP_TYPE, DescriptorHeap*> m_DescriptorHeaps = {};
-
-	// PipelineState (DXR)
-	ID3D12StateObject* m_pRTStateObject = nullptr;
-	ID3D12StateObjectProperties* m_pRTStateObjectProps = nullptr;
-
-	// ShaderTable
-	void CreateShaderBindingTable();
-	ShaderBindingTableGenerator* m_pSbtGenerator;
-	Resource* m_pSbtStorage;
 
 	// Fences
 	HANDLE m_EventHandle = nullptr;

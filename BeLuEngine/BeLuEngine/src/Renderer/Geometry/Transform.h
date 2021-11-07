@@ -50,7 +50,7 @@ private:
 	friend class WireframeRenderTask;
 	friend class TransparentRenderTask;
 	friend class DepthRenderTask;
-
+	friend class DXRReflectionTask;
 	friend class DeferredGeometryRenderTask;
 	friend class DeferredLightRenderTask;
 

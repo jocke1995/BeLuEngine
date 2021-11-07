@@ -75,6 +75,22 @@ private:
 	#define ScopedPixEvent(name, commandList)
 #endif
 
+namespace component
+{
+	class ModelComponent;
+	class TransformComponent;
+}
+
+struct RenderComponent
+{
+public:
+	RenderComponent(component::ModelComponent* mc, component::TransformComponent* tc)
+		:mc(mc), tc(tc) {};
+
+	component::ModelComponent* mc = nullptr;
+	component::TransformComponent* tc = nullptr;
+};
+
 class DX12Task : public MultiThreadedTask
 {
 public:

@@ -104,13 +104,7 @@ void TopLevelAccelerationStructure::SetupAccelerationStructureForBuilding(ID3D12
 	D3D12_RAYTRACING_INSTANCE_DESC* instanceDescs;
 	HRESULT hr = m_pInstanceDesc->GetID3D12Resource1()->Map(0, nullptr, reinterpret_cast<void**>(&instanceDescs));
 
-
-#ifdef DEBUG
-	if (instanceDescs == nullptr || FAILED(hr))
-	{
-		BL_LOG_CRITICAL("Failed to Map into the TLAS.\n");
-	}
-#endif
+	BL_ASSERT_MESSAGE(instanceDescs != nullptr && SUCCEEDED(hr), "Failed to Map into the TLAS.\n");
 
 	// Initialize the memory to zero on the first time only
 	//if (update == false)
