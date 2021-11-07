@@ -31,7 +31,6 @@
 #include "../ECS/Components/Lights/SpotLightComponent.h"
 
 // Renderer-Engine 
-#include "RootSignatureGenerator.h"
 #include "SwapChain.h"
 #include "CommandInterface.h"
 #include "DescriptorHeap.h"
@@ -91,7 +90,7 @@ Renderer::Renderer()
 	m_RenderTasks.resize(E_RENDER_TASK_TYPE::NR_OF_RENDERTASKS);
 	m_CopyTasks.resize(E_COPY_TASK_TYPE::NR_OF_COPYTASKS);
 	m_ComputeTasks.resize(E_COMPUTE_TASK_TYPE::NR_OF_COMPUTETASKS);
-	m_DXRTasks.resize(E_DXR_TASK_TYPE::NR_OF_DXRTASKS);
+	m_DX12Tasks.resize(E_DX12_TASK_TYPE::NR_OF_DX12TASKS);
 
 	// Processinfo
 	// Create handle to process
@@ -120,17 +119,17 @@ void Renderer::deleteRenderer()
 	Log::Print("----------------------------  Deleting Renderer  ----------------------------------\n");
 	waitForGPU();
 
-	SAFE_RELEASE(&m_pFenceFrame);
+	BL_SAFE_RELEASE(&m_pFenceFrame);
 	if (!CloseHandle(m_EventHandle))
 	{
 		Log::Print("Failed To Close Handle... ErrorCode: %d\n", GetLastError());
 	}
 
-	SAFE_RELEASE(&m_CommandQueues[E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE]);
-	SAFE_RELEASE(&m_CommandQueues[E_COMMAND_INTERFACE_TYPE::COMPUTE_TYPE]);
-	SAFE_RELEASE(&m_CommandQueues[E_COMMAND_INTERFACE_TYPE::COPY_TYPE]);
+	BL_SAFE_RELEASE(&m_CommandQueues[E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE]);
+	BL_SAFE_RELEASE(&m_CommandQueues[E_COMMAND_INTERFACE_TYPE::COMPUTE_TYPE]);
+	BL_SAFE_RELEASE(&m_CommandQueues[E_COMMAND_INTERFACE_TYPE::COPY_TYPE]);
 
-	SAFE_RELEASE(&m_pGlobalRootSig);
+	BL_SAFE_RELEASE(&m_pGlobalRootSig);
 
 	delete m_pFullScreenQuad;
 
@@ -164,15 +163,16 @@ void Renderer::deleteRenderer()
 	for (RenderTask* renderTask : m_RenderTasks)
 		delete renderTask;
 
+	for (DX12Task* dx12Task : m_DX12Tasks)
+		delete dx12Task;
+
 	for (DXRTask* dxrTask : m_DXRTasks)
-	{
 		delete dxrTask;
-	}
 
 	delete m_pSbtGenerator;
 	delete m_pSbtStorage;
 
-	SAFE_RELEASE(&m_pDevice5);
+	BL_SAFE_RELEASE(&m_pDevice5);
 
 	delete m_pMousePicker;
 
@@ -389,7 +389,7 @@ void Renderer::Update(double dt)
 #endif
 
 	// DXR
-	TopLevelAccelerationStructure* pTLAS = static_cast<TopLevelRenderTask*>(m_DXRTasks[E_DXR_TASK_TYPE::TLAS])->GetTLAS();
+	TopLevelAccelerationStructure* pTLAS = static_cast<TopLevelRenderTask*>(m_DX12Tasks[E_DX12_TASK_TYPE::TLAS])->GetTLAS();
 
 	pTLAS->Reset();
 
@@ -478,6 +478,7 @@ void Renderer::ExecuteMT()
 	CopyTask* copyTask = nullptr;
 	ComputeTask* computeTask = nullptr;
 	RenderTask* renderTask = nullptr;
+	DX12Task* dx12Task = nullptr;
 	DXRTask* dxrTask = nullptr;
 	/* --------------------- Record command lists --------------------- */
 
@@ -495,16 +496,16 @@ void Renderer::ExecuteMT()
 	m_pThreadPool->AddTask(copyTask);
 
 	// Update BLASes if any...
-	dxrTask = m_DXRTasks[E_DXR_TASK_TYPE::BLAS];
-	m_pThreadPool->AddTask(dxrTask);
+	dx12Task = m_DX12Tasks[E_DX12_TASK_TYPE::BLAS];
+	m_pThreadPool->AddTask(dx12Task);
 
 	// Depth pre-pass
 	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::DEPTH_PRE_PASS];
 	m_pThreadPool->AddTask(renderTask);
 
 	// Update TLAS
-	dxrTask = m_DXRTasks[E_DXR_TASK_TYPE::TLAS];
-	m_pThreadPool->AddTask(dxrTask);
+	dx12Task = m_DX12Tasks[E_DX12_TASK_TYPE::TLAS];
+	m_pThreadPool->AddTask(dx12Task);
 
 	// Geometry pass
 	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::DEFERRED_GEOMETRY];
@@ -611,7 +612,9 @@ void Renderer::ExecuteST()
 	CopyTask* copyTask = nullptr;
 	ComputeTask* computeTask = nullptr;
 	RenderTask* renderTask = nullptr;
+	DX12Task* dx12Task = nullptr;
 	DXRTask* dxrTask = nullptr;
+
 	/* --------------------- Record command lists --------------------- */
 	// Copy on demand
 	copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND];
@@ -627,16 +630,16 @@ void Renderer::ExecuteST()
 	copyTask->Execute();
 
 	// Update BLASes if any...
-	dxrTask = m_DXRTasks[E_DXR_TASK_TYPE::BLAS];
-	dxrTask->Execute();
+	dx12Task = m_DX12Tasks[E_DX12_TASK_TYPE::BLAS];
+	dx12Task->Execute();
 
 	// Depth pre-pass
 	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::DEPTH_PRE_PASS];
 	renderTask->Execute();
 
 	// Update TLAS
-	dxrTask = m_DXRTasks[E_DXR_TASK_TYPE::TLAS];
-	dxrTask->Execute();
+	dx12Task = m_DX12Tasks[E_DX12_TASK_TYPE::TLAS];
+	dx12Task->Execute();
 
 	// Geometry pass
 	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::DEFERRED_GEOMETRY];
@@ -995,7 +998,7 @@ void Renderer::submitModelToGPU(Model* model)
 
 	// TODO: Better structure instead of hardcoding here
 	// Submit model to BLAS
-	static_cast<BottomLevelRenderTask*>(m_DXRTasks[E_DXR_TASK_TYPE::BLAS])->SubmitBLAS(model->m_pBLAS);
+	static_cast<BottomLevelRenderTask*>(m_DX12Tasks[E_DX12_TASK_TYPE::BLAS])->SubmitBLAS(model->m_pBLAS);
 }
 
 void Renderer::submitSlotInfoRawBufferToGPU(component::ModelComponent* mc)
@@ -1209,7 +1212,7 @@ bool Renderer::createDevice()
 			dxgiInfoQueue->SetBreakOnCategory(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_CATEGORY_SHADER, true);
 		}
 
-		SAFE_RELEASE(&debugController);
+		BL_SAFE_RELEASE(&debugController);
 #endif
 	
 	IDXGIFactory6* factory = nullptr;
@@ -1238,7 +1241,7 @@ bool Renderer::createDevice()
 
 			D3D12_FEATURE_DATA_D3D12_OPTIONS5 features5 = {};
 			hr = pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &features5, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS5));
-			SAFE_RELEASE(&pDevice);
+			BL_SAFE_RELEASE(&pDevice);
 
 			if (SUCCEEDED(hr))
 			{
@@ -1250,7 +1253,7 @@ bool Renderer::createDevice()
 			}
 		}
 	
-		SAFE_RELEASE(&adapter);
+		BL_SAFE_RELEASE(&adapter);
 	}
 	
 	if (FAILED(adapter->QueryInterface(__uuidof(IDXGIAdapter4), reinterpret_cast<void**>(&m_pAdapter4))))
@@ -1289,7 +1292,7 @@ bool Renderer::createDevice()
 			BL_LOG_CRITICAL("Failed to create Device\n");
 		}
 	
-		SAFE_RELEASE(&adapter);
+		BL_SAFE_RELEASE(&adapter);
 	}
 	else
 	{
@@ -1298,7 +1301,7 @@ bool Renderer::createDevice()
 		D3D12CreateDevice(adapter, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&m_pDevice5));
 	}
 
-	SAFE_RELEASE(&factory);
+	BL_SAFE_RELEASE(&factory);
 
 	return deviceCreated;
 }
@@ -1383,103 +1386,272 @@ void Renderer::createRootSignature()
 {
 	//m_pRootSignature = new RootSignature(m_pDevice5);
 
-	RootSignatureGenerator rsg = {};
-
-	// Indexes in the RS are preserved in the order they are added in the rsg.
-	// 0, 1, 2
 #pragma region CBVTABLE
+	std::vector<D3D12_DESCRIPTOR_RANGE> dtRangesCBV;
+
+	const unsigned int numCBVDescriptorRanges = 3;
+	for (unsigned int i = 0; i < numCBVDescriptorRanges; i++)
 	{
-		std::vector<D3D12_DESCRIPTOR_RANGE> ranges;
+		D3D12_DESCRIPTOR_RANGE descriptorRange = {};
+		descriptorRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+		descriptorRange.NumDescriptors = -1;
+		descriptorRange.BaseShaderRegister = 0;	// b0
+		descriptorRange.RegisterSpace = i + 1;	// first range at space 1, space0 is for descriptors
+		descriptorRange.OffsetInDescriptorsFromTableStart = 0;
 
-		const unsigned int numDescriptorRanges = 3;
-		for (unsigned int i = 0; i < numDescriptorRanges; i++)
-		{
-			D3D12_DESCRIPTOR_RANGE descriptorRange = {};
-			descriptorRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-			descriptorRange.NumDescriptors = -1;
-			descriptorRange.BaseShaderRegister = 0;	// b0
-			descriptorRange.RegisterSpace = i + 1;	// first range at space 1, space0 is for descriptors
-			descriptorRange.OffsetInDescriptorsFromTableStart = 0;
-
-			ranges.push_back(descriptorRange);
-		}
-
-		rsg.AddDescriptorTableRanges(ranges);
+		dtRangesCBV.push_back(descriptorRange);
 	}
+
+	D3D12_ROOT_DESCRIPTOR_TABLE dtCBV = {};
+	dtCBV.NumDescriptorRanges = dtRangesCBV.size();
+	dtCBV.pDescriptorRanges = dtRangesCBV.data();
+
 #pragma endregion CBVTABLE	
+
 #pragma region SRVTABLE
+	std::vector<D3D12_DESCRIPTOR_RANGE> dtRangesSRV;
+
+	const unsigned int numSRVDescriptorRanges = 3;
+	for (unsigned int i = 0; i < numSRVDescriptorRanges; i++)
 	{
-		std::vector<D3D12_DESCRIPTOR_RANGE> ranges;
+		D3D12_DESCRIPTOR_RANGE descriptorRange = {};
+		descriptorRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		descriptorRange.NumDescriptors = -1;
+		descriptorRange.BaseShaderRegister = 0;	// t0
+		descriptorRange.RegisterSpace = i + 1;	// first range at space 1, space0 is for descriptors
+		descriptorRange.OffsetInDescriptorsFromTableStart = 0;
 
-		const unsigned int numDescriptorRanges = 3;
-		for (unsigned int i = 0; i < numDescriptorRanges; i++)
-		{
-			D3D12_DESCRIPTOR_RANGE descriptorRange = {};
-			descriptorRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-			descriptorRange.NumDescriptors = -1;
-			descriptorRange.BaseShaderRegister = 0;	// t0
-			descriptorRange.RegisterSpace = i + 1;	// first range at space 1, space0 is for descriptors
-			descriptorRange.OffsetInDescriptorsFromTableStart = 0;
-
-			ranges.push_back(descriptorRange);
-		}
-
-		rsg.AddDescriptorTableRanges(ranges);
+		dtRangesSRV.push_back(descriptorRange);
 	}
+
+	D3D12_ROOT_DESCRIPTOR_TABLE dtSRV = {};
+	dtSRV.NumDescriptorRanges = dtRangesSRV.size();
+	dtSRV.pDescriptorRanges = dtRangesSRV.data();
+
 #pragma endregion SRVTABLE
 #pragma region UAVTABLE
+	std::vector<D3D12_DESCRIPTOR_RANGE> dtRangesUAV;
+
+	const unsigned int numUAVDescriptorRanges = 3;
+	for (unsigned int i = 0; i < numUAVDescriptorRanges; i++)
 	{
-		std::vector<D3D12_DESCRIPTOR_RANGE> ranges;
+		D3D12_DESCRIPTOR_RANGE descriptorRange = {};
+		descriptorRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+		descriptorRange.NumDescriptors = -1;
+		descriptorRange.BaseShaderRegister = 0;	// u0
+		descriptorRange.RegisterSpace = i + 1;	// first range at space 1, space0 is for descriptors
+		descriptorRange.OffsetInDescriptorsFromTableStart = 0;
 
-		const unsigned int numDescriptorRanges = 3;
-		for (unsigned int i = 0; i < numDescriptorRanges; i++)
-		{
-			D3D12_DESCRIPTOR_RANGE descriptorRange = {};
-			descriptorRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
-			descriptorRange.NumDescriptors = -1;
-			descriptorRange.BaseShaderRegister = 0;	// u0
-			descriptorRange.RegisterSpace = i + 1;	// first range at space 1, space0 is for descriptors
-			descriptorRange.OffsetInDescriptorsFromTableStart = 0;
-
-			ranges.push_back(descriptorRange);
-		}
-
-		rsg.AddDescriptorTableRanges(ranges);
+		dtRangesUAV.push_back(descriptorRange);
 	}
+
+	D3D12_ROOT_DESCRIPTOR_TABLE dtUAV = {};
+	dtUAV.NumDescriptorRanges = dtRangesUAV.size();
+	dtUAV.pDescriptorRanges = dtRangesUAV.data();
+
 #pragma endregion UAVTABLE
 
-#pragma region CONSTANTS
-	rsg.AddRootConstant(1, 0, sizeof(SlotInfo));				// 3
-	rsg.AddRootConstant(2, 0, sizeof(DescriptorHeapIndices));	// 4
-#pragma endregion CONSTANTS
-#pragma region DESCRIPTORS
-	
-	// 5 -> 10
-	rsg.AddRootDescriptor(D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_SRV, 0, 0, D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_PIXEL);
-	rsg.AddRootDescriptor(D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_SRV, 1, 0, D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_ALL);
-	rsg.AddRootDescriptor(D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_SRV, 2, 0, D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_PIXEL);
-	rsg.AddRootDescriptor(D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_SRV, 3, 0, D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_PIXEL);
-	rsg.AddRootDescriptor(D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_SRV, 4, 0, D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_PIXEL);
-	rsg.AddRootDescriptor(D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_SRV, 5, 0, D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_PIXEL);
+	D3D12_ROOT_PARAMETER rootParam[E_GLOBAL_ROOTSIGNATURE::NUM_PARAMS]{};
 
-	// 11 -> 14
-	rsg.AddRootDescriptor(D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_CBV, 3, 0, D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_ALL);
-	rsg.AddRootDescriptor(D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_CBV, 4, 0, D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_ALL);
-	rsg.AddRootDescriptor(D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_CBV, 5, 0, D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_ALL);
-	rsg.AddRootDescriptor(D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_CBV, 6, 0, D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_ALL);
-#pragma endregion DESCRIPTORS
+	rootParam[E_GLOBAL_ROOTSIGNATURE::dtCBV].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::dtCBV].DescriptorTable = dtCBV;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::dtCBV].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-#pragma region SAMPLERS
-	// Anisotropic
-	rsg.AddStaticSampler(D3D12_FILTER_ANISOTROPIC, D3D12_TEXTURE_ADDRESS_MODE_WRAP, 0, 0, D3D12_COMPARISON_FUNC_LESS_EQUAL, 2);
-	rsg.AddStaticSampler(D3D12_FILTER_ANISOTROPIC, D3D12_TEXTURE_ADDRESS_MODE_WRAP, 1, 0, D3D12_COMPARISON_FUNC_LESS_EQUAL, 4);
-	rsg.AddStaticSampler(D3D12_FILTER_ANISOTROPIC, D3D12_TEXTURE_ADDRESS_MODE_WRAP, 2, 0, D3D12_COMPARISON_FUNC_LESS_EQUAL, 8);
-	rsg.AddStaticSampler(D3D12_FILTER_ANISOTROPIC, D3D12_TEXTURE_ADDRESS_MODE_WRAP, 3, 0, D3D12_COMPARISON_FUNC_LESS_EQUAL, 16);
+	rootParam[E_GLOBAL_ROOTSIGNATURE::dtSRV].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::dtSRV].DescriptorTable = dtSRV;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::dtSRV].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	rsg.AddStaticSampler(D3D12_FILTER_MIN_MAG_MIP_POINT, D3D12_TEXTURE_ADDRESS_MODE_BORDER, 5, 0, D3D12_COMPARISON_FUNC_ALWAYS, 0, D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE);
-	rsg.AddStaticSampler(D3D12_FILTER_MIN_MAG_MIP_LINEAR, D3D12_TEXTURE_ADDRESS_MODE_WRAP, 6, 0, D3D12_COMPARISON_FUNC_NEVER);
-#pragma endregion SAMPLERS
-	m_pGlobalRootSig = rsg.Generate(m_pDevice5, false);
+	rootParam[E_GLOBAL_ROOTSIGNATURE::dtUAV].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::dtUAV].DescriptorTable = dtUAV;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::dtUAV].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	rootParam[E_GLOBAL_ROOTSIGNATURE::Constants_SlotInfo].ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::Constants_SlotInfo].Constants.ShaderRegister = 1; // b1
+	rootParam[E_GLOBAL_ROOTSIGNATURE::Constants_SlotInfo].Constants.RegisterSpace = 0; // space0
+	rootParam[E_GLOBAL_ROOTSIGNATURE::Constants_SlotInfo].Constants.Num32BitValues = sizeof(SlotInfo) / sizeof(UINT);
+	rootParam[E_GLOBAL_ROOTSIGNATURE::Constants_SlotInfo].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	rootParam[E_GLOBAL_ROOTSIGNATURE::Constants_DH_Indices].ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::Constants_DH_Indices].Constants.ShaderRegister = 2; // b2
+	rootParam[E_GLOBAL_ROOTSIGNATURE::Constants_DH_Indices].Constants.RegisterSpace = 0; // space0
+	rootParam[E_GLOBAL_ROOTSIGNATURE::Constants_DH_Indices].Constants.Num32BitValues = sizeof(DescriptorHeapIndices) / sizeof(UINT);
+	rootParam[E_GLOBAL_ROOTSIGNATURE::Constants_DH_Indices].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+#pragma region ROOTPARAMS_CBV
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV0].Descriptor.ShaderRegister = 3;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV0].Descriptor.RegisterSpace = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV1].Descriptor.ShaderRegister = 4;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV1].Descriptor.RegisterSpace = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV2].Descriptor.ShaderRegister = 5;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV2].Descriptor.RegisterSpace = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV2].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV3].Descriptor.ShaderRegister = 6;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV3].Descriptor.RegisterSpace = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV3].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	//rootParam[E_ROOTSIGNATURE::RootParam_CBV4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	//rootParam[E_ROOTSIGNATURE::RootParam_CBV4].Descriptor.ShaderRegister = 4;
+	//rootParam[E_ROOTSIGNATURE::RootParam_CBV4].Descriptor.RegisterSpace = 0;
+	//rootParam[E_ROOTSIGNATURE::RootParam_CBV4].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	//
+	//rootParam[E_ROOTSIGNATURE::RootParam_CBV5].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	//rootParam[E_ROOTSIGNATURE::RootParam_CBV5].Descriptor.ShaderRegister = 5;
+	//rootParam[E_ROOTSIGNATURE::RootParam_CBV5].Descriptor.RegisterSpace = 0;
+	//rootParam[E_ROOTSIGNATURE::RootParam_CBV5].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+#pragma endregion
+#pragma region ROOTPARAMS_SRV
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV0].Descriptor.ShaderRegister = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV0].Descriptor.RegisterSpace = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV1].Descriptor.ShaderRegister = 1;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV1].Descriptor.RegisterSpace = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV2].Descriptor.ShaderRegister = 2;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV2].Descriptor.RegisterSpace = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV2].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV3].Descriptor.ShaderRegister = 3;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV3].Descriptor.RegisterSpace = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV3].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV4].Descriptor.ShaderRegister = 4;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV4].Descriptor.RegisterSpace = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV4].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV5].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV5].Descriptor.ShaderRegister = 5;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV5].Descriptor.RegisterSpace = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV5].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+#pragma endregion
+#pragma region ROOTPARAMS_UAV
+	//rootParam[E_ROOTSIGNATURE::RootParam_SRV0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+	//rootParam[E_ROOTSIGNATURE::RootParam_SRV0].Descriptor.ShaderRegister = 3;
+	//rootParam[E_ROOTSIGNATURE::RootParam_SRV0].Descriptor.RegisterSpace = 0;
+	//rootParam[E_ROOTSIGNATURE::RootParam_SRV0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+#pragma endregion
+
+#pragma region StaticSamplers
+	const unsigned int numStaticSamplers = 6;
+	D3D12_STATIC_SAMPLER_DESC ssd[numStaticSamplers] = {};
+
+	// Anisotropic Wrap
+	for (unsigned int i = 0; i < 4; i++)
+	{
+		ssd[i].ShaderRegister = i;
+		ssd[i].Filter = D3D12_FILTER_ANISOTROPIC;
+		ssd[i].AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		ssd[i].AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		ssd[i].AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		ssd[i].ComparisonFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+		ssd[i].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+		ssd[i].MinLOD = 0;
+		ssd[i].MaxLOD = D3D12_FLOAT32_MAX;
+		ssd[i].MaxAnisotropy = 2 * (i + 1);
+	}
+
+	ssd[4].ShaderRegister = 4;
+	ssd[4].Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+	ssd[4].AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+	ssd[4].AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+	ssd[4].AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+	ssd[4].ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+	ssd[4].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	ssd[4].MinLOD = 0;
+	ssd[4].MaxLOD = D3D12_FLOAT32_MAX;
+	ssd[4].MipLODBias = 0.0f;
+	ssd[4].MaxAnisotropy = 1;
+	ssd[4].BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE;
+
+	ssd[5].ShaderRegister = 5;
+	ssd[5].Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+	ssd[5].AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	ssd[5].AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	ssd[5].AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	ssd[5].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+	ssd[5].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	ssd[5].MinLOD = 0;
+	ssd[5].MaxLOD = D3D12_FLOAT32_MAX;
+	ssd[5].MipLODBias = 0.0f;
+
+#pragma endregion
+
+	D3D12_ROOT_SIGNATURE_DESC rsDesc;
+	rsDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
+	rsDesc.NumParameters = ARRAYSIZE(rootParam);
+	rsDesc.pParameters = rootParam;
+	rsDesc.NumStaticSamplers = numStaticSamplers;
+	rsDesc.pStaticSamplers = ssd;
+
+#ifdef DEBUG
+	unsigned int size = 0;
+	for (const D3D12_ROOT_PARAMETER& param : rootParam)
+	{
+		if (param.ParameterType == D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE)
+		{
+			size += 1;
+		}
+		else if (param.ParameterType == D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS)
+		{
+			size += param.Constants.Num32BitValues;
+		}
+		else if (param.ParameterType == D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_CBV ||
+			param.ParameterType == D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_UAV ||
+			param.ParameterType == D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_SRV)
+		{
+			size += 2;
+		}
+	}
+
+	if (size > 64)
+	{
+		BL_LOG_CRITICAL("RootSignature to big! Size: %d DWORDS\n", size);
+	}
+#endif
+
+	ID3DBlob* errorMessages = nullptr;
+	ID3DBlob* m_pBlob = nullptr;
+
+	HRESULT hr = D3D12SerializeRootSignature(
+		&rsDesc,
+		D3D_ROOT_SIGNATURE_VERSION_1,
+		&m_pBlob,
+		&errorMessages);
+
+	if (FAILED(hr) && errorMessages)
+	{
+		BL_LOG_CRITICAL("Failed to Serialize RootSignature\n");
+
+		const char* errorMsg = static_cast<const char*>(errorMessages->GetBufferPointer());
+		BL_LOG_CRITICAL("%s\n", errorMsg);
+	}
+
+	hr = m_pDevice5->CreateRootSignature(
+		0,
+		m_pBlob->GetBufferPointer(),
+		m_pBlob->GetBufferSize(),
+		IID_PPV_ARGS(&m_pGlobalRootSig));
+
+	if (FAILED(hr))
+	{
+		BL_ASSERT_MESSAGE(m_pGlobalRootSig != nullptr, "Failed to create RootSignature\n");
+	}
+
+	BL_SAFE_RELEASE(&m_pBlob);
 }
 
 void Renderer::createFullScreenQuad()
@@ -1571,10 +1743,10 @@ void Renderer::initRenderTasks()
 {
 
 #pragma region DXRTasks
-	DXRTask* blasTask = new BottomLevelRenderTask(m_pDevice5, F_THREAD_FLAGS::RENDER, L"BL_RenderTask_CommandList");
-	DXRTask* tlasTask = new TopLevelRenderTask(m_pDevice5, F_THREAD_FLAGS::RENDER, L"TL_RenderTask_CommandList");
-	/*
-	RayTracingPipelineGenerator pipeline(m_pDevice5);
+	DX12Task* blasTask = new BottomLevelRenderTask(m_pDevice5, F_THREAD_FLAGS::RENDER, L"BL_RenderTask_CommandList");
+	DX12Task* tlasTask = new TopLevelRenderTask(m_pDevice5, F_THREAD_FLAGS::RENDER, L"TL_RenderTask_CommandList");
+
+	/*RayTracingPipelineGenerator pipeline(m_pDevice5);
 
 
 	// In a way similar to DLLs, each library is associated with a number of
@@ -1644,7 +1816,7 @@ void Renderer::initRenderTasks()
 
 	// Cast the state object into a properties object, allowing to later access
 	// the shader pointers by name
-	m_pRTStateObject->QueryInterface(IID_PPV_ARGS(&m_pRTStateObjectProps)));
+	m_pRTStateObject->QueryInterface(IID_PPV_ARGS(&m_pRTStateObjectProps));
 
 	DXRTask* reflectionTask = new DXRReflectionTask(m_pDevice5, m_pGlobalRootSig,
 		L"RayGen.hlsl", L"Hit.hlsl", L"Miss.hlsl", 
@@ -2189,10 +2361,12 @@ void Renderer::initRenderTasks()
 	m_RenderTasks[E_RENDER_TASK_TYPE::IMGUI] = imGuiRenderTask;
 	m_RenderTasks[E_RENDER_TASK_TYPE::DOWNSAMPLE] = downSampleTask;
 
+	/* ------------------------- DX12 Tasks ------------------------ */
+	m_DX12Tasks[E_DX12_TASK_TYPE::BLAS] = blasTask;
+	m_DX12Tasks[E_DX12_TASK_TYPE::TLAS] = tlasTask;
+
 	/* ------------------------- DXR Tasks ------------------------ */
-	m_DXRTasks[E_DXR_TASK_TYPE::BLAS] = blasTask;
-	m_DXRTasks[E_DXR_TASK_TYPE::TLAS] = tlasTask;
-	//m_DXRTasks[E_DXR_TASK_TYPE::REFLECTION] = reflectionTask;
+	//m_DXRTasks[E_DXR_TASK_TYPE::REFLECTIONS] = reflectionTask;
 
 	// Pushback in the order of execution
 
@@ -2393,7 +2567,7 @@ void Renderer::prepareScene(Scene* activeScene)
 	setRenderTasksPrimaryCamera();
 
 	// DXR, create buffers and create for the first time
-	TopLevelAccelerationStructure* pTLAS = static_cast<TopLevelRenderTask*>(m_DXRTasks[E_DXR_TASK_TYPE::TLAS])->GetTLAS();
+	TopLevelAccelerationStructure* pTLAS = static_cast<TopLevelRenderTask*>(m_DX12Tasks[E_DX12_TASK_TYPE::TLAS])->GetTLAS();
 
 	std::vector<RenderComponent> rcVec = m_RenderComponents[F_DRAW_FLAGS::RAY_TRACED];
 	for (RenderComponent rc : rcVec)

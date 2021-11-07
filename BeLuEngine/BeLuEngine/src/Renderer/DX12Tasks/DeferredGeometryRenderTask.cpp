@@ -15,6 +15,9 @@
 #include "../Geometry/Transform.h"
 #include "../Geometry/Material.h"
 
+TODO(To be replaced by a D3D12Manager some point in the future(needed to access RootSig));
+#include "../Renderer.h"
+
 DeferredGeometryRenderTask::DeferredGeometryRenderTask(ID3D12Device5* device,
 	ID3D12RootSignature* rootSignature,
 	const std::wstring& VSName, const std::wstring& PSName,
@@ -44,8 +47,8 @@ void DeferredGeometryRenderTask::Execute()
 		ID3D12DescriptorHeap* d3d12DescriptorHeap = descriptorHeap_CBV_UAV_SRV->GetID3D12DescriptorHeap();
 		commandList->SetDescriptorHeaps(1, &d3d12DescriptorHeap);
 
-		commandList->SetGraphicsRootDescriptorTable(0, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
-		commandList->SetGraphicsRootDescriptorTable(1, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
+		commandList->SetGraphicsRootDescriptorTable(dtCBV, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
+		commandList->SetGraphicsRootDescriptorTable(dtSRV, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
 
 		DescriptorHeap* renderTargetHeap = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV];
 		DescriptorHeap* depthBufferHeap = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::DSV];
@@ -85,7 +88,7 @@ void DeferredGeometryRenderTask::Execute()
 
 		commandList->OMSetRenderTargets(4, cdhs, false, &dsh);
 
-		commandList->SetGraphicsRootConstantBufferView(13, m_Resources["cbPerScene"]->GetGPUVirtualAdress());
+		commandList->SetGraphicsRootConstantBufferView(RootParam_CBV2, m_Resources["cbPerScene"]->GetGPUVirtualAdress());
 
 		// Draw for every Rendercomponent
 		for (int i = 0; i < m_RenderComponents.size(); i++)
@@ -110,9 +113,9 @@ void DeferredGeometryRenderTask::drawRenderComponent(component::ModelComponent* 
 		const SlotInfo* info = mc->GetSlotInfoAt(i);
 
 		Transform* t = tc->GetTransform();
-		cl->SetGraphicsRootConstantBufferView(14, mc->GetMaterialAt(i)->GetMaterialData()->first->GetDefaultResource()->GetGPUVirtualAdress());
-		cl->SetGraphicsRoot32BitConstants(3, sizeof(SlotInfo) / sizeof(UINT), info, 0);
-		cl->SetGraphicsRootConstantBufferView(11, t->m_pCB->GetDefaultResource()->GetGPUVirtualAdress());
+		cl->SetGraphicsRootConstantBufferView(RootParam_CBV3, mc->GetMaterialAt(i)->GetMaterialData()->first->GetDefaultResource()->GetGPUVirtualAdress());
+		cl->SetGraphicsRoot32BitConstants(Constants_SlotInfo, sizeof(SlotInfo) / sizeof(UINT), info, 0);
+		cl->SetGraphicsRootConstantBufferView(RootParam_CBV0, t->m_pCB->GetDefaultResource()->GetGPUVirtualAdress());
 
 		cl->IASetIndexBuffer(m->GetIndexBufferView());
 		cl->DrawIndexedInstanced(num_Indices, 1, 0, 0, 0);

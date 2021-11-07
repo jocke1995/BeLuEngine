@@ -114,7 +114,7 @@ enum class E_CAMERA_TYPE
 };
 
 // this will only call release if an object exists (prevents exceptions calling release on non existant objects)
-#define SAFE_RELEASE(p)			\
+#define BL_SAFE_RELEASE(p)			\
 {								\
 	if ((*p))					\
 	{							\
@@ -123,7 +123,7 @@ enum class E_CAMERA_TYPE
 	}							\
 }
 
-#define SAFE_DELETE(p)			\
+#define BL_SAFE_DELETE(p)			\
 {								\
 	if (p != nullptr)			\
 	{							\
@@ -131,6 +131,17 @@ enum class E_CAMERA_TYPE
 		p = nullptr;			\
 	}							\
 }
+
+#define BL_SAFE_DELETE_ARRAY(p)	\
+{								\
+	if (p != nullptr)			\
+	{							\
+		delete p[];				\
+		p = nullptr;			\
+	}							\
+}
+
+#define TODO() //DebugBreak();
 
 // Debug
 #define SINGLE_THREADED_RENDERER false

@@ -35,17 +35,17 @@ SwapChain::SwapChain(
 	int m_ScreenHeight = mi.rcMonitor.bottom - mi.rcMonitor.top;
 
 	// If the chosen resolution is higher than the screen resolution, set the resolution to the screen resolution
-	if (m_ScreenWidth <= width || m_ScreenHeight <= height)
-	{
-		m_CurrentModeDescription.Width = m_ScreenWidth - 1;
-		m_CurrentModeDescription.Height = m_ScreenHeight;
-		Log::Print("Choosing (%d, %d) as the new resolution...\n", m_CurrentModeDescription.Width, m_CurrentModeDescription.Height);
-	}
-	else
-	{
+	//if (m_ScreenWidth <= width || m_ScreenHeight <= height)
+	//{
+	//	m_CurrentModeDescription.Width = m_ScreenWidth - 1;
+	//	m_CurrentModeDescription.Height = m_ScreenHeight;
+	//	Log::Print("Choosing (%d, %d) as the new resolution...\n", m_CurrentModeDescription.Width, m_CurrentModeDescription.Height);
+	//}
+	//else
+	//{
 		m_CurrentModeDescription.Width = width;
 		m_CurrentModeDescription.Height = height;
-	}
+	//}
 
 	//Create descriptor
 	DXGI_SWAP_CHAIN_DESC1 scDesc = {};
@@ -87,7 +87,7 @@ SwapChain::SwapChain(
 		BL_LOG_CRITICAL("Failed to create Swapchain\n");
 	}
 
-	SAFE_RELEASE(&factory);
+	BL_SAFE_RELEASE(&factory);
 	
 	if (m_WindowMode == static_cast<int>(E_WINDOW_MODE::FULLSCREEN))
 	{
@@ -110,7 +110,7 @@ SwapChain::~SwapChain()
 		m_pSwapChain4->SetFullscreenState(false, NULL);
 	}
 
-	SAFE_RELEASE(&m_pSwapChain4);
+	BL_SAFE_RELEASE(&m_pSwapChain4);
 }
 
 IDXGISwapChain4* SwapChain::GetDX12SwapChain() const

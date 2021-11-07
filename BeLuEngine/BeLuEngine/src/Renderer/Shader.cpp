@@ -14,7 +14,7 @@ Shader::Shader(LPCTSTR path, E_SHADER_TYPE type)
 
 Shader::~Shader()
 {
-	SAFE_RELEASE(&m_pBlob);
+	BL_SAFE_RELEASE(&m_pBlob);
 }
 
 IDxcBlob* Shader::GetBlob() const

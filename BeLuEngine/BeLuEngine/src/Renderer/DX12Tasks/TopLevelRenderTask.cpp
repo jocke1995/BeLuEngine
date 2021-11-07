@@ -13,14 +13,14 @@ TopLevelRenderTask::TopLevelRenderTask(
 	ID3D12Device5* device,
 	unsigned int FLAG_THREAD,
 	const std::wstring& clName)
-	:DXRTask(device, FLAG_THREAD, E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE, clName)
+	:DX12Task(device, E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE, FLAG_THREAD,  clName)
 {
 	m_pTLAS = new TopLevelAccelerationStructure();
 }
 
 TopLevelRenderTask::~TopLevelRenderTask()
 {
-	SAFE_DELETE(m_pTLAS);
+	BL_SAFE_DELETE(m_pTLAS);
 }
 
 void TopLevelRenderTask::Execute()

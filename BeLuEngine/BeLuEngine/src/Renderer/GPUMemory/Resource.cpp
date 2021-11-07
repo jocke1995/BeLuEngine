@@ -86,7 +86,7 @@ bool Resource::operator!=(const Resource& other)
 
 Resource::~Resource()
 {
-	SAFE_RELEASE(&m_pResource);
+	BL_SAFE_RELEASE(&m_pResource);
 }
 
 unsigned int Resource::GetSize() const

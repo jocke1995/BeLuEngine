@@ -1,11 +1,11 @@
 #ifndef BOTTOMLEVELRENDERTASK_H
 #define BOTTOMLEVELRENDERTASK_H
 
-#include "DXRTask.h"
+#include "DX12Task.h"
 
 class BottomLevelAccelerationStructure;
 
-class BottomLevelRenderTask : public DXRTask
+class BottomLevelRenderTask : public DX12Task
 {
 public:
 	BottomLevelRenderTask(

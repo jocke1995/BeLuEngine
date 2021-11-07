@@ -39,7 +39,7 @@ Model::Model(
 
 Model::~Model()
 {
-	SAFE_DELETE(m_pBLAS);
+	BL_SAFE_DELETE(m_pBLAS);
 }
 
 bool Model::operator==(const Model& other)

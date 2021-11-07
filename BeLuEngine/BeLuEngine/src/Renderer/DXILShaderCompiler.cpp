@@ -10,10 +10,10 @@ DXILShaderCompiler::DXILShaderCompiler()
 
 DXILShaderCompiler::~DXILShaderCompiler() 
 {
-	SAFE_RELEASE(&m_pCompiler);
-	SAFE_RELEASE(&m_pLibrary);
-	SAFE_RELEASE(&m_pIncludeHandler);
-	SAFE_RELEASE(&m_pLinker);
+	BL_SAFE_RELEASE(&m_pCompiler);
+	BL_SAFE_RELEASE(&m_pLibrary);
+	BL_SAFE_RELEASE(&m_pIncludeHandler);
+	BL_SAFE_RELEASE(&m_pLinker);
 }
 
 DXILShaderCompiler* DXILShaderCompiler::Get()
@@ -137,11 +137,11 @@ HRESULT DXILShaderCompiler::CompileFromFile(DXILCompilationDesc* desc, IDxcBlob*
 							BL_LOG_CRITICAL("%s\n", a.c_str());
 
 
-							SAFE_RELEASE(&pPrintBlob);
-							SAFE_RELEASE(&pPrintBlob16);
+							BL_SAFE_RELEASE(&pPrintBlob);
+							BL_SAFE_RELEASE(&pPrintBlob16);
 						}
 					}
-					SAFE_RELEASE(&pResult);
+					BL_SAFE_RELEASE(&pResult);
 				}
 			}
 		}

@@ -44,7 +44,7 @@ DescriptorHeap::DescriptorHeap(ID3D12Device5* device, E_DESCRIPTOR_HEAP_TYPE typ
 
 DescriptorHeap::~DescriptorHeap()
 {
-	SAFE_RELEASE(&m_pDescriptorHeap);
+	BL_SAFE_RELEASE(&m_pDescriptorHeap);
 }
 
 void DescriptorHeap::SetCPUGPUHeapStart()

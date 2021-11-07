@@ -1,11 +1,11 @@
 #ifndef TOPLEVELRENDERTASK_H
 #define TOPLEVELRENDERTASK_H
 
-#include "DXRTask.h"
+#include "DX12Task.h"
 
 class TopLevelAccelerationStructure;
 
-class TopLevelRenderTask : public DXRTask
+class TopLevelRenderTask : public DX12Task
 {
 public:
 	TopLevelRenderTask(

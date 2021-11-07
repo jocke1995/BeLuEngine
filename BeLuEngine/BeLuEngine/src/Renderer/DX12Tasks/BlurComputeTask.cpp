@@ -10,6 +10,9 @@
 // Techniques
 #include "../Techniques/PingPongResource.h"
 
+TODO(To be replaced by a D3D12Manager some point in the future (needed to access RootSig));
+#include "../Renderer.h"
+
 BlurComputeTask::BlurComputeTask(
 	ID3D12Device5* device,
 	ID3D12RootSignature* rootSignature,
@@ -53,9 +56,10 @@ void BlurComputeTask::Execute()
 		DescriptorHeap* descriptorHeap_CBV_UAV_SRV = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV];
 		ID3D12DescriptorHeap* d3d12DescriptorHeap = descriptorHeap_CBV_UAV_SRV->GetID3D12DescriptorHeap();
 		commandList->SetDescriptorHeaps(1, &d3d12DescriptorHeap);
-
-		commandList->SetComputeRootDescriptorTable(2, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
-		commandList->SetComputeRootDescriptorTable(1, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
+		
+		E_GLOBAL_ROOTSIGNATURE;
+		commandList->SetComputeRootDescriptorTable(dtSRV, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
+		commandList->SetComputeRootDescriptorTable(dtUAV, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
 
 		// Descriptorheap indices for the textures to blur
 		// Horizontal pass
@@ -66,7 +70,7 @@ void BlurComputeTask::Execute()
 		m_DhIndices.index3 = m_PingPongResources[0]->GetUAV()->GetDescriptorHeapIndex();	// Write
 
 		// Send the indices to gpu
-		commandList->SetComputeRoot32BitConstants(4, sizeof(DescriptorHeapIndices) / sizeof(UINT), &m_DhIndices, 0);
+		commandList->SetComputeRoot32BitConstants(Constants_DH_Indices, sizeof(DescriptorHeapIndices) / sizeof(UINT), &m_DhIndices, 0);
 
 		// The resource to read (Resource Barrier)
 		const_cast<Resource*>(m_PingPongResources[0]->GetSRV()->GetResource())->TransResourceState(

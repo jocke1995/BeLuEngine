@@ -16,8 +16,8 @@ CommandInterface::~CommandInterface()
 {
 	for (unsigned int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
-		SAFE_RELEASE(&m_pCommandAllocators[i]);
-		SAFE_RELEASE(&m_pCommandLists[i]);
+		BL_SAFE_RELEASE(&m_pCommandAllocators[i]);
+		BL_SAFE_RELEASE(&m_pCommandLists[i]);
 	}
 }
 

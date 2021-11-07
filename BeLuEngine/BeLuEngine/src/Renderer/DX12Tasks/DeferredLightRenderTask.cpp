@@ -14,6 +14,9 @@
 #include "../Renderer/Geometry/Mesh.h"
 #include "../Renderer/Geometry/Material.h"
 
+TODO(To be replaced by a D3D12Manager some point in the future(needed to access RootSig));
+#include "../Renderer.h"
+
 DeferredLightRenderTask::DeferredLightRenderTask(
 	ID3D12Device5* device,
 	ID3D12RootSignature* rootSignature,
@@ -56,8 +59,8 @@ void DeferredLightRenderTask::Execute()
 		ID3D12DescriptorHeap* d3d12DescriptorHeap = descriptorHeap_CBV_UAV_SRV->GetID3D12DescriptorHeap();
 		commandList->SetDescriptorHeaps(1, &d3d12DescriptorHeap);
 
-		commandList->SetGraphicsRootDescriptorTable(0, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
-		commandList->SetGraphicsRootDescriptorTable(1, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
+		commandList->SetGraphicsRootDescriptorTable(dtCBV, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
+		commandList->SetGraphicsRootDescriptorTable(dtSRV, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
 
 		DescriptorHeap* renderTargetHeap = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV];
 		DescriptorHeap* depthBufferHeap = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::DSV];
@@ -91,9 +94,9 @@ void DeferredLightRenderTask::Execute()
 		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		// Set cbvs
-		commandList->SetGraphicsRootConstantBufferView(12, m_Resources["cbPerFrame"]->GetGPUVirtualAdress());
-		commandList->SetGraphicsRootConstantBufferView(13, m_Resources["cbPerScene"]->GetGPUVirtualAdress());
-		commandList->SetGraphicsRootShaderResourceView(5, m_Resources["rawBufferLights"]->GetGPUVirtualAdress());
+		commandList->SetGraphicsRootConstantBufferView(RootParam_CBV1, m_Resources["cbPerFrame"]->GetGPUVirtualAdress());
+		commandList->SetGraphicsRootConstantBufferView(RootParam_CBV2, m_Resources["cbPerScene"]->GetGPUVirtualAdress());
+		commandList->SetGraphicsRootShaderResourceView(RootParam_SRV0, m_Resources["rawBufferLights"]->GetGPUVirtualAdress());
 
 
 		// This pair for m_RenderComponents will be used for model-outlining in case any model is picked.
@@ -115,7 +118,7 @@ void DeferredLightRenderTask::Execute()
 		//commandList->OMSetStencilRef(1);
 
 		// Draw a fullscreen quad 
-		commandList->SetGraphicsRoot32BitConstants(3, sizeof(SlotInfo) / sizeof(UINT), &m_Info, 0);
+		commandList->SetGraphicsRoot32BitConstants(Constants_SlotInfo, sizeof(SlotInfo) / sizeof(UINT), &m_Info, 0);
 		commandList->IASetIndexBuffer(m_pFullScreenQuadMesh->GetIndexBufferView());
 
 		commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);

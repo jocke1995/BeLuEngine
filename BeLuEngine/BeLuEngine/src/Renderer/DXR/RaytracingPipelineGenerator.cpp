@@ -58,7 +58,7 @@ RayTracingPipelineGenerator::RayTracingPipelineGenerator(ID3D12Device5* device)
 
 RayTracingPipelineGenerator::~RayTracingPipelineGenerator()
 {
-    SAFE_RELEASE(&m_dummyLocalRootSignature);
+    BL_SAFE_RELEASE(&m_dummyLocalRootSignature);
 }
 
 //--------------------------------------------------------------------------------------------------

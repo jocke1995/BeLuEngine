@@ -9,8 +9,8 @@ AccelerationStructure::AccelerationStructure()
 
 AccelerationStructure::~AccelerationStructure()
 {
-	SAFE_DELETE(m_pScratch);
-	SAFE_DELETE(m_pResult);
+	BL_SAFE_DELETE(m_pScratch);
+	BL_SAFE_DELETE(m_pResult);
 }
 
 void AccelerationStructure::BuildAccelerationStructure(ID3D12GraphicsCommandList4* commandList) const

@@ -12,6 +12,9 @@
 // Model info
 #include "../Renderer/Geometry/Mesh.h"
 
+TODO(To be replaced by a D3D12Manager some point in the future(needed to access RootSig));
+#include "../Renderer.h"
+
 OutliningRenderTask::OutliningRenderTask(
 	ID3D12Device5* device,
 	ID3D12RootSignature* rootSignature,
@@ -64,7 +67,7 @@ void OutliningRenderTask::Execute()
 		// else continue as usual
 
 		commandList->SetGraphicsRootSignature(m_pRootSig);
-		commandList->SetGraphicsRootDescriptorTable(1, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
+		commandList->SetGraphicsRootDescriptorTable(dtSRV, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
 
 		commandList->OMSetRenderTargets(1, &cdh, true, &dsh);
 
@@ -97,8 +100,8 @@ void OutliningRenderTask::Execute()
 			w_wvp[1] = (*viewProjMatTrans) * w_wvp[0];
 
 			m_OutlineTransformToScale.m_pCB->GetUploadResource()->SetData(&w_wvp);
-			commandList->SetGraphicsRoot32BitConstants(3, sizeof(SlotInfo) / sizeof(UINT), info, 0);
-			commandList->SetGraphicsRootConstantBufferView(11, m_OutlineTransformToScale.m_pCB->GetUploadResource()->GetGPUVirtualAdress());
+			commandList->SetGraphicsRoot32BitConstants(Constants_SlotInfo, sizeof(SlotInfo) / sizeof(UINT), info, 0);
+			commandList->SetGraphicsRootConstantBufferView(RootParam_CBV0, m_OutlineTransformToScale.m_pCB->GetUploadResource()->GetGPUVirtualAdress());
 
 			commandList->IASetIndexBuffer(m->GetIndexBufferView());
 

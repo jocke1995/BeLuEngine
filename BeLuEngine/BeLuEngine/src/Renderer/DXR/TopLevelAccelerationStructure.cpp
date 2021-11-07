@@ -13,7 +13,7 @@ TopLevelAccelerationStructure::TopLevelAccelerationStructure()
 
 TopLevelAccelerationStructure::~TopLevelAccelerationStructure()
 {
-	SAFE_DELETE(m_pInstanceDesc);
+	BL_SAFE_DELETE(m_pInstanceDesc);
 	delete m_pSRV;
 }
 
@@ -54,9 +54,9 @@ void TopLevelAccelerationStructure::GenerateBuffers(ID3D12Device5* pDevice, Desc
 	m_InstanceDescsSizeInBytes = (sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * static_cast<UINT64>(m_Instances.size() + 255)) & ~255;
 
 	// Create buffers for scratch, result and instance
-	SAFE_DELETE(m_pScratch);
-	SAFE_DELETE(m_pResult);
-	SAFE_DELETE(m_pInstanceDesc);
+	BL_SAFE_DELETE(m_pScratch);
+	BL_SAFE_DELETE(m_pResult);
+	BL_SAFE_DELETE(m_pInstanceDesc);
 
 	D3D12_RESOURCE_STATES stateResourceAS = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	m_pScratch = new Resource(

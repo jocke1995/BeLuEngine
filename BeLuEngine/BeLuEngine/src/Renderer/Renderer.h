@@ -93,6 +93,35 @@ struct RenderComponent;
 struct WindowChange;
 struct WindowSettingChange;
 
+enum E_GLOBAL_ROOTSIGNATURE
+{
+	dtCBV,
+	dtSRV,
+	dtUAV,
+	Constants_SlotInfo,
+	Constants_DH_Indices,
+	RootParam_SRV0,
+	RootParam_SRV1,
+	RootParam_SRV2,
+	RootParam_SRV3,
+	RootParam_SRV4,
+	RootParam_SRV5,
+	RootParam_CBV0,
+	RootParam_CBV1,
+	RootParam_CBV2,
+	RootParam_CBV3,
+	//RootParam_CBV4,
+	//RootParam_CBV5,
+	//RootParam_UAV0,
+	//RootParam_UAV1,
+	//RootParam_UAV2,
+	//RootParam_UAV3,
+	//RootParam_UAV4,
+	//RootParam_UAV5,
+	//RootParam_UAV6,
+	NUM_PARAMS
+};
+
 class Renderer
 {
 public:
@@ -208,6 +237,7 @@ private:
 	std::vector<ComputeTask*> m_ComputeTasks;
 	std::vector<CopyTask*>    m_CopyTasks;
 	std::vector<RenderTask*>  m_RenderTasks;
+	std::vector<DX12Task*>	  m_DX12Tasks;
 	std::vector<DXRTask*>	  m_DXRTasks;
 
 	Mesh* m_pFullScreenQuad = nullptr;

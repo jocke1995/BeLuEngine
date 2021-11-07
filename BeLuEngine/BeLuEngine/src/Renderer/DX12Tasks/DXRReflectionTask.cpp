@@ -18,6 +18,8 @@
 #include "../Geometry/Transform.h"
 #include "../Geometry/Material.h"
 
+TODO(To be replaced by a D3D12Manager some point in the future(needed to access RootSig));
+#include "../Renderer.h"
 
 DXRReflectionTask::DXRReflectionTask(
 	ID3D12Device5* device,

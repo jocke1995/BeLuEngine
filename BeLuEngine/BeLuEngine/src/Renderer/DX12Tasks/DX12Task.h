@@ -45,10 +45,16 @@ enum E_COPY_TASK_TYPE
 
 enum E_DXR_TASK_TYPE
 {
+	REFLECTIONS,
+	NR_OF_DXRTASKS
+};
+
+// These tasks are for GPU tasks which are very barebone, such as only submitting specific data (such as TLAS:es and BLAS:es)
+enum E_DX12_TASK_TYPE
+{
 	BLAS,
 	TLAS,
-	REFLECTION,
-	NR_OF_DXRTASKS
+	NR_OF_DX12TASKS
 };
 
 // Dont create this class immediatly, use the #define below
@@ -64,7 +70,7 @@ private:
 };
 
 #ifdef DEBUG	// This is both for Debug and Release, not for Dist
-#define ScopedPixEvent(name, commandList) ScopedPIXEvent concat(PIX_Event_Marker, __LINE__)(#name, commandList);
+	#define ScopedPixEvent(name, commandList) ScopedPIXEvent concat(PIX_Event_Marker, __LINE__)(#name, commandList);
 #else
 	#define ScopedPixEvent(name, commandList)
 #endif

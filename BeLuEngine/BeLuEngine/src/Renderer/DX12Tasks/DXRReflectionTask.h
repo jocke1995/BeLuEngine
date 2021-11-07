@@ -22,6 +22,10 @@ private:
 	Shader* m_pRayGenShader = nullptr;
 	Shader* m_pHitShader = nullptr;
 	Shader* m_pMissShader = nullptr;
+
+	ID3D12RootSignature* m_pRayGenSignature;
+	ID3D12RootSignature* m_pHitSignature;
+	ID3D12RootSignature* m_pMissSignature;
 };
 
 #endif
