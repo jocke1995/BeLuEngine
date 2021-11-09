@@ -117,7 +117,7 @@ void ImGuiHandler::UpdateFrame()
 				// Only show the threads who completed a task this frame
 				if (threadStat->m_TasksCompleted != 0)
 				{
-					ImGui::Text("ID: %d\tCompleted tasks: %d", threadStat->m_Id, threadStat->m_TasksCompleted);
+					ImGui::Text("ID: %.6X\tCompleted tasks: %d", threadStat->m_Id, threadStat->m_TasksCompleted);
 				}
 			}
 		}

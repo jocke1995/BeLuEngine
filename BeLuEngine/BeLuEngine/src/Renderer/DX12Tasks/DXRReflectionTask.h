@@ -14,11 +14,15 @@ enum E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION
 	NUM_LOCAL_PARAMS
 };
 
+struct Resource_UAV_SRV;
+
 class DXRReflectionTask : public DXRTask
 {
 public:
 	DXRReflectionTask(ID3D12Device5* device,
 		ID3D12RootSignature* globalRootSignature,
+		Resource_UAV_SRV* resourceUavSrv,
+		unsigned int width, unsigned int height,
 		unsigned int FLAG_THREAD);
 	~DXRReflectionTask();
 
@@ -33,6 +37,9 @@ private:
 	Shader* m_pHitShader = nullptr;
 	Shader* m_pMissShader = nullptr;
 
+	// Global Root signature
+	ID3D12RootSignature* m_pGlobalRootSig;
+
 	// Local root signatures
 	ID3D12RootSignature* m_pRayGenSignature;
 	ID3D12RootSignature* m_pHitSignature;
@@ -43,6 +50,11 @@ private:
 	Resource* m_pSbtStorage = nullptr;
 	ID3D12StateObject* m_pStateObject = nullptr;
 	ID3D12StateObjectProperties* m_pRTStateObjectProps = nullptr;
+
+	// Texture
+	Resource_UAV_SRV* m_pResourceUavSrv;
+
+	unsigned int m_DispatchWidth = 0, m_DispatchHeight = 0;
 };
 
 #endif

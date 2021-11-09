@@ -85,8 +85,8 @@ struct CB_PER_SCENE_STRUCT
 
 	unsigned int gBufferEmissive;
 	unsigned int depth;
-	unsigned int pad1;
-	unsigned int pad2;
+	unsigned int reflectionUAV;
+	unsigned int reflectionSRV;
 };
 
 struct LightHeader

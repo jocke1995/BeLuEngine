@@ -22,8 +22,8 @@ void BeLuEngine::Init(HINSTANCE hInstance, int nCmdShow)
 {
 	// Window values
 	bool windowedFullscreen = false;
-	int windowWidth = 1920;
-	int windowHeight = 1080;
+	int windowWidth = 1280;
+	int windowHeight = 720;
 
 	// Misc
 	m_pWindow = new Window(hInstance, nCmdShow, windowedFullscreen, windowWidth, windowHeight);

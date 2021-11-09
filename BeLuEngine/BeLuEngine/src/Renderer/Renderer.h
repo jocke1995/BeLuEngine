@@ -217,6 +217,9 @@ private:
 	std::pair<RenderTarget*, ShaderResourceView*> m_GBufferMaterialProperties;
 	std::pair<RenderTarget*, ShaderResourceView*> m_GBufferEmissive;
 
+	// -------------- RenderTargets -------------- 
+	Resource_UAV_SRV m_ReflectionTexture;
+
 	// Swapchain (inheriting from 'RenderTarget')
 	SwapChain* m_pSwapChain = nullptr;
 	

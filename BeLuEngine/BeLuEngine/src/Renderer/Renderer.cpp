@@ -143,6 +143,10 @@ void Renderer::deleteRenderer()
 	delete m_GBufferEmissive.first;
 	delete m_GBufferEmissive.second;
 
+	delete m_ReflectionTexture.resource;
+	delete m_ReflectionTexture.uav;
+	delete m_ReflectionTexture.srv;
+
 	delete m_pSwapChain;
 	delete m_pBloomResources;
 	delete m_pMainDepthStencil;
@@ -187,7 +191,7 @@ void Renderer::deleteRenderer()
 #endif
 }
 
-void Renderer::InitD3D12(Window *window, HINSTANCE hInstance, ThreadPool* threadPool)
+void Renderer::InitD3D12(Window* window, HINSTANCE hInstance, ThreadPool* threadPool)
 {
 	m_pThreadPool = threadPool;
 	m_pWindow = window;
@@ -207,7 +211,7 @@ void Renderer::InitD3D12(Window *window, HINSTANCE hInstance, ThreadPool* thread
 	// Fence for WaitForFrame();
 	createFences();
 
-	
+
 #pragma region RenderTargets
 	// Main color renderTarget (used until the swapchain RT is drawn to)
 	m_FinalColorBuffer.first = new RenderTarget(
@@ -258,18 +262,63 @@ void Renderer::InitD3D12(Window *window, HINSTANCE hInstance, ThreadPool* thread
 		m_pDevice5,
 		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV],
 		m_GBufferMaterialProperties.first->GetDefaultResource());
-	
+
 	// Emissive Color
 	m_GBufferEmissive.first = new RenderTarget(
-			m_pDevice5,
-			m_pWindow->GetScreenWidth(), m_pWindow->GetScreenHeight(),
-			L"gBufferEmissive_RESOURCE",
-			m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV]);
+		m_pDevice5,
+		m_pWindow->GetScreenWidth(), m_pWindow->GetScreenHeight(),
+		L"gBufferEmissive_RESOURCE",
+		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV]);
 
 	m_GBufferEmissive.second = new ShaderResourceView(
 		m_pDevice5,
 		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV],
 		m_GBufferEmissive.first->GetDefaultResource());
+
+#pragma region ReflectionTexture
+	{
+		// Resource
+		D3D12_RESOURCE_DESC resourceDesc = {};
+		resourceDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+		resourceDesc.Width = m_pWindow->GetScreenWidth();
+		resourceDesc.Height = m_pWindow->GetScreenHeight();
+		resourceDesc.DepthOrArraySize = 1;
+		resourceDesc.MipLevels = 1;
+		resourceDesc.SampleDesc.Count = 1;
+		resourceDesc.SampleDesc.Quality = 0;
+		resourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+		resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+		resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+
+		m_ReflectionTexture.resource = new Resource(m_pDevice5, &resourceDesc, nullptr, L"ReflectionTexture_RESOURCE", D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
+		// UAV
+		D3D12_UNORDERED_ACCESS_VIEW_DESC uavDescReflection = {};
+		uavDescReflection.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+		uavDescReflection.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+		uavDescReflection.Texture2D.MipSlice = 0;
+		uavDescReflection.Texture2D.PlaneSlice = 0;
+
+		m_ReflectionTexture.uav = new UnorderedAccessView(
+			m_pDevice5,
+			m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV],
+			&uavDescReflection,
+			m_ReflectionTexture.resource);
+
+		// SRV
+		D3D12_SHADER_RESOURCE_VIEW_DESC srvDescReflection = {};
+		srvDescReflection.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		srvDescReflection.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+		srvDescReflection.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+		srvDescReflection.Texture2D.MipLevels = -1;
+
+		m_ReflectionTexture.srv = new ShaderResourceView(
+			m_pDevice5,
+			m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV],
+			&srvDescReflection,
+			m_ReflectionTexture.resource);
+	}
+#pragma endregion
 
 	// Swapchain
 	createSwapChain();
@@ -1725,7 +1774,14 @@ void Renderer::initRenderTasks()
 	DXRTask* reflectionTask = new DXRReflectionTask(
 		m_pDevice5,
 		m_pGlobalRootSig,
+		&m_ReflectionTexture,
+		m_pWindow->GetScreenWidth(), m_pWindow->GetScreenHeight(),
 		F_THREAD_FLAGS::RENDER);
+
+	reflectionTask->AddResource("cbPerFrame", m_pCbPerFrame->GetDefaultResource());
+	reflectionTask->AddResource("cbPerScene", m_pCbPerScene->GetDefaultResource());
+	reflectionTask->SetDescriptorHeaps(m_DescriptorHeaps);
+
 #pragma endregion DXRTasks
 
 #pragma region DepthPrePass
@@ -2491,6 +2547,8 @@ void Renderer::prepareScene(Scene* activeScene)
 	m_pCbPerSceneData->gBufferMaterialProperties = m_GBufferMaterialProperties.second->GetDescriptorHeapIndex();
 	m_pCbPerSceneData->gBufferEmissive			 = m_GBufferEmissive.second->GetDescriptorHeapIndex();
 	m_pCbPerSceneData->depth					 = m_pMainDepthStencil->GetSRV()->GetDescriptorHeapIndex();
+	m_pCbPerSceneData->reflectionUAV			 = m_ReflectionTexture.uav->GetDescriptorHeapIndex();
+	m_pCbPerSceneData->reflectionSRV			 = m_ReflectionTexture.srv->GetDescriptorHeapIndex();
 }
 
 void Renderer::submitUploadPerSceneData()

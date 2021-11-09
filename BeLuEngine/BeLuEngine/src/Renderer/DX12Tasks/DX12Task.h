@@ -72,7 +72,7 @@ private:
 #ifdef DEBUG	// This is both for Debug and Release, not for Dist
 	#define ScopedPixEvent(name, commandList) ScopedPIXEvent concat(PIX_Event_Marker, __LINE__)(#name, commandList);
 #else
-	#define ScopedPixEvent(name, commandList)
+	#define ScopedPixEvent(name, commandList);
 #endif
 
 namespace component

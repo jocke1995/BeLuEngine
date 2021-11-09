@@ -13,7 +13,7 @@ UnorderedAccess::UnorderedAccess(
 	DescriptorHeap* descriptorHeap_CBV_UAV_SRV)
 {
 	m_pUploadResource = new Resource(device, entrySize, RESOURCE_TYPE::UPLOAD, resourceName + L"_UPLOAD");
-	m_pDefaultResource = new Resource(device, entrySize, RESOURCE_TYPE::DEFAULT, resourceName + L"_DEFAULT");
+	m_pDefaultResource = new Resource(device, entrySize, RESOURCE_TYPE::DEFAULT, resourceName + L"_DEFAULT", D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 	m_pUAV = new UnorderedAccessView(device, descriptorHeap_CBV_UAV_SRV, uavDesc, m_pDefaultResource);
 
 	m_Id = s_UaCounter++;

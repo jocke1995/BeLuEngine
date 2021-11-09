@@ -7,10 +7,12 @@
 RaytracingAccelerationStructure SceneBVH[] : register(t0, space3);
 
 Texture2D textures[]   : register (t0, space1);
+RWTexture2D<float4> texturesUAV[]   : register (u0, space1);
+
 SamplerState MIN_MAG_MIP_LINEAR__WRAP : register(s5);
 
+ConstantBuffer<CB_PER_SCENE_STRUCT>  cbPerScene       : register(b3, space0);
 ConstantBuffer<CB_PER_FRAME_STRUCT>  cbPerFrame		  : register(b4, space0);
-ConstantBuffer<CB_PER_SCENE_STRUCT>  cbPerScene       : register(b5, space0);
 
 [shader("raygeneration")] 
 void RayGen()
@@ -51,5 +53,5 @@ void RayGen()
     //    ray,
     //    ReflectionPayload);
 
-
+    texturesUAV[cbPerScene.reflectionUAV][launchIndex] = float4(uv.x, uv.y, 0.0f, 1.0f);
 }

@@ -2,12 +2,13 @@
 #include "DXRReflectionTask.h"
 
 // Core
+#include "../Headers/Core.h"
 #include "../Misc/Log.h"
 
 // DX12 Specifics
 //#include "../Camera/BaseCamera.h"
 //#include "../CommandInterface.h"
-//#include "../DescriptorHeap.h"
+#include "../DescriptorHeap.h"
 #include "../GPUMemory/GPUMemory.h"
 //#include "../PipelineState/PipelineState.h"
 //#include "../RenderView.h"
@@ -30,6 +31,8 @@ TODO(To be replaced by a D3D12Manager some point in the future(needed to access 
 DXRReflectionTask::DXRReflectionTask(
 	ID3D12Device5* device,
 	ID3D12RootSignature* globalRootSignature,
+	Resource_UAV_SRV* resourceUavSrv,
+	unsigned int width, unsigned int height,
 	unsigned int FLAG_THREAD)
 	:DXRTask(device, FLAG_THREAD, E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE, L"ReflectionCommandList")
 {
@@ -182,6 +185,12 @@ DXRReflectionTask::DXRReflectionTask(
 	// However the instance to the class will stay the same throughtout application lifetime.
 	m_pSbtGenerator = new ShaderBindingTableGenerator();
 #pragma endregion
+
+	// Rest
+	m_pGlobalRootSig = globalRootSignature;
+	m_pResourceUavSrv = resourceUavSrv;
+	m_DispatchWidth = width;
+	m_DispatchHeight = height;
 }
 
 DXRReflectionTask::~DXRReflectionTask()
@@ -262,6 +271,78 @@ void DXRReflectionTask::Execute()
 	m_pCommandInterface->Reset(m_CommandInterfaceIndex);
 	{
 		ScopedPixEvent(RaytracedReflections, commandList);
+
+		commandList->SetComputeRootSignature(m_pGlobalRootSig);
+
+		DescriptorHeap* dhSRVUAVCBV = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV];
+		ID3D12DescriptorHeap* dhHeap = dhSRVUAVCBV->GetID3D12DescriptorHeap();
+		commandList->SetDescriptorHeaps(1, &dhHeap);
+
+		commandList->SetComputeRootDescriptorTable(dtCBV, dhSRVUAVCBV->GetGPUHeapAt(0));
+		commandList->SetComputeRootDescriptorTable(dtSRV, dhSRVUAVCBV->GetGPUHeapAt(0));
+		commandList->SetComputeRootDescriptorTable(dtUAV, dhSRVUAVCBV->GetGPUHeapAt(0));
+		commandList->SetComputeRootConstantBufferView(RootParam_CBV0, m_Resources["cbPerScene"]->GetGPUVirtualAdress());
+		commandList->SetComputeRootConstantBufferView(RootParam_CBV1, m_Resources["cbPerFrame"]->GetGPUVirtualAdress());
+
+		// On the last frame, the raytracing output was used as a copy source, to
+		// copy its contents into the render target. Now we need to transition it to
+		// a UAV so that the shaders can write in it.
+		CD3DX12_RESOURCE_BARRIER transition = CD3DX12_RESOURCE_BARRIER::Transition(
+			m_pResourceUavSrv->resource->GetID3D12Resource1(),
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,	// StateBefore
+			D3D12_RESOURCE_STATE_UNORDERED_ACCESS);		// StateAfter
+		commandList->ResourceBarrier(1, &transition);
+
+		// Setup the raytracing task
+		D3D12_DISPATCH_RAYS_DESC desc = {};
+		// The layout of the SBT is as follows: ray generation shader, miss
+		// shaders, hit groups. As described in the CreateShaderBindingTable method,
+		// all SBT entries of a given type have the same size to allow a fixed stride.
+
+		// The ray generation shaders are always at the beginning of the SBT. 
+		uint32_t rayGenerationSectionSizeInBytes = m_pSbtGenerator->GetRayGenSectionSize();
+		desc.RayGenerationShaderRecord.StartAddress = m_pSbtStorage->GetID3D12Resource1()->GetGPUVirtualAddress();
+		desc.RayGenerationShaderRecord.SizeInBytes = rayGenerationSectionSizeInBytes;
+
+		// The miss shaders are in the second SBT section, right after the ray
+		// generation shader. We have one miss shader for the camera rays and one
+		// for the shadow rays, so this section has a size of 2*m_sbtEntrySize. We
+		// also indicate the stride between the two miss shaders, which is the size
+		// of a SBT entry
+		uint32_t missSectionSizeInBytes = m_pSbtGenerator->GetMissSectionSize();
+		desc.MissShaderTable.StartAddress = m_pSbtStorage->GetID3D12Resource1()->GetGPUVirtualAddress() + rayGenerationSectionSizeInBytes;
+		desc.MissShaderTable.SizeInBytes = missSectionSizeInBytes;
+		desc.MissShaderTable.StrideInBytes = m_pSbtGenerator->GetMissEntrySize();
+
+		// The hit groups section start after the miss shaders.
+		uint32_t hitGroupsSectionSize = m_pSbtGenerator->GetHitGroupSectionSize();
+		desc.HitGroupTable.StartAddress = m_pSbtStorage->GetID3D12Resource1()->GetGPUVirtualAddress() +
+			rayGenerationSectionSizeInBytes +
+			missSectionSizeInBytes;
+		desc.HitGroupTable.SizeInBytes = hitGroupsSectionSize;
+		desc.HitGroupTable.StrideInBytes = m_pSbtGenerator->GetHitGroupEntrySize();
+
+		// Dimensions of the image to render, identical to a kernel launch dimension
+		desc.Width = m_DispatchWidth;
+		desc.Height = m_DispatchHeight;
+		desc.Depth = 1;
+
+		// Bind the raytracing pipeline
+		commandList->SetPipelineState1(m_pStateObject);
+
+		// Dispatch the rays and write to the raytracing output
+		commandList->DispatchRays(&desc);
+
+		// The raytracing output needs to be copied to the actual render target used
+		// for display. For this, we need to transition the raytracing output from a
+		// UAV to a copy source, and the render target buffer to a copy destination.
+		// We can then do the actual copy, before transitioning the render target
+		// buffer into a render target, that will be then used to display the image
+		transition = CD3DX12_RESOURCE_BARRIER::Transition(
+			m_pResourceUavSrv->resource->GetID3D12Resource1(),
+			D3D12_RESOURCE_STATE_UNORDERED_ACCESS, // StateBefore
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);	   // StateAfter
+		commandList->ResourceBarrier(1, &transition);
 	}
 	commandList->Close();
 }

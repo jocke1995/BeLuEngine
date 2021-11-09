@@ -114,7 +114,7 @@ enum class E_CAMERA_TYPE
 };
 
 // this will only call release if an object exists (prevents exceptions calling release on non existant objects)
-#define BL_SAFE_RELEASE(p)			\
+#define BL_SAFE_RELEASE(p)		\
 {								\
 	if ((*p))					\
 	{							\
@@ -123,7 +123,7 @@ enum class E_CAMERA_TYPE
 	}							\
 }
 
-#define BL_SAFE_DELETE(p)			\
+#define BL_SAFE_DELETE(p)		\
 {								\
 	if (p != nullptr)			\
 	{							\
@@ -173,6 +173,18 @@ enum F_THREAD_FLAGS
 	// PrepareNextScene ..
 	// etc
 	ALL = BIT(4)
+};
+
+
+// TODO: Make a renderCore.h with renderstuff, and keep Core.h for commonStuff
+class Resource;
+class UnorderedAccessView;
+class ShaderResourceView;
+struct Resource_UAV_SRV
+{
+	Resource* resource;
+	UnorderedAccessView* uav;
+	ShaderResourceView* srv;
 };
 
 #endif
