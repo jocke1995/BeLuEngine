@@ -13,7 +13,6 @@ ByteAddressBuffer rawBufferLights: register(t0, space0);
 //ByteAddressBuffer rawBufferLights[]: register(t0, space1); // TODO: not working to put rawBuffer in descriptorTable?
 
 ConstantBuffer<SlotInfo> info					 : register(b1, space0);
-ConstantBuffer<CB_PER_FRAME_STRUCT>  cbPerFrame  : register(b4, space0);
 ConstantBuffer<MaterialData> material			 : register(b6, space0);
 
 float4 PS_main(VS_OUT input) : SV_TARGET0
@@ -78,7 +77,8 @@ float4 PS_main(VS_OUT input) : SV_TARGET0
 			albedo.rgb,
 			roughness,
 			normal.rgb,
-			baseReflectivity);
+			baseReflectivity,
+			SceneBVH[cbPerScene.rayTracingBVH]);
 	}
 
 	// SpotLight  contributions

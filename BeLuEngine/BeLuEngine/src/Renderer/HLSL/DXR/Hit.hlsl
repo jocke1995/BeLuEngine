@@ -1,22 +1,13 @@
-#include "ReflectionsCommon.hlsl" 
-#include "hlslhelpers.hlsl" 
- 
+#include "hlslhelpers.hlsl"
+#include "../Common.hlsl"
+#include "../DescriptorBindings.hlsl"
  
 /* GLOBAL */ 
-StructuredBuffer<vertex> meshes[] : register(t0, space1); 
-StructuredBuffer<unsigned int> indices[] : register(t0, space2); 
-Texture2D textures[]   : register (t0, space3); 
- 
-// Raytracing acceleration structure, accessed as a SRV 
-RaytracingAccelerationStructure SceneBVH : register(t0, space4); 
- 
-SamplerState MIN_MAG_MIP_LINEAR__WRAP : register(s5); 
- 
-ConstantBuffer<CB_PER_SCENE_STRUCT> cbPerScene : register(b5, space0);
+//StructuredBuffer<vertex> meshes[] : register(t0, space1); 
+//StructuredBuffer<unsigned int> indices[] : register(t0, space2); 
  
 /* LOCAL */ 
-ByteAddressBuffer rawBuffer: register(t6, space0); 
-ConstantBuffer<MATRICES_PER_OBJECT_STRUCT> worldMat : register(b9, space0);
+//ByteAddressBuffer rawBuffer: register(t6, space0);
  
 [shader("closesthit")]  
 void ClosestHit(inout ReflectionPayload reflectionPayload, in BuiltInTriangleIntersectionAttributes attribs)

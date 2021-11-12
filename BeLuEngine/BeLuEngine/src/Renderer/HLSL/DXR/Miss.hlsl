@@ -1,4 +1,4 @@
-#include "ReflectionsCommon.hlsl"
+#include "hlslhelpers.hlsl" 
 
 [shader("miss")]
 void Miss(inout ReflectionPayload reflectionPayload : SV_RayPayload)

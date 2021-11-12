@@ -1,21 +1,7 @@
-#include "../../Headers/GPU_Structs.h"
-#include "PBRMath.hlsl"
+#include "PBRMath.hlsl" // This includes Common.hlsl
+#include "DescriptorBindings.hlsl"
 
-Texture2D textures[]   : register (t0, space1);
-
-SamplerState Anisotropic2_Wrap			: register (s0);
-SamplerState Anisotropic4_Wrap			: register (s1);
-SamplerState Anisotropic8_Wrap			: register (s2);
-SamplerState Anisotropic16_Wrap			: register (s3);
-SamplerState MIN_MAG_MIP_POINT_Border	: register (s4);
-SamplerState MIN_MAG_MIP_LINEAR_Wrap	: register (s5);
-
-// Raytracing acceleration structure, accessed as a SRV
-RaytracingAccelerationStructure SceneBVH[] : register(t0, space3);
-
-ConstantBuffer<CB_PER_SCENE_STRUCT>  cbPerScene  : register(b5, space0);
-
-float RT_ShadowFactor(float3 worldPos, float tMin, float tMax, float3 rayDir)
+float RT_ShadowFactor(float3 worldPos, float tMin, float tMax, float3 rayDir, RaytracingAccelerationStructure sceneBVH)
 {
 	RayQuery<RAY_FLAG_SKIP_CLOSEST_HIT_SHADER | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH> q;
 
@@ -29,12 +15,10 @@ float RT_ShadowFactor(float3 worldPos, float tMin, float tMax, float3 rayDir)
 	ray.TMax = tMax;
 
 	ray.Direction = normalize(rayDir);
-	ray.Origin = float4(worldPos.xyz, 1.0f);
-
-	uint dhIndexBVH = cbPerScene.rayTracingBVH;
+	ray.Origin = worldPos.xyz;
 
 	q.TraceRayInline(
-		SceneBVH[dhIndexBVH],
+		sceneBVH,
 		rayFlags,
 		instanceMask,
 		ray
@@ -98,12 +82,13 @@ float3 CalcPointLight(
 	in float3 albedo,
 	in float roughness,
 	in float3 normal,
-	in float3 baseReflectivity)
+	in float3 baseReflectivity,
+	in RaytracingAccelerationStructure sceneBVH)
 {
 	float3 pointLightContribution = float3(0.0f, 0.0f, 0.0f);
 	float3 lightDir = normalize(pointLight.position.xyz - fragPos.xyz);
 
-	float shadowFactor = RT_ShadowFactor(fragPos.xyz, 0.1f, length(pointLight.position.xyz - fragPos.xyz) - 1.0, lightDir);
+	float shadowFactor = RT_ShadowFactor(fragPos.xyz, 0.1f, length(pointLight.position.xyz - fragPos.xyz) - 1.0, lightDir, sceneBVH);
 	float3 normalized_bisector = normalize(viewDir + lightDir);
 
 	// Attenuation

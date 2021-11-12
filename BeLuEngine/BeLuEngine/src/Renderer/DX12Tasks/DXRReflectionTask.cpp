@@ -91,36 +91,40 @@ DXRReflectionTask::DXRReflectionTask(
 			BL_ASSERT_MESSAGE(pRootSig != nullptr, "Failed to create local RootSignature\n");
 		}
 
+		BL_SAFE_RELEASE(&m_pBlob);
 		return pRootSig;
-		//BL_SAFE_RELEASE(&m_pBlob);
 	};
 
 	// Specify the root signature with its set of parameters
+	const unsigned int numStaticSamplers = 0;
 	D3D12_ROOT_SIGNATURE_DESC rootDesc = {};
 	rootDesc.NumParameters = 0;
 	rootDesc.pParameters = nullptr;
-	rootDesc.NumStaticSamplers = 0;
-	rootDesc.pStaticSamplers = nullptr;
+	rootDesc.NumStaticSamplers = numStaticSamplers;
 	rootDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
+	rootDesc.pStaticSamplers = nullptr;
 
 	m_pRayGenSignature	= createLocalRootSig(rootDesc);
+	m_pRayGenSignature->SetName(L"RayGenRootSig");
 	m_pMissSignature	= createLocalRootSig(rootDesc);
+	m_pMissSignature->SetName(L"MissRootSig");
 
 	// RegisterSpace 0 is dedicated to descriptors, and globalRootsig uses 0-5 on all SRV,CBV and UAV
 	D3D12_ROOT_PARAMETER rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::NUM_LOCAL_PARAMS]{};
-	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_SRV0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
-	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_SRV0].Descriptor.ShaderRegister = 6;
-	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_SRV0].Descriptor.RegisterSpace = 0;
-	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_SRV0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-
 	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_CBV0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_CBV0].Descriptor.ShaderRegister = 9;
 	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_CBV0].Descriptor.RegisterSpace = 0;
 	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_CBV0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
+	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_SRV0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_SRV0].Descriptor.ShaderRegister = 6;
+	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_SRV0].Descriptor.RegisterSpace = 0;
+	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_SRV0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
 	rootDesc.NumParameters = E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::NUM_LOCAL_PARAMS;
 	rootDesc.pParameters = rootParam;
 	m_pHitSignature = createLocalRootSig(rootDesc);
+	m_pHitSignature->SetName(L"HitRootSig");
 
 #pragma endregion
 
@@ -281,16 +285,16 @@ void DXRReflectionTask::Execute()
 		commandList->SetComputeRootDescriptorTable(dtCBV, dhSRVUAVCBV->GetGPUHeapAt(0));
 		commandList->SetComputeRootDescriptorTable(dtSRV, dhSRVUAVCBV->GetGPUHeapAt(0));
 		commandList->SetComputeRootDescriptorTable(dtUAV, dhSRVUAVCBV->GetGPUHeapAt(0));
-		commandList->SetComputeRootConstantBufferView(RootParam_CBV0, m_Resources["cbPerScene"]->GetGPUVirtualAdress());
 		commandList->SetComputeRootConstantBufferView(RootParam_CBV1, m_Resources["cbPerFrame"]->GetGPUVirtualAdress());
-
+		commandList->SetComputeRootConstantBufferView(RootParam_CBV2, m_Resources["cbPerScene"]->GetGPUVirtualAdress());
+		
 		// On the last frame, the raytracing output was used as a copy source, to
 		// copy its contents into the render target. Now we need to transition it to
 		// a UAV so that the shaders can write in it.
 		CD3DX12_RESOURCE_BARRIER transition = CD3DX12_RESOURCE_BARRIER::Transition(
 			m_pResourceUavSrv->resource->GetID3D12Resource1(),
-			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,	// StateBefore
-			D3D12_RESOURCE_STATE_UNORDERED_ACCESS);		// StateAfter
+			D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,	// StateBefore
+			D3D12_RESOURCE_STATE_UNORDERED_ACCESS);			// StateAfter
 		commandList->ResourceBarrier(1, &transition);
 
 		// Setup the raytracing task
@@ -340,8 +344,8 @@ void DXRReflectionTask::Execute()
 		// buffer into a render target, that will be then used to display the image
 		transition = CD3DX12_RESOURCE_BARRIER::Transition(
 			m_pResourceUavSrv->resource->GetID3D12Resource1(),
-			D3D12_RESOURCE_STATE_UNORDERED_ACCESS, // StateBefore
-			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);	   // StateAfter
+			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,				// StateBefore
+			D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);	// StateAfter
 		commandList->ResourceBarrier(1, &transition);
 	}
 	commandList->Close();

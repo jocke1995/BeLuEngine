@@ -1,5 +1,4 @@
 #include "LightCalculations.hlsl"
-#include "Common.hlsl"
 
 struct VS_OUT
 {
@@ -14,9 +13,7 @@ struct PS_OUTPUT
 };
 
 ByteAddressBuffer rawBufferLights: register(t0, space0);
-
-ConstantBuffer<SlotInfo> info					 : register(b1, space0);
-ConstantBuffer<CB_PER_FRAME_STRUCT>  cbPerFrame  : register(b4, space0);
+ConstantBuffer<SlotInfo> info : register(b1, space0);
 
 PS_OUTPUT PS_main(VS_OUT input)
 {
@@ -28,6 +25,7 @@ PS_OUTPUT PS_main(VS_OUT input)
 	float glow		= textures[cbPerScene.gBufferMaterialProperties].Sample(Anisotropic16_Wrap, uvScaled).b;
 	float4 normal	= textures[cbPerScene.gBufferNormal].Sample(Anisotropic16_Wrap, uvScaled);
 	float4 emissive = textures[cbPerScene.gBufferEmissive].Sample(Anisotropic16_Wrap, uvScaled);
+	float4 reflData = textures[cbPerScene.reflectionSRV].Sample(Anisotropic16_Wrap, uvScaled);
 
 	float depthVal = textures[cbPerScene.depth].Sample(Anisotropic16_Wrap, uvScaled).r;
 	float4 worldPos = float4(WorldPosFromDepth(depthVal, uvScaled, cbPerFrame.projectionI, cbPerFrame.viewI).xyz, 0.0f);
@@ -70,7 +68,8 @@ PS_OUTPUT PS_main(VS_OUT input)
 			albedo.rgb,
 			roughness,
 			normal.rgb,
-			baseReflectivity);
+			baseReflectivity,
+			SceneBVH[cbPerScene.rayTracingBVH]);
 	}
 	
 	// SpotLight  contributions
@@ -105,5 +104,11 @@ PS_OUTPUT PS_main(VS_OUT input)
 	{
 		output.brightColor = float4(0.0f, 0.0f, 0.0f, 1.0f);
 	}
+
+	if (roughness > 0.95f)
+	{
+		output.sceneColor = float4(reflData.rgb, 1.0f);
+	}
+
 	return output;
 }

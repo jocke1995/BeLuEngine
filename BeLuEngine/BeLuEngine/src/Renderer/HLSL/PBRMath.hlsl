@@ -1,6 +1,5 @@
+#include "Common.hlsl"
 // Source: https://www.youtube.com/watch?v=5p0e7YNONr8&ab_channel=BrianWill
-
-static const float PI = 3.141572;
 
 // Proportion of specular reflectance
 float3 CalculateFresnelEffect(float HdotV, float3 baseReflectivity)

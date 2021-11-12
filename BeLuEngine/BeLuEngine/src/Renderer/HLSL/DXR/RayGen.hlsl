@@ -1,18 +1,7 @@
-#include "ReflectionsCommon.hlsl"
+#include "hlslhelpers.hlsl" // DXR Specifics
 #include "../Common.hlsl"
-#include "hlslhelpers.hlsl"
+#include "../DescriptorBindings.hlsl"
 
-
-// Raytracing acceleration structure, accessed as a SRV from a descriptorTable
-RaytracingAccelerationStructure SceneBVH[] : register(t0, space3);
-
-Texture2D textures[]   : register (t0, space1);
-RWTexture2D<float4> texturesUAV[]   : register (u0, space1);
-
-SamplerState MIN_MAG_MIP_LINEAR__WRAP : register(s5);
-
-ConstantBuffer<CB_PER_SCENE_STRUCT>  cbPerScene       : register(b3, space0);
-ConstantBuffer<CB_PER_FRAME_STRUCT>  cbPerFrame		  : register(b4, space0);
 
 [shader("raygeneration")] 
 void RayGen()
@@ -26,32 +15,36 @@ void RayGen()
     // UV:s (0->1)
 	float2 uv = launchIndex.xy / dims.xy;
 
-	//float depth = textures[cbPerScene.depthBufferIndex].SampleLevel(MIN_MAG_MIP_LINEAR__WRAP, uv, 0).r;
-    //
-	//float3 worldPos = WorldPosFromDepth(depth, uv, cbPerFrame.projectionI, cbPerFrame.viewI);
-    //
-    //RayDesc ray;
-    //ray.Origin = float4(worldPos.xyz, 1.0f);
-    //ray.Direction = float3(0.0f, 1.0f, 1.0f);
-    //ray.TMin = 1.0;
-    //ray.TMax = distance(lightPos, worldPos);
-    //
-    //// Initialize the ray payload
-    //ReflectionPayload ReflectionPayload;
-    //ReflectionPayload.colorAndDistance = float4(1.0f, 1.0f, 0.0f, 1.0f);
-    //
-    //uint dhIndexBVH = cbPerScene.rayTracingBVH;
-    //
-    //// Trace the ray
-    //TraceRay(
-    //    SceneBVH[dhIndexBVH],
-    //    RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH,
-    //    0xFF,
-    //    0,  // Hit group index
-    //    0,
-    //    0,  // Miss Shader index
-    //    ray,
-    //    ReflectionPayload);
+	float depth   = textures[cbPerScene.depth].SampleLevel(MIN_MAG_MIP_LINEAR_Wrap, uv, 0).r;
+    float4 normal = textures[cbPerScene.gBufferNormal].SampleLevel(MIN_MAG_MIP_LINEAR_Wrap, uv, 0);
 
-    texturesUAV[cbPerScene.reflectionUAV][launchIndex] = float4(uv.x, uv.y, 0.0f, 1.0f);
+	float3 worldPos = WorldPosFromDepth(depth, uv, cbPerFrame.projectionI, cbPerFrame.viewI);
+    
+    float3 cameraDir = worldPos - cbPerFrame.camPos;
+
+    RayDesc ray;
+    ray.Origin = float4(worldPos.xyz, 1.0f);
+    ray.Direction = reflect(cameraDir, float3(normal.xyz));
+    ray.TMin = 1.0;
+    ray.TMax = 10000;
+    
+    // Initialize the ray payload
+    ReflectionPayload reflectionPayload;
+    reflectionPayload.colorAndDistance = float4(0.0f, 0.0f, 0.0f, 1.0f);
+    
+    uint dhIndexBVH = cbPerScene.rayTracingBVH;
+    
+    // Trace the ray
+    TraceRay(
+        SceneBVH[dhIndexBVH],
+        RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH,
+        0xFF,
+        0,  // Hit group index
+        0,
+        0,  // Miss Shader index
+        ray,
+        reflectionPayload);
+
+    //texturesUAV[cbPerScene.reflectionUAV][launchIndex] = float4(ReflectionPayload.colorAndDistance.rgb, 1.0f);
+    texturesUAV[cbPerScene.reflectionUAV][launchIndex] = float4(reflectionPayload.colorAndDistance.rgb, 1.0f);
 }

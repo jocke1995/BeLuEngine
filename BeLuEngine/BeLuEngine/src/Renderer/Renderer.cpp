@@ -290,7 +290,7 @@ void Renderer::InitD3D12(Window* window, HINSTANCE hInstance, ThreadPool* thread
 		resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 		resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 
-		m_ReflectionTexture.resource = new Resource(m_pDevice5, &resourceDesc, nullptr, L"ReflectionTexture_RESOURCE", D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		m_ReflectionTexture.resource = new Resource(m_pDevice5, &resourceDesc, nullptr, L"ReflectionTexture_RESOURCE", D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
 		// UAV
 		D3D12_UNORDERED_ACCESS_VIEW_DESC uavDescReflection = {};
@@ -1606,7 +1606,7 @@ void Renderer::createRootSignature()
 	ssd[5].AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 	ssd[5].AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 	ssd[5].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-	ssd[5].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	ssd[5].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 	ssd[5].MinLOD = 0;
 	ssd[5].MaxLOD = D3D12_FLOAT32_MAX;
 	ssd[5].MipLODBias = 0.0f;
@@ -1675,6 +1675,8 @@ void Renderer::createRootSignature()
 	}
 
 	BL_SAFE_RELEASE(&m_pBlob);
+
+	m_pGlobalRootSig->SetName(L"GlobalRootSig");
 }
 
 void Renderer::createFullScreenQuad()
