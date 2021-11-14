@@ -100,8 +100,8 @@ void OutliningRenderTask::Execute()
 			w_wvp[1] = (*viewProjMatTrans) * w_wvp[0];
 
 			m_OutlineTransformToScale.m_pCB->GetUploadResource()->SetData(&w_wvp);
-			commandList->SetGraphicsRoot32BitConstants(Constants_SlotInfo, sizeof(SlotInfo) / sizeof(UINT), info, 0);
-			commandList->SetGraphicsRootConstantBufferView(RootParam_CBV0, m_OutlineTransformToScale.m_pCB->GetUploadResource()->GetGPUVirtualAdress());
+			commandList->SetGraphicsRoot32BitConstants(Constants_SlotInfo_B0, sizeof(SlotInfo) / sizeof(UINT), info, 0);
+			commandList->SetGraphicsRootConstantBufferView(RootParam_CBV_B2, m_OutlineTransformToScale.m_pCB->GetUploadResource()->GetGPUVirtualAdress());
 
 			commandList->IASetIndexBuffer(m->GetIndexBufferView());
 

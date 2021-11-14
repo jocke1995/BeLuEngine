@@ -88,7 +88,7 @@ void DeferredGeometryRenderTask::Execute()
 
 		commandList->OMSetRenderTargets(4, cdhs, false, &dsh);
 
-		commandList->SetGraphicsRootConstantBufferView(RootParam_CBV2, m_Resources["cbPerScene"]->GetGPUVirtualAdress());
+		commandList->SetGraphicsRootConstantBufferView(RootParam_CBV_B4, m_Resources["cbPerScene"]->GetGPUVirtualAdress());
 
 		// Draw for every Rendercomponent
 		for (int i = 0; i < m_RenderComponents.size(); i++)
@@ -113,9 +113,9 @@ void DeferredGeometryRenderTask::drawRenderComponent(component::ModelComponent* 
 		const SlotInfo* info = mc->GetSlotInfoAt(i);
 
 		Transform* t = tc->GetTransform();
-		cl->SetGraphicsRootConstantBufferView(RootParam_CBV3, mc->GetMaterialAt(i)->GetMaterialData()->first->GetDefaultResource()->GetGPUVirtualAdress());
-		cl->SetGraphicsRoot32BitConstants(Constants_SlotInfo, sizeof(SlotInfo) / sizeof(UINT), info, 0);
-		cl->SetGraphicsRootConstantBufferView(RootParam_CBV0, t->m_pCB->GetDefaultResource()->GetGPUVirtualAdress());
+		cl->SetGraphicsRootConstantBufferView(RootParam_CBV_B5, mc->GetMaterialAt(i)->GetMaterialData()->first->GetDefaultResource()->GetGPUVirtualAdress());
+		cl->SetGraphicsRoot32BitConstants(Constants_SlotInfo_B0, sizeof(SlotInfo) / sizeof(UINT), info, 0);
+		cl->SetGraphicsRootConstantBufferView(RootParam_CBV_B2, t->m_pCB->GetDefaultResource()->GetGPUVirtualAdress());
 
 		cl->IASetIndexBuffer(m->GetIndexBufferView());
 		cl->DrawIndexedInstanced(num_Indices, 1, 0, 0, 0);

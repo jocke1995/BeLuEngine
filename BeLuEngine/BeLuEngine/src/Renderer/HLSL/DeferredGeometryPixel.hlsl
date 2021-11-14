@@ -17,9 +17,6 @@ struct PS_OUTPUT
 	float4 EmissiveColor	: SV_TARGET3;
 };
 
-ConstantBuffer<SlotInfo> info					 : register(b1, space0);
-ConstantBuffer<MaterialData> material			 : register(b6, space0);
-
 PS_OUTPUT PS_main(VS_OUT input)
 {
 	PS_OUTPUT output = (PS_OUTPUT)0;

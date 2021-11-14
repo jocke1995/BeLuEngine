@@ -1,4 +1,4 @@
-#include "LightCalculations.hlsl"
+#include "LightCalculations.hlsl"	// This includes "DescriptorBindings.hlsl"
 
 struct VS_OUT
 {
@@ -8,12 +8,6 @@ struct VS_OUT
 	float3 norm		: NORM;
 	float3x3 tbn	: TBN;
 };
-
-ByteAddressBuffer rawBufferLights: register(t0, space0);
-//ByteAddressBuffer rawBufferLights[]: register(t0, space1); // TODO: not working to put rawBuffer in descriptorTable?
-
-ConstantBuffer<SlotInfo> info					 : register(b1, space0);
-ConstantBuffer<MaterialData> material			 : register(b6, space0);
 
 float4 PS_main(VS_OUT input) : SV_TARGET0
 {
@@ -78,7 +72,7 @@ float4 PS_main(VS_OUT input) : SV_TARGET0
 			roughness,
 			normal.rgb,
 			baseReflectivity,
-			SceneBVH[cbPerScene.rayTracingBVH]);
+			sceneBVH[cbPerScene.rayTracingBVH]);
 	}
 
 	// SpotLight  contributions

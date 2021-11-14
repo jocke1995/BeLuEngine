@@ -2,10 +2,6 @@
 #include "../Common.hlsl"
 #include "../DescriptorBindings.hlsl"
  
-/* GLOBAL */ 
-//StructuredBuffer<vertex> meshes[] : register(t0, space1); 
-//StructuredBuffer<unsigned int> indices[] : register(t0, space2); 
- 
 /* LOCAL */ 
 //ByteAddressBuffer rawBuffer: register(t6, space0);
  

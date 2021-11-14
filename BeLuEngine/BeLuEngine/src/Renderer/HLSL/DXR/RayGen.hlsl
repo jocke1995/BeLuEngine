@@ -36,7 +36,7 @@ void RayGen()
     
     // Trace the ray
     TraceRay(
-        SceneBVH[dhIndexBVH],
+        sceneBVH[dhIndexBVH],
         RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH,
         0xFF,
         0,  // Hit group index

@@ -6,6 +6,14 @@
 #define MAX_POINT_LIGHTS 20
 #define MAX_SPOT_LIGHTS  10
 
+struct vertex
+{
+	float3 pos;
+	float2 uv;
+	float3 norm;
+	float3 tang;
+};
+
 // This struct can be used to send specific indices as a root constant to the GPU.
 // Example usage is when the indices for pp-effects are sent to gpu.
 struct DescriptorHeapIndices

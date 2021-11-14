@@ -79,8 +79,8 @@ void DownSampleRenderTask::Execute()
 
 		commandList->SetPipelineState(m_PipelineStates[0]->GetPSO());
 
-		commandList->SetGraphicsRoot32BitConstants(Constants_SlotInfo, sizeof(SlotInfo) / sizeof(UINT), &m_Info, 0);
-		commandList->SetGraphicsRoot32BitConstants(Constants_DH_Indices, sizeof(DescriptorHeapIndices) / sizeof(UINT), &m_dhIndices, 0);
+		commandList->SetGraphicsRoot32BitConstants(Constants_SlotInfo_B0, sizeof(SlotInfo) / sizeof(UINT), &m_Info, 0);
+		commandList->SetGraphicsRoot32BitConstants(Constants_DH_Indices_B1, sizeof(DescriptorHeapIndices) / sizeof(UINT), &m_dhIndices, 0);
 
 		commandList->IASetIndexBuffer(m_pFullScreenQuadMesh->GetIndexBufferView());
 

@@ -70,9 +70,9 @@ void TransparentRenderTask::Execute()
 
 		// Create a CB_PER_FRAME struct
 		CB_PER_FRAME_STRUCT perFrame = { m_pCamera->GetPosition().x, m_pCamera->GetPosition().y, m_pCamera->GetPosition().z };
-		commandList->SetGraphicsRootConstantBufferView(RootParam_CBV1, m_Resources["cbPerFrame"]->GetGPUVirtualAdress());
-		commandList->SetGraphicsRootConstantBufferView(RootParam_CBV2, m_Resources["cbPerScene"]->GetGPUVirtualAdress());
-		commandList->SetGraphicsRootShaderResourceView(RootParam_SRV0, m_Resources["rawBufferLights"]->GetGPUVirtualAdress());
+		commandList->SetGraphicsRootConstantBufferView(RootParam_CBV_B3, m_Resources["cbPerFrame"]->GetGPUVirtualAdress());
+		commandList->SetGraphicsRootConstantBufferView(RootParam_CBV_B4, m_Resources["cbPerScene"]->GetGPUVirtualAdress());
+		commandList->SetGraphicsRootShaderResourceView(RootParam_SRV_S0, m_Resources["rawBufferLights"]->GetGPUVirtualAdress());
 
 		const DirectX::XMMATRIX* viewProjMatTrans = m_pCamera->GetViewProjectionTranposed();
 
@@ -91,9 +91,9 @@ void TransparentRenderTask::Execute()
 
 				Transform* t = tc->GetTransform();
 
-				commandList->SetGraphicsRootConstantBufferView(RootParam_CBV3, mc->GetMaterialAt(i)->GetMaterialData()->first->GetDefaultResource()->GetGPUVirtualAdress());
-				commandList->SetGraphicsRoot32BitConstants(Constants_SlotInfo, sizeof(SlotInfo) / sizeof(UINT), info, 0);
-				commandList->SetGraphicsRootConstantBufferView(RootParam_CBV0, t->m_pCB->GetDefaultResource()->GetGPUVirtualAdress());
+				commandList->SetGraphicsRootConstantBufferView(RootParam_CBV_B5, mc->GetMaterialAt(i)->GetMaterialData()->first->GetDefaultResource()->GetGPUVirtualAdress());
+				commandList->SetGraphicsRoot32BitConstants(Constants_SlotInfo_B0, sizeof(SlotInfo) / sizeof(UINT), info, 0);
+				commandList->SetGraphicsRootConstantBufferView(RootParam_CBV_B2, t->m_pCB->GetDefaultResource()->GetGPUVirtualAdress());
 
 				commandList->IASetIndexBuffer(mc->GetMeshAt(j)->GetIndexBufferView());
 				// Draw each object twice with different PSO 

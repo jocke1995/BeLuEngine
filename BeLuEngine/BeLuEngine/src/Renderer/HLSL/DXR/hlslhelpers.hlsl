@@ -1,11 +1,3 @@
-struct vertex
-{
-    float3 pos;
-    float2 uv;
-    float3 norm;
-    float3 tang;
-};
-
 // Hit information, aka ray payload
 struct ReflectionPayload
 {

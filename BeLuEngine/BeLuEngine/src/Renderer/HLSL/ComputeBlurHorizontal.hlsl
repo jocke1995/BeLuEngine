@@ -1,9 +1,4 @@
-#include "../../Headers/GPU_Structs.h"
-
-Texture2D<float4> textures[]   : register (t0, space1);
-RWTexture2D<float4> textureToBlur[] : register(u0, space1);
-
-ConstantBuffer<DescriptorHeapIndices> dhIndices : register(b2, space0);
+#include "DescriptorBindings.hlsl"
 
 static const int g_BlurRadius = 4;
 static const int g_NumThreads = 256;
@@ -57,5 +52,5 @@ void CS_main(uint3 dispatchThreadID : SV_DispatchThreadID, int3 groupThreadID : 
 		blurColor += weights[i] * g_SharedMem[right];
 	}
 
-	textureToBlur[writeIndex][dispatchThreadID.xy] = blurColor;
+	texturesUAV[writeIndex][dispatchThreadID.xy] = blurColor;
 }

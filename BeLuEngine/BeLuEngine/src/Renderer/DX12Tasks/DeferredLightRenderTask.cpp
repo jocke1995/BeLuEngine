@@ -94,9 +94,9 @@ void DeferredLightRenderTask::Execute()
 		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		// Set cbvs
-		commandList->SetGraphicsRootConstantBufferView(RootParam_CBV1, m_Resources["cbPerFrame"]->GetGPUVirtualAdress());
-		commandList->SetGraphicsRootConstantBufferView(RootParam_CBV2, m_Resources["cbPerScene"]->GetGPUVirtualAdress());
-		commandList->SetGraphicsRootShaderResourceView(RootParam_SRV0, m_Resources["rawBufferLights"]->GetGPUVirtualAdress());
+		commandList->SetGraphicsRootConstantBufferView(RootParam_CBV_B3, m_Resources["cbPerFrame"]->GetGPUVirtualAdress());
+		commandList->SetGraphicsRootConstantBufferView(RootParam_CBV_B4, m_Resources["cbPerScene"]->GetGPUVirtualAdress());
+		commandList->SetGraphicsRootShaderResourceView(RootParam_SRV_S0, m_Resources["rawBufferLights"]->GetGPUVirtualAdress());
 
 
 		// This pair for m_RenderComponents will be used for model-outlining in case any model is picked.
@@ -118,7 +118,7 @@ void DeferredLightRenderTask::Execute()
 		//commandList->OMSetStencilRef(1);
 
 		// Draw a fullscreen quad 
-		commandList->SetGraphicsRoot32BitConstants(Constants_SlotInfo, sizeof(SlotInfo) / sizeof(UINT), &m_Info, 0);
+		commandList->SetGraphicsRoot32BitConstants(Constants_SlotInfo_B0, sizeof(SlotInfo) / sizeof(UINT), &m_Info, 0);
 		commandList->IASetIndexBuffer(m_pFullScreenQuadMesh->GetIndexBufferView());
 
 		commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);

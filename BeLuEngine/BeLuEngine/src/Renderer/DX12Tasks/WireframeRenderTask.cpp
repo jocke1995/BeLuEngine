@@ -104,8 +104,8 @@ void WireframeRenderTask::Execute()
 				unsigned int num_Indices = m->GetNumIndices();
 				const SlotInfo* info = m_ObjectsToDraw[i]->GetSlotInfo(j);
 
-				commandList->SetGraphicsRoot32BitConstants(Constants_SlotInfo, sizeof(SlotInfo) / sizeof(UINT), info, 0);
-				commandList->SetGraphicsRootConstantBufferView(RootParam_CBV0, t->m_pCB->GetDefaultResource()->GetGPUVirtualAdress());
+				commandList->SetGraphicsRoot32BitConstants(Constants_SlotInfo_B0, sizeof(SlotInfo) / sizeof(UINT), info, 0);
+				commandList->SetGraphicsRootConstantBufferView(RootParam_CBV_B2, t->m_pCB->GetDefaultResource()->GetGPUVirtualAdress());
 
 				commandList->IASetIndexBuffer(m->GetIndexBufferView());
 				commandList->DrawIndexedInstanced(num_Indices, 1, 0, 0, 0);

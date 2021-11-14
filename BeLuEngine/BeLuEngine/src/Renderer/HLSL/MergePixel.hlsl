@@ -1,4 +1,4 @@
-#include "../../Headers/GPU_Structs.h"
+#include "DescriptorBindings.hlsl"
 
 struct VS_OUT
 {
@@ -6,16 +6,10 @@ struct VS_OUT
 	float2 uv   : UV;
 };
 
-ConstantBuffer<DescriptorHeapIndices> dhIndices : register(b2, space0);
-
-Texture2D textures[]   : register (t0, space1);
-
-SamplerState point_Wrap	: register (s5);
-
 float4 PS_main(VS_OUT input) : SV_TARGET0
 {
-	float4 blurColor = textures[dhIndices.index0].Sample(point_Wrap, input.uv);
-	float4 sceneColor = textures[dhIndices.index1].Sample(point_Wrap, input.uv);
+	float4 blurColor = textures[dhIndices.index0].Sample(MIN_MAG_MIP_LINEAR_Wrap, input.uv);
+	float4 sceneColor = textures[dhIndices.index1].Sample(MIN_MAG_MIP_LINEAR_Wrap, input.uv);
 
 	// Darken down the base image in areas where there is a lot of bloom
 	sceneColor *= (1 - saturate(blurColor));

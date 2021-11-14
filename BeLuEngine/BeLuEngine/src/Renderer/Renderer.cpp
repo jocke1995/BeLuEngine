@@ -1383,7 +1383,7 @@ void Renderer::createRootSignature()
 #pragma region SRVTABLE
 	std::vector<D3D12_DESCRIPTOR_RANGE> dtRangesSRV;
 
-	const unsigned int numSRVDescriptorRanges = 3;
+	const unsigned int numSRVDescriptorRanges = 4;
 	for (unsigned int i = 0; i < numSRVDescriptorRanges; i++)
 	{
 		D3D12_DESCRIPTOR_RANGE descriptorRange = {};
@@ -1446,6 +1446,7 @@ void Renderer::createRootSignature()
 
 #pragma endregion UAVTABLE
 
+#pragma region SetTables
 	D3D12_ROOT_PARAMETER rootParam[E_GLOBAL_ROOTSIGNATURE::NUM_PARAMS]{};
 
 	rootParam[E_GLOBAL_ROOTSIGNATURE::dtCBV].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
@@ -1459,113 +1460,117 @@ void Renderer::createRootSignature()
 	rootParam[E_GLOBAL_ROOTSIGNATURE::dtUAV].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 	rootParam[E_GLOBAL_ROOTSIGNATURE::dtUAV].DescriptorTable = dtUAV;
 	rootParam[E_GLOBAL_ROOTSIGNATURE::dtUAV].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-
-	rootParam[E_GLOBAL_ROOTSIGNATURE::Constants_SlotInfo].ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::Constants_SlotInfo].Constants.ShaderRegister = 1; // b1
-	rootParam[E_GLOBAL_ROOTSIGNATURE::Constants_SlotInfo].Constants.RegisterSpace = 0; // space0
-	rootParam[E_GLOBAL_ROOTSIGNATURE::Constants_SlotInfo].Constants.Num32BitValues = sizeof(SlotInfo) / sizeof(UINT);
-	rootParam[E_GLOBAL_ROOTSIGNATURE::Constants_SlotInfo].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-
-	rootParam[E_GLOBAL_ROOTSIGNATURE::Constants_DH_Indices].ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::Constants_DH_Indices].Constants.ShaderRegister = 2; // b2
-	rootParam[E_GLOBAL_ROOTSIGNATURE::Constants_DH_Indices].Constants.RegisterSpace = 0; // space0
-	rootParam[E_GLOBAL_ROOTSIGNATURE::Constants_DH_Indices].Constants.Num32BitValues = sizeof(DescriptorHeapIndices) / sizeof(UINT);
-	rootParam[E_GLOBAL_ROOTSIGNATURE::Constants_DH_Indices].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-
-#pragma region ROOTPARAMS_SRV
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV0].Descriptor.ShaderRegister = 0;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV0].Descriptor.RegisterSpace = 0;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV1].Descriptor.ShaderRegister = 1;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV1].Descriptor.RegisterSpace = 0;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV2].Descriptor.ShaderRegister = 2;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV2].Descriptor.RegisterSpace = 0;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV2].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV3].Descriptor.ShaderRegister = 3;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV3].Descriptor.RegisterSpace = 0;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV3].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV4].Descriptor.ShaderRegister = 4;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV4].Descriptor.RegisterSpace = 0;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV4].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV5].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV5].Descriptor.ShaderRegister = 5;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV5].Descriptor.RegisterSpace = 0;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV5].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 #pragma endregion
 
+#pragma region RootConstants
+	rootParam[E_GLOBAL_ROOTSIGNATURE::Constants_SlotInfo_B0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::Constants_SlotInfo_B0].Constants.ShaderRegister = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::Constants_SlotInfo_B0].Constants.RegisterSpace = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::Constants_SlotInfo_B0].Constants.Num32BitValues = sizeof(SlotInfo) / sizeof(UINT);
+	rootParam[E_GLOBAL_ROOTSIGNATURE::Constants_SlotInfo_B0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	rootParam[E_GLOBAL_ROOTSIGNATURE::Constants_DH_Indices_B1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::Constants_DH_Indices_B1].Constants.ShaderRegister = 1;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::Constants_DH_Indices_B1].Constants.RegisterSpace = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::Constants_DH_Indices_B1].Constants.Num32BitValues = sizeof(DescriptorHeapIndices) / sizeof(UINT);
+	rootParam[E_GLOBAL_ROOTSIGNATURE::Constants_DH_Indices_B1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
 #pragma region ROOTPARAMS_CBV
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV0].Descriptor.ShaderRegister = 3;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV0].Descriptor.RegisterSpace = 0;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV_B2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV_B2].Descriptor.ShaderRegister = 2;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV_B2].Descriptor.RegisterSpace = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV_B2].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV1].Descriptor.ShaderRegister = 4;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV1].Descriptor.RegisterSpace = 0;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV_B3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV_B3].Descriptor.ShaderRegister = 3;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV_B3].Descriptor.RegisterSpace = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV_B3].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV2].Descriptor.ShaderRegister = 5;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV2].Descriptor.RegisterSpace = 0;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV2].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV_B4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV_B4].Descriptor.ShaderRegister = 4;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV_B4].Descriptor.RegisterSpace = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV_B4].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV3].Descriptor.ShaderRegister = 6;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV3].Descriptor.RegisterSpace = 0;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV3].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV_B5].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV_B5].Descriptor.ShaderRegister = 5;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV_B5].Descriptor.RegisterSpace = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV_B5].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV4].Descriptor.ShaderRegister = 7;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV4].Descriptor.RegisterSpace = 0;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV4].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-	
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV5].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV5].Descriptor.ShaderRegister = 8;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV5].Descriptor.RegisterSpace = 0;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV5].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	// The following 2 shaderRegisters are free to use for custom constantBuffers
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV_B6].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV_B6].Descriptor.ShaderRegister = 6;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV_B6].Descriptor.RegisterSpace = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV_B6].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV_B7].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV_B7].Descriptor.ShaderRegister = 7;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV_B7].Descriptor.RegisterSpace = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV_B7].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+#pragma endregion
+#pragma endregion
+
+#pragma region ROOTPARAMS_SRV
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S0].Descriptor.ShaderRegister = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S0].Descriptor.RegisterSpace = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S1].Descriptor.ShaderRegister = 1;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S1].Descriptor.RegisterSpace = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S2].Descriptor.ShaderRegister = 2;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S2].Descriptor.RegisterSpace = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S2].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S3].Descriptor.ShaderRegister = 3;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S3].Descriptor.RegisterSpace = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S3].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S4].Descriptor.ShaderRegister = 4;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S4].Descriptor.RegisterSpace = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S4].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S5].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S5].Descriptor.ShaderRegister = 5;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S5].Descriptor.RegisterSpace = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S5].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 #pragma endregion
 
 #pragma region ROOTPARAMS_UAV
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_UAV;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV0].Descriptor.ShaderRegister = 0;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV0].Descriptor.RegisterSpace = 0;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV_U0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_UAV;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV_U0].Descriptor.ShaderRegister = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV_U0].Descriptor.RegisterSpace = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV_U0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_UAV;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV1].Descriptor.ShaderRegister = 1;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV1].Descriptor.RegisterSpace = 0;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV_U1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_UAV;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV_U1].Descriptor.ShaderRegister = 1;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV_U1].Descriptor.RegisterSpace = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV_U1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_UAV;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV2].Descriptor.ShaderRegister = 2;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV2].Descriptor.RegisterSpace = 0;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV2].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV_U2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_UAV;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV_U2].Descriptor.ShaderRegister = 2;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV_U2].Descriptor.RegisterSpace = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV_U2].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_UAV;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV3].Descriptor.ShaderRegister = 3;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV3].Descriptor.RegisterSpace = 0;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV3].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV_U3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_UAV;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV_U3].Descriptor.ShaderRegister = 3;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV_U3].Descriptor.RegisterSpace = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV_U3].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_UAV;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV4].Descriptor.ShaderRegister = 4;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV4].Descriptor.RegisterSpace = 0;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV4].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV_U4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_UAV;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV_U4].Descriptor.ShaderRegister = 4;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV_U4].Descriptor.RegisterSpace = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV_U4].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV5].ParameterType = D3D12_ROOT_PARAMETER_TYPE_UAV;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV5].Descriptor.ShaderRegister = 5;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV5].Descriptor.RegisterSpace = 0;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV5].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV_U5].ParameterType = D3D12_ROOT_PARAMETER_TYPE_UAV;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV_U5].Descriptor.ShaderRegister = 5;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV_U5].Descriptor.RegisterSpace = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV_U5].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 #pragma endregion
 
 #pragma region StaticSamplers

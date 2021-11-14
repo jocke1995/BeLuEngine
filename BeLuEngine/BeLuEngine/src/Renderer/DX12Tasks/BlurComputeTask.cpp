@@ -70,7 +70,7 @@ void BlurComputeTask::Execute()
 		m_DhIndices.index3 = m_PingPongResources[0]->GetUAV()->GetDescriptorHeapIndex();	// Write
 
 		// Send the indices to gpu
-		commandList->SetComputeRoot32BitConstants(Constants_DH_Indices, sizeof(DescriptorHeapIndices) / sizeof(UINT), &m_DhIndices, 0);
+		commandList->SetComputeRoot32BitConstants(Constants_DH_Indices_B1, sizeof(DescriptorHeapIndices) / sizeof(UINT), &m_DhIndices, 0);
 
 		// The resource to read (Resource Barrier)
 		const_cast<Resource*>(m_PingPongResources[0]->GetSRV()->GetResource())->TransResourceState(

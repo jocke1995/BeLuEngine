@@ -1,4 +1,4 @@
-#include "../../Headers/GPU_Structs.h"
+#include "DescriptorBindings.hlsl"
 
 struct VS_OUT
 {
@@ -9,24 +9,11 @@ struct VS_OUT
 	float3x3 tbn	: TBN;
 };
 
-struct vertex
-{
-	float3 pos;
-	float2 uv;
-	float3 norm;
-	float3 tang;
-};
-
-ConstantBuffer<SlotInfo> info : register(b1, space0);
-ConstantBuffer<MATRICES_PER_OBJECT_STRUCT> matricesPerObject : register(b3, space0);
-
-StructuredBuffer<vertex> meshes[] : register(t0, space1);
-
 VS_OUT VS_main(uint vID : SV_VertexID)
 {
 	VS_OUT output = (VS_OUT)0;
 
-	vertex v = meshes[info.vertexDataIndex][vID];
+	vertex v = meshes[slotInfo.vertexDataIndex][vID];
 	float4 vertexPosition = float4(v.pos.xyz, 1.0f);
 
 	output.pos = mul(vertexPosition, matricesPerObject.WVP);
