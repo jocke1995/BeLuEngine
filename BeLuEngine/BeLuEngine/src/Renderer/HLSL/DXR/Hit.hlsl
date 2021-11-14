@@ -3,7 +3,8 @@
 #include "../DescriptorBindings.hlsl"
  
 /* LOCAL */ 
-//ByteAddressBuffer rawBuffer: register(t6, space0);
+ConstantBuffer<MATRICES_PER_OBJECT_STRUCT> localMatricesPerObject : register(b8, space0);
+ByteAddressBuffer rawBufferSlotInfo: register(t6, space0);
  
 [shader("closesthit")]  
 void ClosestHit(inout ReflectionPayload reflectionPayload, in BuiltInTriangleIntersectionAttributes attribs)

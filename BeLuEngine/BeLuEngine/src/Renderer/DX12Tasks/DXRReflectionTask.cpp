@@ -109,17 +109,17 @@ DXRReflectionTask::DXRReflectionTask(
 	m_pMissSignature	= createLocalRootSig(rootDesc);
 	m_pMissSignature->SetName(L"MissRootSig");
 
-	// RegisterSpace 0 is dedicated to descriptors, and globalRootsig uses 0-5 on all SRV,CBV and UAV
+	// RegisterSpace 0 is dedicated to descriptors, and globalRootsig uses 0-5 on all SRV and UAV and 0-7 on CBV
 	D3D12_ROOT_PARAMETER rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::NUM_LOCAL_PARAMS]{};
-	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_CBV0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_CBV0].Descriptor.ShaderRegister = 9;
-	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_CBV0].Descriptor.RegisterSpace = 0;
-	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_CBV0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_CBV_B8].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_CBV_B8].Descriptor.ShaderRegister = 8;
+	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_CBV_B8].Descriptor.RegisterSpace = 0;
+	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_CBV_B8].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_SRV0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
-	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_SRV0].Descriptor.ShaderRegister = 6;
-	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_SRV0].Descriptor.RegisterSpace = 0;
-	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_SRV0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_SRV_S6].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_SRV_S6].Descriptor.ShaderRegister = 6;
+	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_SRV_S6].Descriptor.RegisterSpace = 0;
+	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_SRV_S6].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
 	rootDesc.NumParameters = E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::NUM_LOCAL_PARAMS;
 	rootDesc.pParameters = rootParam;
