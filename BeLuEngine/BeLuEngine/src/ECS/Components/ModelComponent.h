@@ -37,32 +37,32 @@ namespace component
         Model* GetModel() const;
 
         // Material
-        Material* GetMaterialAt(unsigned int index) const;
         void SetMaterialAt(unsigned int index, Material* material);
-        ShaderResource* GetMaterialByteAdressBufferDXR() const;
+        Material* GetMaterialAt(unsigned int index);
+        MaterialData* GetUniqueMaterialDataAt(unsigned int index);
+        ShaderResource* GetMaterialByteAdressBuffer() const;
 
-        // SlotInfo
         const SlotInfo* GetSlotInfoAt(unsigned int index) const;
         ShaderResource* GetSlotInfoByteAdressBufferDXR() const;
 
+        void UpdateMaterialRawBufferFromMaterial();
     private:
         // The boundingBox will update the "m_IsPickedThisFrame"
         friend class BoundingBoxComponent;
         friend class BeLuEngine;
         friend class Renderer;
+
         bool m_IsPickedThisFrame = false;
+        unsigned int m_DrawFlag = 0;
 
         Model* m_pModel = nullptr;
 
         std::vector<Material*> m_Materials;
-        std::vector<SlotInfo> m_SlotInfos;
         std::vector<MaterialData> m_MaterialDataRawBuffer;
-        void updateSlotInfo();
-        void updateMaterialDataBuffer();
 
-        unsigned int m_DrawFlag = 0;
+        std::vector<SlotInfo> m_SlotInfos;
+        void updateSlotInfoBuffer();
 
-        // DXR
         ShaderResource* m_SlotInfoByteAdressBuffer;
         ShaderResource* m_MaterialByteAdressBuffer;
     };

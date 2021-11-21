@@ -244,7 +244,7 @@ void DXRReflectionTask::CreateShaderBindingTable(ID3D12Device5* device, const st
 		m_pSbtGenerator->AddHitGroup(L"HitGroup",
 		{
 			(void*)rc.mc->GetSlotInfoByteAdressBufferDXR()->GetUploadResource()->GetGPUVirtualAdress(),	// SlotInfoRawBuffer
-			(void*)rc.mc->GetMaterialByteAdressBufferDXR()->GetUploadResource()->GetGPUVirtualAdress(),	// MaterialData
+			(void*)rc.mc->GetMaterialByteAdressBuffer()->GetUploadResource()->GetGPUVirtualAdress(),	// MaterialData
 			(void*)rc.tc->GetTransform()->m_pCB->GetUploadResource()->GetGPUVirtualAdress()				// MATRICES_PER_OBJECT_STRUCT
 		});
 	}

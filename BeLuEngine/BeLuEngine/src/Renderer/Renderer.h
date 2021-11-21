@@ -180,7 +180,6 @@ private:
 	void submitModelToGPU(Model* model);
 	void submitSlotInfoRawBufferToGPU(component::ModelComponent* mc);
 	void submitMaterialToGPU(component::ModelComponent* mc);
-	void submitMaterialDataToGPU(Material* mat);
 	void submitMeshToCodt(Mesh* mesh);
 	void submitTextureToCodt(Texture* texture);
 

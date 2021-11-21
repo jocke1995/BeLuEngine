@@ -162,13 +162,14 @@ Scene* TestScene(SceneManager* sm)
     tc->GetTransform()->SetRotationY(PI);
     tc->GetTransform()->SetPosition(0, 30, 40);
 
-    std::pair<ConstantBuffer*, MaterialData>* matData = const_cast<std::pair<ConstantBuffer*, MaterialData>*>(mc->GetMaterialAt(0)->GetMaterialData());
-    matData->second.hasMetallicTexture = false;
-    matData->second.hasRoughnessTexture = false;
-    matData->second.hasNormalTexture = false;
-    matData->second.metallicValue = 0.99f;
-    matData->second.roughnessValue = 0.10f;
+    MaterialData* sharedMatData = mc->GetMaterialAt(0)->GetSharedMaterialData();
+    sharedMatData->hasMetallicTexture = false;
+    sharedMatData->hasRoughnessTexture = false;
+    sharedMatData->hasNormalTexture = false;
+    sharedMatData->metallicValue = 0.99f;
+    sharedMatData->roughnessValue = 0.10f;
 
+    mc->UpdateMaterialRawBufferFromMaterial();
     bbc->Init();
     /* ---------------------- Mirror ---------------------- */
 
@@ -207,11 +208,17 @@ Scene* TestScene(SceneManager* sm)
 
     mc->SetModel(sphereModel);
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE);
-    matData = const_cast<std::pair<ConstantBuffer*, MaterialData>*>(mc->GetMaterialAt(0)->GetMaterialData());
-    matData->second.emissiveValue = { 1.0f, 0.0f, 0.0f, 1.0f };
-    matData->second.hasEmissiveTexture = false;
+
+    sharedMatData = mc->GetMaterialAt(0)->GetSharedMaterialData();
+    sharedMatData->hasMetallicTexture = false;
+    sharedMatData->hasRoughnessTexture = false;
+    sharedMatData->hasNormalTexture = false;
+    sharedMatData->metallicValue = 0.99f;
+    sharedMatData->roughnessValue = 0.10f;
     tc->GetTransform()->SetScale(2.0f);
     tc->GetTransform()->SetPosition(-5.0f, 11, 30);
+
+    mc->UpdateMaterialRawBufferFromMaterial();
     bbc->Init();
     mc->Update(0);
 
@@ -222,11 +229,17 @@ Scene* TestScene(SceneManager* sm)
 
     mc->SetModel(sphereModel);
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
-    matData = const_cast<std::pair<ConstantBuffer*, MaterialData>*>(mc->GetMaterialAt(0)->GetMaterialData());
-    matData->second.emissiveValue = { 0.0f, 1.0f, 0.0f, 1.0f };
-    matData->second.hasEmissiveTexture = false;
+
+    sharedMatData = mc->GetMaterialAt(0)->GetSharedMaterialData();
+    sharedMatData->hasMetallicTexture = false;
+    sharedMatData->hasRoughnessTexture = false;
+    sharedMatData->hasNormalTexture = false;
+    sharedMatData->metallicValue = 0.99f;
+    sharedMatData->roughnessValue = 0.10f;
     tc->GetTransform()->SetScale(1.0f);
     tc->GetTransform()->SetPosition(15, 4, 4);
+
+    mc->UpdateMaterialRawBufferFromMaterial();
     bbc->Init();
     mc->Update(0);
 
@@ -238,11 +251,17 @@ Scene* TestScene(SceneManager* sm)
 
     mc->SetModel(sphereModel);
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
-    matData = const_cast<std::pair<ConstantBuffer*, MaterialData>*>(mc->GetMaterialAt(0)->GetMaterialData());
-    matData->second.emissiveValue = { 0.0f, 0.0f, 1.0f, 1.0f };
-    matData->second.hasEmissiveTexture = false;
+
+    sharedMatData = mc->GetMaterialAt(0)->GetSharedMaterialData();
+    sharedMatData->hasMetallicTexture = false;
+    sharedMatData->hasRoughnessTexture = false;
+    sharedMatData->hasNormalTexture = false;
+    sharedMatData->metallicValue = 0.99f;
+    sharedMatData->roughnessValue = 0.10f;
     tc->GetTransform()->SetScale(1.0f);
     tc->GetTransform()->SetPosition(15, 7, 7);
+
+    mc->UpdateMaterialRawBufferFromMaterial();
     bbc->Init();
     mc->Update(0);
     /* ---------------------- Sphere ---------------------- */
@@ -302,13 +321,14 @@ Scene* SponzaScene(SceneManager* sm)
     tc->GetTransform()->SetRotationZ(PI / 2);
     tc->GetTransform()->SetPosition(55, 4.5, 0);
 
-    std::pair<ConstantBuffer*, MaterialData>* matData = const_cast<std::pair<ConstantBuffer*, MaterialData>*>(mc->GetMaterialAt(0)->GetMaterialData());
-    matData->second.hasMetallicTexture = false;
-    matData->second.hasRoughnessTexture = false;
-    matData->second.hasNormalTexture = false;
-    matData->second.metallicValue = 0.99f;
-    matData->second.roughnessValue = 0.10;
+    MaterialData* sharedMatData = mc->GetMaterialAt(0)->GetSharedMaterialData();
+    sharedMatData->hasMetallicTexture = false;
+    sharedMatData->hasRoughnessTexture = false;
+    sharedMatData->hasNormalTexture = false;
+    sharedMatData->metallicValue = 0.99f;
+    sharedMatData->roughnessValue = 0.10f;
 
+    mc->UpdateMaterialRawBufferFromMaterial();
     bbc->Init();
     /* ---------------------- Mirror1 ---------------------- */
 
@@ -326,13 +346,14 @@ Scene* SponzaScene(SceneManager* sm)
     tc->GetTransform()->SetRotationZ(PI / 2);
     tc->GetTransform()->SetPosition(-55, 4.5, 0);
 
-    matData = const_cast<std::pair<ConstantBuffer*, MaterialData>*>(mc->GetMaterialAt(0)->GetMaterialData());
-    matData->second.hasMetallicTexture = false;
-    matData->second.hasRoughnessTexture = false;
-    matData->second.hasNormalTexture = false;
-    matData->second.metallicValue = 0.99f;
-    matData->second.roughnessValue = 0.10;
+    sharedMatData = mc->GetMaterialAt(0)->GetSharedMaterialData();
+    sharedMatData->hasMetallicTexture = false;
+    sharedMatData->hasRoughnessTexture = false;
+    sharedMatData->hasNormalTexture = false;
+    sharedMatData->metallicValue = 0.99f;
+    sharedMatData->roughnessValue = 0.10f;
 
+    mc->UpdateMaterialRawBufferFromMaterial();
     bbc->Init();
     /* ---------------------- Mirror2 ---------------------- */
 

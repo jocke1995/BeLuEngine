@@ -43,5 +43,4 @@ void RayGen()
     }
     
     texturesUAV[cbPerScene.reflectionUAV][launchIndex] = float4(finalColor, 1.0f);
-    //texturesUAV[cbPerScene.reflectionUAV][launchIndex] = float4(1.0f, 0.0f, 1.0f, 1.0f);
 }

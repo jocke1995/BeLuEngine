@@ -25,6 +25,8 @@
 #include "../Renderer/Texture/Texture2DGUI.h"
 #include "../Renderer/Texture/TextureCubeMap.h"
 
+#include "../Renderer/GPUMemory/GPUMemory.h"
+
 #include "MultiThreading/ThreadPool.h"
 
 #include "EngineMath.h"
@@ -47,15 +49,13 @@ Material* AssetLoader::CreateMaterial(std::wstring matName, const Material* mat)
 		// Check if this material is to be created from other material
 		if (mat != nullptr)
 		{
-			m_LoadedMaterials[matName].first  = false;
-			m_LoadedMaterials[matName].second = new Material(*mat, matName);
-			return m_LoadedMaterials[matName].second;
+			m_LoadedMaterials[matName] = new Material(*mat, matName);
+			return m_LoadedMaterials[matName];
 		}
 		else // Create a new material with starting values from the default material.
 		{
-			m_LoadedMaterials[matName].first = false;
-			m_LoadedMaterials[matName].second = new Material(matName);
-			return m_LoadedMaterials[matName].second;
+			m_LoadedMaterials[matName] = new Material(matName);
+			return m_LoadedMaterials[matName];
 		}
 	}
 	else
@@ -70,7 +70,7 @@ Material* AssetLoader::LoadMaterial(std::wstring matName)
 {
 	if (m_LoadedMaterials.count(matName) != 0)
 	{
-		Material* mat = m_LoadedMaterials[matName].second;
+		Material* mat = m_LoadedMaterials[matName];
 		return  mat;
 	}
 	BL_LOG_CRITICAL("Invalid material ID '%S' could not be loaded.\n", matName.c_str());
@@ -85,16 +85,6 @@ bool AssetLoader::IsModelLoadedOnGpu(const std::wstring& name) const
 bool AssetLoader::IsModelLoadedOnGpu(const Model* model) const
 {
 	return m_LoadedModels.at(model->GetPath()).first;
-}
-
-bool AssetLoader::IsMaterialLoadedOnGpu(const std::wstring& name) const
-{
-	return m_LoadedMaterials.at(name).first;
-}
-
-bool AssetLoader::IsMaterialLoadedOnGpu(const Material* material) const
-{
-	return m_LoadedMaterials.at(material->GetPath()).first;
 }
 
 bool AssetLoader::IsTextureLoadedOnGpu(const std::wstring& name) const
@@ -120,8 +110,7 @@ void AssetLoader::loadDefaultMaterial()
 
 	std::wstring matName = L"DefaultMaterial";
 	Material* material = new Material(&matName, &matTextures);
-	m_LoadedMaterials[matName].first = false;
-	m_LoadedMaterials[matName].second = material;
+	m_LoadedMaterials[matName] = material;
 }
 
 AssetLoader::~AssetLoader()
@@ -141,7 +130,7 @@ AssetLoader::~AssetLoader()
 	// For every Material
 	for (auto material : m_LoadedMaterials)
 	{
-		delete material.second.second;
+		delete material.second;
 	}
 
 	// For every model
@@ -383,8 +372,7 @@ Material* AssetLoader::loadMaterial(aiMaterial* mat, const std::wstring& folderP
 		}
 
 		Material* material = new Material(&matName, &matTextures);
-		m_LoadedMaterials[matName].first = false;
-		m_LoadedMaterials[matName].second = material;
+		m_LoadedMaterials[matName] = material;
 
 		return material;
 	}
@@ -395,7 +383,7 @@ Material* AssetLoader::loadMaterial(aiMaterial* mat, const std::wstring& folderP
 		{
 			//Log::PrintSeverity(Log::Severity::WARNING, "AssetLoader: Loaded same material name more than once, first loaded material will be used <%S>\n", matName.c_str());
 		}
-		return m_LoadedMaterials[matName].second;
+		return m_LoadedMaterials[matName];
 	}
 }
 

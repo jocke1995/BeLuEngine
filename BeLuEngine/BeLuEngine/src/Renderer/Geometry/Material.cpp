@@ -24,16 +24,14 @@ Material::Material(const std::wstring& name)
 	}
 #endif 
 
-	Renderer& r = Renderer::GetInstance();
-	m_MaterialData.first = new ConstantBuffer(r.m_pDevice5, sizeof(MaterialData), m_Name, r.m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
-	m_MaterialData.second =
+	m_MaterialData =
 	{
-			defaultMat->m_MaterialData.second.textureAlbedo,
-			defaultMat->m_MaterialData.second.textureRoughness,
-			defaultMat->m_MaterialData.second.textureMetallic,
-			defaultMat->m_MaterialData.second.textureNormal,
-			defaultMat->m_MaterialData.second.textureEmissive,
-			defaultMat->m_MaterialData.second.textureOpacity,
+			defaultMat->m_MaterialData.textureAlbedo,
+			defaultMat->m_MaterialData.textureRoughness,
+			defaultMat->m_MaterialData.textureMetallic,
+			defaultMat->m_MaterialData.textureNormal,
+			defaultMat->m_MaterialData.textureEmissive,
+			defaultMat->m_MaterialData.textureOpacity,
 			0,	// useEmissiveTexture
 			0,	// useRoughnessTexture
 			0,	// useMetallicTexture
@@ -55,9 +53,7 @@ Material::Material(const std::wstring* name, std::map<E_TEXTURE2D_TYPE, Texture*
 {
 	m_Name = *name;
 
-	Renderer& r = Renderer::GetInstance();
-	m_MaterialData.first = new ConstantBuffer(r.m_pDevice5, sizeof(MaterialData), m_Name, r.m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
-	m_MaterialData.second = 
+	m_MaterialData = 
 	{	
 			textures->at(E_TEXTURE2D_TYPE::ALBEDO)->GetDescriptorHeapIndex(),
 			textures->at(E_TEXTURE2D_TYPE::ROUGHNESS)->GetDescriptorHeapIndex(),
@@ -84,19 +80,12 @@ Material::Material(const std::wstring* name, std::map<E_TEXTURE2D_TYPE, Texture*
 Material::Material(const Material& other, const std::wstring& name)
 {
 	m_Name = name;
-
-	Renderer& r = Renderer::GetInstance();
-	m_MaterialData.first = new ConstantBuffer(r.m_pDevice5, sizeof(MaterialData), m_Name, r.m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
-
-	m_MaterialData.second = other.m_MaterialData.second;
-
-
+	m_MaterialData = other.m_MaterialData;
 	m_Textures = other.m_Textures;
 }
 
 Material::~Material()
 {
-	delete m_MaterialData.first;
 }
 
 bool Material::operator==(const Material& other)
@@ -124,7 +113,7 @@ Texture* Material::GetTexture(E_TEXTURE2D_TYPE type) const
 	return m_Textures.at(type);
 }
 
-std::pair<ConstantBuffer*, MaterialData>* Material::GetMaterialData()
+MaterialData* Material::GetSharedMaterialData()
 {
 	return &m_MaterialData;
 }

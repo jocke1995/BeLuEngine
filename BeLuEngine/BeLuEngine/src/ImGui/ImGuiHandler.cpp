@@ -190,14 +190,15 @@ void ImGuiHandler::drawSceneHierarchy()
 									static int matIndex = 0;
 									ImGui::InputInt("Mesh Index", &matIndex);
 
-									// Sanity check
+									// Out of bounds check
 									if (matIndex > (mc->GetNrOfMeshes() - 1) || matIndex < 0)
 									{
 										matIndex = mc->GetNrOfMeshes() - 1;
 									}
 
 									Material* mat = mc->GetMaterialAt(matIndex);
-									MaterialData* matData = const_cast<MaterialData*>(&mat->GetMaterialData()->second);
+									//MaterialData* sharedMatData = mat->GetSharedMaterialData();
+									MaterialData* matData = mc->GetUniqueMaterialDataAt(matIndex);
 
 									bool useRoughnessTexture = matData->hasRoughnessTexture;
 									bool useMetallicTexture = matData->hasMetallicTexture;
@@ -239,8 +240,6 @@ void ImGuiHandler::drawSceneHierarchy()
 										index++;
 
 										mc->SetMaterialAt(matIndex, newMat);
-
-										r.submitSlotInfoRawBufferToGPU(mc);
 									}
 
 									matData->hasRoughnessTexture = useRoughnessTexture;
@@ -255,7 +254,7 @@ void ImGuiHandler::drawSceneHierarchy()
 									matData->opacityValue = opacityValue;
 
 									// Update data on VRAM
-									r.submitMaterialDataToGPU(mat);
+									r.submitMaterialToGPU(mc);
 								}
 							}
 							else if (component::TransformComponent* tc = dynamic_cast<component::TransformComponent*>(c))

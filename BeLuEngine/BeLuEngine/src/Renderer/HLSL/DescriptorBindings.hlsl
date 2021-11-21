@@ -30,10 +30,10 @@ ConstantBuffer<DescriptorHeapIndices>		dhIndices			: register(b1, space0);
 ConstantBuffer<MATRICES_PER_OBJECT_STRUCT>	matricesPerObject	: register(b2, space0);
 ConstantBuffer<CB_PER_FRAME_STRUCT>			cbPerFrame			: register(b3, space0);
 ConstantBuffer<CB_PER_SCENE_STRUCT>			cbPerScene			: register(b4, space0);
-ConstantBuffer<MaterialData>				material			: register(b5, space0);
 
 // SRVs
-ByteAddressBuffer				rawBufferLights	: register(t0, space0);
+ByteAddressBuffer				rawBufferLights			: register(t0, space0);
+ByteAddressBuffer				globalRawBufferMaterial	: register(t1, space0);
 
 // UAVs (not yet used, will be used for readWrite buffers later, maybe when using ExecuteIndirect)
 

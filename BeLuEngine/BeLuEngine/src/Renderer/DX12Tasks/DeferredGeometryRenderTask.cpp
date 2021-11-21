@@ -130,6 +130,8 @@ void DeferredGeometryRenderTask::Execute()
 
 void DeferredGeometryRenderTask::drawRenderComponent(component::ModelComponent* mc, component::TransformComponent* tc, const DirectX::XMMATRIX* viewProjTransposed, ID3D12GraphicsCommandList5* cl)
 {
+	cl->SetGraphicsRootShaderResourceView(RootParam_SRV_T1, mc->GetMaterialByteAdressBuffer()->GetDefaultResource()->GetGPUVirtualAdress());
+
 	// Draw for every m_pMesh the meshComponent has
 	for (unsigned int i = 0; i < mc->GetNrOfMeshes(); i++)
 	{
@@ -138,7 +140,6 @@ void DeferredGeometryRenderTask::drawRenderComponent(component::ModelComponent* 
 		const SlotInfo* info = mc->GetSlotInfoAt(i);
 
 		Transform* t = tc->GetTransform();
-		cl->SetGraphicsRootConstantBufferView(RootParam_CBV_B5, mc->GetMaterialAt(i)->GetMaterialData()->first->GetDefaultResource()->GetGPUVirtualAdress());
 		cl->SetGraphicsRoot32BitConstants(Constants_SlotInfo_B0, sizeof(SlotInfo) / sizeof(UINT), info, 0);
 		cl->SetGraphicsRootConstantBufferView(RootParam_CBV_B2, t->m_pCB->GetDefaultResource()->GetGPUVirtualAdress());
 

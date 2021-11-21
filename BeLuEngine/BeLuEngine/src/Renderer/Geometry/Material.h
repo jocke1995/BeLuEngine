@@ -30,7 +30,7 @@ public:
 
     // Material
     Texture* GetTexture(E_TEXTURE2D_TYPE type) const;
-    std::pair<ConstantBuffer*, MaterialData>* GetMaterialData();
+    MaterialData* GetSharedMaterialData();
 
     void SetTexture(E_TEXTURE2D_TYPE type, Texture* texture);
 
@@ -39,7 +39,7 @@ private:
 
     std::wstring m_Name;
     std::map<E_TEXTURE2D_TYPE, Texture*> m_Textures;
-    std::pair<ConstantBuffer*, MaterialData> m_MaterialData = {};
+    MaterialData m_MaterialData = {};
     
 };
 

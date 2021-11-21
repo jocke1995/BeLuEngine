@@ -11,18 +11,20 @@ struct VS_OUT
 
 float4 PS_main(VS_OUT input) : SV_TARGET0
 {
+	MaterialData matData = globalRawBufferMaterial.Load<MaterialData>(slotInfo.materialIndex * sizeof(MaterialData));
+
 	// Sample from textures
 	float2 uvScaled = float2(input.uv.x, input.uv.y);
-	float4 albedo = textures[material.textureAlbedo].Sample(Anisotropic16_Wrap, uvScaled);
-	float roughness = material.hasRoughnessTexture ? textures[material.textureRoughness].Sample(Anisotropic16_Wrap, uvScaled).r : material.roughnessValue;
-	float metallic = material.hasMetallicTexture ? textures[material.textureMetallic].Sample(Anisotropic16_Wrap, uvScaled).r : material.metallicValue;
-	float4 emissive = material.hasEmissiveTexture ? textures[material.textureEmissive].Sample(Anisotropic16_Wrap, uvScaled) : material.emissiveValue;
-	float opacity   = material.hasOpacityTexture ? textures[material.textureOpacity].Sample(Anisotropic16_Wrap, uvScaled).r : material.opacityValue;
+	float4 albedo = textures[matData.textureAlbedo].Sample(Anisotropic16_Wrap, uvScaled);
+	float roughness = matData.hasRoughnessTexture ? textures[matData.textureRoughness].Sample(Anisotropic16_Wrap, uvScaled).r : matData.roughnessValue;
+	float metallic = matData.hasMetallicTexture ? textures[matData.textureMetallic].Sample(Anisotropic16_Wrap, uvScaled).r : matData.metallicValue;
+	float4 emissive = matData.hasEmissiveTexture ? textures[matData.textureEmissive].Sample(Anisotropic16_Wrap, uvScaled) : matData.emissiveValue;
+	float opacity   = matData.hasOpacityTexture ? textures[matData.textureOpacity].Sample(Anisotropic16_Wrap, uvScaled).r : matData.opacityValue;
 
 	float3 normal = float3(0.0f, 0.0f, 0.0f);
-	if (material.hasNormalTexture)
+	if (matData.hasNormalTexture)
 	{
-		normal = textures[material.textureNormal].Sample(Anisotropic16_Wrap, uvScaled).xyz;
+		normal = textures[matData.textureNormal].Sample(Anisotropic16_Wrap, uvScaled).xyz;
 		normal = normalize((2.0f * normal) - 1.0f);
 		normal = float4(normalize(mul(normal.xyz, input.tbn)), 0.0f);
 	}

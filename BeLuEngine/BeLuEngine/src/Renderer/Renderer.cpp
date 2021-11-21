@@ -794,6 +794,8 @@ void Renderer::InitModelComponent(component::ModelComponent* mc)
 
 	// Submit to codt
 	submitModelToGPU(mc->m_pModel);
+
+	mc->UpdateMaterialRawBufferFromMaterial();
 	submitMaterialToGPU(mc);
 
 	// Only add the m_Entities that actually should be drawn
@@ -1072,18 +1074,12 @@ void Renderer::submitSlotInfoRawBufferToGPU(component::ModelComponent* mc)
 
 void Renderer::submitMaterialToGPU(component::ModelComponent* mc)
 {
+	// Submit Textures
 	for (unsigned int i = 0; i < mc->GetNrOfMeshes(); i++)
 	{
-		Texture* texture;
 		Material* mat = mc->GetMaterialAt(i);
 
-		// Skip already loaded ones
-		if (AssetLoader::Get()->IsMaterialLoadedOnGpu(mat) == true)
-		{
-			continue;
-		}
-
-		// Submit Textures
+		Texture* texture;
 		texture = mat->GetTexture(E_TEXTURE2D_TYPE::ALBEDO);
 		submitTextureToCodt(texture);
 		texture = mat->GetTexture(E_TEXTURE2D_TYPE::ROUGHNESS);
@@ -1096,35 +1092,15 @@ void Renderer::submitMaterialToGPU(component::ModelComponent* mc)
 		submitTextureToCodt(texture);
 		texture = mat->GetTexture(E_TEXTURE2D_TYPE::OPACITY);
 		submitTextureToCodt(texture);
-
-		// ---------------- OLD (REMOVE) -----------------
-		// Submit materialData
-		submitMaterialDataToGPU(mat);
-		// ---------------- OLD (REMOVE) -----------------
-
-		AssetLoader::Get()->m_LoadedMaterials.at(mat->GetName()).first = true;
 	}
 	
-	// ---------------- NEW -----------------
-		// MaterialData
-	mc->updateMaterialDataBuffer();
-
+	// MaterialData
 	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]);
 	const void* data = static_cast<const void*>(mc->m_MaterialDataRawBuffer.data());
 	codt->Submit(&std::make_tuple(
 		mc->m_MaterialByteAdressBuffer->GetUploadResource(),
 		mc->m_MaterialByteAdressBuffer->GetDefaultResource(),
 		data));
-	// ---------------- NEW -----------------
-
-}
-
-void Renderer::submitMaterialDataToGPU(Material* mat)
-{
-	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]);
-	const void* data = static_cast<const void*>(&mat->GetMaterialData()->second);
-	codt->Submit(&std::make_tuple(mat->GetMaterialData()->first->GetUploadResource(), mat->GetMaterialData()->first->GetDefaultResource(), data));
-
 }
 
 void Renderer::submitTextureToCodt(Texture* texture)

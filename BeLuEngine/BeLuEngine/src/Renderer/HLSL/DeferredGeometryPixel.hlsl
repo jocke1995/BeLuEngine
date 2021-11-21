@@ -21,17 +21,19 @@ PS_OUTPUT PS_main(VS_OUT input)
 {
 	PS_OUTPUT output = (PS_OUTPUT)0;
 
+	MaterialData matData = globalRawBufferMaterial.Load<MaterialData>(slotInfo.materialIndex * sizeof(MaterialData));
+
 	// Sample from textures
 	float2 uvScaled = float2(input.uv.x, input.uv.y);
-	float4 albedo = textures[material.textureAlbedo].Sample(Anisotropic16_Wrap, uvScaled);
-	float roughness = material.hasRoughnessTexture ? textures[material.textureRoughness].Sample(Anisotropic16_Wrap, uvScaled).r : material.roughnessValue;
-	float metallic = material.hasMetallicTexture ? textures[material.textureMetallic].Sample(Anisotropic16_Wrap, uvScaled).r : material.metallicValue;
-	float4 emissive = material.hasEmissiveTexture ? textures[material.textureEmissive].Sample(Anisotropic16_Wrap, uvScaled) : material.emissiveValue;
+	float4 albedo = textures[matData.textureAlbedo].Sample(Anisotropic16_Wrap, uvScaled);
+	float roughness = matData.hasRoughnessTexture ? textures[matData.textureRoughness].Sample(Anisotropic16_Wrap, uvScaled).r : matData.roughnessValue;
+	float metallic = matData.hasMetallicTexture ? textures[matData.textureMetallic].Sample(Anisotropic16_Wrap, uvScaled).r : matData.metallicValue;
+	float4 emissive = matData.hasEmissiveTexture ? textures[matData.textureEmissive].Sample(Anisotropic16_Wrap, uvScaled) : matData.emissiveValue;
 	
 	float3 normal = float3(0.0f, 0.0f, 0.0f);
-	if (material.hasNormalTexture)
+	if (matData.hasNormalTexture)
 	{
-		normal = textures[material.textureNormal].Sample(Anisotropic16_Wrap, uvScaled).xyz;
+		normal = textures[matData.textureNormal].Sample(Anisotropic16_Wrap, uvScaled).xyz;
 		normal = normalize((2.0f * normal) - 1.0f);
 		normal = normalize(mul(normal, input.tbn));
 	}
@@ -42,7 +44,7 @@ PS_OUTPUT PS_main(VS_OUT input)
 
 	output.AlbedoColor	 = albedo;
 	output.NormalColor	 = float4(normal, 1.0f);
-	output.MatColor		 = float4(roughness, metallic, material.glow, 0.0f);
+	output.MatColor		 = float4(roughness, metallic, matData.glow, 0.0f);
 	output.EmissiveColor = emissive;
 
 	return output;

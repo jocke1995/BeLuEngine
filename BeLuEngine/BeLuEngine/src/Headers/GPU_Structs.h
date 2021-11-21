@@ -55,17 +55,7 @@ struct SlotInfo
 	unsigned int vertexDataIndex;
 	unsigned int indicesDataIndex;
 	unsigned int materialIndex;
-	unsigned int textureAlbedo;
-
-	unsigned int textureRoughness;
-	unsigned int textureMetallic;
-	unsigned int textureNormal;
-	unsigned int textureEmissive;
-
-	unsigned int textureOpacity;
 	unsigned int pad1;
-	unsigned int pad2;
-	unsigned int pad3;
 };
 
 struct MATRICES_PER_OBJECT_STRUCT

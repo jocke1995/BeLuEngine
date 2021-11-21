@@ -83,6 +83,7 @@ void TransparentRenderTask::Execute()
 			component::TransformComponent* tc = m_RenderComponents.at(i).tc;
 
 			// Draw for every m_pMesh the MeshComponent has
+			commandList->SetGraphicsRootShaderResourceView(RootParam_SRV_T1, mc->GetMaterialByteAdressBuffer()->GetDefaultResource()->GetGPUVirtualAdress());
 			for (unsigned int j = 0; j < mc->GetNrOfMeshes(); j++)
 			{
 				Mesh* m = mc->GetMeshAt(j);
@@ -91,7 +92,6 @@ void TransparentRenderTask::Execute()
 
 				Transform* t = tc->GetTransform();
 
-				commandList->SetGraphicsRootConstantBufferView(RootParam_CBV_B5, mc->GetMaterialAt(i)->GetMaterialData()->first->GetDefaultResource()->GetGPUVirtualAdress());
 				commandList->SetGraphicsRoot32BitConstants(Constants_SlotInfo_B0, sizeof(SlotInfo) / sizeof(UINT), info, 0);
 				commandList->SetGraphicsRootConstantBufferView(RootParam_CBV_B2, t->m_pCB->GetDefaultResource()->GetGPUVirtualAdress());
 

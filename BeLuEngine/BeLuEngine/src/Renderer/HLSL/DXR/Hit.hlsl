@@ -31,15 +31,10 @@ void ClosestHit(inout ReflectionPayload reflectionPayload, in BuiltInTriangleInt
 	
     float2 uv = v1.uv * bary.x + v2.uv * bary.y + v3.uv * bary.z; 
     
-    float4 albedo	= textures[slotInfo.textureAlbedo].SampleLevel(MIN_MAG_MIP_LINEAR_Wrap, uv, 0);
-	//float roughness	= matData.hasRoughnessTexture ? textures[matData.textureRoughness].SampleLevel(MIN_MAG_MIP_LINEAR_Wrap, uv, 0).r : matData.roughnessValue;
-	float roughness	=  matData.roughnessValue;
-	//float metallic	= matData.hasMetallicTexture  ? textures[matData.textureMetallic].SampleLevel(MIN_MAG_MIP_LINEAR_Wrap, uv, 0).g  : matData.metallicValue;
-	float metallic	=  matData.metallicValue;
-	//float roughness	= textures[slotInfo.textureRoughness].SampleLevel(MIN_MAG_MIP_LINEAR_Wrap, uv, 0).r;
-	//float metallic	= textures[slotInfo.textureMetallic].SampleLevel(MIN_MAG_MIP_LINEAR_Wrap, uv, 0).g;
-
-	float4 emissive	= textures[slotInfo.textureEmissive].SampleLevel(MIN_MAG_MIP_LINEAR_Wrap, uv, 0);
+    float4 albedo	= textures[matData.textureAlbedo].SampleLevel(MIN_MAG_MIP_LINEAR_Wrap, uv, 2);
+	float roughness	= matData.hasRoughnessTexture ? textures[matData.textureRoughness].SampleLevel(MIN_MAG_MIP_LINEAR_Wrap, uv, 2).r : matData.roughnessValue;
+	float metallic	= matData.hasMetallicTexture  ? textures[matData.textureMetallic].SampleLevel(MIN_MAG_MIP_LINEAR_Wrap, uv, 2).g  : matData.metallicValue;
+	// TODO: Add normal mapping from normalTexture
 	
 	float3 worldPos = WorldRayOrigin() + RayTCurrent() * WorldRayDirection();
 	float3 camPos = cbPerFrame.camPos;
