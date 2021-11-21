@@ -9,9 +9,10 @@ RenderTarget::RenderTarget(
 	ID3D12Device5* device,
 	unsigned int width, unsigned int height,
 	std::wstring resourceName,
-	DescriptorHeap* descriptorHeap_RTV)
+	DescriptorHeap* descriptorHeap_RTV,
+	D3D12_RESOURCE_STATES startState)
 {
-	createResource(device, width, height, resourceName);
+	createResource(device, width, height, resourceName, startState);
 	
 	D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
 	rtvDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
@@ -46,7 +47,7 @@ const RenderTargetView* const RenderTarget::GetRTV() const
 	return m_pRTV;
 }
 
-void RenderTarget::createResource(ID3D12Device5* device, unsigned int width, unsigned int height, std::wstring resourceName)
+void RenderTarget::createResource(ID3D12Device5* device, unsigned int width, unsigned int height, std::wstring resourceName, D3D12_RESOURCE_STATES startState)
 {
 	D3D12_RESOURCE_DESC resourceDesc = {};
 	resourceDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
@@ -67,5 +68,5 @@ void RenderTarget::createResource(ID3D12Device5* device, unsigned int width, uns
 	clearValue.Color[2] = 0.0f;
 	clearValue.Color[3] = 1.0f;
 
-	m_pResource = new Resource(device, &resourceDesc, &clearValue, resourceName, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	m_pResource = new Resource(device, &resourceDesc, &clearValue, resourceName, startState);
 }

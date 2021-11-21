@@ -9,8 +9,9 @@ class Resource;
 
 enum E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION
 {
+	RootParamLocal_SRV_T6,
+	RootParamLocal_CBV_T7,
 	RootParamLocal_CBV_B8,
-	RootParamLocal_SRV_S6,
 	NUM_LOCAL_PARAMS
 };
 

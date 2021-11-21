@@ -22,6 +22,7 @@ namespace component
 	ModelComponent::~ModelComponent()
 	{
 		delete m_SlotInfoByteAdressBuffer;
+		delete m_MaterialByteAdressBuffer;
 	}
 
 	void ModelComponent::SetModel(Model* model)
@@ -31,10 +32,12 @@ namespace component
 		// Start with values from the default material specified for that model
 		m_Materials = *m_pModel->GetOriginalMaterial();
 
-		m_SlotInfos.resize(m_pModel->GetSize());
+		unsigned int numMeshes = m_pModel->GetSize();
+
+		m_SlotInfos.resize(numMeshes);
+		m_MaterialDataRawBuffer.resize(numMeshes);
 		updateSlotInfo();
 
-		unsigned int numMeshes = m_pModel->GetSize();
 
 		D3D12_SHADER_RESOURCE_VIEW_DESC rawBufferDesc = {};
 		rawBufferDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
@@ -44,12 +47,18 @@ namespace component
 		rawBufferDesc.Buffer.NumElements = numMeshes;
 		rawBufferDesc.Buffer.StructureByteStride = 0;
 		rawBufferDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
-
+		
 		Renderer& r = Renderer::GetInstance();
 		std::string fileName = std::filesystem::path(to_string(m_pModel->GetPath())).filename().string();
 		m_SlotInfoByteAdressBuffer = new ShaderResource(
 			r.m_pDevice5, sizeof(SlotInfo) * numMeshes,
 			to_wstring(fileName) + L"_RAWBUFFER_SLOTINFO",
+			&rawBufferDesc,
+			r.m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
+
+		m_MaterialByteAdressBuffer = new ShaderResource(
+			r.m_pDevice5, sizeof(MaterialData) * numMeshes,
+			to_wstring(fileName) + L"_RAWBUFFER_MATERIALDATA",
 			&rawBufferDesc,
 			r.m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
 	}
@@ -89,12 +98,17 @@ namespace component
 		updateSlotInfo();
 	}
 
+	ShaderResource* ModelComponent::GetMaterialByteAdressBufferDXR() const
+	{
+		return m_MaterialByteAdressBuffer;
+	}
+
 	const SlotInfo* ModelComponent::GetSlotInfoAt(unsigned int index) const
 	{
 		return &m_SlotInfos[index];
 	}
 
-	ShaderResource* ModelComponent::GetByteAdressInfoDXR() const
+	ShaderResource* ModelComponent::GetSlotInfoByteAdressBufferDXR() const
 	{
 		return m_SlotInfoByteAdressBuffer;
 	}
@@ -108,7 +122,73 @@ namespace component
 				m_pModel->GetMeshAt(i)->GetVBSRV()->GetDescriptorHeapIndex(),
 				m_pModel->GetMeshAt(i)->GetIBSRV()->GetDescriptorHeapIndex(),
 				m_Materials[i]->GetMaterialData()->first->GetCBV()->GetDescriptorHeapIndex(),
-				0, // Padding
+				m_Materials[i]->GetMaterialData()->second.textureAlbedo,
+
+				m_Materials[i]->GetMaterialData()->second.textureRoughness,
+				m_Materials[i]->GetMaterialData()->second.textureMetallic,
+				m_Materials[i]->GetMaterialData()->second.textureNormal,
+				m_Materials[i]->GetMaterialData()->second.textureEmissive,
+
+				m_Materials[i]->GetMaterialData()->second.textureOpacity,
+				m_Materials[i]->GetMaterialData()->second.textureAlbedo, // Padding
+				m_Materials[i]->GetMaterialData()->second.textureAlbedo, // Padding
+				m_Materials[i]->GetMaterialData()->second.textureAlbedo // Padding
+			};
+
+			m_MaterialDataRawBuffer[i] =
+			{
+				m_Materials[i]->GetMaterialData()->second.textureAlbedo,
+				m_Materials[i]->GetMaterialData()->second.textureRoughness,
+				m_Materials[i]->GetMaterialData()->second.textureMetallic,
+				m_Materials[i]->GetMaterialData()->second.textureNormal,
+
+				m_Materials[i]->GetMaterialData()->second.textureEmissive,
+				m_Materials[i]->GetMaterialData()->second.textureOpacity,
+				m_Materials[i]->GetMaterialData()->second.hasEmissiveTexture,
+				m_Materials[i]->GetMaterialData()->second.hasRoughnessTexture,
+
+				m_Materials[i]->GetMaterialData()->second.hasMetallicTexture,
+				m_Materials[i]->GetMaterialData()->second.hasOpacityTexture,
+				m_Materials[i]->GetMaterialData()->second.hasNormalTexture,
+				m_Materials[i]->GetMaterialData()->second.glow,
+
+				m_Materials[i]->GetMaterialData()->second.emissiveValue,
+
+				m_Materials[i]->GetMaterialData()->second.roughnessValue,
+				m_Materials[i]->GetMaterialData()->second.metallicValue,
+				m_Materials[i]->GetMaterialData()->second.opacityValue,
+				m_Materials[i]->GetMaterialData()->second.pad3,
+			};
+		}
+	}
+
+	void ModelComponent::updateMaterialDataBuffer()
+	{
+		for (unsigned int i = 0; i < m_pModel->GetSize(); i++)
+		{
+			m_MaterialDataRawBuffer[i] =
+			{
+				m_Materials[i]->GetMaterialData()->second.textureAlbedo,
+				m_Materials[i]->GetMaterialData()->second.textureRoughness,
+				m_Materials[i]->GetMaterialData()->second.textureMetallic,
+				m_Materials[i]->GetMaterialData()->second.textureNormal,
+
+				m_Materials[i]->GetMaterialData()->second.textureEmissive,
+				m_Materials[i]->GetMaterialData()->second.textureOpacity,
+				m_Materials[i]->GetMaterialData()->second.hasEmissiveTexture,
+				m_Materials[i]->GetMaterialData()->second.hasRoughnessTexture,
+
+				m_Materials[i]->GetMaterialData()->second.hasMetallicTexture,
+				m_Materials[i]->GetMaterialData()->second.hasOpacityTexture,
+				m_Materials[i]->GetMaterialData()->second.hasNormalTexture,
+				m_Materials[i]->GetMaterialData()->second.glow,
+
+				m_Materials[i]->GetMaterialData()->second.emissiveValue,
+
+				m_Materials[i]->GetMaterialData()->second.roughnessValue,
+				m_Materials[i]->GetMaterialData()->second.metallicValue,
+				m_Materials[i]->GetMaterialData()->second.opacityValue,
+				m_Materials[i]->GetMaterialData()->second.pad3,
 			};
 		}
 	}

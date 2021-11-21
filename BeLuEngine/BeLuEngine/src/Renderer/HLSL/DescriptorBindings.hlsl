@@ -1,3 +1,6 @@
+#ifndef DESCRIPTORBINDINGS_H
+#define DESCRIPTORBINDINGS_H
+
 #include "../../Headers/GPU_Structs.h"
 
 // Static Samplers
@@ -11,12 +14,15 @@ SamplerState MIN_MAG_MIP_LINEAR_Wrap	: register (s5);
 // SRV table with 4 ranges, all starting at 0 in the dHeap
 Texture2D						textures[]	: register(t0, space1);
 StructuredBuffer<vertex>		meshes[]	: register(t0, space2);
-StructuredBuffer<unsigned int>	indices[]	: register(t0, space2);
+StructuredBuffer<unsigned int>	indices[]	: register(t0, space3);
 RaytracingAccelerationStructure sceneBVH[]	: register(t0, space4);
+
 
 // UAV table with 3 ranges, all starting at 0 in the dHeap
 RWTexture2D<float4> texturesUAV[]   : register(u0, space1);
 
+// CBV table with 3 ranges, all starting at 0 in the dHeap
+ConstantBuffer<MaterialData> materialDatas[]   : register(b0, space1);
 
 // CBVs
 ConstantBuffer<SlotInfo>					slotInfo			: register(b0, space0);
@@ -27,6 +33,9 @@ ConstantBuffer<CB_PER_SCENE_STRUCT>			cbPerScene			: register(b4, space0);
 ConstantBuffer<MaterialData>				material			: register(b5, space0);
 
 // SRVs
-ByteAddressBuffer rawBufferLights: register(t0, space0);
+ByteAddressBuffer				rawBufferLights	: register(t0, space0);
 
 // UAVs (not yet used, will be used for readWrite buffers later, maybe when using ExecuteIndirect)
+
+
+#endif

@@ -72,7 +72,7 @@ void TransparentRenderTask::Execute()
 		CB_PER_FRAME_STRUCT perFrame = { m_pCamera->GetPosition().x, m_pCamera->GetPosition().y, m_pCamera->GetPosition().z };
 		commandList->SetGraphicsRootConstantBufferView(RootParam_CBV_B3, m_Resources["cbPerFrame"]->GetGPUVirtualAdress());
 		commandList->SetGraphicsRootConstantBufferView(RootParam_CBV_B4, m_Resources["cbPerScene"]->GetGPUVirtualAdress());
-		commandList->SetGraphicsRootShaderResourceView(RootParam_SRV_S0, m_Resources["rawBufferLights"]->GetGPUVirtualAdress());
+		commandList->SetGraphicsRootShaderResourceView(RootParam_SRV_T0, m_Resources["rawBufferLights"]->GetGPUVirtualAdress());
 
 		const DirectX::XMMATRIX* viewProjMatTrans = m_pCamera->GetViewProjectionTranposed();
 

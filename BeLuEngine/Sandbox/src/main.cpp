@@ -9,15 +9,6 @@ void SponzaUpdateScene(SceneManager* sm, double dt);
 // Temp
 #include "Misc/Multithreading/MultiThreadedTask.h"
 
-/* 
---------- TODO --------- 
-***Reflections with DXR in the works***
-*  Pipeline state
-*  ReflectionTask
-*  Create Shaders
-*  
-*/
-
 class TestAsyncThread : public MultiThreadedTask
 {
 public:
@@ -149,6 +140,7 @@ Scene* TestScene(SceneManager* sm)
     // Get the models needed
     Model* floorModel = al->LoadModel(L"../Vendor/Resources/Models/FloorPBR/floor.obj");
     Model* sphereModel = al->LoadModel(L"../Vendor/Resources/Models/SpherePBR/ball.obj");
+    Model* posterModel = al->LoadModel(L"../Vendor/Resources/Models/Poster/Poster.obj");
 
     /* ---------------------- Player ---------------------- */
     Entity* entity = (scene->AddEntity("player"));
@@ -156,6 +148,29 @@ Scene* TestScene(SceneManager* sm)
     ic = entity->AddComponent<component::InputComponent>();
     scene->SetPrimaryCamera(cc->GetCamera());
     /* ---------------------- Player ---------------------- */
+
+    /* ---------------------- Mirror ---------------------- */
+    entity = scene->AddEntity("Mirror");
+    mc = entity->AddComponent<component::ModelComponent>();
+    tc = entity->AddComponent<component::TransformComponent>();
+    bbc = entity->AddComponent <component::BoundingBoxComponent>();
+
+    mc->SetModel(posterModel);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
+    tc->GetTransform()->SetScale(30.0f);
+    tc->GetTransform()->SetRotationX(PI / 2);
+    tc->GetTransform()->SetRotationY(PI);
+    tc->GetTransform()->SetPosition(0, 30, 40);
+
+    std::pair<ConstantBuffer*, MaterialData>* matData = const_cast<std::pair<ConstantBuffer*, MaterialData>*>(mc->GetMaterialAt(0)->GetMaterialData());
+    matData->second.hasMetallicTexture = false;
+    matData->second.hasRoughnessTexture = false;
+    matData->second.hasNormalTexture = false;
+    matData->second.metallicValue = 0.99f;
+    matData->second.roughnessValue = 0.10f;
+
+    bbc->Init();
+    /* ---------------------- Mirror ---------------------- */
 
     /* ---------------------- Floor ---------------------- */
     entity = scene->AddEntity("floor");
@@ -174,7 +189,7 @@ Scene* TestScene(SceneManager* sm)
     entity = scene->AddEntity("sphere");
     mc = entity->AddComponent<component::ModelComponent>();
     tc = entity->AddComponent<component::TransformComponent>();
-    bbc = entity->AddComponent <component::BoundingBoxComponent>(F_BOUNDING_BOX_FLAGS::PICKING);
+    bbc = entity->AddComponent <component::BoundingBoxComponent>();
 
     mc->SetModel(sphereModel);
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
@@ -184,12 +199,61 @@ Scene* TestScene(SceneManager* sm)
     bbc->Init();
     /* ---------------------- Sphere ---------------------- */
 
-    entity = scene->AddEntity("pl1");
+    /* ---------------------- Sphere ---------------------- */
+    entity = scene->AddEntity("sphere1");
+    mc = entity->AddComponent<component::ModelComponent>();
+    tc = entity->AddComponent<component::TransformComponent>();
+    bbc = entity->AddComponent<component::BoundingBoxComponent>();
 
-    plc = entity->AddComponent<component::PointLightComponent>();
-    plc->SetPosition({ 1.0f, 10.0f, 0.0f });
-    plc->SetColor({ 0.0f, 1.0f, 0.0f });
+    mc->SetModel(sphereModel);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE);
+    matData = const_cast<std::pair<ConstantBuffer*, MaterialData>*>(mc->GetMaterialAt(0)->GetMaterialData());
+    matData->second.emissiveValue = { 1.0f, 0.0f, 0.0f, 1.0f };
+    matData->second.hasEmissiveTexture = false;
+    tc->GetTransform()->SetScale(2.0f);
+    tc->GetTransform()->SetPosition(-5.0f, 11, 30);
+    bbc->Init();
+    mc->Update(0);
 
+    entity = scene->AddEntity("sphere2");
+    mc = entity->AddComponent<component::ModelComponent>();
+    tc = entity->AddComponent<component::TransformComponent>();
+    bbc = entity->AddComponent<component::BoundingBoxComponent>();
+
+    mc->SetModel(sphereModel);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
+    matData = const_cast<std::pair<ConstantBuffer*, MaterialData>*>(mc->GetMaterialAt(0)->GetMaterialData());
+    matData->second.emissiveValue = { 0.0f, 1.0f, 0.0f, 1.0f };
+    matData->second.hasEmissiveTexture = false;
+    tc->GetTransform()->SetScale(1.0f);
+    tc->GetTransform()->SetPosition(15, 4, 4);
+    bbc->Init();
+    mc->Update(0);
+
+
+    entity = scene->AddEntity("sphere3");
+    mc = entity->AddComponent<component::ModelComponent>();
+    tc = entity->AddComponent<component::TransformComponent>();
+    bbc = entity->AddComponent<component::BoundingBoxComponent>();
+
+    mc->SetModel(sphereModel);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
+    matData = const_cast<std::pair<ConstantBuffer*, MaterialData>*>(mc->GetMaterialAt(0)->GetMaterialData());
+    matData->second.emissiveValue = { 0.0f, 0.0f, 1.0f, 1.0f };
+    matData->second.hasEmissiveTexture = false;
+    tc->GetTransform()->SetScale(1.0f);
+    tc->GetTransform()->SetPosition(15, 7, 7);
+    bbc->Init();
+    mc->Update(0);
+    /* ---------------------- Sphere ---------------------- */
+    entity = scene->AddEntity("dirLight1");
+
+    dlc = entity->AddComponent<component::DirectionalLightComponent>();
+    dlc->SetColor({ 0.1f, 0.25f, 0.3f });
+    dlc->SetDirection({ -1.0f, -2.0f, 0.03f });
+    dlc->SetIntensity(5.0f);
+
+    dlc->Update(0);
     /* ---------------------- Update Function ---------------------- */
     scene->SetUpdateScene(&TestUpdateScene);
     return scene;
@@ -215,6 +279,7 @@ Scene* SponzaScene(SceneManager* sm)
     Model* sponza = al->LoadModel(L"../Vendor/Resources/Scenes/Sponza/textures_pbr/sponza.obj");
     Model* sphereModel = al->LoadModel(L"../Vendor/Resources/Models/SpherePBR/ball.obj");
     Model* boxModel = al->LoadModel(L"../Vendor/Resources/Models/CubePBR/cube.obj");
+    Model* posterModel = al->LoadModel(L"../Vendor/Resources/Models/Poster/Poster.obj");
 
     /* ---------------------- Player ---------------------- */
     Entity* entity = (scene->AddEntity("player"));
@@ -222,6 +287,54 @@ Scene* SponzaScene(SceneManager* sm)
     ic = entity->AddComponent<component::InputComponent>();
     scene->SetPrimaryCamera(cc->GetCamera());
     /* ---------------------- Player ---------------------- */
+
+    /* ---------------------- Mirror1 ---------------------- */
+    entity = scene->AddEntity("Mirror1");
+    mc = entity->AddComponent<component::ModelComponent>();
+    tc = entity->AddComponent<component::TransformComponent>();
+    bbc = entity->AddComponent <component::BoundingBoxComponent>();
+
+    mc->SetModel(posterModel);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
+    tc->GetTransform()->SetScale(6.0f);
+    //tc->GetTransform()->SetRotationX(PI/2 + 0.5);
+    //tc->GetTransform()->SetRotationY(PI / 4);
+    tc->GetTransform()->SetRotationZ(PI / 2);
+    tc->GetTransform()->SetPosition(55, 4.5, 0);
+
+    std::pair<ConstantBuffer*, MaterialData>* matData = const_cast<std::pair<ConstantBuffer*, MaterialData>*>(mc->GetMaterialAt(0)->GetMaterialData());
+    matData->second.hasMetallicTexture = false;
+    matData->second.hasRoughnessTexture = false;
+    matData->second.hasNormalTexture = false;
+    matData->second.metallicValue = 0.99f;
+    matData->second.roughnessValue = 0.10;
+
+    bbc->Init();
+    /* ---------------------- Mirror1 ---------------------- */
+
+    /* ---------------------- Mirror2 ---------------------- */
+    entity = scene->AddEntity("Mirror2");
+    mc = entity->AddComponent<component::ModelComponent>();
+    tc = entity->AddComponent<component::TransformComponent>();
+    bbc = entity->AddComponent <component::BoundingBoxComponent>();
+
+    mc->SetModel(posterModel);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
+    tc->GetTransform()->SetScale(6.0f);
+    //tc->GetTransform()->SetRotationX(PI/2 + 0.5);
+    tc->GetTransform()->SetRotationY(PI);
+    tc->GetTransform()->SetRotationZ(PI / 2);
+    tc->GetTransform()->SetPosition(-55, 4.5, 0);
+
+    matData = const_cast<std::pair<ConstantBuffer*, MaterialData>*>(mc->GetMaterialAt(0)->GetMaterialData());
+    matData->second.hasMetallicTexture = false;
+    matData->second.hasRoughnessTexture = false;
+    matData->second.hasNormalTexture = false;
+    matData->second.metallicValue = 0.99f;
+    matData->second.roughnessValue = 0.10;
+
+    bbc->Init();
+    /* ---------------------- Mirror2 ---------------------- */
 
     /* ---------------------- Sponza ---------------------- */
     entity = scene->AddEntity("sponza");
@@ -234,10 +347,13 @@ Scene* SponzaScene(SceneManager* sm)
     tc->GetTransform()->SetScale(0.05f, 0.05f, 0.05f);
     /* ---------------------- Sponza ---------------------- */
 
+    
+
+
     entity = scene->AddEntity("box");
     mc = entity->AddComponent<component::ModelComponent>();
     tc = entity->AddComponent<component::TransformComponent>();
-    bbc = entity->AddComponent<component::BoundingBoxComponent>(F_BOUNDING_BOX_FLAGS::PICKING);
+    bbc = entity->AddComponent<component::BoundingBoxComponent>();
 
     mc->SetModel(boxModel);
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
@@ -249,7 +365,7 @@ Scene* SponzaScene(SceneManager* sm)
     entity = scene->AddEntity("sphere1");
     mc = entity->AddComponent<component::ModelComponent>();
     tc = entity->AddComponent<component::TransformComponent>();
-    bbc = entity->AddComponent<component::BoundingBoxComponent>(F_BOUNDING_BOX_FLAGS::PICKING);
+    bbc = entity->AddComponent<component::BoundingBoxComponent>();
     
     mc->SetModel(sphereModel);
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_TRANSPARENT | F_DRAW_FLAGS::NO_DEPTH );
@@ -260,7 +376,7 @@ Scene* SponzaScene(SceneManager* sm)
     entity = scene->AddEntity("sphere2");
     mc = entity->AddComponent<component::ModelComponent>();
     tc = entity->AddComponent<component::TransformComponent>();
-    bbc = entity->AddComponent<component::BoundingBoxComponent>(F_BOUNDING_BOX_FLAGS::PICKING);
+    bbc = entity->AddComponent<component::BoundingBoxComponent>();
 
     mc->SetModel(sphereModel);
     //mc->SetMaterialAt(0, ballMatCopy);
@@ -272,7 +388,7 @@ Scene* SponzaScene(SceneManager* sm)
     entity = scene->AddEntity("sphere3");
     mc = entity->AddComponent<component::ModelComponent>();
     tc = entity->AddComponent<component::TransformComponent>();
-    bbc = entity->AddComponent<component::BoundingBoxComponent>(F_BOUNDING_BOX_FLAGS::PICKING);
+    bbc = entity->AddComponent<component::BoundingBoxComponent>();
 
     mc->SetModel(sphereModel);
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);

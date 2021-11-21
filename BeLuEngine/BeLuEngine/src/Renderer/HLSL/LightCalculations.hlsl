@@ -82,13 +82,11 @@ float3 CalcPointLight(
 	in float3 albedo,
 	in float roughness,
 	in float3 normal,
-	in float3 baseReflectivity,
-	in RaytracingAccelerationStructure sceneBVH)
+	in float3 baseReflectivity)
 {
 	float3 pointLightContribution = float3(0.0f, 0.0f, 0.0f);
 	float3 lightDir = normalize(pointLight.position.xyz - fragPos.xyz);
 
-	float shadowFactor = RT_ShadowFactor(fragPos.xyz, 0.1f, length(pointLight.position.xyz - fragPos.xyz) - 1.0, lightDir, sceneBVH);
 	float3 normalized_bisector = normalize(viewDir + lightDir);
 
 	// Attenuation
@@ -117,7 +115,7 @@ float3 CalcPointLight(
 	kD *= 1.0f - metallic;
 	
 	pointLightContribution = (kD * albedo / PI + specular) * radiance * NdotL;
-	return pointLightContribution * shadowFactor;
+	return pointLightContribution;
 }
 
 float3 CalcSpotLight(

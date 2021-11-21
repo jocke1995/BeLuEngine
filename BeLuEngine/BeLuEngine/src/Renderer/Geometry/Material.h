@@ -30,7 +30,7 @@ public:
 
     // Material
     Texture* GetTexture(E_TEXTURE2D_TYPE type) const;
-    const std::pair<ConstantBuffer*, MaterialData>* GetMaterialData() const;
+    std::pair<ConstantBuffer*, MaterialData>* GetMaterialData();
 
     void SetTexture(E_TEXTURE2D_TYPE type, Texture* texture);
 

@@ -56,7 +56,7 @@ void DX12Task::SetDescriptorHeaps(std::map<E_DESCRIPTOR_HEAP_TYPE, DescriptorHea
 	m_DescriptorHeaps = dhs;
 }
 
-void DX12Task::AddResource(std::string id, const Resource* resource)
+void DX12Task::AddResource(std::string id, Resource* resource)
 {
 	if (m_Resources[id] == nullptr)
 	{

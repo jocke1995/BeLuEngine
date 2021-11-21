@@ -12,7 +12,8 @@ public:
 	RenderTarget(ID3D12Device5* device,
 		unsigned int width, unsigned int height,
 		std::wstring resourceName,
-		DescriptorHeap* descriptorHeap_RTV);
+		DescriptorHeap* descriptorHeap_RTV,
+		D3D12_RESOURCE_STATES startState);
 
 	virtual ~RenderTarget();
 
@@ -29,7 +30,7 @@ private:
 
 	unsigned int m_Id = 0;
 
-	void createResource(ID3D12Device5* device, unsigned int width, unsigned int height, std::wstring resourceName);
+	void createResource(ID3D12Device5* device, unsigned int width, unsigned int height, std::wstring resourceName, D3D12_RESOURCE_STATES startState);
 };
 
 #endif

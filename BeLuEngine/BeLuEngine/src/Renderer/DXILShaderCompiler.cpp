@@ -134,6 +134,8 @@ HRESULT DXILShaderCompiler::CompileFromFile(DXILCompilationDesc* desc, IDxcBlob*
 
 							std::wstring b = (LPCWSTR)pPrintBlob16->GetBufferPointer();
 							std::string a = to_string(b);
+							hr = hrCompile;
+
 							BL_LOG_CRITICAL("%s\n", a.c_str());
 
 

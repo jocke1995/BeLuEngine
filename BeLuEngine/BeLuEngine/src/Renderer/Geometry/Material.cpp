@@ -124,7 +124,7 @@ Texture* Material::GetTexture(E_TEXTURE2D_TYPE type) const
 	return m_Textures.at(type);
 }
 
-const std::pair<ConstantBuffer*, MaterialData>* Material::GetMaterialData() const
+std::pair<ConstantBuffer*, MaterialData>* Material::GetMaterialData()
 {
 	return &m_MaterialData;
 }

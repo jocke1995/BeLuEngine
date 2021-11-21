@@ -117,7 +117,7 @@ void TopLevelAccelerationStructure::SetupAccelerationStructureForBuilding(ID3D12
 	for (unsigned int i = 0; i < numInstances; i++)
 	{
 		instanceDescs[i].InstanceID = m_Instances[i].m_ID;
-		instanceDescs[i].InstanceContributionToHitGroupIndex = m_Instances[i].m_HitGroupIndex;
+		instanceDescs[i].InstanceContributionToHitGroupIndex = m_Instances[i].m_ID;
 		instanceDescs[i].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
 		DirectX::XMMATRIX m = XMMatrixTranspose(m_Instances[i].m_Transform);
 		memcpy(instanceDescs[i].Transform, &m, sizeof(instanceDescs[i].Transform));

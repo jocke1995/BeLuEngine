@@ -39,10 +39,11 @@ namespace component
         // Material
         Material* GetMaterialAt(unsigned int index) const;
         void SetMaterialAt(unsigned int index, Material* material);
+        ShaderResource* GetMaterialByteAdressBufferDXR() const;
 
         // SlotInfo
         const SlotInfo* GetSlotInfoAt(unsigned int index) const;
-        ShaderResource* GetByteAdressInfoDXR() const;
+        ShaderResource* GetSlotInfoByteAdressBufferDXR() const;
 
     private:
         // The boundingBox will update the "m_IsPickedThisFrame"
@@ -55,12 +56,15 @@ namespace component
 
         std::vector<Material*> m_Materials;
         std::vector<SlotInfo> m_SlotInfos;
+        std::vector<MaterialData> m_MaterialDataRawBuffer;
         void updateSlotInfo();
+        void updateMaterialDataBuffer();
 
         unsigned int m_DrawFlag = 0;
 
         // DXR
         ShaderResource* m_SlotInfoByteAdressBuffer;
+        ShaderResource* m_MaterialByteAdressBuffer;
     };
 }
 #endif

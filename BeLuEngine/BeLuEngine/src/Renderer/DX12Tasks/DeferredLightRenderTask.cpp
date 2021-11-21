@@ -63,7 +63,7 @@ void DeferredLightRenderTask::Execute()
 		commandList->SetGraphicsRootDescriptorTable(dtSRV, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
 
 		DescriptorHeap* renderTargetHeap = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV];
-		DescriptorHeap* depthBufferHeap = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::DSV];
+		//DescriptorHeap* depthBufferHeap = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::DSV];
 
 		// RenderTargets
 		const unsigned int finalColorTargetIndex = finalColorRTV->GetDescriptorHeapIndex();
@@ -73,9 +73,9 @@ void DeferredLightRenderTask::Execute()
 		D3D12_CPU_DESCRIPTOR_HANDLE cdhs[] = { cdhgFinalColorTarget, cdhBrightTarget };
 
 		// Depth
-		D3D12_CPU_DESCRIPTOR_HANDLE dsh = depthBufferHeap->GetCPUHeapAt(m_pDepthStencil->GetDSV()->GetDescriptorHeapIndex());
+		//D3D12_CPU_DESCRIPTOR_HANDLE dsh = depthBufferHeap->GetCPUHeapAt(m_pDepthStencil->GetDSV()->GetDescriptorHeapIndex());
 
-		commandList->OMSetRenderTargets(2, cdhs, false, &dsh);
+		commandList->OMSetRenderTargets(2, cdhs, false, nullptr);
 
 		float clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 		commandList->ClearRenderTargetView(cdhBrightTarget, clearColor, 0, nullptr);
@@ -96,8 +96,14 @@ void DeferredLightRenderTask::Execute()
 		// Set cbvs
 		commandList->SetGraphicsRootConstantBufferView(RootParam_CBV_B3, m_Resources["cbPerFrame"]->GetGPUVirtualAdress());
 		commandList->SetGraphicsRootConstantBufferView(RootParam_CBV_B4, m_Resources["cbPerScene"]->GetGPUVirtualAdress());
-		commandList->SetGraphicsRootShaderResourceView(RootParam_SRV_S0, m_Resources["rawBufferLights"]->GetGPUVirtualAdress());
+		commandList->SetGraphicsRootShaderResourceView(RootParam_SRV_T0, m_Resources["rawBufferLights"]->GetGPUVirtualAdress());
 
+		Resource* mainDSV = const_cast<Resource*>(m_pDepthStencil->GetDefaultResource());
+		CD3DX12_RESOURCE_BARRIER transition = CD3DX12_RESOURCE_BARRIER::Transition(
+			mainDSV->GetID3D12Resource1(),
+			D3D12_RESOURCE_STATE_DEPTH_WRITE,				// StateBefore
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);// StateAfter
+		commandList->ResourceBarrier(1, &transition);
 
 		// This pair for m_RenderComponents will be used for model-outlining in case any model is picked.
 		//RenderComponent outlinedModel = {nullptr, nullptr};
@@ -130,6 +136,13 @@ void DeferredLightRenderTask::Execute()
 		//	commandList->OMSetStencilRef(1);
 		//	drawRenderComponent(outlinedModel.mc, outlinedModel.tc, viewProjMatTrans, commandList);
 		//}
+
+		transition = CD3DX12_RESOURCE_BARRIER::Transition(
+			mainDSV->GetID3D12Resource1(),
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,	// StateBefore
+			D3D12_RESOURCE_STATE_DEPTH_WRITE);				// StateAfter
+		commandList->ResourceBarrier(1, &transition);
+
 	}
 	commandList->Close();
 }

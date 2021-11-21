@@ -22,7 +22,6 @@ PS_OUTPUT PS_main(VS_OUT input)
 	float glow		= textures[cbPerScene.gBufferMaterialProperties].Sample(Anisotropic16_Wrap, uvScaled).b;
 	float4 normal	= textures[cbPerScene.gBufferNormal].Sample(Anisotropic16_Wrap, uvScaled);
 	float4 emissive = textures[cbPerScene.gBufferEmissive].Sample(Anisotropic16_Wrap, uvScaled);
-	float4 reflData = textures[cbPerScene.reflectionSRV].Sample(Anisotropic16_Wrap, uvScaled);
 
 	float depthVal = textures[cbPerScene.depth].Sample(Anisotropic16_Wrap, uvScaled).r;
 	float4 worldPos = float4(WorldPosFromDepth(depthVal, uvScaled, cbPerFrame.projectionI, cbPerFrame.viewI).xyz, 0.0f);
@@ -55,8 +54,8 @@ PS_OUTPUT PS_main(VS_OUT input)
 	for (unsigned int i = 0; i < lHeader.numPointLights; i++)
 	{
 		PointLight pointLight = rawBufferLights.Load<PointLight>(sizeof(LightHeader) + DIR_LIGHT_MAXOFFSET + i * sizeof(PointLight));
-	
-		finalColor += CalcPointLight(
+		
+		float3 lightColor = CalcPointLight(
 			pointLight,
 			camPos,
 			viewDir,
@@ -65,8 +64,12 @@ PS_OUTPUT PS_main(VS_OUT input)
 			albedo.rgb,
 			roughness,
 			normal.rgb,
-			baseReflectivity,
-			sceneBVH[cbPerScene.rayTracingBVH]);
+			baseReflectivity);
+
+		float3 lightDir = normalize(pointLight.position.xyz - worldPos.xyz);
+		float shadowFactor = RT_ShadowFactor(worldPos.xyz, 0.1f, length(pointLight.position.xyz - worldPos.xyz) - 1.0, lightDir, sceneBVH[cbPerScene.rayTracingBVH]);
+
+		finalColor += lightColor * shadowFactor;
 	}
 	
 	// SpotLight  contributions
@@ -86,7 +89,7 @@ PS_OUTPUT PS_main(VS_OUT input)
 			baseReflectivity);
 	}
 	
-	float3 ambient = float3(0.001f, 0.001f, 0.001f) * albedo;
+	float3 ambient = 0.001f * albedo;
 	finalColor += ambient;
 
 	PS_OUTPUT output = (PS_OUTPUT)0;
@@ -100,11 +103,6 @@ PS_OUTPUT PS_main(VS_OUT input)
 	else
 	{
 		output.brightColor = float4(0.0f, 0.0f, 0.0f, 1.0f);
-	}
-
-	if (roughness > 0.95f)
-	{
-		output.sceneColor = float4(reflData.rgb, 1.0f);
 	}
 
 	return output;

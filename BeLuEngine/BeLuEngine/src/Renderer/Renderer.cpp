@@ -218,7 +218,8 @@ void Renderer::InitD3D12(Window* window, HINSTANCE hInstance, ThreadPool* thread
 		m_pDevice5,
 		m_pWindow->GetScreenWidth(), m_pWindow->GetScreenHeight(),
 		L"finalColorBuffer_RESOURCE",
-		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV]);
+		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV],
+		D3D12_RESOURCE_STATE_RENDER_TARGET);
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	m_FinalColorBuffer.second = new ShaderResourceView(
@@ -231,7 +232,8 @@ void Renderer::InitD3D12(Window* window, HINSTANCE hInstance, ThreadPool* thread
 		m_pDevice5,
 		m_pWindow->GetScreenWidth(), m_pWindow->GetScreenHeight(),
 		L"gBufferAlbedo_RESOURCE",
-		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV]);
+		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV],
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 	srvDesc = {};
 	m_GBufferAlbedo.second = new ShaderResourceView(
@@ -244,7 +246,8 @@ void Renderer::InitD3D12(Window* window, HINSTANCE hInstance, ThreadPool* thread
 		m_pDevice5,
 		m_pWindow->GetScreenWidth(), m_pWindow->GetScreenHeight(),
 		L"gBufferNormal_RESOURCE",
-		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV]);
+		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV],
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 	m_GBufferNormal.second = new ShaderResourceView(
 		m_pDevice5,
@@ -256,7 +259,8 @@ void Renderer::InitD3D12(Window* window, HINSTANCE hInstance, ThreadPool* thread
 		m_pDevice5,
 		m_pWindow->GetScreenWidth(), m_pWindow->GetScreenHeight(),
 		L"gBufferMaterials_RESOURCE",
-		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV]);
+		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV],
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 	m_GBufferMaterialProperties.second = new ShaderResourceView(
 		m_pDevice5,
@@ -268,7 +272,8 @@ void Renderer::InitD3D12(Window* window, HINSTANCE hInstance, ThreadPool* thread
 		m_pDevice5,
 		m_pWindow->GetScreenWidth(), m_pWindow->GetScreenHeight(),
 		L"gBufferEmissive_RESOURCE",
-		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV]);
+		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV],
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 	m_GBufferEmissive.second = new ShaderResourceView(
 		m_pDevice5,
@@ -437,10 +442,11 @@ void Renderer::Update(double dt)
 
 	pTLAS->Reset();
 
-	std::vector<RenderComponent> rcVec = m_RenderComponents[F_DRAW_FLAGS::RAY_TRACED];
-	for (RenderComponent rc : rcVec)
+	unsigned int i = 0;
+	for (RenderComponent rc : m_RayTracedRenderComponents)
 	{
-		pTLAS->AddInstance(rc.mc->GetModel()->m_pBLAS, *rc.tc->GetTransform()->GetWorldMatrix(), 0);
+		pTLAS->AddInstance(rc.mc->GetModel()->m_pBLAS, *rc.tc->GetTransform()->GetWorldMatrix(), i);
+		i++;
 	}
 
 	pTLAS->SetupAccelerationStructureForBuilding(m_pDevice5, true);
@@ -821,7 +827,7 @@ void Renderer::InitModelComponent(component::ModelComponent* mc)
 			m_RenderComponents[F_DRAW_FLAGS::GIVE_SHADOW].emplace_back(mc, tc);
 		}
 
-		m_RenderComponents[F_DRAW_FLAGS::RAY_TRACED].emplace_back(mc, tc);
+		m_RayTracedRenderComponents.emplace_back(mc, tc);
 
 		submitSlotInfoRawBufferToGPU(mc);
 	}
@@ -1055,6 +1061,7 @@ void Renderer::submitModelToGPU(Model* model)
 
 void Renderer::submitSlotInfoRawBufferToGPU(component::ModelComponent* mc)
 {
+	// Slotinfo
 	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]);
 	const void* data = static_cast<const void*>(mc->m_SlotInfos.data());
 	codt->Submit(&std::make_tuple(
@@ -1090,12 +1097,26 @@ void Renderer::submitMaterialToGPU(component::ModelComponent* mc)
 		texture = mat->GetTexture(E_TEXTURE2D_TYPE::OPACITY);
 		submitTextureToCodt(texture);
 
+		// ---------------- OLD (REMOVE) -----------------
 		// Submit materialData
 		submitMaterialDataToGPU(mat);
+		// ---------------- OLD (REMOVE) -----------------
 
 		AssetLoader::Get()->m_LoadedMaterials.at(mat->GetName()).first = true;
 	}
 	
+	// ---------------- NEW -----------------
+		// MaterialData
+	mc->updateMaterialDataBuffer();
+
+	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]);
+	const void* data = static_cast<const void*>(mc->m_MaterialDataRawBuffer.data());
+	codt->Submit(&std::make_tuple(
+		mc->m_MaterialByteAdressBuffer->GetUploadResource(),
+		mc->m_MaterialByteAdressBuffer->GetDefaultResource(),
+		data));
+	// ---------------- NEW -----------------
+
 }
 
 void Renderer::submitMaterialDataToGPU(Material* mat)
@@ -1103,6 +1124,7 @@ void Renderer::submitMaterialDataToGPU(Material* mat)
 	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]);
 	const void* data = static_cast<const void*>(&mat->GetMaterialData()->second);
 	codt->Submit(&std::make_tuple(mat->GetMaterialData()->first->GetUploadResource(), mat->GetMaterialData()->first->GetDefaultResource(), data));
+
 }
 
 void Renderer::submitTextureToCodt(Texture* texture)
@@ -1510,35 +1532,35 @@ void Renderer::createRootSignature()
 #pragma endregion
 
 #pragma region ROOTPARAMS_SRV
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S0].Descriptor.ShaderRegister = 0;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S0].Descriptor.RegisterSpace = 0;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_T0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_T0].Descriptor.ShaderRegister = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_T0].Descriptor.RegisterSpace = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_T0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S1].Descriptor.ShaderRegister = 1;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S1].Descriptor.RegisterSpace = 0;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_T1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_T1].Descriptor.ShaderRegister = 1;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_T1].Descriptor.RegisterSpace = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_T1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S2].Descriptor.ShaderRegister = 2;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S2].Descriptor.RegisterSpace = 0;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S2].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_T2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_T2].Descriptor.ShaderRegister = 2;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_T2].Descriptor.RegisterSpace = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_T2].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S3].Descriptor.ShaderRegister = 3;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S3].Descriptor.RegisterSpace = 0;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S3].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_T3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_T3].Descriptor.ShaderRegister = 3;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_T3].Descriptor.RegisterSpace = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_T3].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S4].Descriptor.ShaderRegister = 4;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S4].Descriptor.RegisterSpace = 0;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S4].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_T4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_T4].Descriptor.ShaderRegister = 4;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_T4].Descriptor.RegisterSpace = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_T4].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S5].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S5].Descriptor.ShaderRegister = 5;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S5].Descriptor.RegisterSpace = 0;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_S5].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_T5].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_T5].Descriptor.ShaderRegister = 5;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_T5].Descriptor.RegisterSpace = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_SRV_T5].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 #pragma endregion
 
 #pragma region ROOTPARAMS_UAV
@@ -1787,8 +1809,10 @@ void Renderer::initRenderTasks()
 
 	reflectionTask->AddResource("cbPerFrame", m_pCbPerFrame->GetDefaultResource());
 	reflectionTask->AddResource("cbPerScene", m_pCbPerScene->GetDefaultResource());
+	reflectionTask->AddResource("rawBufferLights", Light::m_pLightsRawBuffer->GetDefaultResource());
+	reflectionTask->AddResource("mainDSV", const_cast<Resource*>(m_pMainDepthStencil->GetDefaultResource()));	// To transition from depthWrite to depthRead
 	reflectionTask->SetDescriptorHeaps(m_DescriptorHeaps);
-
+	
 #pragma endregion DXRTasks
 
 #pragma region DepthPrePass
@@ -2255,6 +2279,7 @@ void Renderer::initRenderTasks()
 	static_cast<MergeRenderTask*>(mergeTask)->SetFullScreenQuad(m_pFullScreenQuad);
 	static_cast<MergeRenderTask*>(mergeTask)->AddSRVToMerge(m_pBloomResources->GetPingPongResource(0)->GetSRV());
 	static_cast<MergeRenderTask*>(mergeTask)->AddSRVToMerge(m_FinalColorBuffer.second);
+	static_cast<MergeRenderTask*>(mergeTask)->AddSRVToMerge(m_ReflectionTexture.srv);
 	mergeTask->SetSwapChain(m_pSwapChain);
 	mergeTask->SetDescriptorHeaps(m_DescriptorHeaps);
 	static_cast<MergeRenderTask*>(mergeTask)->CreateSlotInfo();
@@ -2375,13 +2400,12 @@ void Renderer::initRenderTasks()
 
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
-		m_DirectCommandLists[i].push_back(deferredLightRenderTask->GetCommandInterface()->GetCommandList(i));
+		m_DirectCommandLists[i].push_back(reflectionTask->GetCommandInterface()->GetCommandList(i));
 	}
 
-	TODO(ReflectionPass here?)
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
-		m_DirectCommandLists[i].push_back(reflectionTask->GetCommandInterface()->GetCommandList(i));
+		m_DirectCommandLists[i].push_back(deferredLightRenderTask->GetCommandInterface()->GetCommandList(i));
 	}
 
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
@@ -2535,15 +2559,16 @@ void Renderer::prepareScene(Scene* activeScene)
 	// DXR, create buffers and create for the first time
 	TopLevelAccelerationStructure* pTLAS = static_cast<TopLevelRenderTask*>(m_DX12Tasks[E_DX12_TASK_TYPE::TLAS])->GetTLAS();
 
-	std::vector<RenderComponent> rcVec = m_RenderComponents[F_DRAW_FLAGS::RAY_TRACED];
-	for (RenderComponent rc : rcVec)
+	unsigned int i = 0;
+	for (RenderComponent rc : m_RayTracedRenderComponents)
 	{
-		pTLAS->AddInstance(rc.mc->GetModel()->m_pBLAS, *rc.tc->GetTransform()->GetWorldMatrix(), 0);	// TODO: HitgroupID
+		pTLAS->AddInstance(rc.mc->GetModel()->m_pBLAS, *rc.tc->GetTransform()->GetWorldMatrix(), i);	// TODO: HitgroupID
+		i++;
 	}
 	pTLAS->GenerateBuffers(m_pDevice5, m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
 	pTLAS->SetupAccelerationStructureForBuilding(m_pDevice5, false);
 
-	static_cast<DXRReflectionTask*>(m_DXRTasks[E_DXR_TASK_TYPE::REFLECTIONS])->CreateShaderBindingTable(m_pDevice5, rcVec);
+	static_cast<DXRReflectionTask*>(m_DXRTasks[E_DXR_TASK_TYPE::REFLECTIONS])->CreateShaderBindingTable(m_pDevice5, m_RayTracedRenderComponents);
 	// Currently unused
 	//static_cast<DeferredLightRenderTask*>(m_RenderTasks[E_RENDER_TASK_TYPE::DEFERRED_GEOMETRY])->SetSceneBVHSRV(pTLAS->GetSRV());
 

@@ -106,19 +106,19 @@ enum E_GLOBAL_ROOTSIGNATURE
 	RootParam_CBV_B5,
 	RootParam_CBV_B6,
 	RootParam_CBV_B7,
-	RootParam_SRV_S0,
-	RootParam_SRV_S1,
-	RootParam_SRV_S2,
-	RootParam_SRV_S3,
-	RootParam_SRV_S4,
-	RootParam_SRV_S5,
+	RootParam_SRV_T0,
+	RootParam_SRV_T1,
+	RootParam_SRV_T2,
+	RootParam_SRV_T3,
+	RootParam_SRV_T4,
+	RootParam_SRV_T5,
 	RootParam_UAV_U0,
 	RootParam_UAV_U1,
 	RootParam_UAV_U2,
 	RootParam_UAV_U3,
 	RootParam_UAV_U4,
 	RootParam_UAV_U5,
-	RootParam_UAV6,
+	RootParam_UAV_U6,
 	NUM_PARAMS
 };
 
@@ -246,6 +246,7 @@ private:
 
 	// Group of components that's needed for rendering:
 	std::map<F_DRAW_FLAGS, std::vector<RenderComponent>> m_RenderComponents;
+	std::vector<RenderComponent> m_RayTracedRenderComponents;
 	std::vector<component::BoundingBoxComponent*> m_BoundingBoxesToBePicked;
 
 	// Current scene to be drawn

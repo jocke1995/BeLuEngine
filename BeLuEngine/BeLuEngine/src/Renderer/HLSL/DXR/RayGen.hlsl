@@ -17,34 +17,31 @@ void RayGen()
 
 	float depth   = textures[cbPerScene.depth].SampleLevel(MIN_MAG_MIP_LINEAR_Wrap, uv, 0).r;
     float4 normal = textures[cbPerScene.gBufferNormal].SampleLevel(MIN_MAG_MIP_LINEAR_Wrap, uv, 0);
+    float roughness = textures[cbPerScene.gBufferMaterialProperties].SampleLevel(MIN_MAG_MIP_LINEAR_Wrap, uv, 0).r;
+    float metallic = textures[cbPerScene.gBufferMaterialProperties].SampleLevel(MIN_MAG_MIP_LINEAR_Wrap, uv, 0).g;
 
 	float3 worldPos = WorldPosFromDepth(depth, uv, cbPerFrame.projectionI, cbPerFrame.viewI);
     
-    float3 cameraDir = worldPos - cbPerFrame.camPos;
+    float3 cameraDir = normalize(worldPos - cbPerFrame.camPos);
 
     RayDesc ray;
-    ray.Origin = float4(worldPos.xyz, 1.0f);
-    ray.Direction = reflect(cameraDir, float3(normal.xyz));
-    ray.TMin = 1.0;
+    ray.Origin = float4(worldPos.xyz, 1.0f) + float4(normal.xyz, 0.0f) * 0.5f;
+    ray.Direction = normalize(reflect(cameraDir, float3(normal.xyz)));
+    ray.TMin = 0;
     ray.TMax = 10000;
     
     // Initialize the ray payload
     ReflectionPayload reflectionPayload;
-    reflectionPayload.colorAndDistance = float4(0.0f, 0.0f, 0.0f, 1.0f);
+    reflectionPayload.color = float3(0.0f, 0.0f, 0.0f);
+    reflectionPayload.recursionDepth = 0;
     
-    uint dhIndexBVH = cbPerScene.rayTracingBVH;
+    float3 finalColor = float3(0.0f, 0.0f, 0.0f);
+    if (roughness < 0.11f && metallic > 0.95f)
+    {
+        // Trace the ray
+        finalColor = TraceRadianceRay(ray, 0, sceneBVH[cbPerScene.rayTracingBVH]);
+    }
     
-    // Trace the ray
-    TraceRay(
-        sceneBVH[dhIndexBVH],
-        RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH,
-        0xFF,
-        0,  // Hit group index
-        0,
-        0,  // Miss Shader index
-        ray,
-        reflectionPayload);
-
-    //texturesUAV[cbPerScene.reflectionUAV][launchIndex] = float4(ReflectionPayload.colorAndDistance.rgb, 1.0f);
-    texturesUAV[cbPerScene.reflectionUAV][launchIndex] = float4(reflectionPayload.colorAndDistance.rgb, 1.0f);
+    texturesUAV[cbPerScene.reflectionUAV][launchIndex] = float4(finalColor, 1.0f);
+    //texturesUAV[cbPerScene.reflectionUAV][launchIndex] = float4(1.0f, 0.0f, 1.0f, 1.0f);
 }

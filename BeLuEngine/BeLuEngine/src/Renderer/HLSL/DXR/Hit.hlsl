@@ -1,50 +1,105 @@
 #include "hlslhelpers.hlsl"
-#include "../Common.hlsl"
-#include "../DescriptorBindings.hlsl"
+#include "../LightCalculations.hlsl"	// This includes "DescriptorBindings.hlsl"
  
 /* LOCAL */ 
-ConstantBuffer<MATRICES_PER_OBJECT_STRUCT> localMatricesPerObject : register(b8, space0);
 ByteAddressBuffer rawBufferSlotInfo: register(t6, space0);
+ByteAddressBuffer rawBufferMaterialData : register(t7, space0);
+
+ConstantBuffer<MATRICES_PER_OBJECT_STRUCT> localMatricesPerObject : register(b8, space0);
  
 [shader("closesthit")]  
 void ClosestHit(inout ReflectionPayload reflectionPayload, in BuiltInTriangleIntersectionAttributes attribs)
 { 
-    //float3 bary = float3(1.0 - attribs.barycentrics.x - attribs.barycentrics.y, attribs.barycentrics.x, attribs.barycentrics.y); 
-    //
-    //SlotInfo info = rawBuffer.Load<SlotInfo>(GeometryIndex() * sizeof(SlotInfo)); 
-    //
-    //uint vertId = 3 * PrimitiveIndex(); 
-    //uint IndexID1 = indices[info.indicesIndex][vertId + 0]; 
-    //uint IndexID2 = indices[info.indicesIndex][vertId + 1]; 
-    //uint IndexID3 = indices[info.indicesIndex][vertId + 2]; 
-    //
-    //// Get the normal 
-    //vertex v1 = meshes[info.vertexDataIndex][IndexID1]; 
-    //vertex v2 = meshes[info.vertexDataIndex][IndexID2]; 
-    //vertex v3 = meshes[info.vertexDataIndex][IndexID3]; 
-    //
-    //float3 norm = v1.norm * bary.x + v2.norm * bary.y + v3.norm * bary.z; 
-    //float3 normal = normalize(mul(float4(norm, 0.0f), worldMat.worldMatrix)); 
-    //
-    //float2 uv = v1.uv * bary.x + v2.uv * bary.y + v3.uv * bary.z; 
-    //
-    //float3 albedo = textures[info.textureAlbedo].SampleLevel(MIN_MAG_MIP_LINEAR__WRAP, uv, 0).rgb; 
-    //float3 materialColor = float3(0.5f, 0.5f, 0.5f); 
-    //materialColor =  albedo.rgb; 
-    //float3 finalColor = float3(0.0f, 0.0f, 0.0f); 
-	// 
-	// 
-	//uint2 launchIndex = DispatchRaysIndex(); 
-	//float2 dims = float2(DispatchRaysDimensions().xy); 
-	//// From 0 to 1 ----> -1 to 1 
-	//float2 d = ((launchIndex.xy + 0.5f) / dims.xy); 
-	// 
-    //float3 worldOrigin = WorldRayOrigin() + RayTCurrent() * WorldRayDirection(); 
-    ////float3 lightPos = float3(-26.42f, 63.0776f, 14.19f); 
-    //
-    //
-    //
-    //float3 ambient = materialColor * float3(0.1f, 0.1f, 0.1f); 
-    //payload.colorAndDistance = float4(finalColor + ambient, RayTCurrent()); 
-    reflectionPayload.colorAndDistance = float4(0.0f, 1.0f, 0.0f, 1.0f);
+    float3 bary = float3(1.0 - attribs.barycentrics.x - attribs.barycentrics.y, attribs.barycentrics.x, attribs.barycentrics.y); 
+    
+    SlotInfo slotInfo = rawBufferSlotInfo.Load<SlotInfo>(GeometryIndex() * sizeof(SlotInfo));
+    MaterialData matData = rawBufferMaterialData.Load<MaterialData>(GeometryIndex() * sizeof(MaterialData));
+    
+    uint vertId = 3 * PrimitiveIndex();
+    unsigned int IndexID1 = indices[slotInfo.indicesDataIndex][vertId + 0];
+    unsigned int IndexID2 = indices[slotInfo.indicesDataIndex][vertId + 1];
+    unsigned int IndexID3 = indices[slotInfo.indicesDataIndex][vertId + 2];
+    
+    // Get the normal 
+    vertex v1 = meshes[slotInfo.vertexDataIndex][IndexID1];
+    vertex v2 = meshes[slotInfo.vertexDataIndex][IndexID2]; 
+    vertex v3 = meshes[slotInfo.vertexDataIndex][IndexID3]; 
+    
+	float4 tmp = mul(float4(v1.pos, 1.0f), localMatricesPerObject.worldMatrix);
+    float3 norm = v1.norm * bary.x + v2.norm * bary.y + v3.norm * bary.z; 
+    float3 normal = float3(normalize(mul(float4(norm, 0.0f), localMatricesPerObject.worldMatrix)).xyz);
+	
+    float2 uv = v1.uv * bary.x + v2.uv * bary.y + v3.uv * bary.z; 
+    
+    float4 albedo	= textures[slotInfo.textureAlbedo].SampleLevel(MIN_MAG_MIP_LINEAR_Wrap, uv, 0);
+	//float roughness	= matData.hasRoughnessTexture ? textures[matData.textureRoughness].SampleLevel(MIN_MAG_MIP_LINEAR_Wrap, uv, 0).r : matData.roughnessValue;
+	float roughness	=  matData.roughnessValue;
+	//float metallic	= matData.hasMetallicTexture  ? textures[matData.textureMetallic].SampleLevel(MIN_MAG_MIP_LINEAR_Wrap, uv, 0).g  : matData.metallicValue;
+	float metallic	=  matData.metallicValue;
+	//float roughness	= textures[slotInfo.textureRoughness].SampleLevel(MIN_MAG_MIP_LINEAR_Wrap, uv, 0).r;
+	//float metallic	= textures[slotInfo.textureMetallic].SampleLevel(MIN_MAG_MIP_LINEAR_Wrap, uv, 0).g;
+
+	float4 emissive	= textures[slotInfo.textureEmissive].SampleLevel(MIN_MAG_MIP_LINEAR_Wrap, uv, 0);
+	
+	float3 worldPos = WorldRayOrigin() + RayTCurrent() * WorldRayDirection();
+	float3 camPos = cbPerFrame.camPos;
+	float3 viewDir = normalize(camPos - worldPos.xyz);
+	
+	if (roughness < 0.11 && metallic > 0.9f)
+	{
+		RayDesc ray;
+		ray.Origin = float4(worldPos, 1.0f) + float4(normal.xyz, 0.0f) * 0.5f;
+		ray.Direction = normalize(reflect(WorldRayDirection(), float3(normal.xyz)));
+		ray.TMin = 0;
+		ray.TMax = 10000;
+	
+		// Trace the ray
+		reflectionPayload.color += TraceRadianceRay(ray, reflectionPayload.recursionDepth, sceneBVH[cbPerScene.rayTracingBVH]);
+	}
+
+	// Do lightning calculations
+	float3 baseReflectivity = lerp(float3(0.04f, 0.04f, 0.04f), albedo.rgb, metallic);
+	
+	LightHeader lHeader = rawBufferLights.Load<LightHeader>(0);
+	// DirectionalLight contributions
+	for (unsigned int i = 0; i < lHeader.numDirectionalLights; i++)
+	{
+		DirectionalLight dirLight = rawBufferLights.Load<DirectionalLight>(sizeof(LightHeader) + i * sizeof(DirectionalLight));
+	
+		reflectionPayload.color += CalcDirLight(
+			dirLight,
+			camPos,
+			viewDir,
+			float4(worldPos, 1.0f),
+			metallic,
+			albedo.rgb,
+			roughness,
+			normal,
+			baseReflectivity);
+	}
+	
+	// PointLight contributions
+	for (unsigned int i = 0; i < lHeader.numPointLights; i++)
+	{
+		PointLight pointLight = rawBufferLights.Load<PointLight>(sizeof(LightHeader) + DIR_LIGHT_MAXOFFSET + i * sizeof(PointLight));
+
+		float3 lightColor = CalcPointLight(
+			pointLight,
+			camPos,
+			viewDir,
+			float4(worldPos, 1.0f),
+			metallic,
+			albedo.rgb,
+			roughness,
+			normal,
+			baseReflectivity);
+
+		float3 lightDir = normalize(pointLight.position.xyz - worldPos.xyz);
+		//float shadowFactor = RT_ShadowFactor(worldPos.xyz, 0.1f, length(pointLight.position.xyz - worldPos.xyz) - 1.0, lightDir, sceneBVH[cbPerScene.rayTracingBVH]);
+
+		reflectionPayload.color += lightColor; //* shadowFactor;
+	}
+
+	reflectionPayload.color += 0.001f * albedo.rgb;
+	//reflectionPayload.color = float3(roughness, metallic, 0.0f);
 } 

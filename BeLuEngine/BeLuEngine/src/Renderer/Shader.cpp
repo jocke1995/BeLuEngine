@@ -63,13 +63,6 @@ void Shader::compileShader()
 
 	HRESULT hr = DXILShaderCompiler::Get()->CompileFromFile(&shaderCompilerDesc, &m_pBlob);
 
-	if (FAILED(hr))
-	{
-		BL_ASSERT_MESSAGE(SUCCEEDED(hr), "Could not create shader %S", m_Path)
-	}
-
-	if (m_pBlob == nullptr)
-	{
-		BL_LOG_CRITICAL("blob is nullptr when loading shader with path: %S\n", m_Path);
-	}
+	BL_ASSERT_MESSAGE(SUCCEEDED(hr), "Could not create shader %S", m_Path)
+	BL_ASSERT_MESSAGE(m_pBlob != nullptr, "blob is nullptr when loading shader with path: %S\n", m_Path)
 }

@@ -38,9 +38,9 @@ DXRReflectionTask::DXRReflectionTask(
 {
 #pragma region PipelineState Object
 	// Gets deleted in Assetloader
-	m_pRayGenShader = AssetLoader::Get()->loadShader(L"DXR/RayGen.hlsl"	, E_SHADER_TYPE::DXR);
-	m_pHitShader	= AssetLoader::Get()->loadShader(L"DXR/Hit.hlsl"	, E_SHADER_TYPE::DXR);
-	m_pMissShader	= AssetLoader::Get()->loadShader(L"DXR/Miss.hlsl"	, E_SHADER_TYPE::DXR);
+	m_pRayGenShader = AssetLoader::Get()->loadShader(L"DXR/RayGen.hlsl", E_SHADER_TYPE::DXR);
+	m_pHitShader = AssetLoader::Get()->loadShader(L"DXR/Hit.hlsl", E_SHADER_TYPE::DXR);
+	m_pMissShader = AssetLoader::Get()->loadShader(L"DXR/Miss.hlsl", E_SHADER_TYPE::DXR);
 
 	RayTracingPipelineGenerator rtPipelineGenerator(device);
 
@@ -104,22 +104,30 @@ DXRReflectionTask::DXRReflectionTask(
 	rootDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
 	rootDesc.pStaticSamplers = nullptr;
 
-	m_pRayGenSignature	= createLocalRootSig(rootDesc);
+	m_pRayGenSignature = createLocalRootSig(rootDesc);
 	m_pRayGenSignature->SetName(L"RayGenRootSig");
-	m_pMissSignature	= createLocalRootSig(rootDesc);
+	m_pMissSignature = createLocalRootSig(rootDesc);
 	m_pMissSignature->SetName(L"MissRootSig");
 
 	// RegisterSpace 0 is dedicated to descriptors, and globalRootsig uses 0-5 on all SRV and UAV and 0-7 on CBV
 	D3D12_ROOT_PARAMETER rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::NUM_LOCAL_PARAMS]{};
+
+	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_SRV_T6].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_SRV_T6].Descriptor.ShaderRegister = 6;
+	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_SRV_T6].Descriptor.RegisterSpace = 0;
+	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_SRV_T6].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_CBV_T7].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_CBV_T7].Descriptor.ShaderRegister = 7;
+	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_CBV_T7].Descriptor.RegisterSpace = 0;
+	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_CBV_T7].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
 	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_CBV_B8].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_CBV_B8].Descriptor.ShaderRegister = 8;
 	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_CBV_B8].Descriptor.RegisterSpace = 0;
 	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_CBV_B8].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_SRV_S6].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
-	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_SRV_S6].Descriptor.ShaderRegister = 6;
-	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_SRV_S6].Descriptor.RegisterSpace = 0;
-	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_SRV_S6].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	
 
 	rootDesc.NumParameters = E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::NUM_LOCAL_PARAMS;
 	rootDesc.pParameters = rootParam;
@@ -160,7 +168,7 @@ DXRReflectionTask::DXRReflectionTask(
 	// exchanged between shaders, such as the HitInfo structure in the HLSL code.
 	// It is important to keep this value as low as possible as a too high value
 	// would result in unnecessary memory consumption and cache trashing.
-	rtPipelineGenerator.SetMaxPayloadSize(4 * sizeof(float)); // RGB + distance
+	rtPipelineGenerator.SetMaxPayloadSize(3 * sizeof(float) + sizeof(unsigned int)); // RGB + recursionDepth
 
 	// Upon hitting a surface, DXR can provide several attributes to the hit. In
 	// our sample we just use the barycentric coordinates defined by the weights
@@ -173,7 +181,7 @@ DXRReflectionTask::DXRReflectionTask(
 	// then requires a trace depth of 1. Note that this recursion depth should be
 	// kept to a minimum for best performance. Path tracing algorithms can be
 	// easily flattened into a simple loop in the ray generation.
-	rtPipelineGenerator.SetMaxRecursionDepth(2);
+	rtPipelineGenerator.SetMaxRecursionDepth(15);
 
 	// Compile the pipeline for execution on the GPU
 	m_pStateObject = rtPipelineGenerator.Generate(globalRootSignature);
@@ -181,6 +189,8 @@ DXRReflectionTask::DXRReflectionTask(
 	// Cast the state object into a properties object, allowing to later access
 	// the shader pointers by name
 	m_pStateObject->QueryInterface(IID_PPV_ARGS(&m_pRTStateObjectProps));
+
+	m_pStateObject->SetName(L"DXR_Reflection_StateObject");
 #pragma endregion
 
 #pragma region ShaderBindingTable
@@ -233,8 +243,9 @@ void DXRReflectionTask::CreateShaderBindingTable(ID3D12Device5* device, const st
 	{
 		m_pSbtGenerator->AddHitGroup(L"HitGroup",
 		{
-			(void*)rc.tc->GetTransform()->m_pCB->GetDefaultResource()->GetGPUVirtualAdress(),	// Unique per instance
-			(void*)rc.mc->GetByteAdressInfoDXR()->GetDefaultResource()->GetGPUVirtualAdress()	// Unique per modelComponent
+			(void*)rc.mc->GetSlotInfoByteAdressBufferDXR()->GetUploadResource()->GetGPUVirtualAdress(),	// SlotInfoRawBuffer
+			(void*)rc.mc->GetMaterialByteAdressBufferDXR()->GetUploadResource()->GetGPUVirtualAdress(),	// MaterialData
+			(void*)rc.tc->GetTransform()->m_pCB->GetUploadResource()->GetGPUVirtualAdress()				// MATRICES_PER_OBJECT_STRUCT
 		});
 	}
 
@@ -246,23 +257,9 @@ void DXRReflectionTask::CreateShaderBindingTable(ID3D12Device5* device, const st
 	// mapping to write the SBT contents. After the SBT compilation it could be
 	// copied to the default heap for performance.
 
-	D3D12_RESOURCE_DESC bufDesc = {};
-	bufDesc.Alignment = 0;
-	bufDesc.DepthOrArraySize = 1;
-	bufDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-	bufDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
-	bufDesc.Format = DXGI_FORMAT_UNKNOWN;
-	bufDesc.Height = 1;
-	bufDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-	bufDesc.MipLevels = 1;
-	bufDesc.SampleDesc.Count = 1;
-	bufDesc.SampleDesc.Quality = 0;
-	bufDesc.Width = sbtSize;
-
 	D3D12_RESOURCE_STATES startState = D3D12_RESOURCE_STATE_GENERIC_READ;
 	m_pSbtStorage = new Resource(device, sbtSize, RESOURCE_TYPE::UPLOAD, L"ShaderBindingTable_Resource", D3D12_RESOURCE_FLAG_NONE, &startState);
 
-	// TODO: Add after stateObject is completed
 	// Compile the SBT from the shader and parameters info
 	m_pSbtGenerator->Generate(m_pSbtStorage->GetID3D12Resource1(), m_pRTStateObjectProps);
 }
@@ -287,11 +284,21 @@ void DXRReflectionTask::Execute()
 		commandList->SetComputeRootDescriptorTable(dtUAV, dhSRVUAVCBV->GetGPUHeapAt(0));
 		commandList->SetComputeRootConstantBufferView(RootParam_CBV_B3, m_Resources["cbPerFrame"]->GetGPUVirtualAdress());
 		commandList->SetComputeRootConstantBufferView(RootParam_CBV_B4, m_Resources["cbPerScene"]->GetGPUVirtualAdress());
+		commandList->SetComputeRootShaderResourceView(RootParam_SRV_T0, m_Resources["rawBufferLights"]->GetGPUVirtualAdress());
+
+		// transition depth Buffer
+		Resource* mainDSV = m_Resources["mainDSV"];
+		CD3DX12_RESOURCE_BARRIER transition = CD3DX12_RESOURCE_BARRIER::Transition(
+			mainDSV->GetID3D12Resource1(),
+			D3D12_RESOURCE_STATE_DEPTH_WRITE,				// StateBefore
+			D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);// StateAfter
+		commandList->ResourceBarrier(1, &transition);
+
 		
 		// On the last frame, the raytracing output was used as a copy source, to
 		// copy its contents into the render target. Now we need to transition it to
 		// a UAV so that the shaders can write in it.
-		CD3DX12_RESOURCE_BARRIER transition = CD3DX12_RESOURCE_BARRIER::Transition(
+		transition = CD3DX12_RESOURCE_BARRIER::Transition(
 			m_pResourceUavSrv->resource->GetID3D12Resource1(),
 			D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,	// StateBefore
 			D3D12_RESOURCE_STATE_UNORDERED_ACCESS);			// StateAfter
@@ -336,6 +343,19 @@ void DXRReflectionTask::Execute()
 
 		// Dispatch the rays and write to the raytracing output
 		commandList->DispatchRays(&desc);
+
+		D3D12_RESOURCE_BARRIER b = {};
+		b.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+		b.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+		b.UAV.pResource = m_pResourceUavSrv->resource->GetID3D12Resource1();
+		commandList->ResourceBarrier(1, &b);
+
+		// Transition DepthBuffer
+		transition = CD3DX12_RESOURCE_BARRIER::Transition(
+			mainDSV->GetID3D12Resource1(),
+			D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,	// StateBefore
+			D3D12_RESOURCE_STATE_DEPTH_WRITE);				// StateAfter
+		commandList->ResourceBarrier(1, &transition);
 
 		// The raytracing output needs to be copied to the actual render target used
 		// for display. For this, we need to transition the raytracing output from a

@@ -62,7 +62,7 @@ float4 PS_main(VS_OUT input) : SV_TARGET0
 	{
 		PointLight pointLight = rawBufferLights.Load<PointLight>(sizeof(LightHeader) + DIR_LIGHT_MAXOFFSET + i * sizeof(PointLight));
 
-		finalColor += CalcPointLight(
+		float3 lightColor = CalcPointLight(
 			pointLight,
 			camPos,
 			viewDir,
@@ -71,8 +71,12 @@ float4 PS_main(VS_OUT input) : SV_TARGET0
 			albedo.rgb,
 			roughness,
 			normal.rgb,
-			baseReflectivity,
-			sceneBVH[cbPerScene.rayTracingBVH]);
+			baseReflectivity);
+
+		float3 lightDir = normalize(pointLight.position.xyz - input.worldPos.xyz);
+		float shadowFactor = RT_ShadowFactor(input.worldPos.xyz, 0.1f, length(pointLight.position.xyz - input.worldPos.xyz) - 1.0, lightDir, sceneBVH[cbPerScene.rayTracingBVH]);
+
+		finalColor += lightColor * shadowFactor;
 	}
 
 	// SpotLight  contributions

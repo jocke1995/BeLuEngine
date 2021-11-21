@@ -52,6 +52,7 @@ void MergeRenderTask::CreateSlotInfo()
 	// The descriptorHeapIndices for the SRVs are currently put inside the textureSlots inside SlotInfo
 	m_dhIndices.index0 = m_SRVs[0]->GetDescriptorHeapIndex();	// Blurred srv
 	m_dhIndices.index1 = m_SRVs[1]->GetDescriptorHeapIndex();	// Main color buffer
+	m_dhIndices.index2 = m_SRVs[2]->GetDescriptorHeapIndex();	// Reflection Data
 }
 
 void MergeRenderTask::Execute()
