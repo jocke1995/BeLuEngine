@@ -2,7 +2,6 @@
 #include "PipelineState.h"
 
 #include "../Shader.h"
-#include "../RootSignature.h"
 #include "../Misc/AssetLoader.h"
 
 PipelineState::PipelineState(const std::wstring& psoName)
@@ -12,7 +11,7 @@ PipelineState::PipelineState(const std::wstring& psoName)
 
 PipelineState::~PipelineState()
 {
-	SAFE_RELEASE(&m_pPSO);
+	BL_SAFE_RELEASE(&m_pPSO);
 }
 
 ID3D12PipelineState* PipelineState::GetPSO() const

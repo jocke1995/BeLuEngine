@@ -6,6 +6,14 @@
 #define MAX_POINT_LIGHTS 20
 #define MAX_SPOT_LIGHTS  10
 
+struct vertex
+{
+	float3 pos;
+	float2 uv;
+	float3 norm;
+	float3 tang;
+};
+
 // This struct can be used to send specific indices as a root constant to the GPU.
 // Example usage is when the indices for pp-effects are sent to gpu.
 struct DescriptorHeapIndices
@@ -18,37 +26,42 @@ struct DescriptorHeapIndices
 
 struct MaterialData
 {
-	// ints used as bools to make them pad to 4 bytes on the GPU
-	float m_HasRoughnessTexture;
-	float m_HasMetallicTexture;
+	unsigned int textureAlbedo;
+	unsigned int textureRoughness;
+	unsigned int textureMetallic;
+	unsigned int textureNormal;
 
-	float roughness;
-	float metallic;
+	unsigned int textureEmissive;
+	unsigned int textureOpacity;
+	unsigned int hasEmissiveTexture;
+	unsigned int hasRoughnessTexture;
+
+	unsigned int hasMetallicTexture;
+	unsigned int hasOpacityTexture;
+	unsigned int hasNormalTexture;
+	unsigned int glow;
+
+	float4 emissiveValue;
+
+	float roughnessValue;
+	float metallicValue;
+	float opacityValue;
+	float pad3;
 };
 
 // Indicies of where the descriptors are stored in the descriptorHeap
 struct SlotInfo
 {
 	unsigned int vertexDataIndex;
-	// TextureIndices
-	unsigned int textureAlbedo;
-	unsigned int textureRoughness;
-	unsigned int textureMetallic;
-	unsigned int textureNormal;
-	unsigned int textureEmissive;
-	unsigned int textureOpacity;
-	unsigned int matIndex;
-
-	// ints used as bools to make them pad to 4 bytes on the GPU
-	//MaterialData matData;
-
+	unsigned int indicesDataIndex;
+	unsigned int materialIndex;
+	unsigned int pad1;
 };
 
-struct CB_PER_OBJECT_STRUCT
+struct MATRICES_PER_OBJECT_STRUCT
 {
 	float4x4 worldMatrix;
 	float4x4 WVP;
-	SlotInfo info;
 };
 
 struct CB_PER_FRAME_STRUCT
@@ -62,6 +75,10 @@ struct CB_PER_FRAME_STRUCT
 	float3 camForward;
 	float pad3;
 
+	float4x4 view;
+	float4x4 projection;
+	float4x4 viewI;
+	float4x4 projectionI;
 
 	// deltaTime ..
 	// etc ..
@@ -69,20 +86,29 @@ struct CB_PER_FRAME_STRUCT
 
 struct CB_PER_SCENE_STRUCT
 {
-	float4 dirLightIndices[MAX_DIR_LIGHTS];
-	float4 pointLightIndices[MAX_POINT_LIGHTS];
-	float4 spotLightIndices[MAX_SPOT_LIGHTS];
+	unsigned int rayTracingBVH;
+	unsigned int gBufferAlbedo;
+	unsigned int gBufferNormal;
+	unsigned int gBufferMaterialProperties;
 
-	unsigned int Num_Dir_Lights;
-	unsigned int Num_Point_Lights;
-	unsigned int Num_Spot_Lights;
-	unsigned int pad1;
+	unsigned int gBufferEmissive;
+	unsigned int depth;
+	unsigned int reflectionUAV;
+	unsigned int reflectionSRV;
+};
+
+struct LightHeader
+{
+	unsigned int numDirectionalLights;
+	unsigned int numPointLights;
+	unsigned int numSpotLights;
+	unsigned int pad;
 };
 
 struct BaseLight
 {
 	float3 color;
-	float pad1;
+	float intensity;
 
 	float castShadow;
 	float3 pad2;
@@ -119,5 +145,9 @@ struct SpotLight
 	unsigned int textureShadowMap;	// Index to the shadowMap (srv)
 	unsigned int pad1[3];
 };
+
+#define DIR_LIGHT_MAXOFFSET MAX_DIR_LIGHTS * sizeof(DirectionalLight)
+#define POINT_LIGHT_MAXOFFSET MAX_POINT_LIGHTS * sizeof(PointLight)
+#define SPOT_LIGHT_MAXOFFSET  MAX_SPOT_LIGHTS * sizeof(SpotLight)
 
 #endif

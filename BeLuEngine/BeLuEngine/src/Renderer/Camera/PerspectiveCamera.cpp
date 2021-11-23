@@ -23,12 +23,12 @@ PerspectiveCamera::~PerspectiveCamera()
 
 }
 
-const DirectX::XMMATRIX* PerspectiveCamera::GetProjection() const
+const DirectX::XMMATRIX* PerspectiveCamera::GetProjMatrix() const
 {
 	return &m_ProjMatrix;
 }
 
-const DirectX::XMMATRIX* PerspectiveCamera::GetProjectionInverse() const
+const DirectX::XMMATRIX* PerspectiveCamera::GetProjMatrixInverse() const
 {
 	return &m_ProjMatrixInverse;
 }
@@ -119,7 +119,7 @@ void PerspectiveCamera::updateCameraMovement(double dt)
 	m_UpVector = DirectX::XMVector3Cross(m_DirectionVector, m_RightVector);
 	m_UpVector = DirectX::XMVector3Normalize(m_UpVector);
 
-	static int ms = 150;
+	static int ms = 40;
 	m_EyeVector = DirectX::XMVectorAdd(m_EyeVector, DirectX::operator*((m_MoveLeftRight		  * ms)	* dt, m_RightVector));
 	m_EyeVector = DirectX::XMVectorAdd(m_EyeVector, DirectX::operator*((m_MoveForwardBackward * ms) * dt, m_DirectionVector));
 	m_EyeVector = DirectX::XMVectorAdd(m_EyeVector, DirectX::operator*((m_MoveUpDown		  * ms)	* dt, s_DefaultUpVector));

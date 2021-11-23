@@ -21,12 +21,12 @@
 
 // Sub-engines
 #include "Renderer/Renderer.h"
-#include "Renderer/Model/Transform.h"
-#include "Renderer/Model/Mesh.h"
+#include "Renderer/Geometry/Transform.h"
+#include "Renderer/Geometry/Mesh.h"
 #include "Renderer/Camera/BaseCamera.h"
 
 // Textures
-#include "Renderer/Model/Material.h"
+#include "Renderer/Geometry/Material.h"
 #include "Renderer/Texture/TextureCubeMap.h"
 #include "Renderer/Texture/Texture2DGUI.h"
 

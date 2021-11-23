@@ -25,7 +25,7 @@ public:
 		const Args&... args)
 	{
 		std::vector<char> inputBuffer;
-		inputBuffer.resize(256);
+		inputBuffer.resize(4096);
 		char typeBuffer[100] = {};
 
 		sprintf(inputBuffer.data(), string.c_str(), args...);
@@ -50,19 +50,22 @@ public:
 		}
 
 		std::string finalBuffer = std::string(typeBuffer) + inputBuffer.data();
+		std::string finalBufferNewline = finalBuffer + "\n";
 
-		OutputDebugStringA(finalBuffer.c_str());
+		OutputDebugStringA(finalBufferNewline.c_str());
 	}
 
 	template <typename... Args>
 	static void Print(const std::string string, const Args&... args)
 	{
 		std::vector<char> inputBuffer;
-		inputBuffer.resize(256);
+		inputBuffer.resize(4096);
 
 		sprintf(inputBuffer.data(), string.c_str(), args...);
 
-		OutputDebugStringA(inputBuffer.data());
+		std::string finalBuffer = std::string(inputBuffer.data()) + "\n";
+
+		OutputDebugStringA(finalBuffer.c_str());
 	}
 private:
 	Log();
@@ -72,10 +75,25 @@ private:
 	#define BL_LOG_INFO(...)	 Log::PrintSeverity(__FILE__, std::to_string(__LINE__), Severity::INFO	  , __VA_ARGS__)
 	#define BL_LOG_WARNING(...)	 Log::PrintSeverity(__FILE__, std::to_string(__LINE__), Severity::WARNING , __VA_ARGS__)
 	#define BL_LOG_CRITICAL(...) Log::PrintSeverity(__FILE__, std::to_string(__LINE__), Severity::CRITICAL, __VA_ARGS__)
+
+	#define BL_ASSERT(expression)				if(expression == false)																							\
+												{																												\
+													Log::PrintSeverity(__FILE__, std::to_string(__LINE__), Severity::CRITICAL,  "Expression: %s", #expression);	\
+													DebugBreak();																								\
+												}
+	#define BL_ASSERT_MESSAGE(expression, ...)	if(expression == false)																							\
+												{																												\
+													Log::PrintSeverity(__FILE__, std::to_string(__LINE__), Severity::CRITICAL, "Expression: %s", #expression);	\
+													Log::PrintSeverity(__FILE__, std::to_string(__LINE__), Severity::CRITICAL, __VA_ARGS__);					\
+													DebugBreak();																								\
+												}
 #else
 	#define BL_LOG_INFO(...)
 	#define BL_LOG_WARNING(...)
 	#define BL_LOG_CRITICAL(...)
+
+	#define BL_ASSERT(expression);
+	#define BL_ASSERT_MESSAGE(expression, ...);
 #endif
 
 #endif

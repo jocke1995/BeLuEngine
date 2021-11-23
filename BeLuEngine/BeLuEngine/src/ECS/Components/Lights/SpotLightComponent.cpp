@@ -3,8 +3,7 @@
 #include "EngineMath.h"
 
 // Renderer
-#include "../Renderer/Model/Transform.h"
-#include "../Renderer/Camera/PerspectiveCamera.h"
+#include "../Renderer/Geometry/Transform.h"
 #include "../Renderer/Renderer.h"
 
 // ECS
@@ -13,7 +12,7 @@
 namespace component
 {
     SpotLightComponent::SpotLightComponent(Entity* parent, unsigned int lightFlags)
-        :Component(parent), Light(E_CAMERA_TYPE::PERSPECTIVE, lightFlags)
+        :Component(parent), Light(lightFlags)
     {
         
         m_pSpotLight = new SpotLight();
@@ -41,18 +40,7 @@ namespace component
             m_pSpotLight->position_cutOff.x = position.x;
             m_pSpotLight->position_cutOff.y = position.y;
             m_pSpotLight->position_cutOff.z = position.z;
-
-            if (m_pCamera != nullptr)
-            {
-                m_pCamera->SetPosition(position.x, position.y, position.z);
-            }
         }
-
-        if (m_pCamera != nullptr)
-        {
-            m_pCamera->Update(dt);
-            m_pSpotLight->viewProj = *m_pCamera->GetViewProjectionTranposed();
-        }  
     }
 
     void SpotLightComponent::OnInitScene()
@@ -85,11 +73,6 @@ namespace component
         m_pSpotLight->position_cutOff.x = position.x;
         m_pSpotLight->position_cutOff.y = position.y;
         m_pSpotLight->position_cutOff.z = position.z;
-
-        if (m_pCamera != nullptr)
-        {
-            m_pCamera->SetPosition(position.x, position.y, position.z);
-        }
     }
 
     // This function modifies the camera aswell as the direction
@@ -98,11 +81,6 @@ namespace component
         m_pSpotLight->direction_outerCutoff.x = direction.x;
         m_pSpotLight->direction_outerCutoff.y = direction.y;
         m_pSpotLight->direction_outerCutoff.z = direction.z;
-
-        if (m_pCamera != nullptr)
-        {
-            m_pCamera->SetDirection(direction.x, direction.y, direction.z);
-        }
     }
 
     // This function modifies the camera aswell as the outerCutOff
@@ -116,39 +94,6 @@ namespace component
         }
 
         m_pSpotLight->direction_outerCutoff.w = cos(DirectX::XMConvertToRadians(degrees));
-
-        if (m_pCamera != nullptr)
-        {
-            PerspectiveCamera* persCam = static_cast<PerspectiveCamera*>(m_pCamera);
-            persCam->SetFov(cameraFov);
-        }
-    }
-
-    void SpotLightComponent::SetAspectRatio(float aspectRatio)
-    {
-        if (m_pCamera != nullptr)
-        {
-            PerspectiveCamera* persCam = static_cast<PerspectiveCamera*>(m_pCamera);
-            persCam->SetAspectRatio(aspectRatio);
-        }
-    }
-
-    void SpotLightComponent::SetNearPlaneDistance(float nearZ)
-    {
-        if (m_pCamera != nullptr)
-        {
-            PerspectiveCamera* persCam = static_cast<PerspectiveCamera*>(m_pCamera);
-            persCam->SetNearZ(nearZ);
-        }
-    }
-
-    void SpotLightComponent::SetFarPlaneDistance(float farZ)
-    {
-        if (m_pCamera != nullptr)
-        {
-            PerspectiveCamera* persCam = static_cast<PerspectiveCamera*>(m_pCamera);
-            persCam->SetFarZ(farZ);
-        }
     }
 
     void* SpotLightComponent::GetLightData() const
@@ -169,20 +114,7 @@ namespace component
 
         if (m_LightFlags & static_cast<unsigned int>(F_LIGHT_FLAGS::CAST_SHADOW))
         {
-            CreatePerspectiveCamera(
-                {
-                m_pSpotLight->position_cutOff.x,
-                m_pSpotLight->position_cutOff.y,
-                m_pSpotLight->position_cutOff.z,
-                },
-                {
-                m_pSpotLight->direction_outerCutoff.x,
-                m_pSpotLight->direction_outerCutoff.y,
-                m_pSpotLight->direction_outerCutoff.z });
-
             m_pSpotLight->baseLight.castShadow = true;
-
-            m_pSpotLight->viewProj = *m_pCamera->GetViewProjectionTranposed();
         }
     }
 

@@ -1,8 +1,5 @@
 # Blender MTL File: 'None'
-# Material Count: 2
+# Material Count: 0
 
-newmtl stefanmat
-map_Kd stefan.jpg
-
-newmtl hansmat
-map_Kd hans.jpg
+# newmtl stefanmat
+# map_Ka stefan.jpg

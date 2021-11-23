@@ -8,6 +8,9 @@
 class Mesh;
 class Model;
 class Material;
+struct SlotInfo;
+
+class ShaderResource;
 
 namespace component
 {
@@ -25,25 +28,43 @@ namespace component
         void SetModel(Model* model);
         void SetDrawFlag(unsigned int drawFlag);
 
-        // Gets
+        // Model Stuff
         Mesh* GetMeshAt(unsigned int index) const;
-        Material* GetMaterialAt(unsigned int index) const;
-        const SlotInfo* GetSlotInfoAt(unsigned int index) const;
-        unsigned int GetDrawFlag() const;
         unsigned int GetNrOfMeshes() const;
+        unsigned int GetDrawFlag() const;
         const std::wstring& GetModelPath() const;
         bool IsPickedThisFrame() const;
         Model* GetModel() const;
 
+        // Material
+        void SetMaterialAt(unsigned int index, Material* material);
+        Material* GetMaterialAt(unsigned int index);
+        MaterialData* GetUniqueMaterialDataAt(unsigned int index);
+        ShaderResource* GetMaterialByteAdressBuffer() const;
+
+        const SlotInfo* GetSlotInfoAt(unsigned int index) const;
+        ShaderResource* GetSlotInfoByteAdressBufferDXR() const;
+
+        void UpdateMaterialRawBufferFromMaterial();
     private:
         // The boundingBox will update the "m_IsPickedThisFrame"
         friend class BoundingBoxComponent;
         friend class BeLuEngine;
         friend class Renderer;
+
         bool m_IsPickedThisFrame = false;
+        unsigned int m_DrawFlag = 0;
 
         Model* m_pModel = nullptr;
-        unsigned int m_DrawFlag = 0;
+
+        std::vector<Material*> m_Materials;
+        std::vector<MaterialData> m_MaterialDataRawBuffer;
+
+        std::vector<SlotInfo> m_SlotInfos;
+        void updateSlotInfoBuffer();
+
+        ShaderResource* m_SlotInfoByteAdressBuffer;
+        ShaderResource* m_MaterialByteAdressBuffer;
     };
 }
 #endif

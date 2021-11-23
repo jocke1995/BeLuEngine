@@ -25,6 +25,22 @@ void CopyTask::Submit(std::tuple<Resource*, Resource*, const void*>* Upload_Defa
 	m_UploadDefaultData.push_back(*Upload_Default_Data);
 }
 
+void CopyTask::ClearSpecific(const Resource* uploadResource)
+{
+	unsigned int i = 0;
+
+	// Loop through all copyPerFrame tasks
+	for (auto& tuple : m_UploadDefaultData)
+	{
+		if (std::get<0>(tuple) == uploadResource)
+		{
+			// Remove
+			m_UploadDefaultData.erase(m_UploadDefaultData.begin() + i);
+		}
+		i++;
+	}
+}
+
 void CopyTask::copyResource(
 	ID3D12GraphicsCommandList5* commandList,
 	Resource* uploadResource, Resource* defaultResource,

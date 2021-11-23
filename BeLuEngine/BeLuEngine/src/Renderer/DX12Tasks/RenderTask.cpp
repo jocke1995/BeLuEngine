@@ -5,14 +5,13 @@
 #include "../CommandInterface.h"
 #include "../GPUMemory/GPUMemory.h"
 #include "../PipelineState/GraphicsState.h"
-#include "../RootSignature.h"
 #include "../SwapChain.h"
 
 
 
 RenderTask::RenderTask(
 	ID3D12Device5* device,
-	RootSignature* rootSignature,
+	ID3D12RootSignature* rootSignature,
 	const std::wstring& VSName, const std::wstring& PSName,
 	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*>* gpsds,
 	const std::wstring& psoName,
@@ -27,7 +26,7 @@ RenderTask::RenderTask(
 		}
 	}
 	
-	m_pRootSig = rootSignature->GetRootSig();
+	m_pRootSig = rootSignature;
 }
 
 RenderTask::~RenderTask()
@@ -46,8 +45,7 @@ void RenderTask::AddRenderTargetView(std::string name, const RenderTargetView* r
 	m_RenderTargetViews[name] = renderTargetView;
 }
 
-void RenderTask::SetRenderComponents(std::vector<std::pair<	component::ModelComponent*,
-															component::TransformComponent*>>*renderComponents)
+void RenderTask::SetRenderComponents(std::vector<RenderComponent> *renderComponents)
 {
 	m_RenderComponents = *renderComponents;
 }

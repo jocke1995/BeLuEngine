@@ -1,14 +1,18 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
+// USE_NSIGHT_AFTERMATH
+#if defined(USE_NSIGHT_AFTERMATH)
+	#include "aftermath/GFSDK_Aftermath.h"
+	#include "../Misc/NvidiaAftermath/NsightAftermathGpuCrashTracker.h"
+#endif
+
 // Misc
 class ThreadPool;
 class Window;
 
 // Renderer Engine
-class RootSignature;
 class SwapChain;
-class ViewPool;
 class BoundingBoxPool;
 class DescriptorHeap;
 class Mesh;
@@ -45,7 +49,7 @@ class Scene;
 class Light;
 
 // Graphics
-class RenderTask;
+#include "DX12Tasks/RenderTask.h"
 class WireframeRenderTask;
 class OutliningRenderTask;
 class BaseCamera;
@@ -56,6 +60,12 @@ class CopyTask;
 
 // Compute
 class ComputeTask;
+
+// DXR
+class DXRTask;
+class ShaderBindingTableGenerator;
+class ID3D12StateObject;
+class ID3D12StateObjectProperties;
 
 // DX12 Forward Declarations
 struct ID3D12CommandQueue;
@@ -77,9 +87,40 @@ namespace component
 	class SpotLightComponent;
 }
 
+struct RenderComponent;
+
 // Events
 struct WindowChange;
 struct WindowSettingChange;
+
+enum E_GLOBAL_ROOTSIGNATURE
+{
+	dtSRV,
+	dtCBV,
+	dtUAV,
+	Constants_SlotInfo_B0,
+	Constants_DH_Indices_B1,
+	RootParam_CBV_B2,
+	RootParam_CBV_B3,
+	RootParam_CBV_B4,
+	RootParam_CBV_B5,
+	RootParam_CBV_B6,
+	RootParam_CBV_B7,
+	RootParam_SRV_T0,
+	RootParam_SRV_T1,
+	RootParam_SRV_T2,
+	RootParam_SRV_T3,
+	RootParam_SRV_T4,
+	RootParam_SRV_T5,
+	RootParam_UAV_U0,
+	RootParam_UAV_U1,
+	RootParam_UAV_U2,
+	RootParam_UAV_U3,
+	RootParam_UAV_U4,
+	RootParam_UAV_U5,
+	RootParam_UAV_U6,
+	NUM_PARAMS
+};
 
 class Renderer
 {
@@ -127,6 +168,8 @@ private:
 	friend class SceneManager;
 	friend class ImGuiHandler;
 	friend class Material;
+	friend class component::ModelComponent;
+
 	Renderer();
 
 	// For control of safe release of DirectX resources
@@ -135,7 +178,8 @@ private:
 	// SubmitToCodt functions
 	void submitToCodt(std::tuple<Resource*, Resource*, const void*>* Upload_Default_Data);
 	void submitModelToGPU(Model* model);
-	void submitMaterialToGPU(Model* model);
+	void submitSlotInfoRawBufferToGPU(component::ModelComponent* mc);
+	void submitMaterialToGPU(component::ModelComponent* mc);
 	void submitMeshToCodt(Mesh* mesh);
 	void submitTextureToCodt(Texture* texture);
 
@@ -166,7 +210,14 @@ private:
 	std::map<E_COMMAND_INTERFACE_TYPE, ID3D12CommandQueue*> m_CommandQueues;
 
 	// -------------- RenderTargets -------------- 
-	std::pair<RenderTarget*, ShaderResourceView*> m_pMainColorBuffer;
+	std::pair<RenderTarget*, ShaderResourceView*> m_FinalColorBuffer;
+	std::pair<RenderTarget*, ShaderResourceView*> m_GBufferAlbedo;
+	std::pair<RenderTarget*, ShaderResourceView*> m_GBufferNormal;
+	std::pair<RenderTarget*, ShaderResourceView*> m_GBufferMaterialProperties;
+	std::pair<RenderTarget*, ShaderResourceView*> m_GBufferEmissive;
+
+	// -------------- RenderTargets -------------- 
+	Resource_UAV_SRV m_ReflectionTexture;
 
 	// Swapchain (inheriting from 'RenderTarget')
 	SwapChain* m_pSwapChain = nullptr;
@@ -176,11 +227,9 @@ private:
 
 	// Depthbuffer
 	DepthStencil* m_pMainDepthStencil = nullptr;
+
+	ID3D12RootSignature* m_pGlobalRootSig = nullptr;
 	// -------------- RenderTargets -------------- 
-
-	// Rootsignature
-	RootSignature* m_pRootSignature = nullptr;
-
 	// Picking
 	MousePicker* m_pMousePicker = nullptr;
 	Entity* m_pPickedEntity = nullptr;
@@ -189,15 +238,15 @@ private:
 	std::vector<ComputeTask*> m_ComputeTasks;
 	std::vector<CopyTask*>    m_CopyTasks;
 	std::vector<RenderTask*>  m_RenderTasks;
+	std::vector<DX12Task*>	  m_DX12Tasks;
+	std::vector<DXRTask*>	  m_DXRTasks;
 
 	Mesh* m_pFullScreenQuad = nullptr;
 
 	// Group of components that's needed for rendering:
-	std::map<F_DRAW_FLAGS, std::vector<std::pair<component::ModelComponent*, component::TransformComponent*>>> m_RenderComponents;
+	std::map<F_DRAW_FLAGS, std::vector<RenderComponent>> m_RenderComponents;
+	std::vector<RenderComponent> m_RayTracedRenderComponents;
 	std::vector<component::BoundingBoxComponent*> m_BoundingBoxesToBePicked;
-
-	ViewPool* m_pViewPool = nullptr;
-	std::map<E_LIGHT_TYPE, std::vector<std::tuple<Light*, ConstantBuffer*, ShadowInfo*>>> m_Lights;
 
 	// Current scene to be drawn
 	Scene* m_pCurrActiveScene = nullptr;
@@ -229,6 +278,7 @@ private:
 	void createFullScreenQuad();
 	void updateMousePicker();
 	void initRenderTasks();
+	void createRawBufferForLights();
 	void setRenderTasksRenderComponents();
 	void createDescriptorHeaps();
 	void createFences();
@@ -246,6 +296,13 @@ private:
 	void toggleFullscreen(WindowChange* event);
 
 	SwapChain* getSwapChain() const;
+
+// USE_NSIGHT_AFTERMATH
+#if defined(USE_NSIGHT_AFTERMATH)
+	int32_t* m_pAfterMathContextHandle = nullptr;
+	GpuCrashTracker m_GpuCrashTracker = {};
+#endif
+
 };
 
 #endif

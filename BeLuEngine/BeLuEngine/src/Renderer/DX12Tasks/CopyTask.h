@@ -15,6 +15,8 @@ public:
 		const std::wstring& clName);
 	virtual ~CopyTask();
 
+	void CopyTask::ClearSpecific(const Resource* uploadResource);
+
 	// tuple(Upload, Default, Data)
 	void Submit(std::tuple<Resource*, Resource*, const void*>* Upload_Default_Data);
 

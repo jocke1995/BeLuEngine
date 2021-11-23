@@ -49,6 +49,9 @@ inline std::string GetFileExtension(const std::string& FileName)
 	return "";
 }
 
+#define concat(x,y) concat2(x,y)
+#define concat2(x,y) x##y
+
 enum class E_WINDOW_MODE
 {
 	WINDOWED,
@@ -98,7 +101,8 @@ enum class E_SHADER_TYPE
 	VS = 0,
 	PS = 1,
 	CS = 2,
-	UNSPECIFIED = 3
+	DXR = 3,
+	UNSPECIFIED = 4
 };
 
 enum class E_CAMERA_TYPE
@@ -110,7 +114,7 @@ enum class E_CAMERA_TYPE
 };
 
 // this will only call release if an object exists (prevents exceptions calling release on non existant objects)
-#define SAFE_RELEASE(p)			\
+#define BL_SAFE_RELEASE(p)		\
 {								\
 	if ((*p))					\
 	{							\
@@ -119,10 +123,31 @@ enum class E_CAMERA_TYPE
 	}							\
 }
 
+#define BL_SAFE_DELETE(p)		\
+{								\
+	if (p != nullptr)			\
+	{							\
+		delete p;				\
+		p = nullptr;			\
+	}							\
+}
+
+#define BL_SAFE_DELETE_ARRAY(p)	\
+{								\
+	if (p != nullptr)			\
+	{							\
+		delete p[];				\
+		p = nullptr;			\
+	}							\
+}
+
+#define TODO() //DebugBreak();
+
 // Debug
-#define SINGLE_THREADED_RENDERER true
+#define SINGLE_THREADED_RENDERER false
 #define DX12VALIDATIONGLAYER false
 #define DEVELOPERMODE_DRAWBOUNDINGBOX false
+//#define USE_NSIGHT_AFTERMATH
 
 // Common
 #define NUM_SWAP_BUFFERS 2
@@ -133,20 +158,32 @@ enum F_DRAW_FLAGS
 {
 	NO_DEPTH = BIT(1),
 	DRAW_OPAQUE = BIT(2),
-	DRAW_TRANSPARENT_CONSTANT = BIT(3),
-	DRAW_TRANSPARENT_TEXTURE = BIT(4),
-	GIVE_SHADOW = BIT(5),
-	NUM_FLAG_DRAWS = 5,
+	DRAW_TRANSPARENT = BIT(3),
+	GIVE_SHADOW = BIT(4),
+	NUM_FLAG_DRAWS = 4,
 };
 
 enum F_THREAD_FLAGS
 {
 	RENDER = BIT(1),
-	// CopyTextures,
+	TEST = BIT(2),
+	ASYNC_BLAS = BIT(3),	// TODO
+	// CopyTextures
 	// PrepareNextScene ..
 	// etc
-	ALL = BIT(2)
-	// etc..
+	ALL = BIT(4)
+};
+
+
+// TODO: Make a renderCore.h with renderstuff, and keep Core.h for commonStuff
+class Resource;
+class UnorderedAccessView;
+class ShaderResourceView;
+struct Resource_UAV_SRV
+{
+	Resource* resource;
+	UnorderedAccessView* uav;
+	ShaderResourceView* srv;
 };
 
 #endif

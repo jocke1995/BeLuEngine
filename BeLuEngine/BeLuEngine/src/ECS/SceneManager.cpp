@@ -12,7 +12,7 @@
 #include "../Renderer/GPUMemory/ShaderResourceView.h"
 #include "../Renderer/GPUMemory/ConstantBuffer.h"
 #include "../Renderer/Texture/Texture.h"
-#include "../Renderer/Model/Mesh.h"
+#include "../Renderer/Geometry/Mesh.h"
 
 // CopyTasks
 #include "../Renderer/DX12Tasks/CopyOnDemandTask.h"
@@ -20,7 +20,6 @@
 
 // RenderTasks
 #include "../Renderer/DX12Tasks/WireframeRenderTask.h"
-#include "../Renderer/DX12Tasks/ShadowRenderTask.h"
 
 // Techniques
 #include "../Renderer/Techniques/BoundingBoxPool.h"

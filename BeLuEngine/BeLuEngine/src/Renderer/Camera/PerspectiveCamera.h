@@ -18,8 +18,8 @@ public:
 	virtual ~PerspectiveCamera();
 
     // Gets
-    const DirectX::XMMATRIX* GetProjection() const;
-    const DirectX::XMMATRIX* GetProjectionInverse() const;
+    const DirectX::XMMATRIX* GetProjMatrix() const;
+    const DirectX::XMMATRIX* GetProjMatrixInverse() const;
     const DirectX::XMMATRIX* GetViewProjection() const override;
     const DirectX::XMMATRIX* GetViewProjectionTranposed() const override;
 

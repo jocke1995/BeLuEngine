@@ -27,9 +27,11 @@ project "BeLuEngine"
     links {
         "d3d12",
         "dxgi",
-        "d3dcompiler",
+        "dxcompiler",
         "dxguid",
         "assimp-vc142-mt",
+        "GFSDK_Aftermath_Lib.x64",
+        "WinPixEventRuntime",
     }
 
     postbuildcommands

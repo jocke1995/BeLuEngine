@@ -1,9 +1,4 @@
-#include "../../Headers/GPU_Structs.h"
-
-Texture2D<float4> textures[]   : register (t0);
-RWTexture2D<float4> textureToBlur[] : register(u0);
-
-ConstantBuffer<DescriptorHeapIndices> dhIndices : register(b2, space3);
+#include "DescriptorBindings.hlsl"
 
 static const int g_BlurRadius = 4;
 static const int g_NumThreads = 256;
@@ -24,16 +19,23 @@ void CS_main(uint3 dispatchThreadID : SV_DispatchThreadID, int3 groupThreadID : 
 		g_SharedMem[groupThreadID.y] = textures[readIndex][int2(dispatchThreadID.x, y)];
 	}
 
+
+	uint mipLevel;
+	uint width;
+	uint height;
+	uint numLevels;
+	textures[readIndex].GetDimensions(mipLevel, width, height, numLevels);
+
 	// bot side
 	if (groupThreadID.y >= g_NumThreads - g_BlurRadius)
 	{
-		int y = min(dispatchThreadID.y + g_BlurRadius, textures[readIndex].Length.y - 1);
+		int y = min(dispatchThreadID.y + g_BlurRadius, height - 1);
 		g_SharedMem[groupThreadID.y + 2 * g_BlurRadius] = textures[readIndex][int2(dispatchThreadID.x, y)];
 	}
 	/* -------------------- Clamp out of bound samples -------------------- */
 
 	// Fill the middle parts of the sharedMemory
-	g_SharedMem[groupThreadID.y + g_BlurRadius] = textures[readIndex][min(dispatchThreadID.xy, textures[readIndex].Length.xy - 1)];
+	g_SharedMem[groupThreadID.y + g_BlurRadius] = textures[readIndex][min(dispatchThreadID.xy, float2(width, height) - 1)];
 
 	// Wait for shared memory to be populated before reading from it
 	GroupMemoryBarrierWithGroupSync();
@@ -51,5 +53,5 @@ void CS_main(uint3 dispatchThreadID : SV_DispatchThreadID, int3 groupThreadID : 
 		blurColor += weights[i] * g_SharedMem[bot];
 	}
 
-	textureToBlur[writeIndex][dispatchThreadID.xy] = blurColor;
+	texturesUAV[writeIndex][dispatchThreadID.xy] = blurColor;
 }

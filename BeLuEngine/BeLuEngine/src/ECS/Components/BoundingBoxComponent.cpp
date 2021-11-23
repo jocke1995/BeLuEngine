@@ -9,11 +9,11 @@
 #include "ModelComponent.h"
 
 // Using the same m_pTransform as the models m_pTransform
-#include "../Renderer/Model/Transform.h"
+#include "../Renderer/Geometry/Transform.h"
 #include "TransformComponent.h"
 #include "../Renderer/Techniques/BoundingBoxPool.h"
 
-#include "../Renderer/Model/Mesh.h"
+#include "../Renderer/Geometry/Mesh.h"
 #include "../Renderer/GPUMemory/ShaderResourceView.h"
 #include "../Renderer/Renderer.h"
 
@@ -80,7 +80,7 @@ namespace component
 
 		m_SlotInfos.push_back(new SlotInfo());
 
-		m_SlotInfos.back()->vertexDataIndex = mesh->m_pSRV->GetDescriptorHeapIndex();
+		m_SlotInfos.back()->vertexDataIndex = mesh->m_pVertexBufferSRV->GetDescriptorHeapIndex();
 		// Textures are not used in the WireframeRenderTask
 	}
 

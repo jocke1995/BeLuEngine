@@ -9,11 +9,11 @@
 
 #include "Window.h"
 #include "../Renderer/DescriptorHeap.h"
-#include "../Renderer/Model/Mesh.h"
-#include "../Renderer/Model/Model.h"
+#include "../Renderer/Geometry/Mesh.h"
+#include "../Renderer/Geometry/Model.h"
 #include "../Renderer/Shader.h"
-#include "../Renderer/Model/Material.h"
-#include "../Renderer/Model/Transform.h"
+#include "../Renderer/Geometry/Material.h"
+#include "../Renderer/Geometry/Transform.h"
 
 #include "assimp/Importer.hpp"
 #include "assimp/postprocess.h"
@@ -24,6 +24,8 @@
 #include "../Renderer/Texture/Texture2D.h"
 #include "../Renderer/Texture/Texture2DGUI.h"
 #include "../Renderer/Texture/TextureCubeMap.h"
+
+#include "../Renderer/GPUMemory/GPUMemory.h"
 
 #include "MultiThreading/ThreadPool.h"
 
@@ -39,6 +41,42 @@ AssetLoader::AssetLoader(ID3D12Device5* device, DescriptorHeap* descriptorHeap_C
 	loadDefaultMaterial();
 }
 
+Material* AssetLoader::CreateMaterial(std::wstring matName, const Material* mat)
+{
+	// Check if material don't exists
+	if (m_LoadedMaterials.count(matName) == 0)
+	{
+		// Check if this material is to be created from other material
+		if (mat != nullptr)
+		{
+			m_LoadedMaterials[matName] = new Material(*mat, matName);
+			return m_LoadedMaterials[matName];
+		}
+		else // Create a new material with starting values from the default material.
+		{
+			m_LoadedMaterials[matName] = new Material(matName);
+			return m_LoadedMaterials[matName];
+		}
+	}
+	else
+	{
+		BL_LOG_WARNING("Material with ID: '%S' already exists and wont be created.\n", matName.c_str());
+	}
+
+	return nullptr;
+}
+
+Material* AssetLoader::LoadMaterial(std::wstring matName)
+{
+	if (m_LoadedMaterials.count(matName) != 0)
+	{
+		Material* mat = m_LoadedMaterials[matName];
+		return  mat;
+	}
+	BL_LOG_CRITICAL("Invalid material ID '%S' could not be loaded.\n", matName.c_str());
+	return nullptr;
+}
+
 bool AssetLoader::IsModelLoadedOnGpu(const std::wstring& name) const
 {
 	return m_LoadedModels.at(name).first;
@@ -47,16 +85,6 @@ bool AssetLoader::IsModelLoadedOnGpu(const std::wstring& name) const
 bool AssetLoader::IsModelLoadedOnGpu(const Model* model) const
 {
 	return m_LoadedModels.at(model->GetPath()).first;
-}
-
-bool AssetLoader::IsMaterialLoadedOnGpu(const std::wstring& name) const
-{
-	return m_LoadedMaterials.at(name).first;
-}
-
-bool AssetLoader::IsMaterialLoadedOnGpu(const Material* material) const
-{
-	return m_LoadedMaterials.at(material->GetPath()).first;
 }
 
 bool AssetLoader::IsTextureLoadedOnGpu(const std::wstring& name) const
@@ -73,17 +101,16 @@ void AssetLoader::loadDefaultMaterial()
 {
 	// Load default textures
 	std::map<E_TEXTURE2D_TYPE, Texture*> matTextures;
-	matTextures[E_TEXTURE2D_TYPE::ALBEDO] = LoadTexture2D(m_FilePathDefaultTextures + L"default_albedo.dds");
+	matTextures[E_TEXTURE2D_TYPE::ALBEDO]	 = LoadTexture2D(m_FilePathDefaultTextures + L"default_albedo.dds");
 	matTextures[E_TEXTURE2D_TYPE::ROUGHNESS] = LoadTexture2D(m_FilePathDefaultTextures + L"default_roughness.dds");
-	matTextures[E_TEXTURE2D_TYPE::METALLIC] = LoadTexture2D(m_FilePathDefaultTextures + L"default_metallic.dds");
-	matTextures[E_TEXTURE2D_TYPE::NORMAL] = LoadTexture2D(m_FilePathDefaultTextures + L"default_normal.dds");
-	matTextures[E_TEXTURE2D_TYPE::EMISSIVE] = LoadTexture2D(m_FilePathDefaultTextures + L"default_emissive.dds");
-	matTextures[E_TEXTURE2D_TYPE::OPACITY] = LoadTexture2D(m_FilePathDefaultTextures + L"default_opacity.dds");
+	matTextures[E_TEXTURE2D_TYPE::METALLIC]  = LoadTexture2D(m_FilePathDefaultTextures + L"default_metallic.dds");
+	matTextures[E_TEXTURE2D_TYPE::NORMAL]	 = LoadTexture2D(m_FilePathDefaultTextures + L"default_normal.dds");
+	matTextures[E_TEXTURE2D_TYPE::EMISSIVE]  = LoadTexture2D(m_FilePathDefaultTextures + L"default_emissive.dds");
+	matTextures[E_TEXTURE2D_TYPE::OPACITY]	 = LoadTexture2D(m_FilePathDefaultTextures + L"default_opacity.dds");
 
 	std::wstring matName = L"DefaultMaterial";
 	Material* material = new Material(&matName, &matTextures);
-	m_LoadedMaterials[matName].first = false;
-	m_LoadedMaterials[matName].second = material;
+	m_LoadedMaterials[matName] = material;
 }
 
 AssetLoader::~AssetLoader()
@@ -103,7 +130,7 @@ AssetLoader::~AssetLoader()
 	// For every Material
 	for (auto material : m_LoadedMaterials)
 	{
-		delete material.second.second;
+		delete material.second;
 	}
 
 	// For every model
@@ -156,7 +183,7 @@ Model* AssetLoader::LoadModel(const std::wstring& path)
 	m_LoadedModels[path].first = false;
 
 	processModel(assimpScene, &meshes, &materials, path);
-	m_LoadedModels[path].second = new Model(&path, &meshes, &materials);
+	m_LoadedModels[path].second = new Model(&path, &meshes, &materials, m_pDevice);
 
 	return m_LoadedModels[path].second;
 }
@@ -345,8 +372,7 @@ Material* AssetLoader::loadMaterial(aiMaterial* mat, const std::wstring& folderP
 		}
 
 		Material* material = new Material(&matName, &matTextures);
-		m_LoadedMaterials[matName].first = false;
-		m_LoadedMaterials[matName].second = material;
+		m_LoadedMaterials[matName] = material;
 
 		return material;
 	}
@@ -357,7 +383,7 @@ Material* AssetLoader::loadMaterial(aiMaterial* mat, const std::wstring& folderP
 		{
 			//Log::PrintSeverity(Log::Severity::WARNING, "AssetLoader: Loaded same material name more than once, first loaded material will be used <%S>\n", matName.c_str());
 		}
-		return m_LoadedMaterials[matName].second;
+		return m_LoadedMaterials[matName];
 	}
 }
 

@@ -3,8 +3,8 @@
 
 #include "EngineMath.h"
 #include "../Camera/PerspectiveCamera.h"
-#include "../Renderer/Model/Transform.h"
-#include "../Renderer/Model/Mesh.h"
+#include "../Renderer/Geometry/Transform.h"
+#include "../Renderer/Geometry/Mesh.h"
 #include "../Renderer/Techniques/BoundingBoxPool.h"
 
 #include "../Renderer/Renderer.h"
@@ -42,7 +42,7 @@ void MousePicker::UpdateRay()
 	m_RayInWorldSpacePos = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 
 	//Transform 2D pick position on screen space to 3D ray in View space
-	DirectX::XMMATRIX camProjection = *static_cast<PerspectiveCamera*>(m_pPrimaryCamera)->GetProjection();
+	DirectX::XMMATRIX camProjection = *static_cast<PerspectiveCamera*>(m_pPrimaryCamera)->GetProjMatrix();
 	m_RayInWorldSpaceDir.m128_f32[0] =  (((2.0f * mousex) / w->GetScreenWidth())  - 1) / camProjection.r[0].m128_f32[0];
 	m_RayInWorldSpaceDir.m128_f32[1] = -(((2.0f * mousey) / w->GetScreenHeight()) - 1) / camProjection.r[1].m128_f32[1];
 	m_RayInWorldSpaceDir.m128_f32[2] = 1.0f;

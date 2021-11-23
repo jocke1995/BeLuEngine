@@ -10,9 +10,14 @@ unsigned int __stdcall Thread::threadFunc(void* threadParam)
 
 // Statistics info
 #ifdef DEBUG
-	std::stringstream ss;
-	ss << std::this_thread::get_id();
-	t->m_pStatistics->m_Id = std::stoull(ss.str());
+	{
+		std::unique_lock<std::mutex> lock(*(t->m_Mutex));
+
+		std::stringstream ss;
+		ss << std::this_thread::get_id();
+		t->m_pStatistics->m_Id = std::stoull(ss.str());
+	}
+	
 #endif
 
 	while (t->m_IsExiting == false)

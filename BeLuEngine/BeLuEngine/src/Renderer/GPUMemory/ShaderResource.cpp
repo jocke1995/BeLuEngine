@@ -36,12 +36,12 @@ ShaderResource::~ShaderResource()
     delete m_pSRV;
 }
 
-Resource* const ShaderResource::GetUploadResource() const
+Resource* ShaderResource::GetUploadResource() const
 {
     return m_pUploadResource;
 }
 
-const Resource* const ShaderResource::GetDefaultResource() const
+Resource* ShaderResource::GetDefaultResource() const
 {
     return m_pDefaultResource;
 }

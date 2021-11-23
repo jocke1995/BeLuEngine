@@ -20,8 +20,8 @@ public:
 	bool operator == (const ShaderResource& other);
 	bool operator != (const ShaderResource& other);
 
-	Resource* const GetUploadResource() const;
-	const Resource* const GetDefaultResource() const;
+	Resource* GetUploadResource() const;
+	Resource* GetDefaultResource() const;
 
 	const ShaderResourceView* const GetSRV() const;
 

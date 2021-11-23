@@ -3,17 +3,16 @@
 
 #include "../Misc/Log.h"
 
-#include "../RootSignature.h"
 #include "../Shader.h"
 
-ComputeState::ComputeState(ID3D12Device5* device, RootSignature* rootSignature, std::wstring& CSName, std::wstring& psoName)
+ComputeState::ComputeState(ID3D12Device5* device, ID3D12RootSignature* rootSignature, std::wstring& CSName, std::wstring& psoName)
 	:PipelineState(psoName)
 {
-	m_Cpsd.pRootSignature = rootSignature->GetRootSig();
+	m_Cpsd.pRootSignature = rootSignature;
 
 	m_pCS = createShader(CSName, E_SHADER_TYPE::CS);
 
-	ID3DBlob* csBlob = m_pCS->GetBlob();
+	IDxcBlob* csBlob = m_pCS->GetBlob();
 
 	m_Cpsd.CS.pShaderBytecode = csBlob->GetBufferPointer();
 	m_Cpsd.CS.BytecodeLength = csBlob->GetBufferSize();

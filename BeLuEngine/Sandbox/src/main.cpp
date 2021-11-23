@@ -6,6 +6,26 @@ Scene* SponzaScene(SceneManager* sm);
 void TestUpdateScene(SceneManager* sm, double dt);
 void SponzaUpdateScene(SceneManager* sm, double dt);
 
+// Temp
+#include "Misc/Multithreading/MultiThreadedTask.h"
+
+class TestAsyncThread : public MultiThreadedTask
+{
+public:
+    TestAsyncThread()
+        :MultiThreadedTask(F_THREAD_FLAGS::TEST)
+    {};
+
+    void Execute()
+    {
+        //while (true)
+        //{
+            Sleep(200);
+            //Log::Print("Async!\n");
+        //}
+    }
+};
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
 {
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
@@ -30,9 +50,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
    // Set scene
    sceneManager->SetScene(scene);
    
+   TestAsyncThread test1 = TestAsyncThread();
+
    Log::Print("Entering Game-Loop ...\n\n");
    while (!window->ExitWindow())
    {
+       // Async Test
+       //threadPool->AddTask(static_cast<MultiThreadedTask*>(&test1));
+
        // Temporary functions to test functionalities in the engine
        if (window->WasSpacePressed() == true)
        {
@@ -58,11 +83,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
            tc->GetTransform()->SetPosition(lightPos);
            bbc->Init();
    
-           plc->SetColor({ 10.0f, 5.0f, 5.0f });
-   
+           plc->SetColor({ 0.5f, 0.25f, 0.25f });
+           entity->Update(0);
+
            counter++;
    
            sceneManager->AddEntity(entity);
+
+           Log::Print("X: %f, Y:%f, Z: %f\n", position.x, position.y, position.z);
            /* ---------------------- SpotLightDynamic ---------------------- */
        }
        if (window->WasTabPressed() == true)
@@ -112,6 +140,7 @@ Scene* TestScene(SceneManager* sm)
     // Get the models needed
     Model* floorModel = al->LoadModel(L"../Vendor/Resources/Models/FloorPBR/floor.obj");
     Model* sphereModel = al->LoadModel(L"../Vendor/Resources/Models/SpherePBR/ball.obj");
+    Model* posterModel = al->LoadModel(L"../Vendor/Resources/Models/Poster/Poster.obj");
 
     /* ---------------------- Player ---------------------- */
     Entity* entity = (scene->AddEntity("player"));
@@ -119,6 +148,30 @@ Scene* TestScene(SceneManager* sm)
     ic = entity->AddComponent<component::InputComponent>();
     scene->SetPrimaryCamera(cc->GetCamera());
     /* ---------------------- Player ---------------------- */
+
+    /* ---------------------- Mirror ---------------------- */
+    entity = scene->AddEntity("Mirror");
+    mc = entity->AddComponent<component::ModelComponent>();
+    tc = entity->AddComponent<component::TransformComponent>();
+    bbc = entity->AddComponent <component::BoundingBoxComponent>();
+
+    mc->SetModel(posterModel);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
+    tc->GetTransform()->SetScale(30.0f);
+    tc->GetTransform()->SetRotationX(PI / 2);
+    tc->GetTransform()->SetRotationY(PI);
+    tc->GetTransform()->SetPosition(0, 30, 40);
+
+    MaterialData* sharedMatData = mc->GetMaterialAt(0)->GetSharedMaterialData();
+    sharedMatData->hasMetallicTexture = false;
+    sharedMatData->hasRoughnessTexture = false;
+    sharedMatData->hasNormalTexture = false;
+    sharedMatData->metallicValue = 0.99f;
+    sharedMatData->roughnessValue = 0.10f;
+
+    mc->UpdateMaterialRawBufferFromMaterial();
+    bbc->Init();
+    /* ---------------------- Mirror ---------------------- */
 
     /* ---------------------- Floor ---------------------- */
     entity = scene->AddEntity("floor");
@@ -137,57 +190,89 @@ Scene* TestScene(SceneManager* sm)
     entity = scene->AddEntity("sphere");
     mc = entity->AddComponent<component::ModelComponent>();
     tc = entity->AddComponent<component::TransformComponent>();
+    bbc = entity->AddComponent <component::BoundingBoxComponent>();
 
     mc->SetModel(sphereModel);
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
     tc->GetTransform()->SetScale(1.0f);
-    tc->GetTransform()->SetPosition(0, 4, 30);
+    tc->GetTransform()->SetPosition(0, 4, 0);
+
+    bbc->Init();
     /* ---------------------- Sphere ---------------------- */
 
-    /* ---------------------- Poster ---------------------- */
-    //entity = scene->AddEntity("poster");
-    //mc = entity->AddComponent<component::ModelComponent>();
-    //tc = entity->AddComponent<component::TransformComponent>();
-    //
-    //mc = entity->GetComponent<component::ModelComponent>();
-    //mc->SetModel(posterModel);
-    //mc->SetDrawFlag(FLAG_DRAW::DRAW_OPAQUE | FLAG_DRAW::GIVE_SHADOW);
-    //tc = entity->GetComponent<component::TransformComponent>();
-    //tc->GetTransform()->SetScale(2, 1, 2);
-    //tc->GetTransform()->SetRotationZ(-PI / 2);
-    //tc->GetTransform()->SetPosition(28.5f, 2.0f, 34.0f);
-    /* ---------------------- Poster ---------------------- */
+    /* ---------------------- Sphere ---------------------- */
+    entity = scene->AddEntity("sphere1");
+    mc = entity->AddComponent<component::ModelComponent>();
+    tc = entity->AddComponent<component::TransformComponent>();
+    bbc = entity->AddComponent<component::BoundingBoxComponent>();
 
-    /* ---------------------- SpotLightDynamic ---------------------- */
-    //entity = scene->AddEntity("spotLightDynamic");
-    //mc = entity->AddComponent<component::ModelComponent>();
-    //tc = entity->AddComponent<component::TransformComponent>();
-    //slc = entity->AddComponent<component::SpotLightComponent>(FLAG_LIGHT::CAST_SHADOW);
-    //
-    //float3 pos = { 5.0f, 20.0f, 5.0f };
-    //mc->SetModel(sphereModel);
-    //mc->SetDrawFlag(FLAG_DRAW::DRAW_OPAQUE | FLAG_DRAW::GIVE_SHADOW);
-    //tc->GetTransform()->SetScale(0.3f);
-    //tc->GetTransform()->SetPosition(pos.x, pos.y, pos.z);
-    //
-    ////slc->SetColor({ 0.0f, 1.0f, 0.0f });
-    //slc->SetAttenuation({ 1.0, 0.09f, 0.032f });
-    //slc->SetPosition(pos);
-    //slc->SetDirection({ 0.0f, -1.0f, 0.5f });
-    //slc->SetOuterCutOff(50.0f);
-    /* ---------------------- SpotLightDynamic ---------------------- */
+    mc->SetModel(sphereModel);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE);
 
-    /* ---------------------- dirLight ---------------------- */
-    //entity = scene->AddEntity("dirLight");
-    //dlc = entity->AddComponent<component::DirectionalLightComponent>(FLAG_LIGHT::CAST_SHADOW);
-    //dlc->SetColor({ 0.6f, 0.6f, 0.6f });
-    //dlc->SetDirection({ 1.0f, -1.0f, 0.0f });
-    //dlc->SetCameraTop(30.0f);
-    //dlc->SetCameraBot(-30.0f);
-    //dlc->SetCameraLeft(-70.0f);
-    //dlc->SetCameraRight(70.0f);
-    /* ---------------------- dirLight ---------------------- */
+    sharedMatData = mc->GetMaterialAt(0)->GetSharedMaterialData();
+    sharedMatData->hasMetallicTexture = false;
+    sharedMatData->hasRoughnessTexture = false;
+    sharedMatData->hasNormalTexture = false;
+    sharedMatData->metallicValue = 0.99f;
+    sharedMatData->roughnessValue = 0.10f;
+    tc->GetTransform()->SetScale(2.0f);
+    tc->GetTransform()->SetPosition(-5.0f, 11, 30);
 
+    mc->UpdateMaterialRawBufferFromMaterial();
+    bbc->Init();
+    mc->Update(0);
+
+    entity = scene->AddEntity("sphere2");
+    mc = entity->AddComponent<component::ModelComponent>();
+    tc = entity->AddComponent<component::TransformComponent>();
+    bbc = entity->AddComponent<component::BoundingBoxComponent>();
+
+    mc->SetModel(sphereModel);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
+
+    sharedMatData = mc->GetMaterialAt(0)->GetSharedMaterialData();
+    sharedMatData->hasMetallicTexture = false;
+    sharedMatData->hasRoughnessTexture = false;
+    sharedMatData->hasNormalTexture = false;
+    sharedMatData->metallicValue = 0.99f;
+    sharedMatData->roughnessValue = 0.10f;
+    tc->GetTransform()->SetScale(1.0f);
+    tc->GetTransform()->SetPosition(15, 4, 4);
+
+    mc->UpdateMaterialRawBufferFromMaterial();
+    bbc->Init();
+    mc->Update(0);
+
+
+    entity = scene->AddEntity("sphere3");
+    mc = entity->AddComponent<component::ModelComponent>();
+    tc = entity->AddComponent<component::TransformComponent>();
+    bbc = entity->AddComponent<component::BoundingBoxComponent>();
+
+    mc->SetModel(sphereModel);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
+
+    sharedMatData = mc->GetMaterialAt(0)->GetSharedMaterialData();
+    sharedMatData->hasMetallicTexture = false;
+    sharedMatData->hasRoughnessTexture = false;
+    sharedMatData->hasNormalTexture = false;
+    sharedMatData->metallicValue = 0.99f;
+    sharedMatData->roughnessValue = 0.10f;
+    tc->GetTransform()->SetScale(1.0f);
+    tc->GetTransform()->SetPosition(15, 7, 7);
+
+    mc->UpdateMaterialRawBufferFromMaterial();
+    bbc->Init();
+    mc->Update(0);
+    /* ---------------------- Sphere ---------------------- */
+    entity = scene->AddEntity("dirLight1");
+
+    dlc = entity->AddComponent<component::DirectionalLightComponent>();
+    dlc->SetColor({ 0.1f, 0.25f, 0.3f });
+    dlc->SetDirection({ -1.0f, -2.0f, 0.03f });
+    dlc->SetIntensity(5.0f);
+
+    dlc->Update(0);
     /* ---------------------- Update Function ---------------------- */
     scene->SetUpdateScene(&TestUpdateScene);
     return scene;
@@ -212,6 +297,8 @@ Scene* SponzaScene(SceneManager* sm)
     // Get the models needed
     Model* sponza = al->LoadModel(L"../Vendor/Resources/Scenes/Sponza/textures_pbr/sponza.obj");
     Model* sphereModel = al->LoadModel(L"../Vendor/Resources/Models/SpherePBR/ball.obj");
+    Model* boxModel = al->LoadModel(L"../Vendor/Resources/Models/CubePBR/cube.obj");
+    Model* posterModel = al->LoadModel(L"../Vendor/Resources/Models/Poster/Poster.obj");
 
     /* ---------------------- Player ---------------------- */
     Entity* entity = (scene->AddEntity("player"));
@@ -219,6 +306,56 @@ Scene* SponzaScene(SceneManager* sm)
     ic = entity->AddComponent<component::InputComponent>();
     scene->SetPrimaryCamera(cc->GetCamera());
     /* ---------------------- Player ---------------------- */
+
+    /* ---------------------- Mirror1 ---------------------- */
+    entity = scene->AddEntity("Mirror1");
+    mc = entity->AddComponent<component::ModelComponent>();
+    tc = entity->AddComponent<component::TransformComponent>();
+    bbc = entity->AddComponent <component::BoundingBoxComponent>();
+
+    mc->SetModel(posterModel);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
+    tc->GetTransform()->SetScale(6.0f);
+    //tc->GetTransform()->SetRotationX(PI/2 + 0.5);
+    //tc->GetTransform()->SetRotationY(PI / 4);
+    tc->GetTransform()->SetRotationZ(PI / 2);
+    tc->GetTransform()->SetPosition(55, 4.5, 0);
+
+    MaterialData* sharedMatData = mc->GetMaterialAt(0)->GetSharedMaterialData();
+    sharedMatData->hasMetallicTexture = false;
+    sharedMatData->hasRoughnessTexture = false;
+    sharedMatData->hasNormalTexture = false;
+    sharedMatData->metallicValue = 0.99f;
+    sharedMatData->roughnessValue = 0.10f;
+
+    mc->UpdateMaterialRawBufferFromMaterial();
+    bbc->Init();
+    /* ---------------------- Mirror1 ---------------------- */
+
+    /* ---------------------- Mirror2 ---------------------- */
+    entity = scene->AddEntity("Mirror2");
+    mc = entity->AddComponent<component::ModelComponent>();
+    tc = entity->AddComponent<component::TransformComponent>();
+    bbc = entity->AddComponent <component::BoundingBoxComponent>();
+
+    mc->SetModel(posterModel);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
+    tc->GetTransform()->SetScale(6.0f);
+    //tc->GetTransform()->SetRotationX(PI/2 + 0.5);
+    tc->GetTransform()->SetRotationY(PI);
+    tc->GetTransform()->SetRotationZ(PI / 2);
+    tc->GetTransform()->SetPosition(-55, 4.5, 0);
+
+    sharedMatData = mc->GetMaterialAt(0)->GetSharedMaterialData();
+    sharedMatData->hasMetallicTexture = false;
+    sharedMatData->hasRoughnessTexture = false;
+    sharedMatData->hasNormalTexture = false;
+    sharedMatData->metallicValue = 0.99f;
+    sharedMatData->roughnessValue = 0.10f;
+
+    mc->UpdateMaterialRawBufferFromMaterial();
+    bbc->Init();
+    /* ---------------------- Mirror2 ---------------------- */
 
     /* ---------------------- Sponza ---------------------- */
     entity = scene->AddEntity("sponza");
@@ -228,102 +365,78 @@ Scene* SponzaScene(SceneManager* sm)
     mc->SetModel(sponza);
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
     tc->GetTransform()->SetPosition({0.0f, 0.0f, 0.0f});
-    tc->GetTransform()->SetScale(0.3f, 0.3f, 0.3f);
+    tc->GetTransform()->SetScale(0.05f, 0.05f, 0.05f);
     /* ---------------------- Sponza ---------------------- */
+
+    
+
+
+    entity = scene->AddEntity("box");
+    mc = entity->AddComponent<component::ModelComponent>();
+    tc = entity->AddComponent<component::TransformComponent>();
+    bbc = entity->AddComponent<component::BoundingBoxComponent>();
+
+    mc->SetModel(boxModel);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
+    tc->GetTransform()->SetPosition(0, 4.0f, 1.0f);
+    bbc->Init();
+
 
     /* ---------------------- Sphere ---------------------- */
     entity = scene->AddEntity("sphere1");
     mc = entity->AddComponent<component::ModelComponent>();
     tc = entity->AddComponent<component::TransformComponent>();
-    bbc = entity->AddComponent<component::BoundingBoxComponent>(F_BOUNDING_BOX_FLAGS::PICKING);
-
+    bbc = entity->AddComponent<component::BoundingBoxComponent>();
+    
     mc->SetModel(sphereModel);
-    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_TRANSPARENT | F_DRAW_FLAGS::NO_DEPTH );
     tc->GetTransform()->SetScale(1.0f);
-    tc->GetTransform()->SetPosition(5, 15, 5);
+    tc->GetTransform()->SetPosition(15, 1, 1);
     bbc->Init();
 
     entity = scene->AddEntity("sphere2");
     mc = entity->AddComponent<component::ModelComponent>();
     tc = entity->AddComponent<component::TransformComponent>();
-    bbc = entity->AddComponent<component::BoundingBoxComponent>(F_BOUNDING_BOX_FLAGS::PICKING);
+    bbc = entity->AddComponent<component::BoundingBoxComponent>();
 
     mc->SetModel(sphereModel);
+    //mc->SetMaterialAt(0, ballMatCopy);
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
     tc->GetTransform()->SetScale(1.0f);
-    tc->GetTransform()->SetPosition(5, 25, 10);
+    tc->GetTransform()->SetPosition(15, 4, 4);
     bbc->Init();
 
     entity = scene->AddEntity("sphere3");
     mc = entity->AddComponent<component::ModelComponent>();
     tc = entity->AddComponent<component::TransformComponent>();
-    bbc = entity->AddComponent<component::BoundingBoxComponent>(F_BOUNDING_BOX_FLAGS::PICKING);
+    bbc = entity->AddComponent<component::BoundingBoxComponent>();
 
     mc->SetModel(sphereModel);
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
     tc->GetTransform()->SetScale(1.0f);
-    tc->GetTransform()->SetPosition(5, 35, 15);
+    tc->GetTransform()->SetPosition(15, 7, 7);
     bbc->Init();
     /* ---------------------- Sphere ---------------------- */
 
-    /* ---------------------- Braziers ---------------------- */
-    entity = scene->AddEntity("Brazier0");
-    mc = entity->AddComponent<component::ModelComponent>();
-    tc = entity->AddComponent<component::TransformComponent>();
-    plc = entity->AddComponent<component::PointLightComponent>(F_LIGHT_FLAGS::USE_TRANSFORM_POSITION);
-    
-    mc->SetModel(sphereModel);
-    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
-    tc->GetTransform()->SetScale(0.3f);
-    tc->GetTransform()->SetPosition({ -185.0f, 40.0f, 66.0f });
-    plc->SetColor({ 0.0f, 0.0f, 15.0f });
-    
-    entity = scene->AddEntity("Brazier1");
-    mc = entity->AddComponent<component::ModelComponent>();
-    tc = entity->AddComponent<component::TransformComponent>();
-    plc = entity->AddComponent<component::PointLightComponent>(F_LIGHT_FLAGS::USE_TRANSFORM_POSITION);
-    
-    mc->SetModel(sphereModel);
-    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
-    tc->GetTransform()->SetScale(0.3f);
-    tc->GetTransform()->SetPosition({ -185.0f, 40.0f, -42.6f });
-    plc->SetColor({ 10.0f, 0.0f, 10.0f });
-
-    entity = scene->AddEntity("Brazier2");
+    /* ---------------------- Lights ---------------------- */
+    entity = scene->AddEntity("pl1");
     mc = entity->AddComponent<component::ModelComponent>();
     tc = entity->AddComponent<component::TransformComponent>();
     plc = entity->AddComponent<component::PointLightComponent>(F_LIGHT_FLAGS::USE_TRANSFORM_POSITION);
 
     mc->SetModel(sphereModel);
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
-    tc->GetTransform()->SetScale(0.3f);
-    tc->GetTransform()->SetPosition({ 146.0f, 40.0f, 66.0f });
-    plc->SetColor({ 0.0f, 15.0f, 0.0f });
+    tc->GetTransform()->SetScale(0.5f);
+    tc->GetTransform()->SetPosition({ 25.0f, 16.2f, 7.5f});
+    plc->SetColor({ 1.0f, 1.0f, 1.0f });
+    plc->SetIntensity(1.0f);
+    entity->Update(0);
 
-    entity = scene->AddEntity("Brazier3");
-    mc = entity->AddComponent<component::ModelComponent>();
-    tc = entity->AddComponent<component::TransformComponent>();
-    plc = entity->AddComponent<component::PointLightComponent>(F_LIGHT_FLAGS::USE_TRANSFORM_POSITION);
-
-    mc->SetModel(sphereModel);
-    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
-    tc->GetTransform()->SetScale(0.3f);
-    tc->GetTransform()->SetPosition({ 146.0f, 40.0f, -42.6f });
-    plc->SetColor({ 15.0f, 0.0f, 0.0f });
-    /* ---------------------- Braziers ---------------------- */
-
-    /* ---------------------- dirLight ---------------------- */
     entity = scene->AddEntity("dirLight");
     dlc = entity->AddComponent<component::DirectionalLightComponent>(F_LIGHT_FLAGS::CAST_SHADOW);
-    dlc->SetColor({ 0.17, 0.25, 0.3f});
-    dlc->SetCameraDistance(300);
+    dlc->SetColor({ 0.1f, 0.25f, 0.3f });
     dlc->SetDirection({ -1.0f, -2.0f, 0.03f });
-    dlc->SetCameraTop(800.0f);
-    dlc->SetCameraBot(-550.0f);
-    dlc->SetCameraLeft(-550.0f);
-    dlc->SetCameraRight(550.0f);
-    dlc->SetCameraFarZ(5000);
-    /* ---------------------- dirLight ---------------------- */
+    /* ---------------------- Lights ---------------------- */
 
     /* ---------------------- Update Function ---------------------- */
     scene->SetUpdateScene(&SponzaUpdateScene);

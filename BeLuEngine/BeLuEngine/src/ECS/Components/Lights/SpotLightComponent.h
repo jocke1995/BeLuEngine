@@ -23,9 +23,6 @@ namespace component
 		void SetPosition(float3 position);
 		void SetDirection(float3 direction);
 		void SetOuterCutOff(float degrees);
-		void SetAspectRatio(float aspectRatio);
-		void SetNearPlaneDistance(float nearZ);
-		void SetFarPlaneDistance(float farZ);
 
 		void* GetLightData() const override;
 	

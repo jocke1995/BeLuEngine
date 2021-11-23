@@ -2,8 +2,7 @@
 #include "PointLightComponent.h"
 
 // Renderer
-#include "../Renderer/Model/Transform.h"
-#include "../Renderer/Camera/BaseCamera.h"
+#include "../Renderer/Geometry/Transform.h"
 #include "../Renderer/Renderer.h"
 
 // ECS
@@ -12,7 +11,7 @@
 namespace component
 {
 	PointLightComponent::PointLightComponent(Entity* parent, unsigned int lightFlags)
-		:Component(parent), Light(E_CAMERA_TYPE::PERSPECTIVE, lightFlags)
+		:Component(parent), Light(lightFlags)
 	{
 		m_pPointLight = new PointLight();
 		m_pPointLight->position = { 0.0f,  2.0f,  0.0f, 0.0f };
@@ -27,11 +26,6 @@ namespace component
 
 	void PointLightComponent::Update(double dt)
 	{
-		if (m_pCamera != nullptr)
-		{
-			m_pCamera->Update(dt);
-		}
-
 		if (m_LightFlags & static_cast<unsigned int>(F_LIGHT_FLAGS::USE_TRANSFORM_POSITION))
 		{
 			Transform* tc = m_pParent->GetComponent<TransformComponent>()->GetTransform();

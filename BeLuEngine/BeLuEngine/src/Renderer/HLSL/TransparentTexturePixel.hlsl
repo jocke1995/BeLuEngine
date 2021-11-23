@@ -1,47 +1,54 @@
-#include "LightCalculations.hlsl"
+#include "LightCalculations.hlsl"	// This includes "DescriptorBindings.hlsl"
 
 struct VS_OUT
 {
 	float4 pos      : SV_Position;
 	float4 worldPos : WPos;
 	float2 uv       : UV;
+	float3 norm		: NORM;
 	float3x3 tbn	: TBN;
 };
 
-ConstantBuffer<DirectionalLight> dirLight[]	: register(b0, space0);
-ConstantBuffer<PointLight> pointLight[]		: register(b0, space1);
-ConstantBuffer<SpotLight> spotLight[]		: register(b0, space2);
-
-ConstantBuffer<CB_PER_OBJECT_STRUCT> cbPerObject : register(b1, space3);
-ConstantBuffer<CB_PER_FRAME_STRUCT>  cbPerFrame  : register(b4, space3);
-
 float4 PS_main(VS_OUT input) : SV_TARGET0
 {
+	MaterialData matData = globalRawBufferMaterial.Load<MaterialData>(slotInfo.materialIndex * sizeof(MaterialData));
+
 	// Sample from textures
 	float2 uvScaled = float2(input.uv.x, input.uv.y);
-	float4 albedo	= textures[cbPerObject.info.textureAlbedo	].Sample(Anisotropic16_Wrap, uvScaled);
-	float roughness = textures[cbPerObject.info.textureRoughness].Sample(Anisotropic16_Wrap, uvScaled).r;
-	float metallic	= textures[cbPerObject.info.textureMetallic	].Sample(Anisotropic16_Wrap, uvScaled).r;
-	float4 emissive = textures[cbPerObject.info.textureEmissive	].Sample(Anisotropic16_Wrap, uvScaled);
-	float opacity	= textures[cbPerObject.info.textureOpacity	].Sample(Anisotropic16_Wrap, uvScaled).r;
-	float4 normal	= textures[cbPerObject.info.textureNormal	].Sample(Anisotropic16_Wrap, uvScaled);
+	float4 albedo = textures[matData.textureAlbedo].Sample(Anisotropic16_Wrap, uvScaled);
+	float roughness = matData.hasRoughnessTexture ? textures[matData.textureRoughness].Sample(Anisotropic16_Wrap, uvScaled).r : matData.roughnessValue;
+	float metallic = matData.hasMetallicTexture ? textures[matData.textureMetallic].Sample(Anisotropic16_Wrap, uvScaled).r : matData.metallicValue;
+	float4 emissive = matData.hasEmissiveTexture ? textures[matData.textureEmissive].Sample(Anisotropic16_Wrap, uvScaled) : matData.emissiveValue;
+	float opacity   = matData.hasOpacityTexture ? textures[matData.textureOpacity].Sample(Anisotropic16_Wrap, uvScaled).r : matData.opacityValue;
 
-	normal = (2.0f * normal) - 1.0f;
-	normal = float4(normalize(mul(normal.xyz, input.tbn)), 1.0f);
+	float3 normal = float3(0.0f, 0.0f, 0.0f);
+	if (matData.hasNormalTexture)
+	{
+		normal = textures[matData.textureNormal].Sample(Anisotropic16_Wrap, uvScaled).xyz;
+		normal = normalize((2.0f * normal) - 1.0f);
+		normal = float4(normalize(mul(normal.xyz, input.tbn)), 0.0f);
+	}
+	else
+	{
+		normal = float4(input.norm.xyz, 0.0f);
+	}
 
 	float3 camPos = cbPerFrame.camPos;
 	float3 finalColor = float3(0.0f, 0.0f, 0.0f);
 	float3 viewDir = normalize(camPos - input.worldPos.xyz);
 
+
 	// Linear interpolation
 	float3 baseReflectivity = lerp(float3(0.04f, 0.04f, 0.04f), albedo.rgb, metallic);
 
+	LightHeader lHeader = rawBufferLights.Load<LightHeader>(0);
 	// DirectionalLight contributions
-	for (unsigned int i = 0; i < cbPerScene.Num_Dir_Lights; i++)
+	for (unsigned int i = 0; i < lHeader.numDirectionalLights; i++)
 	{
-		int index = cbPerScene.dirLightIndices[i].x;
+		DirectionalLight dirLight = rawBufferLights.Load<DirectionalLight>(sizeof(LightHeader) + i * sizeof(DirectionalLight));
+
 		finalColor += CalcDirLight(
-			dirLight[index],
+			dirLight,
 			camPos,
 			viewDir,
 			input.worldPos,
@@ -53,12 +60,12 @@ float4 PS_main(VS_OUT input) : SV_TARGET0
 	}
 
 	// PointLight contributions
-	for (unsigned int i = 0; i < cbPerScene.Num_Point_Lights; i++)
+	for (unsigned int i = 0; i < lHeader.numPointLights; i++)
 	{
-		int index = cbPerScene.pointLightIndices[i].x;
+		PointLight pointLight = rawBufferLights.Load<PointLight>(sizeof(LightHeader) + DIR_LIGHT_MAXOFFSET + i * sizeof(PointLight));
 
-		finalColor += CalcPointLight(
-			pointLight[index],
+		float3 lightColor = CalcPointLight(
+			pointLight,
 			camPos,
 			viewDir,
 			input.worldPos,
@@ -67,14 +74,20 @@ float4 PS_main(VS_OUT input) : SV_TARGET0
 			roughness,
 			normal.rgb,
 			baseReflectivity);
+
+		float3 lightDir = normalize(pointLight.position.xyz - input.worldPos.xyz);
+		float shadowFactor = RT_ShadowFactor(input.worldPos.xyz, 0.1f, length(pointLight.position.xyz - input.worldPos.xyz) - 1.0, lightDir, sceneBVH[cbPerScene.rayTracingBVH]);
+
+		finalColor += lightColor * shadowFactor;
 	}
 
 	// SpotLight  contributions
-	for (unsigned int i = 0; i < cbPerScene.Num_Spot_Lights; i++)
+	for (unsigned int i = 0; i < lHeader.numSpotLights; i++)
 	{
-		int index = cbPerScene.spotLightIndices[i].x;
+		SpotLight spotLight = rawBufferLights.Load<SpotLight>(sizeof(LightHeader) + DIR_LIGHT_MAXOFFSET + POINT_LIGHT_MAXOFFSET + i * sizeof(SpotLight));
+
 		finalColor += CalcSpotLight(
-			spotLight[index],
+			spotLight,
 			camPos,
 			viewDir,
 			input.worldPos,

@@ -1,4 +1,4 @@
-#include "../../Headers/GPU_Structs.h"
+#include "DescriptorBindings.hlsl"
 
 struct VS_OUT
 {
@@ -6,16 +6,10 @@ struct VS_OUT
 	float2 uv   : UV;
 };
 
-// Source descriptorHeapIndex is stored in albedo
-ConstantBuffer<CB_PER_OBJECT_STRUCT> descriptorHeapIndices : register(b1, space3);
-
-Texture2D<float4> textures[]   : register (t0);
-
-SamplerState linear_Wrap	: register (s5);
-
 float4 PS_main(VS_OUT input) : SV_TARGET0
 {
-	float4 outputFiltered = textures[descriptorHeapIndices.info.textureAlbedo].Sample(linear_Wrap, input.uv);
+	// Source descriptorHeapIndex is stored in albedo
+	float4 outputFiltered = textures[dhIndices.index0].Sample(MIN_MAG_MIP_LINEAR_Wrap, input.uv);
 
 	return outputFiltered;
 }

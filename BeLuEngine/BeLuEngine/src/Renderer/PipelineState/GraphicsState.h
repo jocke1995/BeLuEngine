@@ -11,7 +11,7 @@ class GraphicsState : public PipelineState
 {
 public:
 	GraphicsState(ID3D12Device5* device,
-		RootSignature* rootSignature,
+		ID3D12RootSignature* rootSignature,
 		const std::wstring& VSName, const std::wstring& PSName,
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC* gpsd,
 		const std::wstring& psoName);

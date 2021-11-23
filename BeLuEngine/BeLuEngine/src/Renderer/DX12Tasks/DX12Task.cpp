@@ -8,6 +8,24 @@
 #include "../DescriptorHeap.h"
 #include "../GPUMemory/GPUMemory.h"
 
+
+// PIX Events
+#include "WinPixEventRuntime/pix3.h"
+ScopedPIXEvent::ScopedPIXEvent(const char* nameOfTask, ID3D12GraphicsCommandList* cl)
+{
+	assert(cl);
+
+	m_pCommandList = cl;
+	UINT64 col = 0;
+	PIXBeginEvent(m_pCommandList, col, nameOfTask);
+}
+
+ScopedPIXEvent::~ScopedPIXEvent()
+{
+	PIXEndEvent(m_pCommandList);
+}
+
+// DX12 TASK
 DX12Task::DX12Task(
 	ID3D12Device5* device,
 	E_COMMAND_INTERFACE_TYPE interfaceType,
@@ -38,7 +56,7 @@ void DX12Task::SetDescriptorHeaps(std::map<E_DESCRIPTOR_HEAP_TYPE, DescriptorHea
 	m_DescriptorHeaps = dhs;
 }
 
-void DX12Task::AddResource(std::string id, const Resource* resource)
+void DX12Task::AddResource(std::string id, Resource* resource)
 {
 	if (m_Resources[id] == nullptr)
 	{
