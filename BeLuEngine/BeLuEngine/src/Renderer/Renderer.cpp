@@ -1169,7 +1169,7 @@ bool Renderer::createDevice()
 #ifdef DEBUG
 		//Enable the D3D12 debug layer.
 		ID3D12Debug3* debugController = nullptr;
-		HMODULE mD3D12 = LoadLibrary(L"D3D12.dll"); // ist�llet f�r GetModuleHandle
+		HMODULE mD3D12 = LoadLibrary(L"D3D12.dll");
 
 		PFN_D3D12_GET_DEBUG_INTERFACE f = (PFN_D3D12_GET_DEBUG_INTERFACE)GetProcAddress(mD3D12, "D3D12GetDebugInterface");
 		if (SUCCEEDED(f(IID_PPV_ARGS(&debugController))))
@@ -1179,7 +1179,7 @@ bool Renderer::createDevice()
 #if !defined(USE_NSIGHT_AFTERMATH)
 			EngineStatistics::GetIM_CommonStats().m_DebugLayerActive = true;
 			debugController->EnableDebugLayer();
-			debugController->SetEnableGPUBasedValidation(DX12VALIDATIONGLAYER);
+			debugController->SetEnableGPUBasedValidation(ENABLE_VALIDATIONGLAYER);
 #endif
 		}
 

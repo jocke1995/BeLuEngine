@@ -30,10 +30,10 @@ enum E_GLOBAL_ROOTSIGNATURE
 	NUM_PARAMS
 };
 
-enum E_GRAPHICS_API
+enum class E_GRAPHICS_API
 {
-	D3D12_API,
-	VULKAN_API,		// One bright day.. :)
+	D3D12,
+	VULKAN,		// One bright day.. :)
 	NUM_PARAMS
 };
 

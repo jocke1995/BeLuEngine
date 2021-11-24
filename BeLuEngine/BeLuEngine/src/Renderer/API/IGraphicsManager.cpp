@@ -22,14 +22,13 @@ IGraphicsManager::~IGraphicsManager()
 IGraphicsManager* IGraphicsManager::Create(const E_GRAPHICS_API graphicsApi)
 {
     BL_ASSERT(&m_sInstance);
-    BL_ASSERT(graphicsApi >= 0 && graphicsApi < E_GRAPHICS_API::NUM_PARAMS);
 
-    if (graphicsApi == E_GRAPHICS_API::D3D12_API)
+    if (graphicsApi == E_GRAPHICS_API::D3D12)
     {
         m_sInstance = new D3D12GraphicsManager();
         return m_sInstance;
     }
-    else if (graphicsApi == E_GRAPHICS_API::VULKAN_API)
+    else if (graphicsApi == E_GRAPHICS_API::VULKAN)
     {
         BL_ASSERT_MESSAGE(false, "Vulkan not yet supported!\n");
         return nullptr;
