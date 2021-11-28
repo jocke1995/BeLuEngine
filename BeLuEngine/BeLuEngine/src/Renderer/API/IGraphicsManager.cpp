@@ -16,7 +16,6 @@ IGraphicsManager* IGraphicsManager::GetInstance()
 
 IGraphicsManager::~IGraphicsManager()
 {
-    BL_SAFE_DELETE(m_sInstance);
 }
 
 IGraphicsManager* IGraphicsManager::Create(const E_GRAPHICS_API graphicsApi)
@@ -38,4 +37,9 @@ IGraphicsManager* IGraphicsManager::Create(const E_GRAPHICS_API graphicsApi)
         BL_ASSERT_MESSAGE(false, "Invalid Graphics API");
         return nullptr;
     }
+}
+
+void IGraphicsManager::Destroy()
+{
+    BL_SAFE_DELETE(m_sInstance);
 }

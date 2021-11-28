@@ -16,6 +16,8 @@
 
 TODO(To be replaced by a D3D12Manager some point in the future(needed to access RootSig));
 #include "../Renderer.h"
+// TODO ABSTRACTION
+#include "../API/D3D12/D3D12GraphicsManager.h"
 
 TransparentRenderTask::TransparentRenderTask(	
 	ID3D12Device5* device,
@@ -40,21 +42,25 @@ void TransparentRenderTask::Execute()
 	const RenderTargetView* gBufferAlbedoRenderTarget = m_RenderTargetViews["finalColorBuffer"];
 	ID3D12Resource1* gBufferAlbedoResource = gBufferAlbedoRenderTarget->GetResource()->GetID3D12Resource1();
 
+	DescriptorHeap* mainHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
+	DescriptorHeap* rtvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetRTVDescriptorHeap();
+	DescriptorHeap* dsvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetDSVDescriptorHeap();
+
 	m_pCommandInterface->Reset(m_CommandInterfaceIndex);
 	{
 		ScopedPixEvent(TransparentPass, commandList);
 
 		commandList->SetGraphicsRootSignature(m_pRootSig);
 
-		DescriptorHeap* descriptorHeap_CBV_UAV_SRV = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV];
+		DescriptorHeap* descriptorHeap_CBV_UAV_SRV = mainHeap;
 		ID3D12DescriptorHeap* d3d12DescriptorHeap = descriptorHeap_CBV_UAV_SRV->GetID3D12DescriptorHeap();
 		commandList->SetDescriptorHeaps(1, &d3d12DescriptorHeap);
 
 		commandList->SetGraphicsRootDescriptorTable(dtCBV, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
 		commandList->SetGraphicsRootDescriptorTable(dtSRV, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
 
-		DescriptorHeap* renderTargetHeap = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV];
-		DescriptorHeap* depthBufferHeap = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::DSV];
+		DescriptorHeap* renderTargetHeap = rtvHeap;
+		DescriptorHeap* depthBufferHeap = dsvHeap;
 
 		unsigned int renderTargetIndex = gBufferAlbedoRenderTarget->GetDescriptorHeapIndex();
 		D3D12_CPU_DESCRIPTOR_HANDLE cdh = renderTargetHeap->GetCPUHeapAt(renderTargetIndex);

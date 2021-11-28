@@ -103,13 +103,11 @@ public:
 
 	static void SetBackBufferIndex(int backBufferIndex);
 	static void SetCommandInterfaceIndex(int index);
-	void SetDescriptorHeaps(std::map<E_DESCRIPTOR_HEAP_TYPE, DescriptorHeap*> dhs);
 
 	void AddResource(std::string id, Resource* resource);
 
 	CommandInterface* const GetCommandInterface() const;
 protected:
-	std::map<E_DESCRIPTOR_HEAP_TYPE, DescriptorHeap*> m_DescriptorHeaps;
 	std::map<std::string, Resource*> m_Resources;
 
 	CommandInterface* m_pCommandInterface = nullptr;

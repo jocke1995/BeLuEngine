@@ -13,7 +13,8 @@
 #include "../ImGUI/imgui_impl_win32.h"
 #include "../ImGUI/imgui_impl_dx12.h"
 
-
+// TODO ABSTRACTION
+#include "../API/D3D12/D3D12GraphicsManager.h"
 ImGuiRenderTask::ImGuiRenderTask(
 	ID3D12Device5* device,
 	ID3D12RootSignature* rootSignature,
@@ -38,11 +39,14 @@ void ImGuiRenderTask::Execute()
 	const RenderTargetView* swapChainRenderTarget = m_pSwapChain->GetRTV(m_BackBufferIndex);
 	Resource* swapChainResource = swapChainRenderTarget->GetResource();
 
+	DescriptorHeap* mainHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
+	DescriptorHeap* rtvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetRTVDescriptorHeap();
+
 	m_pCommandInterface->Reset(m_CommandInterfaceIndex);
 	{
 		ScopedPixEvent(ImGuiPass, commandList);
 
-		DescriptorHeap* descriptorHeap_CBV_UAV_SRV = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV];
+		DescriptorHeap* descriptorHeap_CBV_UAV_SRV = mainHeap;
 		ID3D12DescriptorHeap* d3d12DescriptorHeap = descriptorHeap_CBV_UAV_SRV->GetID3D12DescriptorHeap();
 		commandList->SetDescriptorHeaps(1, &d3d12DescriptorHeap);
 
@@ -52,7 +56,7 @@ void ImGuiRenderTask::Execute()
 			D3D12_RESOURCE_STATE_PRESENT,
 			D3D12_RESOURCE_STATE_RENDER_TARGET);
 
-		DescriptorHeap* renderTargetHeap = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV];
+		DescriptorHeap* renderTargetHeap = rtvHeap;
 
 		const unsigned int swapChainIndex = swapChainRenderTarget->GetDescriptorHeapIndex();
 		D3D12_CPU_DESCRIPTOR_HANDLE cdh = renderTargetHeap->GetCPUHeapAt(swapChainIndex);

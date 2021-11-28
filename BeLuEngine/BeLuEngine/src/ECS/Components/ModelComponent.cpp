@@ -12,6 +12,9 @@
 
 #include "../Renderer/GPUMemory/GPUMemory.h"
 
+// TODO ABSTRACTION
+#include "../Renderer/API/D3D12/D3D12GraphicsManager.h"
+
 namespace component
 {
 	ModelComponent::ModelComponent(Entity* parent)
@@ -50,19 +53,23 @@ namespace component
 		rawBufferDesc.Buffer.StructureByteStride = 0;
 		rawBufferDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
 		
-		Renderer& r = Renderer::GetInstance();
+		ID3D12Device5* m_pDevice5 = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pDevice5;
+		DescriptorHeap* mainHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
+		DescriptorHeap* rtvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetRTVDescriptorHeap();
+		DescriptorHeap* dsvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetDSVDescriptorHeap();
+
 		std::string fileName = std::filesystem::path(to_string(m_pModel->GetPath())).filename().string();
 		m_SlotInfoByteAdressBuffer = new ShaderResource(
-			r.m_pDevice5, sizeof(SlotInfo) * numMeshes,
+			m_pDevice5, sizeof(SlotInfo) * numMeshes,
 			to_wstring(fileName) + L"_RAWBUFFER_SLOTINFO",
 			&rawBufferDesc,
-			r.m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
+			mainHeap);
 
 		m_MaterialByteAdressBuffer = new ShaderResource(
-			r.m_pDevice5, sizeof(MaterialData) * numMeshes,
+			m_pDevice5, sizeof(MaterialData) * numMeshes,
 			to_wstring(fileName) + L"_RAWBUFFER_MATERIALDATA",
 			&rawBufferDesc,
-			r.m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
+			mainHeap);
 	}
 
 	void ModelComponent::SetDrawFlag(unsigned int drawFlag)

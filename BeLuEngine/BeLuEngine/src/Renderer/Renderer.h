@@ -187,8 +187,6 @@ private:
 	void submitToCpft(std::tuple<Resource*, Resource*, const void*>* Upload_Default_Data);
 	void clearSpecificCpft(Resource* upload);
 
-	DescriptorHeap* getCBVSRVUAVdHeap() const;
-
 	ThreadPool* m_pThreadPool = nullptr;
 
 	// Camera
@@ -196,18 +194,10 @@ private:
 
 	unsigned int m_FrameCounter = 0;
 
-	// Window
-	Window* m_pWindow;
-
-	// Device
-	ID3D12Device5* m_pDevice5 = nullptr;
-
-	// Adapters used for getting VRAM and RAM
-	IDXGIAdapter4* m_pAdapter4 = nullptr;
 	HANDLE m_ProcessHandle = nullptr;
 
-	// CommandQueues
-	std::map<E_COMMAND_INTERFACE_TYPE, ID3D12CommandQueue*> m_CommandQueues;
+	// Window
+	Window* m_pWindow;
 
 	// -------------- RenderTargets -------------- 
 	std::pair<RenderTarget*, ShaderResourceView*> m_FinalColorBuffer;
@@ -257,21 +247,12 @@ private:
 	CB_PER_FRAME_STRUCT* m_pCbPerFrameData = nullptr;
 	ConstantBuffer* m_pCbPerFrame = nullptr;
 
-	// Commandlists holders
-	std::vector<ID3D12CommandList*> m_DirectCommandLists[NUM_SWAP_BUFFERS];
-	std::vector<ID3D12CommandList*> m_ImGuiCommandLists[NUM_SWAP_BUFFERS];
-
-	// DescriptorHeaps
-	std::map<E_DESCRIPTOR_HEAP_TYPE, DescriptorHeap*> m_DescriptorHeaps = {};
-
 	// Fences
 	HANDLE m_EventHandle = nullptr;
 	ID3D12Fence1* m_pFenceFrame = nullptr;
 	UINT64 m_FenceFrameValue = 0;
 
 	void setRenderTasksPrimaryCamera();
-	bool createDevice();
-	void createCommandQueues();
 	void createSwapChain();
 	void createMainDSV();
 	void createRootSignature();
@@ -280,7 +261,6 @@ private:
 	void initRenderTasks();
 	void createRawBufferForLights();
 	void setRenderTasksRenderComponents();
-	void createDescriptorHeaps();
 	void createFences();
 	void waitForFrame(unsigned int framesToBeAhead = NUM_SWAP_BUFFERS - 1);
 	void waitForGPU();

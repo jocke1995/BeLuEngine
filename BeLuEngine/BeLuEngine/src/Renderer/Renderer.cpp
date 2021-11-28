@@ -81,6 +81,10 @@
 // Event
 #include "../Events/EventBus.h"
 
+
+// ABSTRACTION TEMP
+#include "API/D3D12/D3D12GraphicsManager.h"
+
 Renderer::Renderer()
 {
 	EventBus::GetInstance().Subscribe(this, &Renderer::toggleFullscreen);
@@ -89,7 +93,7 @@ Renderer::Renderer()
 	m_ComputeTasks.resize(E_COMPUTE_TASK_TYPE::NR_OF_COMPUTETASKS);
 	m_DX12Tasks.resize(E_DX12_TASK_TYPE::NR_OF_DX12TASKS);
 	m_DXRTasks.resize(E_DXR_TASK_TYPE::NR_OF_DXRTASKS);
-
+	
 	// Processinfo
 	// Create handle to process
 	DWORD currentProcessID = GetCurrentProcessId();
@@ -109,7 +113,6 @@ Renderer& Renderer::GetInstance()
 
 Renderer::~Renderer()
 {
-
 }
 
 void Renderer::deleteRenderer()
@@ -123,9 +126,6 @@ void Renderer::deleteRenderer()
 		Log::Print("Failed To Close Handle... ErrorCode: %d\n", GetLastError());
 	}
 
-	BL_SAFE_RELEASE(&m_CommandQueues[E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE]);
-	BL_SAFE_RELEASE(&m_CommandQueues[E_COMMAND_INTERFACE_TYPE::COMPUTE_TYPE]);
-	BL_SAFE_RELEASE(&m_CommandQueues[E_COMMAND_INTERFACE_TYPE::COPY_TYPE]);
 
 	BL_SAFE_RELEASE(&m_pGlobalRootSig);
 
@@ -151,11 +151,6 @@ void Renderer::deleteRenderer()
 	delete m_pBloomResources;
 	delete m_pMainDepthStencil;
 
-	for (auto& pair : m_DescriptorHeaps)
-	{
-		delete pair.second;
-	}
-
 	for (ComputeTask* computeTask : m_ComputeTasks)
 		delete computeTask;
 
@@ -170,8 +165,6 @@ void Renderer::deleteRenderer()
 
 	for (DXRTask* dxrTask : m_DXRTasks)
 		delete dxrTask;
-
-	BL_SAFE_RELEASE(&m_pDevice5);
 
 	delete m_pMousePicker;
 
@@ -196,21 +189,13 @@ void Renderer::InitD3D12(Window* window, HINSTANCE hInstance, ThreadPool* thread
 	m_pThreadPool = threadPool;
 	m_pWindow = window;
 
-	// Create Device
-	if (!createDevice())
-	{
-		BL_LOG_CRITICAL("Failed to Create Device\n");
-	}
-
-	// Create CommandQueues (copy, compute and direct)
-	createCommandQueues();
-
-	// Create DescriptorHeaps
-	createDescriptorHeaps();
-
 	// Fence for WaitForFrame();
 	createFences();
 
+	// ABSTRACTION TEMP
+	ID3D12Device5* m_pDevice5 = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pDevice5;
+	DescriptorHeap* mainHeap= static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
+	DescriptorHeap* rtvHeap= static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetRTVDescriptorHeap();
 
 #pragma region RenderTargets
 	// Main color renderTarget (used until the swapchain RT is drawn to)
@@ -218,13 +203,13 @@ void Renderer::InitD3D12(Window* window, HINSTANCE hInstance, ThreadPool* thread
 		m_pDevice5,
 		m_pWindow->GetScreenWidth(), m_pWindow->GetScreenHeight(),
 		L"finalColorBuffer_RESOURCE",
-		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV],
+		rtvHeap,
 		D3D12_RESOURCE_STATE_RENDER_TARGET);
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	m_FinalColorBuffer.second = new ShaderResourceView(
 		m_pDevice5,
-		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV],
+		mainHeap,
 		m_FinalColorBuffer.first->GetDefaultResource());
 
 	// GBufferAlbedo
@@ -232,13 +217,13 @@ void Renderer::InitD3D12(Window* window, HINSTANCE hInstance, ThreadPool* thread
 		m_pDevice5,
 		m_pWindow->GetScreenWidth(), m_pWindow->GetScreenHeight(),
 		L"gBufferAlbedo_RESOURCE",
-		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV],
+		rtvHeap,
 		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 	srvDesc = {};
 	m_GBufferAlbedo.second = new ShaderResourceView(
 		m_pDevice5,
-		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV],
+		mainHeap,
 		m_GBufferAlbedo.first->GetDefaultResource());
 
 	// Normal
@@ -246,12 +231,12 @@ void Renderer::InitD3D12(Window* window, HINSTANCE hInstance, ThreadPool* thread
 		m_pDevice5,
 		m_pWindow->GetScreenWidth(), m_pWindow->GetScreenHeight(),
 		L"gBufferNormal_RESOURCE",
-		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV],
+		rtvHeap,
 		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 	m_GBufferNormal.second = new ShaderResourceView(
 		m_pDevice5,
-		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV],
+		mainHeap,
 		m_GBufferNormal.first->GetDefaultResource());
 
 	// Material Properties (Roughness, Metallic, glow..
@@ -259,12 +244,12 @@ void Renderer::InitD3D12(Window* window, HINSTANCE hInstance, ThreadPool* thread
 		m_pDevice5,
 		m_pWindow->GetScreenWidth(), m_pWindow->GetScreenHeight(),
 		L"gBufferMaterials_RESOURCE",
-		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV],
+		rtvHeap,
 		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 	m_GBufferMaterialProperties.second = new ShaderResourceView(
 		m_pDevice5,
-		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV],
+		mainHeap,
 		m_GBufferMaterialProperties.first->GetDefaultResource());
 
 	// Emissive Color
@@ -272,12 +257,12 @@ void Renderer::InitD3D12(Window* window, HINSTANCE hInstance, ThreadPool* thread
 		m_pDevice5,
 		m_pWindow->GetScreenWidth(), m_pWindow->GetScreenHeight(),
 		L"gBufferEmissive_RESOURCE",
-		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV],
+		rtvHeap,
 		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 	m_GBufferEmissive.second = new ShaderResourceView(
 		m_pDevice5,
-		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV],
+		mainHeap,
 		m_GBufferEmissive.first->GetDefaultResource());
 
 #pragma region ReflectionTexture
@@ -306,7 +291,7 @@ void Renderer::InitD3D12(Window* window, HINSTANCE hInstance, ThreadPool* thread
 
 		m_ReflectionTexture.uav = new UnorderedAccessView(
 			m_pDevice5,
-			m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV],
+			mainHeap,
 			&uavDescReflection,
 			m_ReflectionTexture.resource);
 
@@ -319,7 +304,7 @@ void Renderer::InitD3D12(Window* window, HINSTANCE hInstance, ThreadPool* thread
 
 		m_ReflectionTexture.srv = new ShaderResourceView(
 			m_pDevice5,
-			m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV],
+			mainHeap,
 			&srvDescReflection,
 			m_ReflectionTexture.resource);
 	}
@@ -330,8 +315,8 @@ void Renderer::InitD3D12(Window* window, HINSTANCE hInstance, ThreadPool* thread
 
 	// Bloom
 	m_pBloomResources = new Bloom(m_pDevice5, 
-		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV],
-		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV],
+		rtvHeap,
+		mainHeap,
 		m_pSwapChain
 		);
 
@@ -351,18 +336,17 @@ void Renderer::InitD3D12(Window* window, HINSTANCE hInstance, ThreadPool* thread
 	createFullScreenQuad();
 
 	// Init Assetloader
-	AssetLoader* al = AssetLoader::Get(m_pDevice5, m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV], m_pWindow);
+	AssetLoader* al = AssetLoader::Get(m_pDevice5, mainHeap, m_pWindow);
 
 	// Init BoundingBoxPool
-	BoundingBoxPool::Get(m_pDevice5, m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
+	BoundingBoxPool::Get(m_pDevice5, mainHeap);
 
 	// Allocate memory for cbPerScene
 	m_pCbPerScene = new ConstantBuffer(
 		m_pDevice5, 
 		sizeof(CB_PER_SCENE_STRUCT),
 		L"CB_PER_SCENE",
-		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]
-		);
+		mainHeap);
 	
 	m_pCbPerSceneData = new CB_PER_SCENE_STRUCT();
 
@@ -371,8 +355,7 @@ void Renderer::InitD3D12(Window* window, HINSTANCE hInstance, ThreadPool* thread
 		m_pDevice5,
 		sizeof(CB_PER_FRAME_STRUCT),
 		L"CB_PER_FRAME",
-		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]
-	);
+		mainHeap);
 
 	m_pCbPerFrameData = new CB_PER_FRAME_STRUCT();
 
@@ -390,14 +373,14 @@ void Renderer::InitD3D12(Window* window, HINSTANCE hInstance, ThreadPool* thread
 	io.DisplaySize.x = m_pWindow->GetScreenWidth();
 	io.DisplaySize.y = m_pWindow->GetScreenHeight();
 
-	unsigned int imGuiTextureIndex = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]->GetNextDescriptorHeapIndex(1);
+	unsigned int imGuiTextureIndex = mainHeap->GetNextDescriptorHeapIndex(1);
 
 	// Setup Platform/Renderer bindings
 	ImGui_ImplWin32_Init(*m_pWindow->GetHwnd());
 	ImGui_ImplDX12_Init(m_pDevice5, NUM_SWAP_BUFFERS,
-		DXGI_FORMAT_R16G16B16A16_FLOAT, m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]->GetID3D12DescriptorHeap(),
-		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]->GetCPUHeapAt(imGuiTextureIndex),
-		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]->GetGPUHeapAt(imGuiTextureIndex));
+		DXGI_FORMAT_R16G16B16A16_FLOAT, mainHeap->GetID3D12DescriptorHeap(),
+		mainHeap->GetCPUHeapAt(imGuiTextureIndex),
+		mainHeap->GetGPUHeapAt(imGuiTextureIndex));
 #endif
 	createRawBufferForLights();
 
@@ -449,6 +432,8 @@ void Renderer::Update(double dt)
 		i++;
 	}
 
+	// ABSTRACTION TEMP
+	ID3D12Device5* m_pDevice5 = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pDevice5;
 	pTLAS->SetupAccelerationStructureForBuilding(m_pDevice5, true);
 }
 
@@ -601,9 +586,11 @@ void Renderer::ExecuteMT()
 	// Wait for the threads which records the commandlists to complete
 	m_pThreadPool->WaitForThreads(F_THREAD_FLAGS::RENDER);
 
-	m_CommandQueues[E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->ExecuteCommandLists(
-		m_DirectCommandLists[commandInterfaceIndex].size(), 
-		m_DirectCommandLists[commandInterfaceIndex].data());
+	ID3D12CommandQueue* pDirectQueue = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pGraphicsCommandQueue;
+
+	pDirectQueue->ExecuteCommandLists(
+		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_DirectCommandLists[commandInterfaceIndex].size(), 
+		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_DirectCommandLists[commandInterfaceIndex].data());
 
 	/* --------------------------------------------------------------- */
 
@@ -618,13 +605,13 @@ void Renderer::ExecuteMT()
 	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::IMGUI];
 	renderTask->Execute();
 
-	m_CommandQueues[E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->ExecuteCommandLists(
-		m_ImGuiCommandLists[commandInterfaceIndex].size(),
-		m_ImGuiCommandLists[commandInterfaceIndex].data());
+	pDirectQueue->ExecuteCommandLists(
+		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_ImGuiCommandLists[commandInterfaceIndex].size(),
+		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_ImGuiCommandLists[commandInterfaceIndex].data());
 #endif
 
 	// Wait if the CPU is to far ahead of the gpu
-	m_CommandQueues[E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->Signal(m_pFenceFrame, m_FenceFrameValue);
+	pDirectQueue->Signal(m_pFenceFrame, m_FenceFrameValue);
 	waitForFrame(0);
 	m_FenceFrameValue++;
 
@@ -735,9 +722,11 @@ void Renderer::ExecuteST()
 	}
 
 	/* ----------------------------- DEVELOPERMODE CommandLists ----------------------------- */
-	m_CommandQueues[E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->ExecuteCommandLists(
-		m_DirectCommandLists[commandInterfaceIndex].size(),
-		m_DirectCommandLists[commandInterfaceIndex].data());
+	ID3D12CommandQueue* pDirectQueue = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pGraphicsCommandQueue;
+
+	pDirectQueue->ExecuteCommandLists(
+		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_DirectCommandLists[commandInterfaceIndex].size(),
+		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_DirectCommandLists[commandInterfaceIndex].data());
 
 	/* --------------------------------------------------------------- */
 
@@ -753,13 +742,13 @@ void Renderer::ExecuteST()
 	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::IMGUI];
 	renderTask->Execute();
 
-	m_CommandQueues[E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->ExecuteCommandLists(
-		m_ImGuiCommandLists[commandInterfaceIndex].size(),
-		m_ImGuiCommandLists[commandInterfaceIndex].data());
+	pDirectQueue->ExecuteCommandLists(
+		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_ImGuiCommandLists[commandInterfaceIndex].size(),
+		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_ImGuiCommandLists[commandInterfaceIndex].data());
 #endif
 
 	// Wait if the CPU is to far ahead of the gpu
-	m_CommandQueues[E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->Signal(m_pFenceFrame, m_FenceFrameValue);
+	pDirectQueue->Signal(m_pFenceFrame, m_FenceFrameValue);
 	waitForFrame(0);
 	m_FenceFrameValue++;
 
@@ -790,6 +779,9 @@ void Renderer::ExecuteST()
 
 void Renderer::InitModelComponent(component::ModelComponent* mc)
 {
+	ID3D12Device5* m_pDevice5 = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pDevice5;
+	DescriptorHeap* mainHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
+
 	component::TransformComponent* tc = mc->GetParent()->GetComponent<component::TransformComponent>();
 
 	// Submit to codt
@@ -802,7 +794,7 @@ void Renderer::InitModelComponent(component::ModelComponent* mc)
 	if (tc != nullptr)
 	{
 		Transform* t = tc->GetTransform();
-		t->m_pCB = new ConstantBuffer(m_pDevice5, sizeof(DirectX::XMMATRIX) * 2, L"Transform", m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
+		t->m_pCB = new ConstantBuffer(m_pDevice5, sizeof(DirectX::XMMATRIX) * 2, L"Transform", mainHeap);
 		ConstantBuffer* cb = t->m_pCB;
 
 		t->UpdateWorldMatrix();
@@ -1128,11 +1120,6 @@ void Renderer::clearSpecificCpft(Resource* upload)
 	cpft->ClearSpecific(upload);
 }
 
-DescriptorHeap* Renderer::getCBVSRVUAVdHeap() const
-{
-	return m_DescriptorHeaps.at(E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV);
-}
-
 Entity* const Renderer::GetPickedEntity() const
 {
 	return m_pPickedEntity;
@@ -1162,180 +1149,13 @@ void Renderer::setRenderTasksPrimaryCamera()
 	}
 }
 
-bool Renderer::createDevice()
-{
-	bool deviceCreated = false;
-
-#ifdef DEBUG
-		//Enable the D3D12 debug layer.
-		ID3D12Debug3* debugController = nullptr;
-		HMODULE mD3D12 = LoadLibrary(L"D3D12.dll");
-
-		PFN_D3D12_GET_DEBUG_INTERFACE f = (PFN_D3D12_GET_DEBUG_INTERFACE)GetProcAddress(mD3D12, "D3D12GetDebugInterface");
-		if (SUCCEEDED(f(IID_PPV_ARGS(&debugController))))
-		{
-
-		// USE_NSIGHT_AFTERMATH
-#if !defined(USE_NSIGHT_AFTERMATH)
-			EngineStatistics::GetIM_CommonStats().m_DebugLayerActive = true;
-			debugController->EnableDebugLayer();
-			debugController->SetEnableGPUBasedValidation(ENABLE_VALIDATIONGLAYER);
-#endif
-		}
-
-		IDXGIInfoQueue* dxgiInfoQueue = nullptr;
-		unsigned int dxgiFactoryFlags = 0;
-		if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&dxgiInfoQueue)))) {
-			dxgiFactoryFlags = DXGI_CREATE_FACTORY_DEBUG;
-
-			// Break on severity
-			dxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_ERROR, true);
-			dxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_CORRUPTION, true);
-
-			// Break on errors
-			dxgiInfoQueue->SetBreakOnCategory(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_CATEGORY_UNKNOWN, true);
-			dxgiInfoQueue->SetBreakOnCategory(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_CATEGORY_MISCELLANEOUS, true);
-			dxgiInfoQueue->SetBreakOnCategory(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_CATEGORY_INITIALIZATION, true);
-			dxgiInfoQueue->SetBreakOnCategory(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_CATEGORY_CLEANUP, true);
-			dxgiInfoQueue->SetBreakOnCategory(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_CATEGORY_COMPILATION, true);
-			dxgiInfoQueue->SetBreakOnCategory(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_CATEGORY_STATE_CREATION, true);
-			dxgiInfoQueue->SetBreakOnCategory(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_CATEGORY_STATE_SETTING, true);
-			dxgiInfoQueue->SetBreakOnCategory(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_CATEGORY_STATE_GETTING, true);
-			dxgiInfoQueue->SetBreakOnCategory(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_CATEGORY_RESOURCE_MANIPULATION, true);
-			dxgiInfoQueue->SetBreakOnCategory(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_CATEGORY_EXECUTION, true);
-			dxgiInfoQueue->SetBreakOnCategory(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_CATEGORY_SHADER, true);
-		}
-
-		BL_SAFE_RELEASE(&debugController);
-#endif
-	
-	IDXGIFactory6* factory = nullptr;
-	IDXGIAdapter1* adapter = nullptr;
-	CreateDXGIFactory(IID_PPV_ARGS(&factory));
-
-	for (unsigned int adapterIndex = 0;; ++adapterIndex)
-	{
-		adapter = nullptr;
-		if (DXGI_ERROR_NOT_FOUND == factory->EnumAdapters1(adapterIndex, &adapter))
-		{
-			break; // No more adapters
-		}
-	
-		// Check to see if the adapter supports Direct3D 12, but don't create the actual device yet.
-
-		ID3D12Device5* pDevice = nullptr;
-		HRESULT hr = D3D12CreateDevice(adapter, D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&pDevice));
-
-		if (SUCCEEDED(hr))
-		{
-			DXGI_ADAPTER_DESC adapterDesc = {};
-			adapter->GetDesc(&adapterDesc);
-			EngineStatistics::GetIM_CommonStats().m_Adapter = to_string(std::wstring(adapterDesc.Description));
-			EngineStatistics::GetIM_CommonStats().m_API = "DirectX 12"; // TEMP: Specifiy when creating application later
-
-			D3D12_FEATURE_DATA_D3D12_OPTIONS5 features5 = {};
-			hr = pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &features5, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS5));
-			BL_SAFE_RELEASE(&pDevice);
-
-			if (SUCCEEDED(hr))
-			{
-				if (features5.RaytracingTier == D3D12_RAYTRACING_TIER_1_1)
-				{
-					BL_LOG_INFO("Raytracing tier 1.1 supported!\n");
-					break; // found one!
-				}
-			}
-		}
-	
-		BL_SAFE_RELEASE(&adapter);
-	}
-	
-	if (FAILED(adapter->QueryInterface(__uuidof(IDXGIAdapter4), reinterpret_cast<void**>(&m_pAdapter4))))
-	{
-		BL_LOG_CRITICAL("Failed to queryInterface for adapter4\n");
-	}
-
-	if (adapter)
-	{
-#if defined(USE_NSIGHT_AFTERMATH)
-		m_GpuCrashTracker.Initialize();
-#endif
-
-		HRESULT hr = S_OK;
-		//Create the actual device.
-		if (SUCCEEDED(hr = D3D12CreateDevice(adapter, D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&m_pDevice5))))
-		{
-			deviceCreated = true;
-
-			// Init aftermathflags
-#if defined(USE_NSIGHT_AFTERMATH)
-		const uint32_t aftermathFlags =
-			GFSDK_Aftermath_FeatureFlags_EnableMarkers |             // Enable event marker tracking.
-			GFSDK_Aftermath_FeatureFlags_EnableResourceTracking |    // Enable tracking of resources.
-			GFSDK_Aftermath_FeatureFlags_CallStackCapturing |        // Capture call stacks for all draw calls, compute dispatches, and resource copies.
-			GFSDK_Aftermath_FeatureFlags_GenerateShaderDebugInfo;    // Generate debug information for shaders.
-
-		AFTERMATH_CHECK_ERROR(GFSDK_Aftermath_DX12_Initialize(
-			GFSDK_Aftermath_Version_API,
-			aftermathFlags,
-			m_pDevice5));
-#endif
-		}
-		else
-		{
-			BL_LOG_CRITICAL("Failed to create Device\n");
-		}
-	
-		BL_SAFE_RELEASE(&adapter);
-	}
-	else
-	{
-		//Create warp m_pDevice if no adapter was found.
-		factory->EnumWarpAdapter(IID_PPV_ARGS(&adapter));
-		D3D12CreateDevice(adapter, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&m_pDevice5));
-	}
-
-	BL_SAFE_RELEASE(&factory);
-
-	return deviceCreated;
-}
-
-void Renderer::createCommandQueues()
-{
-	// Direct
-	D3D12_COMMAND_QUEUE_DESC cqdDirect = {};
-	cqdDirect.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-	HRESULT hr;
-	hr = m_pDevice5->CreateCommandQueue(&cqdDirect, IID_PPV_ARGS(&m_CommandQueues[E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE]));
-	if (FAILED(hr))
-	{
-		BL_LOG_CRITICAL("Failed to Create Direct CommandQueue\n");
-	}
-	m_CommandQueues[E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->SetName(L"DirectQueue");
-
-	// Compute
-	D3D12_COMMAND_QUEUE_DESC cqdCompute = {};
-	cqdCompute.Type = D3D12_COMMAND_LIST_TYPE_COMPUTE;
-	hr = m_pDevice5->CreateCommandQueue(&cqdCompute, IID_PPV_ARGS(&m_CommandQueues[E_COMMAND_INTERFACE_TYPE::COMPUTE_TYPE]));
-	if (FAILED(hr))
-	{
-		BL_LOG_CRITICAL("Failed to Create Compute CommandQueue\n");
-	}
-	m_CommandQueues[E_COMMAND_INTERFACE_TYPE::COMPUTE_TYPE]->SetName(L"ComputeQueue");
-
-	// Copy
-	D3D12_COMMAND_QUEUE_DESC cqdCopy = {};
-	cqdCopy.Type = D3D12_COMMAND_LIST_TYPE_COPY;
-	hr = m_pDevice5->CreateCommandQueue(&cqdCopy, IID_PPV_ARGS(&m_CommandQueues[E_COMMAND_INTERFACE_TYPE::COPY_TYPE]));
-	if (FAILED(hr))
-	{
-		BL_LOG_CRITICAL("Failed to Create Copy CommandQueue\n");
-	}
-	m_CommandQueues[E_COMMAND_INTERFACE_TYPE::COPY_TYPE]->SetName(L"CopyQueue");
-}
-
 void Renderer::createSwapChain()
 {
+	ID3D12Device5* m_pDevice5 = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pDevice5;
+	DescriptorHeap* mainHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
+	DescriptorHeap* rtvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetRTVDescriptorHeap();
+	ID3D12CommandQueue* pDirectQueue = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pGraphicsCommandQueue;
+
 	unsigned int resolutionWidth = m_pWindow->GetScreenWidth();
 	unsigned int resolutionHeight = m_pWindow->GetScreenHeight();
 
@@ -1346,13 +1166,19 @@ void Renderer::createSwapChain()
 		m_pDevice5,
 		m_pWindow->GetHwnd(),
 		resolutionWidth, resolutionHeight,
-		m_CommandQueues[E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE],
-		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV],
-		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
+		pDirectQueue,
+		rtvHeap,
+		mainHeap);
 }
 
 void Renderer::createMainDSV()
 {
+	ID3D12Device5* m_pDevice5 = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pDevice5;
+	DescriptorHeap* mainHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
+	DescriptorHeap* rtvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetRTVDescriptorHeap();
+	DescriptorHeap* dsvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetDSVDescriptorHeap();
+	ID3D12CommandQueue* pDirectQueue = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pGraphicsCommandQueue;
+
 	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
 	dsvDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
@@ -1372,8 +1198,8 @@ void Renderer::createMainDSV()
 		resolutionWidth, resolutionHeight,
 		L"MainDSV",
 		&dsvDesc,
-		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::DSV],
-		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
+		dsvHeap,
+		mainHeap);
 }
 
 void Renderer::createRootSignature()
@@ -1666,6 +1492,12 @@ void Renderer::createRootSignature()
 		BL_LOG_CRITICAL("%s\n", errorMsg);
 	}
 
+	ID3D12Device5* m_pDevice5 = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pDevice5;
+	DescriptorHeap* mainHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
+	DescriptorHeap* rtvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetRTVDescriptorHeap();
+	DescriptorHeap* dsvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetDSVDescriptorHeap();
+	ID3D12CommandQueue* pDirectQueue = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pGraphicsCommandQueue;
+
 	hr = m_pDevice5->CreateRootSignature(
 		0,
 		m_pBlob->GetBufferPointer(),
@@ -1684,6 +1516,12 @@ void Renderer::createRootSignature()
 
 void Renderer::createFullScreenQuad()
 {
+	ID3D12Device5* m_pDevice5 = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pDevice5;
+	DescriptorHeap* mainHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
+	DescriptorHeap* rtvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetRTVDescriptorHeap();
+	DescriptorHeap* dsvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetDSVDescriptorHeap();
+	ID3D12CommandQueue* pDirectQueue = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pGraphicsCommandQueue;
+
 	std::vector<Vertex> vertexVector;
 	std::vector<unsigned int> indexVector;
 
@@ -1714,7 +1552,7 @@ void Renderer::createFullScreenQuad()
 	m_pFullScreenQuad = new Mesh(&vertexVector, &indexVector);
 
 	// init dx12 resources
-	m_pFullScreenQuad->Init(m_pDevice5, m_DescriptorHeaps.at(E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV));
+	m_pFullScreenQuad->Init(m_pDevice5, mainHeap);
 }
 
 void Renderer::updateMousePicker()
@@ -1769,6 +1607,11 @@ void Renderer::updateMousePicker()
 
 void Renderer::initRenderTasks()
 {
+	ID3D12Device5* m_pDevice5 = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pDevice5;
+	DescriptorHeap* mainHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
+	DescriptorHeap* rtvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetRTVDescriptorHeap();
+	DescriptorHeap* dsvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetDSVDescriptorHeap();
+	ID3D12CommandQueue* pDirectQueue = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pGraphicsCommandQueue;
 
 #pragma region DXRTasks
 	DX12Task* blasTask = new BottomLevelRenderTask(m_pDevice5, F_THREAD_FLAGS::RENDER, L"BL_RenderTask_CommandList");
@@ -1787,7 +1630,6 @@ void Renderer::initRenderTasks()
 	reflectionTask->AddResource("cbPerScene", m_pCbPerScene->GetDefaultResource());
 	reflectionTask->AddResource("rawBufferLights", Light::m_pLightsRawBuffer->GetDefaultResource());
 	reflectionTask->AddResource("mainDSV", const_cast<Resource*>(m_pMainDepthStencil->GetDefaultResource()));	// To transition from depthWrite to depthRead
-	reflectionTask->SetDescriptorHeaps(m_DescriptorHeaps);
 	
 #pragma endregion DXRTasks
 
@@ -1844,7 +1686,6 @@ void Renderer::initRenderTasks()
 
 	DepthPrePassRenderTask->SetMainDepthStencil(m_pMainDepthStencil);
 	DepthPrePassRenderTask->SetSwapChain(m_pSwapChain);
-	DepthPrePassRenderTask->SetDescriptorHeaps(m_DescriptorHeaps);
 
 #pragma endregion DepthPrePass
 
@@ -1903,7 +1744,6 @@ void Renderer::initRenderTasks()
 
 	deferredGeometryRenderTask->SetMainDepthStencil(m_pMainDepthStencil);
 	deferredGeometryRenderTask->SetSwapChain(m_pSwapChain);
-	deferredGeometryRenderTask->SetDescriptorHeaps(m_DescriptorHeaps);
 	deferredGeometryRenderTask->AddResource("cbPerScene", m_pCbPerScene->GetDefaultResource());
 	deferredGeometryRenderTask->AddRenderTargetView("gBufferAlbedo", m_GBufferAlbedo.first->GetRTV());
 	deferredGeometryRenderTask->AddRenderTargetView("gBufferNormal", m_GBufferNormal.first->GetRTV());
@@ -1993,8 +1833,6 @@ void Renderer::initRenderTasks()
 
 	static_cast<DeferredLightRenderTask*>(deferredLightRenderTask)->SetFullScreenQuad(m_pFullScreenQuad);
 
-	deferredLightRenderTask->SetDescriptorHeaps(m_DescriptorHeaps);
-
 #pragma endregion DeferredRenderingLight
 
 #pragma region DownSampleTextureTask
@@ -2037,7 +1875,6 @@ void Renderer::initRenderTasks()
 		F_THREAD_FLAGS::RENDER);
 	
 	static_cast<DownSampleRenderTask*>(downSampleTask)->SetFullScreenQuad(m_pFullScreenQuad);
-	downSampleTask->SetDescriptorHeaps(m_DescriptorHeaps);
 	static_cast<DownSampleRenderTask*>(downSampleTask)->SetFullScreenQuadInSlotInfo();
 
 #pragma endregion DownSampleTextureTask
@@ -2076,12 +1913,11 @@ void Renderer::initRenderTasks()
 		L"OutlinedVertex.hlsl", L"OutlinedPixel.hlsl",
 		&gpsdOutliningVector,
 		L"outliningScaledPSO",
-		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV],
+		mainHeap,
 		F_THREAD_FLAGS::RENDER);
 	
 	outliningRenderTask->SetMainDepthStencil(m_pMainDepthStencil);
 	outliningRenderTask->AddRenderTargetView("finalColorBuffer", m_FinalColorBuffer.first->GetRTV());
-	outliningRenderTask->SetDescriptorHeaps(m_DescriptorHeaps);
 
 #pragma endregion ModelOutlining
 
@@ -2179,7 +2015,6 @@ void Renderer::initRenderTasks()
 	transparentRenderTask->AddResource("rawBufferLights", Light::m_pLightsRawBuffer->GetDefaultResource());
 	transparentRenderTask->SetMainDepthStencil(m_pMainDepthStencil);
 	transparentRenderTask->AddRenderTargetView("finalColorBuffer", m_FinalColorBuffer.first->GetRTV());
-	transparentRenderTask->SetDescriptorHeaps(m_DescriptorHeaps);
 
 #pragma endregion Blend
 
@@ -2213,7 +2048,6 @@ void Renderer::initRenderTasks()
 		F_THREAD_FLAGS::RENDER);
 
 	wireFrameRenderTask->AddRenderTargetView("finalColorBuffer", m_FinalColorBuffer.first->GetRTV());
-	wireFrameRenderTask->SetDescriptorHeaps(m_DescriptorHeaps);
 #pragma endregion WireFrame
 
 #pragma region MergePass
@@ -2257,7 +2091,6 @@ void Renderer::initRenderTasks()
 	static_cast<MergeRenderTask*>(mergeTask)->AddSRVToMerge(m_FinalColorBuffer.second);
 	static_cast<MergeRenderTask*>(mergeTask)->AddSRVToMerge(m_ReflectionTexture.srv);
 	mergeTask->SetSwapChain(m_pSwapChain);
-	mergeTask->SetDescriptorHeaps(m_DescriptorHeaps);
 	static_cast<MergeRenderTask*>(mergeTask)->CreateSlotInfo();
 #pragma endregion MergePass
 
@@ -2271,7 +2104,6 @@ void Renderer::initRenderTasks()
 		F_THREAD_FLAGS::RENDER);
 
 	imGuiRenderTask->SetSwapChain(m_pSwapChain);
-	imGuiRenderTask->SetDescriptorHeaps(m_DescriptorHeaps);
 
 #pragma endregion IMGUIRENDERTASK
 
@@ -2293,8 +2125,6 @@ void Renderer::initRenderTasks()
 		m_pBloomResources->GetPingPongResource(1),
 		m_pBloomResources->GetBlurWidth(), m_pBloomResources->GetBlurHeight(),
 		F_THREAD_FLAGS::RENDER);
-
-	blurComputeTask->SetDescriptorHeaps(m_DescriptorHeaps);
 
 	// CopyTasks
 	CopyTask* copyPerFrameTask			= new CopyPerFrameTask(m_pDevice5, E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE, F_THREAD_FLAGS::RENDER, L"copyPerFrameCL");
@@ -2336,100 +2166,106 @@ void Renderer::initRenderTasks()
 	m_DXRTasks[E_DXR_TASK_TYPE::REFLECTIONS] = reflectionTask;
 
 	// Pushback in the order of execution
-
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
-		m_DirectCommandLists[i].push_back(copyOnDemandTask->GetCommandInterface()->GetCommandList(i));
+		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_DirectCommandLists[i].push_back(copyOnDemandTask->GetCommandInterface()->GetCommandList(i));
 	}
 
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
-		m_DirectCommandLists[i].push_back(copyPerFrameTask->GetCommandInterface()->GetCommandList(i));
+		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_DirectCommandLists[i].push_back(copyPerFrameTask->GetCommandInterface()->GetCommandList(i));
 	}
 
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
-		m_DirectCommandLists[i].push_back(copyPerFrameMatricesTask->GetCommandInterface()->GetCommandList(i));
+		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_DirectCommandLists[i].push_back(copyPerFrameMatricesTask->GetCommandInterface()->GetCommandList(i));
 	}
 
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
 		// Update the BLAS:es if any (synced-version)
-		m_DirectCommandLists[i].push_back(blasTask->GetCommandInterface()->GetCommandList(i));
+		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_DirectCommandLists[i].push_back(blasTask->GetCommandInterface()->GetCommandList(i));
 	}
 
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
 		// Update the TLAS every frame
-		m_DirectCommandLists[i].push_back(tlasTask->GetCommandInterface()->GetCommandList(i));
+		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_DirectCommandLists[i].push_back(tlasTask->GetCommandInterface()->GetCommandList(i));
 	}
 
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
-		m_DirectCommandLists[i].push_back(DepthPrePassRenderTask->GetCommandInterface()->GetCommandList(i));
+		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_DirectCommandLists[i].push_back(DepthPrePassRenderTask->GetCommandInterface()->GetCommandList(i));
 	}
 
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
-		m_DirectCommandLists[i].push_back(deferredGeometryRenderTask->GetCommandInterface()->GetCommandList(i));
+		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_DirectCommandLists[i].push_back(deferredGeometryRenderTask->GetCommandInterface()->GetCommandList(i));
 	}
 
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
-		m_DirectCommandLists[i].push_back(reflectionTask->GetCommandInterface()->GetCommandList(i));
+		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_DirectCommandLists[i].push_back(reflectionTask->GetCommandInterface()->GetCommandList(i));
 	}
 
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
-		m_DirectCommandLists[i].push_back(deferredLightRenderTask->GetCommandInterface()->GetCommandList(i));
+		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_DirectCommandLists[i].push_back(deferredLightRenderTask->GetCommandInterface()->GetCommandList(i));
 	}
 
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
-		m_DirectCommandLists[i].push_back(downSampleTask->GetCommandInterface()->GetCommandList(i));
+		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_DirectCommandLists[i].push_back(downSampleTask->GetCommandInterface()->GetCommandList(i));
 	}
 
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
-		m_DirectCommandLists[i].push_back(outliningRenderTask->GetCommandInterface()->GetCommandList(i));
+		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_DirectCommandLists[i].push_back(outliningRenderTask->GetCommandInterface()->GetCommandList(i));
 	}
 
 	if (DEVELOPERMODE_DRAWBOUNDINGBOX == true)
 	{
 		for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 		{
-			m_DirectCommandLists[i].push_back(wireFrameRenderTask->GetCommandInterface()->GetCommandList(i));
+			static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_DirectCommandLists[i].push_back(wireFrameRenderTask->GetCommandInterface()->GetCommandList(i));
 		}
 	}
 
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
-		m_DirectCommandLists[i].push_back(transparentRenderTask->GetCommandInterface()->GetCommandList(i));
+		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_DirectCommandLists[i].push_back(transparentRenderTask->GetCommandInterface()->GetCommandList(i));
 	}
 
 	// Compute shader to blur the RTV from forwardRenderTask
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
-		m_DirectCommandLists[i].push_back(blurComputeTask->GetCommandInterface()->GetCommandList(i));
+		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_DirectCommandLists[i].push_back(blurComputeTask->GetCommandInterface()->GetCommandList(i));
 	}
 
 	// Final pass (this pass will merge different textures together and put result in the swapchain backBuffer)
 	// This will be used for pp-effects such as bloom.
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
-		m_DirectCommandLists[i].push_back(mergeTask->GetCommandInterface()->GetCommandList(i));
+		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_DirectCommandLists[i].push_back(mergeTask->GetCommandInterface()->GetCommandList(i));
 	}
 
 	// -------------------------------------- GUI -------------------------------------------------
 	// Debug/ImGui
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
-		m_ImGuiCommandLists[i].push_back(imGuiRenderTask->GetCommandInterface()->GetCommandList(i));
+		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_ImGuiCommandLists[i].push_back(imGuiRenderTask->GetCommandInterface()->GetCommandList(i));
 	}
 }
 
 void Renderer::createRawBufferForLights()
 {
+	// TODO ABSTRACTION
+	ID3D12Device5* m_pDevice5 = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pDevice5;
+	DescriptorHeap* mainHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
+	DescriptorHeap* rtvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetRTVDescriptorHeap();
+	DescriptorHeap* dsvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetDSVDescriptorHeap();
+	ID3D12CommandQueue* pDirectQueue = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pGraphicsCommandQueue;
+
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
 	srvDesc.Buffer.FirstElement = 0;
@@ -2444,7 +2280,7 @@ void Renderer::createRawBufferForLights()
 				MAX_POINT_LIGHTS * sizeof(PointLight)		+
 				MAX_SPOT_LIGHTS  * sizeof(SpotLight);
 
-	Light::m_pLightsRawBuffer = new ShaderResource(m_pDevice5, rawBufferSize, L"rawBufferLights", &srvDesc, m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
+	Light::m_pLightsRawBuffer = new ShaderResource(m_pDevice5, rawBufferSize, L"rawBufferLights", &srvDesc, mainHeap);
 
 	// Allocate memory on CPU
 	Light::m_pRawData = (unsigned char*)malloc(rawBufferSize);
@@ -2459,15 +2295,14 @@ void Renderer::setRenderTasksRenderComponents()
 	m_RenderTasks[E_RENDER_TASK_TYPE::OPACITY]->SetRenderComponents(&m_RenderComponents[F_DRAW_FLAGS::DRAW_TRANSPARENT]);
 }
 
-void Renderer::createDescriptorHeaps()
-{
-	m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV] = new DescriptorHeap(m_pDevice5, E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV);
-	m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV]		 = new DescriptorHeap(m_pDevice5, E_DESCRIPTOR_HEAP_TYPE::RTV);
-	m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::DSV]		 = new DescriptorHeap(m_pDevice5, E_DESCRIPTOR_HEAP_TYPE::DSV);
-}
-
 void Renderer::createFences()
 {
+	ID3D12Device5* m_pDevice5 = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pDevice5;
+	DescriptorHeap* mainHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
+	DescriptorHeap* rtvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetRTVDescriptorHeap();
+	DescriptorHeap* dsvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetDSVDescriptorHeap();
+	ID3D12CommandQueue* pDirectQueue = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pGraphicsCommandQueue;
+
 	HRESULT hr = m_pDevice5->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_pFenceFrame));
 
 	if (FAILED(hr))
@@ -2482,9 +2317,15 @@ void Renderer::createFences()
 
 void Renderer::waitForGPU()
 {
+	ID3D12Device5* m_pDevice5 = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pDevice5;
+	DescriptorHeap* mainHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
+	DescriptorHeap* rtvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetRTVDescriptorHeap();
+	DescriptorHeap* dsvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetDSVDescriptorHeap();
+	ID3D12CommandQueue* pDirectQueue = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pGraphicsCommandQueue;
+
 	//Signal and increment the fence value.
 	const UINT64 oldFenceValue = m_FenceFrameValue;
-	m_CommandQueues[E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->Signal(m_pFenceFrame, oldFenceValue);
+	pDirectQueue->Signal(m_pFenceFrame, oldFenceValue);
 	m_FenceFrameValue++;
 
 	//Wait until command queue is done.
@@ -2510,6 +2351,12 @@ void Renderer::waitForFrame(unsigned int framesToBeAhead)
 
 void Renderer::prepareScene(Scene* activeScene)
 {
+	ID3D12Device5* m_pDevice5 = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pDevice5;
+	DescriptorHeap* mainHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
+	DescriptorHeap* rtvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetRTVDescriptorHeap();
+	DescriptorHeap* dsvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetDSVDescriptorHeap();
+	ID3D12CommandQueue* pDirectQueue = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pGraphicsCommandQueue;
+
 	m_pCurrActiveScene = activeScene;
 	submitUploadPerFrameData();
 	submitUploadPerSceneData();
@@ -2541,7 +2388,7 @@ void Renderer::prepareScene(Scene* activeScene)
 		pTLAS->AddInstance(rc.mc->GetModel()->m_pBLAS, *rc.tc->GetTransform()->GetWorldMatrix(), i);	// TODO: HitgroupID
 		i++;
 	}
-	pTLAS->GenerateBuffers(m_pDevice5, m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
+	pTLAS->GenerateBuffers(m_pDevice5, mainHeap);
 	pTLAS->SetupAccelerationStructureForBuilding(m_pDevice5, false);
 
 	static_cast<DXRReflectionTask*>(m_DXRTasks[E_DXR_TASK_TYPE::REFLECTIONS])->CreateShaderBindingTable(m_pDevice5, m_RayTracedRenderComponents);
@@ -2590,8 +2437,14 @@ void Renderer::submitUploadPerFrameData()
 
 void Renderer::toggleFullscreen(WindowChange* event)
 {
+	ID3D12Device5* m_pDevice5 = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pDevice5;
+	DescriptorHeap* mainHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
+	DescriptorHeap* rtvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetRTVDescriptorHeap();
+	DescriptorHeap* dsvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetDSVDescriptorHeap();
+	ID3D12CommandQueue* pDirectQueue = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pGraphicsCommandQueue;
+
 	m_FenceFrameValue++;
-	m_CommandQueues[E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->Signal(m_pFenceFrame, m_FenceFrameValue);
+	pDirectQueue->Signal(m_pFenceFrame, m_FenceFrameValue);
 
 	// Wait for all frames
 	waitForFrame(0);
@@ -2623,9 +2476,9 @@ void Renderer::toggleFullscreen(WindowChange* event)
 
 	m_pSwapChain->ToggleWindowMode(m_pDevice5,
 		m_pWindow->GetHwnd(),
-		m_CommandQueues[E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE],
-		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::RTV],
-		m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]);
+		pDirectQueue,
+		rtvHeap,
+		mainHeap);
 
 	// Change the member variables of the window class to match the swapchain
 	UINT width = 0, height = 0;

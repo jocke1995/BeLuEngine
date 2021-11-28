@@ -6,20 +6,13 @@
 #include "../Misc/Log.h"
 
 // DX12 Specifics
-//#include "../Camera/BaseCamera.h"
-//#include "../CommandInterface.h"
 #include "../DescriptorHeap.h"
 #include "../GPUMemory/GPUMemory.h"
-//#include "../PipelineState/PipelineState.h"
-//#include "../RenderView.h"
-//#include "../SwapChain.h"
 #include "../Shader.h"
 #include "../Misc/AssetLoader.h"
 
 // Model info
-//#include "../Geometry/Mesh.h"
 #include "../Geometry/Transform.h"
-//#include "../Geometry/Material.h"
 
 // DXR stuff
 #include "../DXR/ShaderBindingTableGenerator.h"
@@ -27,6 +20,8 @@
 
 TODO(To be replaced by a D3D12Manager some point in the future(needed to access RootSig));
 #include "../Renderer.h"
+// TODO ABSTRACTION
+#include "../API/D3D12/D3D12GraphicsManager.h"
 
 DXRReflectionTask::DXRReflectionTask(
 	ID3D12Device5* device,
@@ -269,13 +264,17 @@ void DXRReflectionTask::Execute()
 	ID3D12CommandAllocator* commandAllocator = m_pCommandInterface->GetCommandAllocator(m_CommandInterfaceIndex);
 	ID3D12GraphicsCommandList5* commandList = m_pCommandInterface->GetCommandList(m_CommandInterfaceIndex);
 
+	DescriptorHeap* mainHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
+	DescriptorHeap* rtvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetRTVDescriptorHeap();
+	DescriptorHeap* dsvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetDSVDescriptorHeap();
+
 	m_pCommandInterface->Reset(m_CommandInterfaceIndex);
 	{
 		ScopedPixEvent(RaytracedReflections, commandList);
 
 		commandList->SetComputeRootSignature(m_pGlobalRootSig);
 
-		DescriptorHeap* dhSRVUAVCBV = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV];
+		DescriptorHeap* dhSRVUAVCBV = mainHeap;
 		ID3D12DescriptorHeap* dhHeap = dhSRVUAVCBV->GetID3D12DescriptorHeap();
 		commandList->SetDescriptorHeaps(1, &dhHeap);
 

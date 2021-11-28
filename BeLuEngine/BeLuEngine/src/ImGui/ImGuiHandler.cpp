@@ -29,6 +29,9 @@
 
 #define DIV 1024
 
+// TODO ABSTRACTION
+#include "../Renderer/API/D3D12/D3D12GraphicsManager.h"
+
 ImGuiHandler& ImGuiHandler::GetInstance()
 {
 	// Init
@@ -372,12 +375,18 @@ void ImGuiHandler::updateMemoryInfo()
 		mStats.m_ProcessRamUsage = (pmc.WorkingSetSize / DIV / DIV);
 	}
 
+	ID3D12Device5* m_pDevice5 = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pDevice5;
+	DescriptorHeap* mainHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
+	DescriptorHeap* rtvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetRTVDescriptorHeap();
+	DescriptorHeap* dsvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetDSVDescriptorHeap();
+	IDXGIAdapter4* adapter4 = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pAdapter4;
+
 	// Vram usage
 	DXGI_QUERY_VIDEO_MEMORY_INFO info;
-	if (SUCCEEDED(r.m_pAdapter4->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL, &info)))
+	if (SUCCEEDED(adapter4->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL, &info)))
 	{
 		DXGI_ADAPTER_DESC3 aDesc = {};
-		r.m_pAdapter4->GetDesc3(&aDesc);
+		adapter4->GetDesc3(&aDesc);
 
 		mStats.m_ProcessVramUsage = info.CurrentUsage / DIV / DIV;
 		mStats.m_TotalVram = aDesc.DedicatedVideoMemory / DIV / DIV;

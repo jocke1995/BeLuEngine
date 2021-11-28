@@ -51,11 +51,6 @@ void DX12Task::SetCommandInterfaceIndex(int index)
 	m_CommandInterfaceIndex = index;
 }
 
-void DX12Task::SetDescriptorHeaps(std::map<E_DESCRIPTOR_HEAP_TYPE, DescriptorHeap*> dhs)
-{
-	m_DescriptorHeaps = dhs;
-}
-
 void DX12Task::AddResource(std::string id, Resource* resource)
 {
 	if (m_Resources[id] == nullptr)

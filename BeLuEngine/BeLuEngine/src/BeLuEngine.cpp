@@ -3,6 +3,9 @@
 #include "Misc/MultiThreading/Thread.h"
 
 #include "Renderer/Statistics/EngineStatistics.h"
+
+#include "Renderer/API/IGraphicsManager.h"
+
 BeLuEngine::BeLuEngine()
 {
 	
@@ -10,12 +13,15 @@ BeLuEngine::BeLuEngine()
 
 BeLuEngine::~BeLuEngine()
 {
-	delete m_pTimer;
+	BL_SAFE_DELETE(m_pTimer);
 
 	m_pSceneManager->deleteSceneManager();
 	m_pRenderer->deleteRenderer();
 
-	delete m_pWindow;
+	BL_SAFE_DELETE(m_pWindow);
+
+	IGraphicsManager* graphicsManager = IGraphicsManager::GetInstance();
+	graphicsManager->Destroy();
 }
 
 void BeLuEngine::Init(HINSTANCE hInstance, int nCmdShow)
@@ -41,6 +47,9 @@ void BeLuEngine::Init(HINSTANCE hInstance, int nCmdShow)
 	m_pThreadPool = &ThreadPool::GetInstance(numThreads * 2);
 
 	// Sub-engines
+	IGraphicsManager* graphicsManager = IGraphicsManager::Create(E_GRAPHICS_API::D3D12);
+	graphicsManager->Init();
+
 	m_pRenderer = &Renderer::GetInstance();
 	m_pRenderer->InitD3D12(m_pWindow, hInstance, m_pThreadPool);
 

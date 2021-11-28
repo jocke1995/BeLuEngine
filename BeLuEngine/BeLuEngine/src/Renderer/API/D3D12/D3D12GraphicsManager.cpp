@@ -5,19 +5,28 @@ TODO("This should be inside stdafx.h");
 #include "../Misc/Log.h"
 
 #include "../Renderer/Statistics/EngineStatistics.h"
-
+#include "../Renderer/DescriptorHeap.h"
 D3D12GraphicsManager::D3D12GraphicsManager()
 {
 }
 
 D3D12GraphicsManager::~D3D12GraphicsManager()
 {
+	if (!FreeLibrary(m_D3D12Handle))
+	{
+		BL_LOG_WARNING("Failed to Free D3D12 Handle\n");
+	}
+
 	BL_SAFE_RELEASE(&m_pDevice5);
 	BL_SAFE_RELEASE(&m_pAdapter4);
 
 	BL_SAFE_RELEASE(&m_pGraphicsCommandQueue);
 	BL_SAFE_RELEASE(&m_pCopyCommandQueue);
 	BL_SAFE_RELEASE(&m_pComputeCommandQueue);
+
+	BL_SAFE_DELETE(m_pMainDescriptorHeap);
+	BL_SAFE_DELETE(m_pRTVDescriptorHeap);
+	BL_SAFE_DELETE(m_pDSVDescriptorHeap);
 }
 
 void D3D12GraphicsManager::Init()
@@ -30,9 +39,9 @@ void D3D12GraphicsManager::Init()
 
 	//Enable the D3D12 debug layer.
 	ID3D12Debug3* debugController = nullptr;
-	HMODULE mD3D12 = LoadLibrary(L"D3D12.dll");
+	m_D3D12Handle = LoadLibrary(L"D3D12.dll");
 
-	PFN_D3D12_GET_DEBUG_INTERFACE f = (PFN_D3D12_GET_DEBUG_INTERFACE)GetProcAddress(mD3D12, "D3D12GetDebugInterface");
+	PFN_D3D12_GET_DEBUG_INTERFACE f = (PFN_D3D12_GET_DEBUG_INTERFACE)GetProcAddress(m_D3D12Handle, "D3D12GetDebugInterface");
 
 	hr = f(IID_PPV_ARGS(&debugController));
 	if (SUCCEEDED(hr))
@@ -201,4 +210,25 @@ void D3D12GraphicsManager::Init()
 	}
 	m_pComputeCommandQueue->SetName(L"CopyQueue");
 #pragma endregion
+
+#pragma region DescriptorHeap
+	m_pMainDescriptorHeap	 = new DescriptorHeap(m_pDevice5, E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV);
+	m_pRTVDescriptorHeap	 = new DescriptorHeap(m_pDevice5, E_DESCRIPTOR_HEAP_TYPE::RTV);
+	m_pDSVDescriptorHeap	 = new DescriptorHeap(m_pDevice5, E_DESCRIPTOR_HEAP_TYPE::DSV);
+#pragma endregion
+}
+
+DescriptorHeap* D3D12GraphicsManager::GetMainDescriptorHeap() const
+{
+	return m_pMainDescriptorHeap;
+}
+
+DescriptorHeap* D3D12GraphicsManager::GetRTVDescriptorHeap() const
+{
+	return m_pRTVDescriptorHeap;
+}
+
+DescriptorHeap* D3D12GraphicsManager::GetDSVDescriptorHeap() const
+{
+	return m_pDSVDescriptorHeap;
 }
