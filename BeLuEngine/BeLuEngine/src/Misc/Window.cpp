@@ -170,9 +170,9 @@ int Window::GetScreenHeight() const
 	return m_ScreenHeight;
 }
 
-const HWND* Window::GetHwnd() const
+HWND Window::GetHwnd() const
 {
-	return &m_Hwnd;
+	return m_Hwnd;
 }
 
 void Window::SetScreenWidth(int width)

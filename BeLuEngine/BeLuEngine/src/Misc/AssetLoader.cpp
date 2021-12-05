@@ -31,11 +31,10 @@
 
 #include "EngineMath.h"
 
-AssetLoader::AssetLoader(ID3D12Device5* device, DescriptorHeap* descriptorHeap_CBV_UAV_SRV, const Window* window)
+AssetLoader::AssetLoader(ID3D12Device5* device, DescriptorHeap* descriptorHeap_CBV_UAV_SRV)
 {
 	m_pDevice = device;
 	m_pDescriptorHeap_CBV_UAV_SRV = descriptorHeap_CBV_UAV_SRV;
-	m_pWindow = const_cast<Window*>(window);
 
 	// Load default textures
 	loadDefaultMaterial();
@@ -146,9 +145,9 @@ AssetLoader::~AssetLoader()
 	}
 }
 
-AssetLoader* AssetLoader::Get(ID3D12Device5* device, DescriptorHeap* descriptorHeap_CBV_UAV_SRV, const Window* window)
+AssetLoader* AssetLoader::Get(ID3D12Device5* device, DescriptorHeap* descriptorHeap_CBV_UAV_SRV)
 {
-	static AssetLoader instance(device, descriptorHeap_CBV_UAV_SRV, window);
+	static AssetLoader instance(device, descriptorHeap_CBV_UAV_SRV);
 
 	return &instance;
 }

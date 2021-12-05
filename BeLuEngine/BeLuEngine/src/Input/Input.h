@@ -129,7 +129,7 @@ public:
 	static Input& GetInstance();
 
 	// Register the input devices to be used.
-	void RegisterDevices(const HWND* hWnd);
+	void RegisterDevices(HWND hWnd);
 
 	void SetKeyState(SCAN_CODES key, bool pressed);
 	void SetMouseButtonState(MOUSE_BUTTON button, bool pressed);

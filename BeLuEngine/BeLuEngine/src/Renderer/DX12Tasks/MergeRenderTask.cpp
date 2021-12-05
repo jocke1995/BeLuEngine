@@ -70,8 +70,7 @@ void MergeRenderTask::Execute()
 		ScopedPixEvent(MergePass, commandList);
 
 		// Get renderTarget
-		const RenderTargetView* swapChainRenderTarget = m_pSwapChain->GetRTV(m_BackBufferIndex);
-		ID3D12Resource1* swapChainResource = swapChainRenderTarget->GetResource()->GetID3D12Resource1();
+		const RenderTargetView* swapChainRenderTarget = static_cast<D3D12GraphicsManager*>(IGraphicsManager::GetInstance())->m_RTVs[m_CommandInterfaceIndex];
 
 		DescriptorHeap* descriptorHeap_CBV_UAV_SRV = mainHeap;
 		ID3D12DescriptorHeap* d3d12DescriptorHeap = descriptorHeap_CBV_UAV_SRV->GetID3D12DescriptorHeap();

@@ -66,7 +66,6 @@ void ImGuiHandler::UpdateFrame()
 	this->updateMemoryInfo();
 
 	Renderer& r = Renderer::GetInstance();
-	const Window* window = r.GetWindow();
 
 	IM_CommonStats& cStats = EngineStatistics::GetIM_CommonStats();
 	IM_MemoryStats& mStats = EngineStatistics::GetIM_MemoryStats();
@@ -163,7 +162,6 @@ void ImGuiHandler::onEntityClicked(MouseClick* event)
 void ImGuiHandler::drawSceneHierarchy()
 {
 	Renderer& r = Renderer::GetInstance();
-	const Window* window = r.GetWindow();
 
 	if (ImGui::Begin("Scene"))
 	{

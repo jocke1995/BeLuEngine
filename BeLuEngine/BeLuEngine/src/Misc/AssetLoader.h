@@ -30,7 +30,7 @@ class AssetLoader
 public:
     ~AssetLoader();
 
-    static AssetLoader* Get(ID3D12Device5* device = nullptr, DescriptorHeap* descriptorHeap_CBV_UAV_SRV = nullptr, const Window* window = nullptr);
+    static AssetLoader* Get(ID3D12Device5* device = nullptr, DescriptorHeap* descriptorHeap_CBV_UAV_SRV = nullptr);
 
     /* Load Functions */
     // Model ---------------
@@ -58,7 +58,7 @@ private:
     friend class Renderer;
 
     // Constructor currently called from m_pRenderer to set dx12 specific objects
-    AssetLoader(ID3D12Device5* device = nullptr, DescriptorHeap* descriptorHeap_CBV_UAV_SRV = nullptr, const Window* window = nullptr);
+    AssetLoader(ID3D12Device5* device = nullptr, DescriptorHeap* descriptorHeap_CBV_UAV_SRV = nullptr);
     AssetLoader(AssetLoader const&) = delete;
     void operator=(AssetLoader const&) = delete;
 

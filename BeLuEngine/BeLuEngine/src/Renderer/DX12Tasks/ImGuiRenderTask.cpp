@@ -15,6 +15,7 @@
 
 // TODO ABSTRACTION
 #include "../API/D3D12/D3D12GraphicsManager.h"
+
 ImGuiRenderTask::ImGuiRenderTask(
 	ID3D12Device5* device,
 	ID3D12RootSignature* rootSignature,
@@ -36,7 +37,7 @@ void ImGuiRenderTask::Execute()
 	ID3D12CommandAllocator* commandAllocator = m_pCommandInterface->GetCommandAllocator(m_CommandInterfaceIndex);
 	ID3D12GraphicsCommandList5* commandList = m_pCommandInterface->GetCommandList(m_CommandInterfaceIndex);
 
-	const RenderTargetView* swapChainRenderTarget = m_pSwapChain->GetRTV(m_BackBufferIndex);
+	const RenderTargetView* swapChainRenderTarget = static_cast<D3D12GraphicsManager*>(IGraphicsManager::GetInstance())->m_RTVs[m_CommandInterfaceIndex];
 	Resource* swapChainResource = swapChainRenderTarget->GetResource();
 
 	DescriptorHeap* mainHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();

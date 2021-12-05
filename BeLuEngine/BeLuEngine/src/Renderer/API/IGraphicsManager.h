@@ -46,7 +46,9 @@ public:
 
 	static IGraphicsManager* Create(const E_GRAPHICS_API graphicsApi);
 
-	virtual void Init() = 0;
+	virtual void Init(HWND hwnd, unsigned int width, unsigned int height, DXGI_FORMAT dxgiFormat) = 0;
+	virtual void Present() = 0;
+
 	void Destroy();
 private:
 	static inline IGraphicsManager* m_sInstance = nullptr;

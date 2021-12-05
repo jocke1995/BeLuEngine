@@ -87,7 +87,7 @@
 
 Renderer::Renderer()
 {
-	EventBus::GetInstance().Subscribe(this, &Renderer::toggleFullscreen);
+	//EventBus::GetInstance().Subscribe(this, &Renderer::toggleFullscreen);
 	m_RenderTasks.resize(E_RENDER_TASK_TYPE::NR_OF_RENDERTASKS);
 	m_CopyTasks.resize(E_COPY_TASK_TYPE::NR_OF_COPYTASKS);
 	m_ComputeTasks.resize(E_COMPUTE_TASK_TYPE::NR_OF_COMPUTETASKS);
@@ -118,14 +118,8 @@ Renderer::~Renderer()
 void Renderer::deleteRenderer()
 {
 	Log::Print("----------------------------  Deleting Renderer  ----------------------------------\n");
-	waitForGPU();
-
-	BL_SAFE_RELEASE(&m_pFenceFrame);
-	if (!CloseHandle(m_EventHandle))
-	{
-		Log::Print("Failed To Close Handle... ErrorCode: %d\n", GetLastError());
-	}
-
+	TODO("Fix this");
+	//waitForGPU();
 
 	BL_SAFE_RELEASE(&m_pGlobalRootSig);
 
@@ -147,7 +141,6 @@ void Renderer::deleteRenderer()
 	delete m_ReflectionTexture.uav;
 	delete m_ReflectionTexture.srv;
 
-	delete m_pSwapChain;
 	delete m_pBloomResources;
 	delete m_pMainDepthStencil;
 
@@ -184,13 +177,12 @@ void Renderer::deleteRenderer()
 #endif
 }
 
-void Renderer::InitD3D12(Window* window, HINSTANCE hInstance, ThreadPool* threadPool)
+void Renderer::InitD3D12(HWND hwnd, unsigned int width, unsigned int height, HINSTANCE hInstance, ThreadPool* threadPool)
 {
 	m_pThreadPool = threadPool;
-	m_pWindow = window;
 
-	// Fence for WaitForFrame();
-	createFences();
+	m_CurrentRenderingWidth = width;
+	m_CurrentRenderingHeight = height;
 
 	// ABSTRACTION TEMP
 	ID3D12Device5* m_pDevice5 = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pDevice5;
@@ -201,7 +193,7 @@ void Renderer::InitD3D12(Window* window, HINSTANCE hInstance, ThreadPool* thread
 	// Main color renderTarget (used until the swapchain RT is drawn to)
 	m_FinalColorBuffer.first = new RenderTarget(
 		m_pDevice5,
-		m_pWindow->GetScreenWidth(), m_pWindow->GetScreenHeight(),
+		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
 		L"finalColorBuffer_RESOURCE",
 		rtvHeap,
 		D3D12_RESOURCE_STATE_RENDER_TARGET);
@@ -215,7 +207,7 @@ void Renderer::InitD3D12(Window* window, HINSTANCE hInstance, ThreadPool* thread
 	// GBufferAlbedo
 	m_GBufferAlbedo.first = new RenderTarget(
 		m_pDevice5,
-		m_pWindow->GetScreenWidth(), m_pWindow->GetScreenHeight(),
+		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
 		L"gBufferAlbedo_RESOURCE",
 		rtvHeap,
 		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
@@ -229,7 +221,7 @@ void Renderer::InitD3D12(Window* window, HINSTANCE hInstance, ThreadPool* thread
 	// Normal
 	m_GBufferNormal.first = new RenderTarget(
 		m_pDevice5,
-		m_pWindow->GetScreenWidth(), m_pWindow->GetScreenHeight(),
+		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
 		L"gBufferNormal_RESOURCE",
 		rtvHeap,
 		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
@@ -242,7 +234,7 @@ void Renderer::InitD3D12(Window* window, HINSTANCE hInstance, ThreadPool* thread
 	// Material Properties (Roughness, Metallic, glow..
 	m_GBufferMaterialProperties.first = new RenderTarget(
 		m_pDevice5,
-		m_pWindow->GetScreenWidth(), m_pWindow->GetScreenHeight(),
+		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
 		L"gBufferMaterials_RESOURCE",
 		rtvHeap,
 		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
@@ -255,7 +247,7 @@ void Renderer::InitD3D12(Window* window, HINSTANCE hInstance, ThreadPool* thread
 	// Emissive Color
 	m_GBufferEmissive.first = new RenderTarget(
 		m_pDevice5,
-		m_pWindow->GetScreenWidth(), m_pWindow->GetScreenHeight(),
+		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
 		L"gBufferEmissive_RESOURCE",
 		rtvHeap,
 		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
@@ -270,8 +262,8 @@ void Renderer::InitD3D12(Window* window, HINSTANCE hInstance, ThreadPool* thread
 		// Resource
 		D3D12_RESOURCE_DESC resourceDesc = {};
 		resourceDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
-		resourceDesc.Width = m_pWindow->GetScreenWidth();
-		resourceDesc.Height = m_pWindow->GetScreenHeight();
+		resourceDesc.Width = m_CurrentRenderingWidth;
+		resourceDesc.Height = m_CurrentRenderingHeight;
 		resourceDesc.DepthOrArraySize = 1;
 		resourceDesc.MipLevels = 1;
 		resourceDesc.SampleDesc.Count = 1;
@@ -310,15 +302,8 @@ void Renderer::InitD3D12(Window* window, HINSTANCE hInstance, ThreadPool* thread
 	}
 #pragma endregion
 
-	// Swapchain
-	createSwapChain();
-
 	// Bloom
-	m_pBloomResources = new Bloom(m_pDevice5, 
-		rtvHeap,
-		mainHeap,
-		m_pSwapChain
-		);
+	m_pBloomResources = new Bloom(m_pDevice5, rtvHeap,mainHeap);
 
 	// Create Main DepthBuffer
 	createMainDSV();
@@ -336,7 +321,7 @@ void Renderer::InitD3D12(Window* window, HINSTANCE hInstance, ThreadPool* thread
 	createFullScreenQuad();
 
 	// Init Assetloader
-	AssetLoader* al = AssetLoader::Get(m_pDevice5, mainHeap, m_pWindow);
+	AssetLoader* al = AssetLoader::Get(m_pDevice5, mainHeap);
 
 	// Init BoundingBoxPool
 	BoundingBoxPool::Get(m_pDevice5, mainHeap);
@@ -370,13 +355,13 @@ void Renderer::InitD3D12(Window* window, HINSTANCE hInstance, ThreadPool* thread
 	ImGuiIO& io = ImGui::GetIO();
 	io.ConfigFlags = ImGuiConfigFlags_NoMouse;
 
-	io.DisplaySize.x = m_pWindow->GetScreenWidth();
-	io.DisplaySize.y = m_pWindow->GetScreenHeight();
+	io.DisplaySize.x = m_CurrentRenderingWidth;
+	io.DisplaySize.y = m_CurrentRenderingHeight;
 
 	unsigned int imGuiTextureIndex = mainHeap->GetNextDescriptorHeapIndex(1);
 
 	// Setup Platform/Renderer bindings
-	ImGui_ImplWin32_Init(*m_pWindow->GetHwnd());
+	ImGui_ImplWin32_Init(hwnd);
 	ImGui_ImplDX12_Init(m_pDevice5, NUM_SWAP_BUFFERS,
 		DXGI_FORMAT_R16G16B16A16_FLOAT, mainHeap->GetID3D12DescriptorHeap(),
 		mainHeap->GetCPUHeapAt(imGuiTextureIndex),
@@ -503,11 +488,9 @@ void Renderer::SortObjects()
 
 void Renderer::ExecuteMT()
 {
-	IDXGISwapChain4* dx12SwapChain = m_pSwapChain->GetDX12SwapChain();
-	unsigned int backBufferIndex = dx12SwapChain->GetCurrentBackBufferIndex();
 	unsigned int commandInterfaceIndex = m_FrameCounter++ % NUM_SWAP_BUFFERS;
 
-	DX12Task::SetBackBufferIndex(backBufferIndex);
+	DX12Task::SetBackBufferIndex(commandInterfaceIndex);
 	DX12Task::SetCommandInterfaceIndex(commandInterfaceIndex);
 
 	CopyTask* copyTask = nullptr;
@@ -586,11 +569,9 @@ void Renderer::ExecuteMT()
 	// Wait for the threads which records the commandlists to complete
 	m_pThreadPool->WaitForThreads(F_THREAD_FLAGS::RENDER);
 
-	ID3D12CommandQueue* pDirectQueue = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pGraphicsCommandQueue;
 
-	pDirectQueue->ExecuteCommandLists(
-		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_DirectCommandLists[commandInterfaceIndex].size(), 
-		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_DirectCommandLists[commandInterfaceIndex].data());
+	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->Execute(m_DirectCommandLists[commandInterfaceIndex], m_DirectCommandLists[commandInterfaceIndex].size());
+
 
 	/* --------------------------------------------------------------- */
 
@@ -605,49 +586,22 @@ void Renderer::ExecuteMT()
 	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::IMGUI];
 	renderTask->Execute();
 
-	pDirectQueue->ExecuteCommandLists(
-		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_ImGuiCommandLists[commandInterfaceIndex].size(),
-		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_ImGuiCommandLists[commandInterfaceIndex].data());
+	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->Execute(m_ImGuiCommandLists[commandInterfaceIndex], m_ImGuiCommandLists[commandInterfaceIndex].size());
 #endif
 
-	// Wait if the CPU is to far ahead of the gpu
-	pDirectQueue->Signal(m_pFenceFrame, m_FenceFrameValue);
-	waitForFrame(0);
-	m_FenceFrameValue++;
 
 	/*------------------- Present -------------------*/
-	HRESULT hr = dx12SwapChain->Present(0, 0);
+	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->Present();
 	
-#if defined(USE_NSIGHT_AFTERMATH)
-	if (FAILED(hr))
-	{
-		// DXGI_ERROR error notification is asynchronous to the NVIDIA display
-		// driver's GPU crash handling. Give the Nsight Aftermath GPU crash dump
-		// thread some time to do its work before terminating the process.
-		Sleep(3000);
-
-		// Terminate on failure
-		exit(-1);
-	}
-#elif DEBUG
-	
-	if (FAILED(hr))
-	{
-		BL_LOG_CRITICAL("Swapchain Failed to present\n");
-	}
-
 	// Check to end ImGui if its active
 	ImGuiHandler::GetInstance().EndFrame();
-#endif
 }
 
 void Renderer::ExecuteST()
 {
-	IDXGISwapChain4* dx12SwapChain = m_pSwapChain->GetDX12SwapChain();
-	unsigned int backBufferIndex = dx12SwapChain->GetCurrentBackBufferIndex();
 	unsigned int commandInterfaceIndex = m_FrameCounter++ % NUM_SWAP_BUFFERS;
 
-	DX12Task::SetBackBufferIndex(backBufferIndex);
+	DX12Task::SetBackBufferIndex(commandInterfaceIndex);
 	DX12Task::SetCommandInterfaceIndex(commandInterfaceIndex);
 
 	CopyTask* copyTask = nullptr;
@@ -722,11 +676,7 @@ void Renderer::ExecuteST()
 	}
 
 	/* ----------------------------- DEVELOPERMODE CommandLists ----------------------------- */
-	ID3D12CommandQueue* pDirectQueue = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pGraphicsCommandQueue;
-
-	pDirectQueue->ExecuteCommandLists(
-		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_DirectCommandLists[commandInterfaceIndex].size(),
-		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_DirectCommandLists[commandInterfaceIndex].data());
+	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->Execute(m_DirectCommandLists[commandInterfaceIndex], m_DirectCommandLists[commandInterfaceIndex].size());
 
 	/* --------------------------------------------------------------- */
 
@@ -742,39 +692,14 @@ void Renderer::ExecuteST()
 	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::IMGUI];
 	renderTask->Execute();
 
-	pDirectQueue->ExecuteCommandLists(
-		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_ImGuiCommandLists[commandInterfaceIndex].size(),
-		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_ImGuiCommandLists[commandInterfaceIndex].data());
+	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->Execute(m_ImGuiCommandLists[commandInterfaceIndex], m_ImGuiCommandLists[commandInterfaceIndex].size());
 #endif
 
-	// Wait if the CPU is to far ahead of the gpu
-	pDirectQueue->Signal(m_pFenceFrame, m_FenceFrameValue);
-	waitForFrame(0);
-	m_FenceFrameValue++;
-
 	/*------------------- Present -------------------*/
-	HRESULT hr = dx12SwapChain->Present(0, 0);
-
-#if defined(USE_NSIGHT_AFTERMATH)
-	if (FAILED(hr))
-	{
-		// DXGI_ERROR error notification is asynchronous to the NVIDIA display
-		// driver's GPU crash handling. Give the Nsight Aftermath GPU crash dump
-		// thread some time to do its work before terminating the process.
-		Sleep(3000);
-
-		// Terminate on failure
-		exit(-1);
-	}
-#elif DEBUG
-		if (FAILED(hr))
-		{
-			BL_LOG_CRITICAL("Swapchain Failed to present\n");
-		}
+	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->Present();
 
 	// Check to end ImGui if its active
 	ImGuiHandler::GetInstance().EndFrame();
-#endif
 }
 
 void Renderer::InitModelComponent(component::ModelComponent* mc)
@@ -1130,11 +1055,6 @@ Scene* const Renderer::GetActiveScene() const
 	return m_pCurrActiveScene;
 }
 
-Window* const Renderer::GetWindow() const
-{
-	return m_pWindow;
-}
-
 void Renderer::setRenderTasksPrimaryCamera()
 {
 	m_RenderTasks[E_RENDER_TASK_TYPE::DEPTH_PRE_PASS]->SetCamera(m_pScenePrimaryCamera);
@@ -1147,28 +1067,6 @@ void Renderer::setRenderTasksPrimaryCamera()
 	{
 		m_RenderTasks[E_RENDER_TASK_TYPE::WIREFRAME]->SetCamera(m_pScenePrimaryCamera);
 	}
-}
-
-void Renderer::createSwapChain()
-{
-	ID3D12Device5* m_pDevice5 = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pDevice5;
-	DescriptorHeap* mainHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
-	DescriptorHeap* rtvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetRTVDescriptorHeap();
-	ID3D12CommandQueue* pDirectQueue = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pGraphicsCommandQueue;
-
-	unsigned int resolutionWidth = m_pWindow->GetScreenWidth();
-	unsigned int resolutionHeight = m_pWindow->GetScreenHeight();
-
-	EngineStatistics::GetIM_CommonStats().m_ResX = resolutionWidth;
-	EngineStatistics::GetIM_CommonStats().m_ResY = resolutionHeight;
-
-	m_pSwapChain = new SwapChain(
-		m_pDevice5,
-		m_pWindow->GetHwnd(),
-		resolutionWidth, resolutionHeight,
-		pDirectQueue,
-		rtvHeap,
-		mainHeap);
 }
 
 void Renderer::createMainDSV()
@@ -1184,18 +1082,9 @@ void Renderer::createMainDSV()
 	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
 	dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
 
-	unsigned int resolutionWidth = 0;
-	unsigned int resolutionHeight = 0;
-	HRESULT hr = m_pSwapChain->GetDX12SwapChain()->GetSourceSize(&resolutionWidth, &resolutionHeight);
-	if (FAILED(hr))
-	{
-		BL_LOG_CRITICAL("Failed to GetSourceSize from DX12SwapChain when creating DSV\n");
-	}
-
-
 	m_pMainDepthStencil = new DepthStencil(
 		m_pDevice5,
-		resolutionWidth, resolutionHeight,
+		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
 		L"MainDSV",
 		&dsvDesc,
 		dsvHeap,
@@ -1623,7 +1512,7 @@ void Renderer::initRenderTasks()
 		m_pDevice5,
 		m_pGlobalRootSig,
 		&m_ReflectionTexture,
-		m_pWindow->GetScreenWidth(), m_pWindow->GetScreenHeight(),
+		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
 		F_THREAD_FLAGS::RENDER);
 
 	reflectionTask->AddResource("cbPerFrame", m_pCbPerFrame->GetDefaultResource());
@@ -1685,7 +1574,6 @@ void Renderer::initRenderTasks()
 		F_THREAD_FLAGS::RENDER);
 
 	DepthPrePassRenderTask->SetMainDepthStencil(m_pMainDepthStencil);
-	DepthPrePassRenderTask->SetSwapChain(m_pSwapChain);
 
 #pragma endregion DepthPrePass
 
@@ -1743,7 +1631,6 @@ void Renderer::initRenderTasks()
 		F_THREAD_FLAGS::RENDER);
 
 	deferredGeometryRenderTask->SetMainDepthStencil(m_pMainDepthStencil);
-	deferredGeometryRenderTask->SetSwapChain(m_pSwapChain);
 	deferredGeometryRenderTask->AddResource("cbPerScene", m_pCbPerScene->GetDefaultResource());
 	deferredGeometryRenderTask->AddRenderTargetView("gBufferAlbedo", m_GBufferAlbedo.first->GetRTV());
 	deferredGeometryRenderTask->AddRenderTargetView("gBufferNormal", m_GBufferNormal.first->GetRTV());
@@ -2090,7 +1977,6 @@ void Renderer::initRenderTasks()
 	static_cast<MergeRenderTask*>(mergeTask)->AddSRVToMerge(m_pBloomResources->GetPingPongResource(0)->GetSRV());
 	static_cast<MergeRenderTask*>(mergeTask)->AddSRVToMerge(m_FinalColorBuffer.second);
 	static_cast<MergeRenderTask*>(mergeTask)->AddSRVToMerge(m_ReflectionTexture.srv);
-	mergeTask->SetSwapChain(m_pSwapChain);
 	static_cast<MergeRenderTask*>(mergeTask)->CreateSlotInfo();
 #pragma endregion MergePass
 
@@ -2102,16 +1988,9 @@ void Renderer::initRenderTasks()
 		nullptr,
 		L"",
 		F_THREAD_FLAGS::RENDER);
-
-	imGuiRenderTask->SetSwapChain(m_pSwapChain);
-
 #pragma endregion IMGUIRENDERTASK
 
 #pragma region ComputeAndCopyTasks
-	UINT resolutionWidth = 0;
-	UINT resolutionHeight = 0;
-	m_pSwapChain->GetDX12SwapChain()->GetSourceSize(&resolutionWidth, &resolutionHeight);
-
 	// ComputeTasks
 	std::vector<std::pair<std::wstring, std::wstring>> csNamePSOName;
 	csNamePSOName.push_back(std::make_pair(L"ComputeBlurHorizontal.hlsl", L"blurHorizontalPSO"));
@@ -2168,92 +2047,92 @@ void Renderer::initRenderTasks()
 	// Pushback in the order of execution
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
-		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_DirectCommandLists[i].push_back(copyOnDemandTask->GetCommandInterface()->GetCommandList(i));
+		m_DirectCommandLists[i].push_back(copyOnDemandTask->GetCommandInterface()->GetCommandList(i));
 	}
 
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
-		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_DirectCommandLists[i].push_back(copyPerFrameTask->GetCommandInterface()->GetCommandList(i));
+		m_DirectCommandLists[i].push_back(copyPerFrameTask->GetCommandInterface()->GetCommandList(i));
 	}
 
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
-		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_DirectCommandLists[i].push_back(copyPerFrameMatricesTask->GetCommandInterface()->GetCommandList(i));
+		m_DirectCommandLists[i].push_back(copyPerFrameMatricesTask->GetCommandInterface()->GetCommandList(i));
 	}
 
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
 		// Update the BLAS:es if any (synced-version)
-		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_DirectCommandLists[i].push_back(blasTask->GetCommandInterface()->GetCommandList(i));
+		m_DirectCommandLists[i].push_back(blasTask->GetCommandInterface()->GetCommandList(i));
 	}
 
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
 		// Update the TLAS every frame
-		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_DirectCommandLists[i].push_back(tlasTask->GetCommandInterface()->GetCommandList(i));
+		m_DirectCommandLists[i].push_back(tlasTask->GetCommandInterface()->GetCommandList(i));
 	}
 
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
-		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_DirectCommandLists[i].push_back(DepthPrePassRenderTask->GetCommandInterface()->GetCommandList(i));
+		m_DirectCommandLists[i].push_back(DepthPrePassRenderTask->GetCommandInterface()->GetCommandList(i));
 	}
 
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
-		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_DirectCommandLists[i].push_back(deferredGeometryRenderTask->GetCommandInterface()->GetCommandList(i));
+		m_DirectCommandLists[i].push_back(deferredGeometryRenderTask->GetCommandInterface()->GetCommandList(i));
 	}
 
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
-		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_DirectCommandLists[i].push_back(reflectionTask->GetCommandInterface()->GetCommandList(i));
+		m_DirectCommandLists[i].push_back(reflectionTask->GetCommandInterface()->GetCommandList(i));
 	}
 
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
-		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_DirectCommandLists[i].push_back(deferredLightRenderTask->GetCommandInterface()->GetCommandList(i));
+		m_DirectCommandLists[i].push_back(deferredLightRenderTask->GetCommandInterface()->GetCommandList(i));
 	}
 
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
-		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_DirectCommandLists[i].push_back(downSampleTask->GetCommandInterface()->GetCommandList(i));
+		m_DirectCommandLists[i].push_back(downSampleTask->GetCommandInterface()->GetCommandList(i));
 	}
 
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
-		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_DirectCommandLists[i].push_back(outliningRenderTask->GetCommandInterface()->GetCommandList(i));
+		m_DirectCommandLists[i].push_back(outliningRenderTask->GetCommandInterface()->GetCommandList(i));
 	}
 
 	if (DEVELOPERMODE_DRAWBOUNDINGBOX == true)
 	{
 		for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 		{
-			static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_DirectCommandLists[i].push_back(wireFrameRenderTask->GetCommandInterface()->GetCommandList(i));
+			m_DirectCommandLists[i].push_back(wireFrameRenderTask->GetCommandInterface()->GetCommandList(i));
 		}
 	}
 
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
-		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_DirectCommandLists[i].push_back(transparentRenderTask->GetCommandInterface()->GetCommandList(i));
+		m_DirectCommandLists[i].push_back(transparentRenderTask->GetCommandInterface()->GetCommandList(i));
 	}
 
 	// Compute shader to blur the RTV from forwardRenderTask
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
-		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_DirectCommandLists[i].push_back(blurComputeTask->GetCommandInterface()->GetCommandList(i));
+		m_DirectCommandLists[i].push_back(blurComputeTask->GetCommandInterface()->GetCommandList(i));
 	}
 
 	// Final pass (this pass will merge different textures together and put result in the swapchain backBuffer)
 	// This will be used for pp-effects such as bloom.
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
-		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_DirectCommandLists[i].push_back(mergeTask->GetCommandInterface()->GetCommandList(i));
+		m_DirectCommandLists[i].push_back(mergeTask->GetCommandInterface()->GetCommandList(i));
 	}
 
 	// -------------------------------------- GUI -------------------------------------------------
 	// Debug/ImGui
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
-		static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_ImGuiCommandLists[i].push_back(imGuiRenderTask->GetCommandInterface()->GetCommandList(i));
+		m_ImGuiCommandLists[i].push_back(imGuiRenderTask->GetCommandInterface()->GetCommandList(i));
 	}
 }
 
@@ -2293,60 +2172,6 @@ void Renderer::setRenderTasksRenderComponents()
 	m_RenderTasks[E_RENDER_TASK_TYPE::DEFERRED_GEOMETRY]->SetRenderComponents(&m_RenderComponents[F_DRAW_FLAGS::DRAW_OPAQUE]);
 	m_RenderTasks[E_RENDER_TASK_TYPE::DEFERRED_LIGHT]->SetRenderComponents(&m_RenderComponents[F_DRAW_FLAGS::DRAW_OPAQUE]);	// TEMP
 	m_RenderTasks[E_RENDER_TASK_TYPE::OPACITY]->SetRenderComponents(&m_RenderComponents[F_DRAW_FLAGS::DRAW_TRANSPARENT]);
-}
-
-void Renderer::createFences()
-{
-	ID3D12Device5* m_pDevice5 = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pDevice5;
-	DescriptorHeap* mainHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
-	DescriptorHeap* rtvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetRTVDescriptorHeap();
-	DescriptorHeap* dsvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetDSVDescriptorHeap();
-	ID3D12CommandQueue* pDirectQueue = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pGraphicsCommandQueue;
-
-	HRESULT hr = m_pDevice5->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_pFenceFrame));
-
-	if (FAILED(hr))
-	{
-		BL_LOG_CRITICAL("Failed to Create Fence\n");
-	}
-	m_FenceFrameValue = 1;
-
-	// Event handle to use for GPU synchronization
-	m_EventHandle = CreateEvent(0, false, false, 0);
-}
-
-void Renderer::waitForGPU()
-{
-	ID3D12Device5* m_pDevice5 = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pDevice5;
-	DescriptorHeap* mainHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
-	DescriptorHeap* rtvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetRTVDescriptorHeap();
-	DescriptorHeap* dsvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetDSVDescriptorHeap();
-	ID3D12CommandQueue* pDirectQueue = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pGraphicsCommandQueue;
-
-	//Signal and increment the fence value.
-	const UINT64 oldFenceValue = m_FenceFrameValue;
-	pDirectQueue->Signal(m_pFenceFrame, oldFenceValue);
-	m_FenceFrameValue++;
-
-	//Wait until command queue is done.
-	if (m_pFenceFrame->GetCompletedValue() < oldFenceValue)
-	{
-		m_pFenceFrame->SetEventOnCompletion(oldFenceValue, m_EventHandle);
-		WaitForSingleObject(m_EventHandle, INFINITE);
-	}
-}
-
-void Renderer::waitForFrame(unsigned int framesToBeAhead)
-{
-	static constexpr unsigned int nrOfFenceChangesPerFrame = 1;
-	unsigned int fenceValuesToBeAhead = framesToBeAhead * nrOfFenceChangesPerFrame;
-
-	//Wait if the CPU is "framesToBeAhead" number of frames ahead of the GPU
-	if (m_pFenceFrame->GetCompletedValue() < m_FenceFrameValue - fenceValuesToBeAhead)
-	{
-		m_pFenceFrame->SetEventOnCompletion(m_FenceFrameValue - fenceValuesToBeAhead, m_EventHandle);
-		WaitForSingleObject(m_EventHandle, INFINITE);
-	}
 }
 
 void Renderer::prepareScene(Scene* activeScene)
@@ -2435,92 +2260,87 @@ void Renderer::submitUploadPerFrameData()
 
 }
 
-void Renderer::toggleFullscreen(WindowChange* event)
-{
-	ID3D12Device5* m_pDevice5 = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pDevice5;
-	DescriptorHeap* mainHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
-	DescriptorHeap* rtvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetRTVDescriptorHeap();
-	DescriptorHeap* dsvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetDSVDescriptorHeap();
-	ID3D12CommandQueue* pDirectQueue = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pGraphicsCommandQueue;
-
-	m_FenceFrameValue++;
-	pDirectQueue->Signal(m_pFenceFrame, m_FenceFrameValue);
-
-	// Wait for all frames
-	waitForFrame(0);
-
-	// Wait for the threads which records the commandlists to complete
-	m_pThreadPool->WaitForThreads(F_THREAD_FLAGS::RENDER);
-
-	for (auto task : m_RenderTasks)
-	{
-		for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
-		{
-			task->GetCommandInterface()->Reset(i);
-		}
-	}
-	for (auto task : m_CopyTasks)
-	{
-		for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
-		{
-			task->GetCommandInterface()->Reset(i);
-		}
-	}
-	for (auto task : m_ComputeTasks)
-	{
-		for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
-		{
-			task->GetCommandInterface()->Reset(i);
-		}
-	}
-
-	m_pSwapChain->ToggleWindowMode(m_pDevice5,
-		m_pWindow->GetHwnd(),
-		pDirectQueue,
-		rtvHeap,
-		mainHeap);
-
-	// Change the member variables of the window class to match the swapchain
-	UINT width = 0, height = 0;
-	if (m_pSwapChain->IsFullscreen())
-	{
-		m_pSwapChain->GetDX12SwapChain()->GetSourceSize(&width, &height);
-	}
-	else
-	{
-		// Earlier it read from options. now just set to 800/600
-		width = 800;
-		height = 600;
-	}
-
-	Window* window = const_cast<Window*>(m_pWindow);
-	window->SetScreenWidth(width);
-	window->SetScreenHeight(height);
-
-	for (auto task : m_RenderTasks)
-	{
-		for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
-		{
-			task->GetCommandInterface()->GetCommandList(i)->Close();
-		}
-	}
-	for (auto task : m_CopyTasks)
-	{
-		for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
-		{
-			task->GetCommandInterface()->GetCommandList(i)->Close();
-		}
-	}
-	for (auto task : m_ComputeTasks)
-	{
-		for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
-		{
-			task->GetCommandInterface()->GetCommandList(i)->Close();
-		}
-	}
-}
-
-SwapChain* Renderer::getSwapChain() const
-{
-	return m_pSwapChain;
-}
+//void Renderer::toggleFullscreen(WindowChange* event)
+//{
+//	ID3D12Device5* m_pDevice5 = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pDevice5;
+//	DescriptorHeap* mainHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
+//	DescriptorHeap* rtvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetRTVDescriptorHeap();
+//	DescriptorHeap* dsvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetDSVDescriptorHeap();
+//	ID3D12CommandQueue* pDirectQueue = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pGraphicsCommandQueue;
+//
+//	m_FenceFrameValue++;
+//	pDirectQueue->Signal(m_pFenceFrame, m_FenceFrameValue);
+//
+//	// Wait for all frames
+//	waitForFrame(0);
+//
+//	// Wait for the threads which records the commandlists to complete
+//	m_pThreadPool->WaitForThreads(F_THREAD_FLAGS::RENDER);
+//
+//	for (auto task : m_RenderTasks)
+//	{
+//		for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
+//		{
+//			task->GetCommandInterface()->Reset(i);
+//		}
+//	}
+//	for (auto task : m_CopyTasks)
+//	{
+//		for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
+//		{
+//			task->GetCommandInterface()->Reset(i);
+//		}
+//	}
+//	for (auto task : m_ComputeTasks)
+//	{
+//		for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
+//		{
+//			task->GetCommandInterface()->Reset(i);
+//		}
+//	}
+//
+//	m_pSwapChain->ToggleWindowMode(m_pDevice5,
+//		m_pWindow->GetHwnd(),
+//		pDirectQueue,
+//		rtvHeap,
+//		mainHeap);
+//
+//	// Change the member variables of the window class to match the swapchain
+//	UINT width = 0, height = 0;
+//	if (m_pSwapChain->IsFullscreen())
+//	{
+//		m_pSwapChain->GetDX12SwapChain()->GetSourceSize(&width, &height);
+//	}
+//	else
+//	{
+//		// Earlier it read from options. now just set to 800/600
+//		width = 800;
+//		height = 600;
+//	}
+//
+//	Window* window = const_cast<Window*>(m_pWindow);
+//	window->SetScreenWidth(width);
+//	window->SetScreenHeight(height);
+//
+//	for (auto task : m_RenderTasks)
+//	{
+//		for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
+//		{
+//			task->GetCommandInterface()->GetCommandList(i)->Close();
+//		}
+//	}
+//	for (auto task : m_CopyTasks)
+//	{
+//		for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
+//		{
+//			task->GetCommandInterface()->GetCommandList(i)->Close();
+//		}
+//	}
+//	for (auto task : m_ComputeTasks)
+//	{
+//		for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
+//		{
+//			task->GetCommandInterface()->GetCommandList(i)->Close();
+//		}
+//	}
+//}

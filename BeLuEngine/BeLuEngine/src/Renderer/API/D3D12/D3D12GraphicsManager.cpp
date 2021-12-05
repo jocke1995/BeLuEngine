@@ -27,9 +27,18 @@ D3D12GraphicsManager::~D3D12GraphicsManager()
 	BL_SAFE_DELETE(m_pMainDescriptorHeap);
 	BL_SAFE_DELETE(m_pRTVDescriptorHeap);
 	BL_SAFE_DELETE(m_pDSVDescriptorHeap);
+
+	BL_SAFE_RELEASE(&m_pSwapChain4);
+
+	for (unsigned int i = 0; i < NUM_SWAP_BUFFERS; i++)
+	{
+		BL_SAFE_DELETE(m_Resources[i]);
+		BL_SAFE_DELETE(m_RTVs[i]);
+		BL_SAFE_DELETE(m_SRVs[i]);
+	}
 }
 
-void D3D12GraphicsManager::Init()
+void D3D12GraphicsManager::Init(HWND hwnd, unsigned int width, unsigned int height, DXGI_FORMAT dxgiFormat)
 {
 	HRESULT hr;
 #pragma region CreateDevice
@@ -211,11 +220,134 @@ void D3D12GraphicsManager::Init()
 	m_pComputeCommandQueue->SetName(L"CopyQueue");
 #pragma endregion
 
+#pragma region Fences
+	hr = m_pDevice5->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_pFenceFrame));
+
+	if (FAILED(hr))
+	{
+		BL_LOG_CRITICAL("Failed to Create Fence\n");
+	}
+	m_FenceFrameValue = 1;
+
+	// Event handle to use for GPU Sync
+	m_EventHandle = CreateEvent(0, false, false, L"EventHandle");
+#pragma endregion
+
 #pragma region DescriptorHeap
 	m_pMainDescriptorHeap	 = new DescriptorHeap(m_pDevice5, E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV);
 	m_pRTVDescriptorHeap	 = new DescriptorHeap(m_pDevice5, E_DESCRIPTOR_HEAP_TYPE::RTV);
 	m_pDSVDescriptorHeap	 = new DescriptorHeap(m_pDevice5, E_DESCRIPTOR_HEAP_TYPE::DSV);
 #pragma endregion
+
+#pragma region Swapchain
+
+	IDXGIFactory4* factorySwapChain = nullptr;
+	hr = CreateDXGIFactory(IID_PPV_ARGS(&factorySwapChain));
+
+	if (hr != S_OK)
+	{
+		BL_LOG_CRITICAL("Failed to create DXGIFactory for SwapChain\n");
+	}
+
+	//HMONITOR hmon = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+	//MONITORINFO mi = { sizeof(mi) };
+	//GetMonitorInfo(hmon, &mi);
+	//
+	//int m_ScreenWidth = mi.rcMonitor.right - mi.rcMonitor.left;
+	//int m_ScreenHeight = mi.rcMonitor.bottom - mi.rcMonitor.top;
+
+	//Create descriptor
+	DXGI_SWAP_CHAIN_DESC1 scDesc = {};
+	scDesc.Width = width;
+	scDesc.Height = height;
+	scDesc.Format = dxgiFormat;
+	scDesc.Stereo = FALSE;
+	scDesc.SampleDesc.Count = 1;
+	scDesc.SampleDesc.Quality = 0;
+	scDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+	scDesc.BufferCount = NUM_SWAP_BUFFERS;
+	scDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+	scDesc.Scaling = DXGI_SCALING_STRETCH;
+	scDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+	scDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
+
+
+	IDXGISwapChain1* swapChain1 = nullptr;
+	hr = factorySwapChain->CreateSwapChainForHwnd(
+		m_pGraphicsCommandQueue,
+		hwnd,
+		&scDesc,
+		nullptr,
+		nullptr,
+		&swapChain1);
+
+	if (SUCCEEDED(hr))
+	{
+		if (SUCCEEDED(swapChain1->QueryInterface(IID_PPV_ARGS(&m_pSwapChain4))))
+		{
+			m_pSwapChain4->Release();
+		}
+	}
+	else
+	{
+		BL_LOG_CRITICAL("Failed to create Swapchain\n");
+	}
+
+	BL_SAFE_RELEASE(&factorySwapChain);
+
+	// Set RTVs
+	for (unsigned int i = 0; i < NUM_SWAP_BUFFERS; i++)
+	{
+		m_Resources[i] = new Resource();
+		m_RTVs[i] = new RenderTargetView(m_pDevice5, width, height, m_pRTVDescriptorHeap, nullptr, m_Resources[i], false);
+	}
+
+	// Connect the m_RenderTargets to the swapchain, so that the swapchain can easily swap between these two m_RenderTargets
+	for (unsigned int i = 0; i < NUM_SWAP_BUFFERS; i++)
+	{
+		HRESULT hr = m_pSwapChain4->GetBuffer(i, IID_PPV_ARGS(const_cast<Resource*>(m_RTVs[i]->GetResource())->GetID3D12Resource1PP()));
+		if (FAILED(hr))
+		{
+			BL_LOG_CRITICAL("Failed to GetBuffer from RenderTarget to Swapchain\n");
+		}
+
+		m_RTVs[i]->CreateRTV(m_pDevice5, m_pRTVDescriptorHeap, nullptr);
+	}
+
+	m_RTVs[0]->GetResource()->GetID3D12Resource1()->SetName(L"RTV0_Resource");
+	m_RTVs[1]->GetResource()->GetID3D12Resource1()->SetName(L"RTV1_Resource");
+
+	// Create SRVs
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc.Format = dxgiFormat;
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MipLevels = 1;
+
+	for (unsigned int i = 0; i < NUM_SWAP_BUFFERS; i++)
+	{
+		m_SRVs[i] = new ShaderResourceView(m_pDevice5, m_pMainDescriptorHeap, &srvDesc, m_Resources[i]);
+	}
+
+#pragma endregion
+}
+
+void D3D12GraphicsManager::Execute(const std::vector<ID3D12CommandList*>& m_DirectCommandLists, unsigned int numCommandLists)
+{
+	m_pGraphicsCommandQueue->ExecuteCommandLists(numCommandLists, m_DirectCommandLists.data());
+}
+
+void D3D12GraphicsManager::Present()
+{
+	// Hardsync atm
+	waitForGPU(m_pGraphicsCommandQueue);
+
+	HRESULT hr = m_pSwapChain4->Present(0, 0);
+
+	if (FAILED(hr))
+	{
+		BL_LOG_CRITICAL("Swapchain Failed to present\n");
+	}
 }
 
 DescriptorHeap* D3D12GraphicsManager::GetMainDescriptorHeap() const
@@ -231,4 +363,21 @@ DescriptorHeap* D3D12GraphicsManager::GetRTVDescriptorHeap() const
 DescriptorHeap* D3D12GraphicsManager::GetDSVDescriptorHeap() const
 {
 	return m_pDSVDescriptorHeap;
+}
+
+void D3D12GraphicsManager::waitForGPU(ID3D12CommandQueue* commandQueue)
+{
+	static const unsigned int nrOfFenceChangesPerFrame = 1;
+	static const unsigned int framesToBeAhead = 0;
+
+	unsigned int fenceValuesToBeAhead = framesToBeAhead * nrOfFenceChangesPerFrame;
+
+	m_pGraphicsCommandQueue->Signal(m_pFenceFrame, m_FenceFrameValue);
+	//Wait if the CPU is "framesToBeAhead" number of frames ahead of the GPU
+	if (m_pFenceFrame->GetCompletedValue() < m_FenceFrameValue - fenceValuesToBeAhead)
+	{
+		m_pFenceFrame->SetEventOnCompletion(m_FenceFrameValue - fenceValuesToBeAhead, m_EventHandle);
+		WaitForSingleObject(m_EventHandle, INFINITE);
+	}
+	m_FenceFrameValue++;
 }

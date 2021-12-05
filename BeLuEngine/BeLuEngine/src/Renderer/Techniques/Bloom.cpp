@@ -9,12 +9,10 @@
 Bloom::Bloom(
 	ID3D12Device5* device,
 	DescriptorHeap* dh_RTV,
-	DescriptorHeap* dh_CBV_UAV_SRV,
-	SwapChain* swapChain)
+	DescriptorHeap* dh_CBV_UAV_SRV)
 {
-	UINT resolutionWidth = 0;
-	UINT resolutionHeight = 0;
-	swapChain->GetDX12SwapChain()->GetSourceSize(&resolutionWidth, &resolutionHeight);
+	UINT resolutionWidth = 1280;
+	UINT resolutionHeight = 720;
 
 	// A resource, rtv and srv for "bright" areas on the screen
 	createBrightTuple(device, dh_RTV, dh_CBV_UAV_SRV, resolutionWidth, resolutionHeight);

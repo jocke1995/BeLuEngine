@@ -182,7 +182,8 @@ void SceneManager::SetScene(Scene* scene)
 
 void SceneManager::ResetScene()
 {
-	Renderer::GetInstance().waitForGPU();
+	TODO("Fix this");
+	//Renderer::GetInstance().waitForGPU();
 
 	/* ------------------------- GPU -------------------------*/
 	

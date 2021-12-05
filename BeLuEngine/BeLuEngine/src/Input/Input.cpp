@@ -13,7 +13,7 @@ Input& Input::GetInstance()
 	return instance;
 }
 
-void Input::RegisterDevices(const HWND* hWnd)
+void Input::RegisterDevices(HWND hWnd)
 {
 	static RAWINPUTDEVICE m_Rid[2];
 
@@ -21,13 +21,13 @@ void Input::RegisterDevices(const HWND* hWnd)
 	m_Rid[0].usUsagePage = 0x01;
 	m_Rid[0].usUsage = 0x02;
 	m_Rid[0].dwFlags = 0;
-	m_Rid[0].hwndTarget = *hWnd;
+	m_Rid[0].hwndTarget = hWnd;
 
 	// Register keyboard
 	m_Rid[1].usUsagePage = 0x01;
 	m_Rid[1].usUsage = 0x06;
 	m_Rid[1].dwFlags = 0;
-	m_Rid[1].hwndTarget = *hWnd;
+	m_Rid[1].hwndTarget = hWnd;
 
 	if (RegisterRawInputDevices(m_Rid, 2, sizeof(m_Rid[0])) == FALSE)
 	{

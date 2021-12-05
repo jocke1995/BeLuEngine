@@ -18,8 +18,7 @@ class Bloom
 public:
 	Bloom(
 		ID3D12Device5* device,
-		DescriptorHeap* dhRTV, DescriptorHeap* dh_CBV_UAV_SRV,
-		SwapChain* swapChain);
+		DescriptorHeap* dhRTV, DescriptorHeap* dh_CBV_UAV_SRV);
 	virtual ~Bloom();
 
 	unsigned int GetBlurWidth() const;

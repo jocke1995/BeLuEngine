@@ -63,11 +63,23 @@ void DeferredGeometryRenderTask::Execute()
 		commandList->SetPipelineState(m_PipelineStates[0]->GetPSO());
 		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-		// TODO: Get Depth viewport, rightnow use swapchain since the view and rect is the same.
-		const D3D12_VIEWPORT* viewPort = m_pSwapChain->GetRTV(0)->GetRenderView()->GetViewPort();
-		const D3D12_RECT* rect = m_pSwapChain->GetRTV(0)->GetRenderView()->GetScissorRect();
-		commandList->RSSetViewports(1, viewPort);
-		commandList->RSSetScissorRects(1, rect);
+		TODO("Fix the sizes");
+		D3D12_VIEWPORT viewPort = {};
+		viewPort.TopLeftX = 0.0f;
+		viewPort.TopLeftY = 0.0f;
+		viewPort.Width = 1280;
+		viewPort.Height = 720;
+		viewPort.MinDepth = 0.0f;
+		viewPort.MaxDepth = 1.0f;
+
+		D3D12_RECT rect = {};
+		rect.left = 0;
+		rect.right = 1280;
+		rect.top = 0;
+		rect.bottom = 720;
+
+		commandList->RSSetViewports(1, &viewPort);
+		commandList->RSSetScissorRects(1, &rect);
 
 		const DirectX::XMMATRIX* viewProjMatTrans = m_pCamera->GetViewProjectionTranposed();
 

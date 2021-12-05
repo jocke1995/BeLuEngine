@@ -20,7 +20,7 @@ IGraphicsManager::~IGraphicsManager()
 
 IGraphicsManager* IGraphicsManager::Create(const E_GRAPHICS_API graphicsApi)
 {
-    BL_ASSERT(&m_sInstance);
+    BL_ASSERT_MESSAGE(m_sInstance == nullptr, "Trying to create a new graphics manager without deleting the old one!");
 
     if (graphicsApi == E_GRAPHICS_API::D3D12)
     {
@@ -42,4 +42,5 @@ IGraphicsManager* IGraphicsManager::Create(const E_GRAPHICS_API graphicsApi)
 void IGraphicsManager::Destroy()
 {
     BL_SAFE_DELETE(m_sInstance);
+    m_sInstance = nullptr;
 }

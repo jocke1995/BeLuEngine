@@ -59,11 +59,3 @@ void RenderTask::SetCamera(BaseCamera* camera)
 {
 	m_pCamera = camera;
 }
-
-void RenderTask::SetSwapChain(SwapChain* swapChain)
-{
-	m_pSwapChain = swapChain;
-}
-
-
-

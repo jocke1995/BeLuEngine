@@ -29,28 +29,28 @@ void MousePicker::SetPrimaryCamera(BaseCamera* primaryCamera)
 
 void MousePicker::UpdateRay()
 {
-	Window* w = Renderer::GetInstance().GetWindow();
-	POINT screenSpacePos = {};
-	GetCursorPos(&screenSpacePos);
-
-	// Cursor pos relative to the window instead of the screen
-	ScreenToClient(*w->GetHwnd(), &screenSpacePos);
-
-	float mousex = screenSpacePos.x;
-	float mousey = screenSpacePos.y;
-
-	m_RayInWorldSpacePos = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-
-	//Transform 2D pick position on screen space to 3D ray in View space
-	DirectX::XMMATRIX camProjection = *static_cast<PerspectiveCamera*>(m_pPrimaryCamera)->GetProjMatrix();
-	m_RayInWorldSpaceDir.m128_f32[0] =  (((2.0f * mousex) / w->GetScreenWidth())  - 1) / camProjection.r[0].m128_f32[0];
-	m_RayInWorldSpaceDir.m128_f32[1] = -(((2.0f * mousey) / w->GetScreenHeight()) - 1) / camProjection.r[1].m128_f32[1];
-	m_RayInWorldSpaceDir.m128_f32[2] = 1.0f;
-	m_RayInWorldSpaceDir.m128_f32[3] = 0.0f;
-
-	// Transform ray to worldSpace by taking inverse of the view matrix
-	m_RayInWorldSpacePos = DirectX::XMVector3TransformCoord(m_RayInWorldSpacePos, *m_pPrimaryCamera->GetViewMatrixInverse());
-	m_RayInWorldSpaceDir = DirectX::XMVector3TransformNormal(m_RayInWorldSpaceDir, *m_pPrimaryCamera->GetViewMatrixInverse());
+	//Window* w = Renderer::GetInstance().GetWindow();
+	//POINT screenSpacePos = {};
+	//GetCursorPos(&screenSpacePos);
+	//
+	//// Cursor pos relative to the window instead of the screen
+	//ScreenToClient(w->GetHwnd(), &screenSpacePos);
+	//
+	//float mousex = screenSpacePos.x;
+	//float mousey = screenSpacePos.y;
+	//
+	//m_RayInWorldSpacePos = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	//
+	////Transform 2D pick position on screen space to 3D ray in View space
+	//DirectX::XMMATRIX camProjection = *static_cast<PerspectiveCamera*>(m_pPrimaryCamera)->GetProjMatrix();
+	//m_RayInWorldSpaceDir.m128_f32[0] =  (((2.0f * mousex) / w->GetScreenWidth())  - 1) / camProjection.r[0].m128_f32[0];
+	//m_RayInWorldSpaceDir.m128_f32[1] = -(((2.0f * mousey) / w->GetScreenHeight()) - 1) / camProjection.r[1].m128_f32[1];
+	//m_RayInWorldSpaceDir.m128_f32[2] = 1.0f;
+	//m_RayInWorldSpaceDir.m128_f32[3] = 0.0f;
+	//
+	//// Transform ray to worldSpace by taking inverse of the view matrix
+	//m_RayInWorldSpacePos = DirectX::XMVector3TransformCoord(m_RayInWorldSpacePos, *m_pPrimaryCamera->GetViewMatrixInverse());
+	//m_RayInWorldSpaceDir = DirectX::XMVector3TransformNormal(m_RayInWorldSpaceDir, *m_pPrimaryCamera->GetViewMatrixInverse());
 }
 
 bool MousePicker::Pick(component::BoundingBoxComponent* bbc, float& distance, unsigned int bbdIndex)

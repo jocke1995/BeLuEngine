@@ -51,7 +51,6 @@ public:
 	void SetMainDepthStencil(DepthStencil* depthStencil);
 
 	void SetCamera(BaseCamera* camera);
-	void SetSwapChain(SwapChain* swapChain);
 	
 protected:
 	std::vector<RenderComponent> m_RenderComponents;
@@ -59,7 +58,6 @@ protected:
 	
 	DepthStencil* m_pDepthStencil = nullptr;
 	BaseCamera* m_pCamera = nullptr;
-	SwapChain* m_pSwapChain = nullptr;
 	ID3D12RootSignature* m_pRootSig = nullptr;
 	std::vector<PipelineState*> m_PipelineStates;
 };

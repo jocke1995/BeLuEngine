@@ -9,7 +9,6 @@
 
 // Misc
 class ThreadPool;
-class Window;
 
 // Renderer Engine
 class SwapChain;
@@ -133,10 +132,8 @@ public:
 	// Scene
 	Scene* const GetActiveScene() const;
 
-	Window* const GetWindow() const;
-
 	// Call once
-	void InitD3D12(Window* window, HINSTANCE hInstance, ThreadPool* threadPool);
+	void InitD3D12(HWND hwnd, unsigned int width, unsigned int height, HINSTANCE hInstance, ThreadPool* threadPool);
 
 	// Call each frame
 	void Update(double dt);
@@ -196,9 +193,6 @@ private:
 
 	HANDLE m_ProcessHandle = nullptr;
 
-	// Window
-	Window* m_pWindow;
-
 	// -------------- RenderTargets -------------- 
 	std::pair<RenderTarget*, ShaderResourceView*> m_FinalColorBuffer;
 	std::pair<RenderTarget*, ShaderResourceView*> m_GBufferAlbedo;
@@ -208,9 +202,6 @@ private:
 
 	// -------------- RenderTargets -------------- 
 	Resource_UAV_SRV m_ReflectionTexture;
-
-	// Swapchain (inheriting from 'RenderTarget')
-	SwapChain* m_pSwapChain = nullptr;
 	
 	// Bloom (includes rtv, uav and srv)
 	Bloom* m_pBloomResources = nullptr;
@@ -247,13 +238,7 @@ private:
 	CB_PER_FRAME_STRUCT* m_pCbPerFrameData = nullptr;
 	ConstantBuffer* m_pCbPerFrame = nullptr;
 
-	// Fences
-	HANDLE m_EventHandle = nullptr;
-	ID3D12Fence1* m_pFenceFrame = nullptr;
-	UINT64 m_FenceFrameValue = 0;
-
 	void setRenderTasksPrimaryCamera();
-	void createSwapChain();
 	void createMainDSV();
 	void createRootSignature();
 	void createFullScreenQuad();
@@ -261,9 +246,6 @@ private:
 	void initRenderTasks();
 	void createRawBufferForLights();
 	void setRenderTasksRenderComponents();
-	void createFences();
-	void waitForFrame(unsigned int framesToBeAhead = NUM_SWAP_BUFFERS - 1);
-	void waitForGPU();
 
 	// Setup the whole scene
 	void prepareScene(Scene* activeScene);
@@ -273,9 +255,14 @@ private:
 	// Submit cbPerFrameData to the copyQueue that updates each frame
 	void submitUploadPerFrameData();
 
-	void toggleFullscreen(WindowChange* event);
+	//void toggleFullscreen(WindowChange* event);
 
-	SwapChain* getSwapChain() const;
+	// CommandInterface
+	std::vector<ID3D12CommandList*> m_DirectCommandLists[NUM_SWAP_BUFFERS];
+	std::vector<ID3D12CommandList*> m_ImGuiCommandLists[NUM_SWAP_BUFFERS];
+
+	unsigned int m_CurrentRenderingWidth = 0;
+	unsigned int m_CurrentRenderingHeight = 0;
 
 // USE_NSIGHT_AFTERMATH
 #if defined(USE_NSIGHT_AFTERMATH)
