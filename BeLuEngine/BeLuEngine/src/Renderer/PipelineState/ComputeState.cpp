@@ -5,10 +5,12 @@
 
 #include "../Shader.h"
 
-ComputeState::ComputeState(ID3D12Device5* device, ID3D12RootSignature* rootSignature, std::wstring& CSName, std::wstring& psoName)
+#include "../API/D3D12/D3D12GraphicsManager.h"
+
+ComputeState::ComputeState(ID3D12Device5* device, std::wstring& CSName, std::wstring& psoName)
 	:PipelineState(psoName)
 {
-	m_Cpsd.pRootSignature = rootSignature;
+	m_Cpsd.pRootSignature = static_cast<D3D12GraphicsManager*>(IGraphicsManager::GetInstance())->m_pGlobalRootSig;
 
 	m_pCS = createShader(CSName, E_SHADER_TYPE::CS);
 

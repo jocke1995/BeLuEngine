@@ -5,13 +5,15 @@
 
 #include "../Shader.h"
 
-GraphicsState::GraphicsState(ID3D12Device5* device, ID3D12RootSignature* rootSignature, const std::wstring& VSName, const std::wstring& PSName, D3D12_GRAPHICS_PIPELINE_STATE_DESC* gpsd, const std::wstring& psoName)
+#include "../API/D3D12/D3D12GraphicsManager.h"
+
+GraphicsState::GraphicsState(ID3D12Device5* device, const std::wstring& VSName, const std::wstring& PSName, D3D12_GRAPHICS_PIPELINE_STATE_DESC* gpsd, const std::wstring& psoName)
 	:PipelineState(psoName)
 {
 	// Set the rootSignature in the pipeline state object descriptor
 	m_pGPSD = gpsd;
 
-	m_pGPSD->pRootSignature = rootSignature;
+	m_pGPSD->pRootSignature = static_cast<D3D12GraphicsManager*>(IGraphicsManager::GetInstance())->m_pGlobalRootSig;
 
 	m_pVS = createShader(VSName, E_SHADER_TYPE::VS);
 	m_pPS = createShader(PSName, E_SHADER_TYPE::PS);

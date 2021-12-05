@@ -38,6 +38,18 @@ private:
 	friend class ImGuiHandler;
 	friend class ImGuiRenderTask;
 	friend class MergeRenderTask;
+	friend class DXRReflectionTask;
+	friend class RayTracingPipelineGenerator;
+	friend class GraphicsState;
+	friend class ComputeState;
+	friend class OutliningRenderTask;
+	friend class WireframeRenderTask;
+	friend class DownSampleRenderTask;
+	friend class DepthRenderTask;
+	friend class DeferredGeometryRenderTask;
+	friend class DeferredLightRenderTask;
+	friend class BlurComputeTask;
+	friend class TransparentRenderTask;
 	// -------------------------- Native D3D12 Objects -------------------------- 
 	// D3D12 DLL
 	HINSTANCE m_D3D12Handle;
@@ -67,6 +79,9 @@ private:
 	std::array<Resource*, NUM_SWAP_BUFFERS> m_Resources;
 	std::array<RenderTargetView*, NUM_SWAP_BUFFERS> m_RTVs;
 	std::array<ShaderResourceView*, NUM_SWAP_BUFFERS> m_SRVs;
+
+	// Root Signature
+	ID3D12RootSignature* m_pGlobalRootSig = nullptr;
 	// -------------------------- Native D3D12 Objects -------------------------- 
 
 	void waitForGPU(ID3D12CommandQueue* commandQueue);

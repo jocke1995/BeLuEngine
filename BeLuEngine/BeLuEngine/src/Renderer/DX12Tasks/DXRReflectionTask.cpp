@@ -20,12 +20,12 @@
 
 TODO(To be replaced by a D3D12Manager some point in the future(needed to access RootSig));
 #include "../Renderer.h"
+
 // TODO ABSTRACTION
 #include "../API/D3D12/D3D12GraphicsManager.h"
 
 DXRReflectionTask::DXRReflectionTask(
 	ID3D12Device5* device,
-	ID3D12RootSignature* globalRootSignature,
 	Resource_UAV_SRV* resourceUavSrv,
 	unsigned int width, unsigned int height,
 	unsigned int FLAG_THREAD)
@@ -179,7 +179,7 @@ DXRReflectionTask::DXRReflectionTask(
 	rtPipelineGenerator.SetMaxRecursionDepth(15);
 
 	// Compile the pipeline for execution on the GPU
-	m_pStateObject = rtPipelineGenerator.Generate(globalRootSignature);
+	m_pStateObject = rtPipelineGenerator.Generate();
 
 	// Cast the state object into a properties object, allowing to later access
 	// the shader pointers by name
@@ -196,7 +196,6 @@ DXRReflectionTask::DXRReflectionTask(
 #pragma endregion
 
 	// Rest
-	m_pGlobalRootSig = globalRootSignature;
 	m_pResourceUavSrv = resourceUavSrv;
 	m_DispatchWidth = width;
 	m_DispatchHeight = height;
@@ -272,7 +271,8 @@ void DXRReflectionTask::Execute()
 	{
 		ScopedPixEvent(RaytracedReflections, commandList);
 
-		commandList->SetComputeRootSignature(m_pGlobalRootSig);
+		
+		commandList->SetComputeRootSignature(static_cast<D3D12GraphicsManager*>(IGraphicsManager::GetInstance())->m_pGlobalRootSig);
 
 		DescriptorHeap* dhSRVUAVCBV = mainHeap;
 		ID3D12DescriptorHeap* dhHeap = dhSRVUAVCBV->GetID3D12DescriptorHeap();

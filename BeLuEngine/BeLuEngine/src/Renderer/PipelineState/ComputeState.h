@@ -8,8 +8,7 @@ class Shader;
 class ComputeState : public PipelineState
 {
 public:
-	ComputeState(	ID3D12Device5* device, 
-					ID3D12RootSignature* rootSignature,
+	ComputeState(	ID3D12Device5* device,
 					std::wstring& CSName,
 					std::wstring& psoName);
 

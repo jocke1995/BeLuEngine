@@ -1,12 +1,6 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
-// USE_NSIGHT_AFTERMATH
-#if defined(USE_NSIGHT_AFTERMATH)
-	#include "aftermath/GFSDK_Aftermath.h"
-	#include "../Misc/NvidiaAftermath/NsightAftermathGpuCrashTracker.h"
-#endif
-
 // Misc
 class ThreadPool;
 
@@ -34,12 +28,8 @@ class UnorderedAccessView;
 class ConstantBufferView;
 class DepthStencilView;
 
-// Enums
-enum E_COMMAND_INTERFACE_TYPE;
-enum class E_DESCRIPTOR_HEAP_TYPE;
 
 // techniques
-class ShadowInfo;
 class MousePicker;
 class Bloom;
 
@@ -49,10 +39,7 @@ class Light;
 
 // Graphics
 #include "DX12Tasks/RenderTask.h"
-class WireframeRenderTask;
-class OutliningRenderTask;
 class BaseCamera;
-class Material;
 
 // Copy
 class CopyTask;
@@ -62,19 +49,13 @@ class ComputeTask;
 
 // DXR
 class DXRTask;
-class ShaderBindingTableGenerator;
-class ID3D12StateObject;
-class ID3D12StateObjectProperties;
-
-// DX12 Forward Declarations
-struct ID3D12CommandQueue;
-struct ID3D12CommandList;
-struct ID3D12Fence1;
-struct ID3D12Device5;
-struct IDXGIAdapter4;
 
 // ECS
 class Entity;
+
+TODO("Replace with GraphicsContext");
+struct ID3D12CommandList;
+
 namespace component
 {
 	class ModelComponent;
@@ -91,35 +72,6 @@ struct RenderComponent;
 // Events
 struct WindowChange;
 struct WindowSettingChange;
-
-enum E_GLOBAL_ROOTSIGNATURE
-{
-	dtSRV,
-	dtCBV,
-	dtUAV,
-	Constants_SlotInfo_B0,
-	Constants_DH_Indices_B1,
-	RootParam_CBV_B2,
-	RootParam_CBV_B3,
-	RootParam_CBV_B4,
-	RootParam_CBV_B5,
-	RootParam_CBV_B6,
-	RootParam_CBV_B7,
-	RootParam_SRV_T0,
-	RootParam_SRV_T1,
-	RootParam_SRV_T2,
-	RootParam_SRV_T3,
-	RootParam_SRV_T4,
-	RootParam_SRV_T5,
-	RootParam_UAV_U0,
-	RootParam_UAV_U1,
-	RootParam_UAV_U2,
-	RootParam_UAV_U3,
-	RootParam_UAV_U4,
-	RootParam_UAV_U5,
-	RootParam_UAV_U6,
-	NUM_PARAMS
-};
 
 class Renderer
 {
@@ -209,7 +161,6 @@ private:
 	// Depthbuffer
 	DepthStencil* m_pMainDepthStencil = nullptr;
 
-	ID3D12RootSignature* m_pGlobalRootSig = nullptr;
 	// -------------- RenderTargets -------------- 
 	// Picking
 	MousePicker* m_pMousePicker = nullptr;
@@ -240,7 +191,6 @@ private:
 
 	void setRenderTasksPrimaryCamera();
 	void createMainDSV();
-	void createRootSignature();
 	void createFullScreenQuad();
 	void updateMousePicker();
 	void initRenderTasks();
@@ -263,13 +213,6 @@ private:
 
 	unsigned int m_CurrentRenderingWidth = 0;
 	unsigned int m_CurrentRenderingHeight = 0;
-
-// USE_NSIGHT_AFTERMATH
-#if defined(USE_NSIGHT_AFTERMATH)
-	int32_t* m_pAfterMathContextHandle = nullptr;
-	GpuCrashTracker m_GpuCrashTracker = {};
-#endif
-
 };
 
 #endif

@@ -17,14 +17,13 @@ TODO(To be replaced by a D3D12Manager some point in the future(needed to access 
 #include "../API/D3D12/D3D12GraphicsManager.h"
 DownSampleRenderTask::DownSampleRenderTask(
 	ID3D12Device5* device,
-	ID3D12RootSignature* rootSignature,
 	const std::wstring& VSName, const std::wstring& PSName,
 	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*>* gpsds,
 	const std::wstring& psoName,
 	const ShaderResourceView* sourceSRV,
 	const RenderTargetView* destinationRTV,
 	unsigned int FLAG_THREAD)
-	:RenderTask(device, rootSignature, VSName, PSName, gpsds, psoName, FLAG_THREAD)
+	:RenderTask(device, VSName, PSName, gpsds, psoName, FLAG_THREAD)
 {
 	m_pSourceSRV = const_cast<ShaderResourceView*>(sourceSRV);
 	m_pDestinationRTV = const_cast<RenderTargetView*>(destinationRTV);
@@ -64,7 +63,7 @@ void DownSampleRenderTask::Execute()
 	{
 		ScopedPixEvent(DownSamplePass, commandList);
 
-		commandList->SetGraphicsRootSignature(m_pRootSig);
+		commandList->SetGraphicsRootSignature(static_cast<D3D12GraphicsManager*>(IGraphicsManager::GetInstance())->m_pGlobalRootSig);
 
 		DescriptorHeap* descriptorHeap_RTV = rtvHeap;
 		DescriptorHeap* descriptorHeap_CBV_UAV_SRV = mainHeap;

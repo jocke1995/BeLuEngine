@@ -21,12 +21,11 @@ TODO(To be replaced by a D3D12Manager some point in the future(needed to access 
 
 TransparentRenderTask::TransparentRenderTask(	
 	ID3D12Device5* device,
-	ID3D12RootSignature* rootSignature,
 	const std::wstring& VSName, const std::wstring& PSName,
 	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*>* gpsds,
 	const std::wstring& psoName,
 	unsigned int FLAG_THREAD)
-	:RenderTask(device, rootSignature, VSName, PSName, gpsds, psoName, FLAG_THREAD)
+	:RenderTask(device, VSName, PSName, gpsds, psoName, FLAG_THREAD)
 {
 }
 
@@ -50,7 +49,7 @@ void TransparentRenderTask::Execute()
 	{
 		ScopedPixEvent(TransparentPass, commandList);
 
-		commandList->SetGraphicsRootSignature(m_pRootSig);
+		commandList->SetGraphicsRootSignature(static_cast<D3D12GraphicsManager*>(IGraphicsManager::GetInstance())->m_pGlobalRootSig);
 
 		DescriptorHeap* descriptorHeap_CBV_UAV_SRV = mainHeap;
 		ID3D12DescriptorHeap* d3d12DescriptorHeap = descriptorHeap_CBV_UAV_SRV->GetID3D12DescriptorHeap();

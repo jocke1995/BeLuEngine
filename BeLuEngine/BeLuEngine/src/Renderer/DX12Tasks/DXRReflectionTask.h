@@ -21,7 +21,6 @@ class DXRReflectionTask : public DXRTask
 {
 public:
 	DXRReflectionTask(ID3D12Device5* device,
-		ID3D12RootSignature* globalRootSignature,
 		Resource_UAV_SRV* resourceUavSrv,
 		unsigned int width, unsigned int height,
 		unsigned int FLAG_THREAD);
@@ -37,9 +36,6 @@ private:
 	Shader* m_pRayGenShader = nullptr;
 	Shader* m_pHitShader = nullptr;
 	Shader* m_pMissShader = nullptr;
-
-	// Global Root signature
-	ID3D12RootSignature* m_pGlobalRootSig;
 
 	// Local root signatures
 	ID3D12RootSignature* m_pRayGenSignature;

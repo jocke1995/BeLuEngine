@@ -11,7 +11,6 @@
 
 RenderTask::RenderTask(
 	ID3D12Device5* device,
-	ID3D12RootSignature* rootSignature,
 	const std::wstring& VSName, const std::wstring& PSName,
 	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*>* gpsds,
 	const std::wstring& psoName,
@@ -22,11 +21,9 @@ RenderTask::RenderTask(
 	{
 		for (auto gpsd : *gpsds)
 		{
-			m_PipelineStates.push_back(new GraphicsState(device, rootSignature, VSName, PSName, gpsd, psoName));
+			m_PipelineStates.push_back(new GraphicsState(device, VSName, PSName, gpsd, psoName));
 		}
 	}
-	
-	m_pRootSig = rootSignature;
 }
 
 RenderTask::~RenderTask()

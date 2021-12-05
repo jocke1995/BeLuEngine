@@ -18,7 +18,6 @@ TODO(To be replaced by a D3D12Manager some point in the future (needed to access
 
 BlurComputeTask::BlurComputeTask(
 	ID3D12Device5* device,
-	ID3D12RootSignature* rootSignature,
 	std::vector<std::pair< std::wstring, std::wstring>> csNamePSOName,
 	E_COMMAND_INTERFACE_TYPE interfaceType,
 	ShaderResourceView* brightSRV,
@@ -26,7 +25,7 @@ BlurComputeTask::BlurComputeTask(
 	const PingPongResource* Bloom1_RESOURCE,
 	unsigned int screenWidth, unsigned int screenHeight,
 	unsigned int FLAG_THREAD)
-	:ComputeTask(device, rootSignature, csNamePSOName, FLAG_THREAD, interfaceType)
+	:ComputeTask(device, csNamePSOName, FLAG_THREAD, interfaceType)
 {
 	m_pSRV = brightSRV;
 
@@ -56,7 +55,7 @@ void BlurComputeTask::Execute()
 	{
 		ScopedPixEvent(BlurCompute, commandList);
 
-		commandList->SetComputeRootSignature(m_pRootSig);
+		commandList->SetComputeRootSignature(static_cast<D3D12GraphicsManager*>(IGraphicsManager::GetInstance())->m_pGlobalRootSig);
 
 		DescriptorHeap* descriptorHeap_CBV_UAV_SRV = mainHeap;
 		ID3D12DescriptorHeap* d3d12DescriptorHeap = descriptorHeap_CBV_UAV_SRV->GetID3D12DescriptorHeap();

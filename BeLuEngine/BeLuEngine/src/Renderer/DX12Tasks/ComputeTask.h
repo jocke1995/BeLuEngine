@@ -11,7 +11,6 @@ class ComputeTask : public DX12Task
 {
 public:
 	ComputeTask(ID3D12Device5* device,
-		ID3D12RootSignature* rootSignature,
 		std::vector<std::pair< std::wstring, std::wstring>> csNamePSOName,
 		unsigned int FLAG_THREAD,
 		E_COMMAND_INTERFACE_TYPE interfaceType = E_COMMAND_INTERFACE_TYPE::COMPUTE_TYPE,
@@ -19,8 +18,6 @@ public:
 	virtual ~ComputeTask();
 
 protected:
-	ID3D12RootSignature* m_pRootSig = nullptr;
-
 	std::vector<PipelineState*> m_PipelineStates;
 };
 #endif

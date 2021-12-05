@@ -18,12 +18,11 @@
 
 ImGuiRenderTask::ImGuiRenderTask(
 	ID3D12Device5* device,
-	ID3D12RootSignature* rootSignature,
 	LPCWSTR VSName, LPCWSTR PSName,
 	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*>* gpsds,
 	LPCTSTR psoName,
 	unsigned int FLAG_THREAD)
-	:RenderTask(device, rootSignature, VSName, PSName, gpsds, psoName, FLAG_THREAD)
+	:RenderTask(device, VSName, PSName, gpsds, psoName, FLAG_THREAD)
 {
 }
 
