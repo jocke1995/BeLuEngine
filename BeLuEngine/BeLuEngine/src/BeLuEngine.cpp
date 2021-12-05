@@ -20,7 +20,7 @@ BeLuEngine::~BeLuEngine()
 
 	BL_SAFE_DELETE(m_pWindow);
 
-	IGraphicsManager* graphicsManager = IGraphicsManager::GetInstance();
+	IGraphicsManager* graphicsManager = IGraphicsManager::GetBaseInstance();
 	graphicsManager->Destroy();
 }
 

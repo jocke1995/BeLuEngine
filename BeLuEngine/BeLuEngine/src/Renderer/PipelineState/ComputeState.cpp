@@ -10,7 +10,7 @@
 ComputeState::ComputeState(ID3D12Device5* device, std::wstring& CSName, std::wstring& psoName)
 	:PipelineState(psoName)
 {
-	m_Cpsd.pRootSignature = static_cast<D3D12GraphicsManager*>(IGraphicsManager::GetInstance())->m_pGlobalRootSig;
+	m_Cpsd.pRootSignature = static_cast<D3D12GraphicsManager*>(IGraphicsManager::GetBaseInstance())->m_pGlobalRootSig;
 
 	m_pCS = createShader(CSName, E_SHADER_TYPE::CS);
 

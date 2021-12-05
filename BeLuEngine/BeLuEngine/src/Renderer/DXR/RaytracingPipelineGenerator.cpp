@@ -141,7 +141,7 @@ void RayTracingPipelineGenerator::SetMaxRecursionDepth(UINT maxDepth)
 // Compiles the raytracing state object
 ID3D12StateObject* RayTracingPipelineGenerator::Generate()
 {
-  ID3D12RootSignature* globalRootSigParam = static_cast<D3D12GraphicsManager*>(IGraphicsManager::GetInstance())->m_pGlobalRootSig;
+  ID3D12RootSignature* globalRootSigParam = static_cast<D3D12GraphicsManager*>(IGraphicsManager::GetBaseInstance())->m_pGlobalRootSig;
 
   // The pipeline is made of a set of sub-objects, representing the DXIL libraries, hit group
   // declarations, root signature associations, plus some configuration objects

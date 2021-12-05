@@ -23,14 +23,21 @@ public:
 	D3D12GraphicsManager();
 	virtual ~D3D12GraphicsManager();
 
+	static D3D12GraphicsManager* GetInstance();
+
 	void Init(HWND hwnd, unsigned int width, unsigned int height, DXGI_FORMAT dxgiFormat) override;
 	void Execute(const std::vector<ID3D12CommandList*>& m_DirectCommandLists, unsigned int numCommandLists); // This will later take in GPUContext and be overriding from base
 	void Present() override;
+
+	static bool SucceededHRESULT(HRESULT hrParam);
 
 	// Getters
 	DescriptorHeap* GetMainDescriptorHeap() const;
 	DescriptorHeap* GetRTVDescriptorHeap()  const;
 	DescriptorHeap* GetDSVDescriptorHeap()  const;
+	ID3D12Device5* GetDevice() const { return m_pDevice5; }
+	ID3D12RootSignature* GetGlobalRootSignature() const { return m_pGlobalRootSig; }
+	unsigned int GetCommandInterfaceIndex() const { return mCommandInterfaceIndex; }
 private:
 	// ABSTRACTION TEMP
 	friend class Renderer;
@@ -84,6 +91,7 @@ private:
 	ID3D12RootSignature* m_pGlobalRootSig = nullptr;
 	// -------------------------- Native D3D12 Objects -------------------------- 
 
+	unsigned int mCommandInterfaceIndex = 0;
 	void waitForGPU(ID3D12CommandQueue* commandQueue);
 };
 

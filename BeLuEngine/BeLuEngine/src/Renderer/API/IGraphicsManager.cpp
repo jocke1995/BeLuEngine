@@ -7,7 +7,7 @@ TODO("This should be inside stdafx.h");
 #include "D3D12/D3D12GraphicsManager.h"
 TODO("Include future Vulkan Manager");
 
-IGraphicsManager* IGraphicsManager::GetInstance()
+IGraphicsManager* IGraphicsManager::GetBaseInstance()
 {
     BL_ASSERT_MESSAGE(m_sInstance, "IGraphicsManager::m_sInstance is nullptr, did you forget to create it?");
 

@@ -13,7 +13,7 @@ GraphicsState::GraphicsState(ID3D12Device5* device, const std::wstring& VSName, 
 	// Set the rootSignature in the pipeline state object descriptor
 	m_pGPSD = gpsd;
 
-	m_pGPSD->pRootSignature = static_cast<D3D12GraphicsManager*>(IGraphicsManager::GetInstance())->m_pGlobalRootSig;
+	m_pGPSD->pRootSignature = static_cast<D3D12GraphicsManager*>(IGraphicsManager::GetBaseInstance())->m_pGlobalRootSig;
 
 	m_pVS = createShader(VSName, E_SHADER_TYPE::VS);
 	m_pPS = createShader(PSName, E_SHADER_TYPE::PS);

@@ -63,7 +63,7 @@ void DownSampleRenderTask::Execute()
 	{
 		ScopedPixEvent(DownSamplePass, commandList);
 
-		commandList->SetGraphicsRootSignature(static_cast<D3D12GraphicsManager*>(IGraphicsManager::GetInstance())->m_pGlobalRootSig);
+		commandList->SetGraphicsRootSignature(static_cast<D3D12GraphicsManager*>(IGraphicsManager::GetBaseInstance())->m_pGlobalRootSig);
 
 		DescriptorHeap* descriptorHeap_RTV = rtvHeap;
 		DescriptorHeap* descriptorHeap_CBV_UAV_SRV = mainHeap;

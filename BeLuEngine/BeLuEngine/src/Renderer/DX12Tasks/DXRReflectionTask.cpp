@@ -272,7 +272,7 @@ void DXRReflectionTask::Execute()
 		ScopedPixEvent(RaytracedReflections, commandList);
 
 		
-		commandList->SetComputeRootSignature(static_cast<D3D12GraphicsManager*>(IGraphicsManager::GetInstance())->m_pGlobalRootSig);
+		commandList->SetComputeRootSignature(static_cast<D3D12GraphicsManager*>(IGraphicsManager::GetBaseInstance())->m_pGlobalRootSig);
 
 		DescriptorHeap* dhSRVUAVCBV = mainHeap;
 		ID3D12DescriptorHeap* dhHeap = dhSRVUAVCBV->GetID3D12DescriptorHeap();

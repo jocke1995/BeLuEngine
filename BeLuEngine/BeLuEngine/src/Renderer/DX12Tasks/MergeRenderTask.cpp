@@ -69,7 +69,7 @@ void MergeRenderTask::Execute()
 		ScopedPixEvent(MergePass, commandList);
 
 		// Get renderTarget
-		const RenderTargetView* swapChainRenderTarget = static_cast<D3D12GraphicsManager*>(IGraphicsManager::GetInstance())->m_RTVs[m_CommandInterfaceIndex];
+		const RenderTargetView* swapChainRenderTarget = static_cast<D3D12GraphicsManager*>(IGraphicsManager::GetBaseInstance())->m_RTVs[m_CommandInterfaceIndex];
 
 		DescriptorHeap* descriptorHeap_CBV_UAV_SRV = mainHeap;
 		ID3D12DescriptorHeap* d3d12DescriptorHeap = descriptorHeap_CBV_UAV_SRV->GetID3D12DescriptorHeap();
@@ -80,7 +80,7 @@ void MergeRenderTask::Execute()
 		const unsigned int SwapChainIndex = swapChainRenderTarget->GetDescriptorHeapIndex();
 		D3D12_CPU_DESCRIPTOR_HANDLE cdh = renderTargetHeap->GetCPUHeapAt(SwapChainIndex);
 
-		commandList->SetGraphicsRootSignature(static_cast<D3D12GraphicsManager*>(IGraphicsManager::GetInstance())->m_pGlobalRootSig);
+		commandList->SetGraphicsRootSignature(static_cast<D3D12GraphicsManager*>(IGraphicsManager::GetBaseInstance())->m_pGlobalRootSig);
 
 		commandList->SetGraphicsRootDescriptorTable(dtSRV, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
 

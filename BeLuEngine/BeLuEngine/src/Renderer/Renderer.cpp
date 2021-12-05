@@ -1066,11 +1066,11 @@ void Renderer::setRenderTasksPrimaryCamera()
 
 void Renderer::createMainDSV()
 {
-	ID3D12Device5* m_pDevice5 = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pDevice5;
-	DescriptorHeap* mainHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
-	DescriptorHeap* rtvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetRTVDescriptorHeap();
-	DescriptorHeap* dsvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetDSVDescriptorHeap();
-	ID3D12CommandQueue* pDirectQueue = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pGraphicsCommandQueue;
+	ID3D12Device5* m_pDevice5 = D3D12GraphicsManager::GetInstance()->m_pDevice5;
+	DescriptorHeap* mainHeap = D3D12GraphicsManager::GetInstance()->GetMainDescriptorHeap();
+	DescriptorHeap* rtvHeap  = D3D12GraphicsManager::GetInstance()->GetRTVDescriptorHeap();
+	DescriptorHeap* dsvHeap  = D3D12GraphicsManager::GetInstance()->GetDSVDescriptorHeap();
+	ID3D12CommandQueue* pDirectQueue = D3D12GraphicsManager::GetInstance()->m_pGraphicsCommandQueue;
 
 	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
 	dsvDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;

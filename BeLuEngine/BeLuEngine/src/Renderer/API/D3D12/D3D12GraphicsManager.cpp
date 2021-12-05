@@ -40,6 +40,13 @@ D3D12GraphicsManager::~D3D12GraphicsManager()
 	BL_SAFE_RELEASE(&m_pGlobalRootSig);
 }
 
+D3D12GraphicsManager* D3D12GraphicsManager::GetInstance()
+{
+	IGraphicsManager* graphicsManager = IGraphicsManager::GetBaseInstance();
+
+	return static_cast<D3D12GraphicsManager*>(graphicsManager);
+}
+
 void D3D12GraphicsManager::Init(HWND hwnd, unsigned int width, unsigned int height, DXGI_FORMAT dxgiFormat)
 {
 	HRESULT hr;
@@ -653,6 +660,41 @@ void D3D12GraphicsManager::Present()
 	{
 		BL_LOG_CRITICAL("Swapchain Failed to present\n");
 	}
+
+	mCommandInterfaceIndex = (mCommandInterfaceIndex + 1) % NUM_SWAP_BUFFERS;
+}
+
+bool D3D12GraphicsManager::SucceededHRESULT(HRESULT hrParam)
+{
+	if (SUCCEEDED(hrParam))
+		return true;
+
+	std::string buffer;
+	std::string message = std::system_category().message(hrParam);
+	std::string deviceRemovedMessage;
+
+	buffer = "\n\nA D3D12 Error has occurred and the app is forced to terminate. Verify your graphics drivers are up to date. (HRESULT:" + std::to_string(hrParam) + "), " + message;
+
+	if (hrParam == DXGI_ERROR_DEVICE_REMOVED)
+	{
+		ID3D12Device5* device5 = D3D12GraphicsManager::GetInstance()->GetDevice();
+		if (device5 != nullptr)
+		{
+			HRESULT hrDevicedRemovedReason = device5->GetDeviceRemovedReason();
+			deviceRemovedMessage = std::system_category().message(hrDevicedRemovedReason);
+			std::string reason = "Reason: " + deviceRemovedMessage + "\n\n";
+			buffer += reason;
+		}
+	}
+	else if (hrParam == DXGI_ERROR_DEVICE_HUNG)
+	{
+		std::string reason = "Reason: DXGI_ERROR_DEVICE_HUNG\n\n";
+		buffer += reason;
+	}
+
+	BL_LOG_CRITICAL(buffer.c_str());
+
+	return false;
 }
 
 DescriptorHeap* D3D12GraphicsManager::GetMainDescriptorHeap() const

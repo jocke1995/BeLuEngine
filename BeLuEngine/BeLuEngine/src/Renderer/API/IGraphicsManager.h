@@ -40,10 +40,10 @@ enum class E_GRAPHICS_API
 class IGraphicsManager
 {
 public:
-	static IGraphicsManager* GetInstance();
 	virtual ~IGraphicsManager();
 
 	static IGraphicsManager* Create(const E_GRAPHICS_API graphicsApi);
+	static IGraphicsManager* GetBaseInstance();
 
 	virtual void Init(HWND hwnd, unsigned int width, unsigned int height, DXGI_FORMAT dxgiFormat) = 0;
 	virtual void Present() = 0;
