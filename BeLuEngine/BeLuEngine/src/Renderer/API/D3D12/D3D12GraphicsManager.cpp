@@ -38,6 +38,12 @@ D3D12GraphicsManager::~D3D12GraphicsManager()
 	}
 
 	BL_SAFE_RELEASE(&m_pGlobalRootSig);
+
+	// Intermediate Upload Heap
+	for (unsigned int i = 0; i < NUM_SWAP_BUFFERS; i++)
+	{
+		BL_SAFE_RELEASE(&m_pIntermediateUploadHeap[i]);
+	}
 }
 
 D3D12GraphicsManager* D3D12GraphicsManager::GetInstance()
@@ -341,6 +347,8 @@ void D3D12GraphicsManager::Init(HWND hwnd, unsigned int width, unsigned int heig
 
 #pragma endregion
 
+#pragma region CreateRootSignature
+
 #pragma region SRVTABLE
 	std::vector<D3D12_DESCRIPTOR_RANGE> dtRangesSRV;
 
@@ -579,6 +587,8 @@ void D3D12GraphicsManager::Init(HWND hwnd, unsigned int width, unsigned int heig
 
 #pragma endregion
 
+#pragma region Create
+
 	D3D12_ROOT_SIGNATURE_DESC rsDesc;
 	rsDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
 	rsDesc.NumParameters = ARRAYSIZE(rootParam);
@@ -608,7 +618,7 @@ void D3D12GraphicsManager::Init(HWND hwnd, unsigned int width, unsigned int heig
 
 	if (size > 64)
 	{
-		BL_LOG_CRITICAL("RootSignature to big! Size: %d DWORDS\n", size);
+		BL_LOG_CRITICAL("RootSignature too big! Size: %d DWORDS\n", size);
 	}
 #endif
 
@@ -643,6 +653,51 @@ void D3D12GraphicsManager::Init(HWND hwnd, unsigned int width, unsigned int heig
 	BL_SAFE_RELEASE(&m_pBlob);
 
 	m_pGlobalRootSig->SetName(L"GlobalRootSig");
+#pragma endregion
+
+#pragma endregion
+
+#pragma region CreateIntermediateUploadHeap
+	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
+	{
+		D3D12_HEAP_PROPERTIES heapProps = {};
+		heapProps.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+		heapProps.CreationNodeMask = 1; //used when multi-gpu
+		heapProps.VisibleNodeMask = 1; //used when multi-gpu
+		heapProps.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+		heapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
+
+		D3D12_RESOURCE_DESC resourceDesc = {};
+		resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+		resourceDesc.Width = m_IntermediateUploadHeapSize;
+		resourceDesc.Height = 1;
+		resourceDesc.DepthOrArraySize = 1;
+		resourceDesc.MipLevels = 1;
+		resourceDesc.SampleDesc.Count = 1;
+		resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+		resourceDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+
+		// Create buffer
+		hr = m_pDevice5->CreateCommittedResource(
+			&heapProps,
+			D3D12_HEAP_FLAG_NONE,
+			&resourceDesc,
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			nullptr,    // ClearValue, nullptr for buffers
+			IID_PPV_ARGS(&m_pIntermediateUploadHeap[i])
+		);
+		if (!SucceededHRESULT(hr))
+		{
+			BL_LOG_CRITICAL("Could not create D3D12IntermediateUploadHeap\n");
+		}
+
+		std::wstring resourceName = L"IntermediateUploadHeap" + std::to_wstring(i);
+		m_pIntermediateUploadHeap[i]->SetName(resourceName.c_str());
+
+		// Permanently mapped
+		m_pIntermediateUploadHeap[i]->Map(0, nullptr, &m_pIntermediateUploadHeapBegin[i]);
+	}
+#pragma endregion
 }
 
 void D3D12GraphicsManager::Begin()
@@ -732,6 +787,27 @@ void D3D12GraphicsManager::AddD3D12ObjectToDefferedDeletion(ID3D12Object* object
 {
 	TODO("Possible memory leak");
 	m_ObjectsToBeDeleted.push_back(std::make_tuple(mFrameIndex, object));
+}
+
+D3D12_GPU_VIRTUAL_ADDRESS D3D12GraphicsManager::SetDynamicData(unsigned int size, void* data)
+{
+	long offset = InterlockedAdd(&m_pIntermediateUploadHeapAtomicCurrent, size);
+
+	if (offset > m_IntermediateUploadHeapSize)
+	{
+		BL_LOG_CRITICAL("IntermediateUploadHeap to small");
+		return (D3D12_GPU_VIRTUAL_ADDRESS)0;
+	}
+
+	long currentOffset = offset - size;
+
+	// Copy to CPU address
+	void* cpuAddress = (char*)m_pIntermediateUploadHeapBegin[mCommandInterfaceIndex] + currentOffset;
+	memcpy(cpuAddress, data, size);
+
+	// Return GPU address
+	D3D12_GPU_VIRTUAL_ADDRESS gpuAddress = m_pIntermediateUploadHeap[mCommandInterfaceIndex]->GetGPUVirtualAddress() + currentOffset;
+	return gpuAddress;
 }
 
 DescriptorHeap* D3D12GraphicsManager::GetMainDescriptorHeap() const

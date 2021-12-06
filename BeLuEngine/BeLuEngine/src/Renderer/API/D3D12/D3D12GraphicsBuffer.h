@@ -17,7 +17,7 @@ public:
 private:
 	E_GRAPHICSBUFFER_TYPE m_BufferType = E_GRAPHICSBUFFER_TYPE::None;
 
-	ID3D12Resource1* m_pDefaultResource = nullptr;
+	ID3D12Resource1* m_pResource = nullptr;
 
 	// DescriptorBindings
 	unsigned int m_ConstantBufferSlot = 0;

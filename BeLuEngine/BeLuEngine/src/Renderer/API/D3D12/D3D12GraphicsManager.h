@@ -27,6 +27,7 @@ public:
 
 	void Init(HWND hwnd, unsigned int width, unsigned int height, DXGI_FORMAT dxgiFormat) override;
 
+	// Call everyframe
 	void Begin() override;
 	void Execute(const std::vector<ID3D12CommandList*>& m_DirectCommandLists, unsigned int numCommandLists); // This will later take in GPUContext and be overriding from base
 	void SyncAndPresent() override;
@@ -35,6 +36,7 @@ public:
 	static bool SucceededHRESULT(HRESULT hrParam);
 
 	void AddD3D12ObjectToDefferedDeletion(ID3D12Object* object);
+	D3D12_GPU_VIRTUAL_ADDRESS SetDynamicData(unsigned int size, void* data);
 
 	// Getters
 	DescriptorHeap* GetMainDescriptorHeap() const;
@@ -98,6 +100,11 @@ private:
 	// Objects to be deffered deleted.
 	// Tuple information: <indexSubmitted, objectItSelf>
 	std::vector<std::tuple<unsigned int, ID3D12Object*>> m_ObjectsToBeDeleted;
+
+	ID3D12Resource1* m_pIntermediateUploadHeap[NUM_SWAP_BUFFERS] = {};
+	void* m_pIntermediateUploadHeapBegin[NUM_SWAP_BUFFERS] = {};
+	LONG m_pIntermediateUploadHeapAtomicCurrent = 0;
+	const unsigned int m_IntermediateUploadHeapSize = 1024 * 1024 * 100; // 100MB
 	// -------------------------- Native D3D12 Objects -------------------------- 
 
 	unsigned int mCommandInterfaceIndex = 0;

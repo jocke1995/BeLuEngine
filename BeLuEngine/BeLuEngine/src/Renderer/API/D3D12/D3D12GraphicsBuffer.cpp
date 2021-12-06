@@ -45,7 +45,7 @@ D3D12GraphicsBuffer::D3D12GraphicsBuffer(E_GRAPHICSBUFFER_TYPE type, E_GRAPHICSB
 		&resourceDesc,
 		D3D12_RESOURCE_STATE_COMMON,
 		nullptr,
-		IID_PPV_ARGS(&m_pDefaultResource)
+		IID_PPV_ARGS(&m_pResource)
 	);
 
 	if (!graphicsManager->SucceededHRESULT(hr))
@@ -53,7 +53,7 @@ D3D12GraphicsBuffer::D3D12GraphicsBuffer(E_GRAPHICSBUFFER_TYPE type, E_GRAPHICSB
 		BL_LOG_CRITICAL("Failed to create D3D12GraphicsBuffer with name: \'%s\'\n", name.c_str());
 	}
 
-	m_pDefaultResource->SetName(name.c_str());
+	m_pResource->SetName(name.c_str());
 #pragma endregion
 
 #pragma region CreateDescriptor
@@ -64,7 +64,7 @@ D3D12GraphicsBuffer::D3D12GraphicsBuffer(E_GRAPHICSBUFFER_TYPE type, E_GRAPHICSB
 			m_ConstantBufferSlot = mainDHeap->GetNextDescriptorHeapIndex(1);
 
 			D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
-			cbvDesc.BufferLocation = m_pDefaultResource->GetGPUVirtualAddress();
+			cbvDesc.BufferLocation = m_pResource->GetGPUVirtualAddress();
 			cbvDesc.SizeInBytes = m_Size;
 
 			device5->CreateConstantBufferView(&cbvDesc, mainDHeap->GetCPUHeapAt(m_ConstantBufferSlot));
@@ -83,7 +83,7 @@ D3D12GraphicsBuffer::D3D12GraphicsBuffer(E_GRAPHICSBUFFER_TYPE type, E_GRAPHICSB
 			srvDesc.Buffer.NumElements = 1;
 			srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
 
-			device5->CreateShaderResourceView(m_pDefaultResource, &srvDesc, mainDHeap->GetCPUHeapAt(m_RawBufferSlot));
+			device5->CreateShaderResourceView(m_pResource, &srvDesc, mainDHeap->GetCPUHeapAt(m_RawBufferSlot));
 
 			break;
 		}
@@ -99,7 +99,7 @@ D3D12GraphicsBuffer::D3D12GraphicsBuffer(E_GRAPHICSBUFFER_TYPE type, E_GRAPHICSB
 D3D12GraphicsBuffer::~D3D12GraphicsBuffer()
 {
 	D3D12GraphicsManager* graphicsManager = D3D12GraphicsManager::GetInstance();
-	graphicsManager->AddD3D12ObjectToDefferedDeletion(m_pDefaultResource);
+	graphicsManager->AddD3D12ObjectToDefferedDeletion(m_pResource);
 }
 
 unsigned int D3D12GraphicsBuffer::GetConstantBufferDescriptorIndex() const

@@ -1038,17 +1038,6 @@ void Renderer::submitTextureToCodt(Texture* texture)
 	AssetLoader::Get()->m_LoadedTextures.at(texture->GetPath()).first = true;
 }
 
-void Renderer::submitToCpft(std::tuple<Resource*, Resource*, const void*>* Upload_Default_Data)
-{
-	CopyPerFrameTask* cpft = static_cast<CopyPerFrameTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME]);
-	cpft->Submit(Upload_Default_Data);
-}
-
-void Renderer::clearSpecificCpft(Resource* upload)
-{
-	CopyPerFrameTask* cpft = static_cast<CopyPerFrameTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME]);
-	cpft->ClearSpecific(upload);
-}
 
 Entity* const Renderer::GetPickedEntity() const
 {

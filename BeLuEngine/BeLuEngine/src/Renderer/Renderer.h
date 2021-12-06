@@ -132,10 +132,6 @@ private:
 	void submitMeshToCodt(Mesh* mesh);
 	void submitTextureToCodt(Texture* texture);
 
-	//SubmitToCpft functions
-	void submitToCpft(std::tuple<Resource*, Resource*, const void*>* Upload_Default_Data);
-	void clearSpecificCpft(Resource* upload);
-
 	ThreadPool* m_pThreadPool = nullptr;
 
 	// Camera
