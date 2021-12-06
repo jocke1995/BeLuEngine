@@ -8,7 +8,6 @@
 // Stuff to copy
 #include "../Renderer/Geometry/Mesh.h"
 #include "../Texture/Texture.h"
-#include "../Texture/TextureCubeMap.h"
 
 CopyOnDemandTask::CopyOnDemandTask(
 	ID3D12Device5* device,

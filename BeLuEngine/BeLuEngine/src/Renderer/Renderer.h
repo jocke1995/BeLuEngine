@@ -14,7 +14,6 @@ class Model;
 class Resource;
 
 // GPU Resources
-class ConstantBuffer;
 class ShaderResource;
 class UnorderedAccess;
 class DepthStencil;
@@ -52,6 +51,9 @@ class DXRTask;
 
 // ECS
 class Entity;
+
+// API
+class IGraphicsBuffer;
 
 TODO("Replace with GraphicsContext");
 struct ID3D12CommandList;
@@ -179,11 +181,11 @@ private:
 	// Current scene to be drawn
 	Scene* m_pCurrActiveScene = nullptr;
 	CB_PER_SCENE_STRUCT* m_pCbPerSceneData = nullptr;
-	ConstantBuffer* m_pCbPerScene = nullptr;
+	IGraphicsBuffer* m_pCbPerScene = nullptr;
 
 	// update per frame
 	CB_PER_FRAME_STRUCT* m_pCbPerFrameData = nullptr;
-	ConstantBuffer* m_pCbPerFrame = nullptr;
+	IGraphicsBuffer* m_pCbPerFrame = nullptr;
 
 	void setRenderTasksPrimaryCamera();
 	void createMainDSV();

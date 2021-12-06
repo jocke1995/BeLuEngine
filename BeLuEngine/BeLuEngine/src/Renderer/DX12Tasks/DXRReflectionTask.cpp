@@ -23,6 +23,8 @@ TODO(To be replaced by a D3D12Manager some point in the future(needed to access 
 
 // TODO ABSTRACTION
 #include "../API/D3D12/D3D12GraphicsManager.h"
+#include "../API/D3D12/D3D12GraphicsBuffer.h"
+#include "../API/D3D12/D3D12GraphicsTexture.h"
 
 DXRReflectionTask::DXRReflectionTask(
 	ID3D12Device5* device,
@@ -239,7 +241,7 @@ void DXRReflectionTask::CreateShaderBindingTable(ID3D12Device5* device, const st
 		{
 			(void*)rc.mc->GetSlotInfoByteAdressBufferDXR()->GetUploadResource()->GetGPUVirtualAdress(),	// SlotInfoRawBuffer
 			(void*)rc.mc->GetMaterialByteAdressBuffer()->GetUploadResource()->GetGPUVirtualAdress(),	// MaterialData
-			(void*)rc.tc->GetTransform()->m_pCB->GetUploadResource()->GetGPUVirtualAdress()				// MATRICES_PER_OBJECT_STRUCT
+			(void*)static_cast<D3D12GraphicsBuffer*>(rc.tc->GetTransform()->m_pConstantBuffer)->GetTempResource()->GetGPUVirtualAddress()			// MATRICES_PER_OBJECT_STRUCT
 		});
 	}
 
@@ -281,14 +283,13 @@ void DXRReflectionTask::Execute()
 		commandList->SetComputeRootDescriptorTable(dtCBV, dhSRVUAVCBV->GetGPUHeapAt(0));
 		commandList->SetComputeRootDescriptorTable(dtSRV, dhSRVUAVCBV->GetGPUHeapAt(0));
 		commandList->SetComputeRootDescriptorTable(dtUAV, dhSRVUAVCBV->GetGPUHeapAt(0));
-		commandList->SetComputeRootConstantBufferView(RootParam_CBV_B3, m_Resources["cbPerFrame"]->GetGPUVirtualAdress());
-		commandList->SetComputeRootConstantBufferView(RootParam_CBV_B4, m_Resources["cbPerScene"]->GetGPUVirtualAdress());
-		commandList->SetComputeRootShaderResourceView(RootParam_SRV_T0, m_Resources["rawBufferLights"]->GetGPUVirtualAdress());
+		commandList->SetComputeRootConstantBufferView(RootParam_CBV_B3, static_cast<D3D12GraphicsBuffer*>(m_GraphicBuffers["cbPerFrame"])->GetTempResource()->GetGPUVirtualAddress());
+		commandList->SetComputeRootConstantBufferView(RootParam_CBV_B4, static_cast<D3D12GraphicsBuffer*>(m_GraphicBuffers["cbPerScene"])->GetTempResource()->GetGPUVirtualAddress());
+		commandList->SetComputeRootShaderResourceView(RootParam_SRV_T0, static_cast<D3D12GraphicsBuffer*>(m_GraphicBuffers["rawBufferLights"])->GetTempResource()->GetGPUVirtualAddress());
 
 		// transition depth Buffer
-		Resource* mainDSV = m_Resources["mainDSV"];
 		CD3DX12_RESOURCE_BARRIER transition = CD3DX12_RESOURCE_BARRIER::Transition(
-			mainDSV->GetID3D12Resource1(),
+			static_cast<D3D12GraphicsTexture*>(m_GraphicTextures["mainDSV"])->GetTempResource(),
 			D3D12_RESOURCE_STATE_DEPTH_WRITE,				// StateBefore
 			D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);// StateAfter
 		commandList->ResourceBarrier(1, &transition);
@@ -351,7 +352,7 @@ void DXRReflectionTask::Execute()
 
 		// Transition DepthBuffer
 		transition = CD3DX12_RESOURCE_BARRIER::Transition(
-			mainDSV->GetID3D12Resource1(),
+			static_cast<D3D12GraphicsTexture*>(m_GraphicTextures["mainDSV"])->GetTempResource(),
 			D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,	// StateBefore
 			D3D12_RESOURCE_STATE_DEPTH_WRITE);				// StateAfter
 		commandList->ResourceBarrier(1, &transition);

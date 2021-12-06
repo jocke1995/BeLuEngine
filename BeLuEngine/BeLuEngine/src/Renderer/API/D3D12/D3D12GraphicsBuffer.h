@@ -14,6 +14,7 @@ public:
 	unsigned int GetConstantBufferDescriptorIndex() const;
 	unsigned int GetRawBufferDescriptorIndex() const;
 
+	ID3D12Resource1* GetTempResource() { return m_pResource; }
 private:
 	E_GRAPHICSBUFFER_TYPE m_BufferType = E_GRAPHICSBUFFER_TYPE::None;
 

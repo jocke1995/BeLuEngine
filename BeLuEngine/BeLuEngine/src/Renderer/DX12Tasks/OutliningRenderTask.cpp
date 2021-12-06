@@ -14,8 +14,13 @@
 
 TODO(To be replaced by a D3D12Manager some point in the future(needed to access RootSig));
 #include "../Renderer.h"
+
 // TODO ABSTRACTION
 #include "../API/D3D12/D3D12GraphicsManager.h"
+#include "../API/D3D12/D3D12GraphicsBuffer.h"
+#include "../API/D3D12/D3D12GraphicsTexture.h"
+
+
 OutliningRenderTask::OutliningRenderTask(
 	ID3D12Device5* device,
 	const std::wstring& VSName, const std::wstring& PSName,
@@ -28,12 +33,12 @@ OutliningRenderTask::OutliningRenderTask(
 	// Init with nullptr
 	Clear();
 
-	m_OutlineTransformToScale.m_pCB = new ConstantBuffer(device, sizeof(DirectX::XMMATRIX) * 2, L"OutlinedTransform", cbvHeap);
+	m_OutlineTransformToScale.m_pConstantBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::ConstantBuffer, E_GRAPHICSBUFFER_UPLOADFREQUENCY::Static, sizeof(DirectX::XMMATRIX) * 2, L"OutlinedTransform");
 }
 
 OutliningRenderTask::~OutliningRenderTask()
 {
-	delete m_OutlineTransformToScale.m_pCB;
+	delete m_OutlineTransformToScale.m_pConstantBuffer;
 }
 
 void OutliningRenderTask::Execute()
@@ -103,9 +108,10 @@ void OutliningRenderTask::Execute()
 			w_wvp[0] = *newScaledTransform.GetWorldMatrixTransposed();
 			w_wvp[1] = (*viewProjMatTrans) * w_wvp[0];
 
-			m_OutlineTransformToScale.m_pCB->GetUploadResource()->SetData(&w_wvp);
+			D3D12_GPU_VIRTUAL_ADDRESS vAddr = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->SetDynamicData(sizeof(DirectX::XMMATRIX) * 2, &w_wvp);
+
 			commandList->SetGraphicsRoot32BitConstants(Constants_SlotInfo_B0, sizeof(SlotInfo) / sizeof(UINT), info, 0);
-			commandList->SetGraphicsRootConstantBufferView(RootParam_CBV_B2, m_OutlineTransformToScale.m_pCB->GetUploadResource()->GetGPUVirtualAdress());
+			commandList->SetGraphicsRootConstantBufferView(RootParam_CBV_B2, vAddr);
 
 			commandList->IASetIndexBuffer(m->GetIndexBufferView());
 

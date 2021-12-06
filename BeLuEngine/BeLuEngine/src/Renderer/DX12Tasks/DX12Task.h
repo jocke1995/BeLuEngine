@@ -91,6 +91,9 @@ public:
 	component::TransformComponent* tc = nullptr;
 };
 
+class IGraphicsBuffer;
+class IGraphicsTexture;
+
 class DX12Task : public MultiThreadedTask
 {
 public:
@@ -104,11 +107,13 @@ public:
 	static void SetBackBufferIndex(int backBufferIndex);
 	static void SetCommandInterfaceIndex(int index);
 
-	void AddResource(std::string id, Resource* resource);
+	void AddGraphicsBuffer(std::string id, IGraphicsBuffer* graphicsBuffer);
+	void AddGraphicsTexture(std::string id, IGraphicsTexture* graphicsTexture);
 
 	CommandInterface* const GetCommandInterface() const;
 protected:
-	std::map<std::string, Resource*> m_Resources;
+	std::map<std::string, IGraphicsBuffer*> m_GraphicBuffers;
+	std::map<std::string, IGraphicsTexture*> m_GraphicTextures;
 
 	CommandInterface* m_pCommandInterface = nullptr;
 	inline static int m_BackBufferIndex = -1;

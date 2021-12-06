@@ -17,7 +17,9 @@ D3D12GraphicsBuffer::D3D12GraphicsBuffer(E_GRAPHICSBUFFER_TYPE type, E_GRAPHICSB
 	ID3D12Device5* device5 = graphicsManager->GetDevice();
 	DescriptorHeap* mainDHeap = graphicsManager->GetMainDescriptorHeap();
 
-	m_Size = (size + 255) & ~255;
+	// Pad
+	if(type == E_GRAPHICSBUFFER_TYPE::ConstantBuffer)
+		m_Size = (size + 255) & ~255;
 
 #pragma region CreateBuffer
 	D3D12_HEAP_TYPE heapType = D3D12_HEAP_TYPE_DEFAULT;

@@ -2,7 +2,6 @@
 #define GPUMEMORY_H
 
 // Descriptors&Resources - Wrappers
-#include "ConstantBuffer.h"
 #include "ShaderResource.h"
 #include "UnorderedAccess.h"
 #include "DepthStencil.h"

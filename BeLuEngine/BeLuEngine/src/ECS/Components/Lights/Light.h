@@ -5,7 +5,7 @@
 
 class BaseCamera;
 
-class ShaderResource;
+class IGraphicsBuffer;
 
 enum F_LIGHT_FLAGS
 {
@@ -50,7 +50,7 @@ private:
 	friend class Renderer;
 	friend class ImGuiHandler;
 
-	static inline ShaderResource* m_pLightsRawBuffer = nullptr;
+	static inline IGraphicsBuffer* m_pLightsRawBuffer = nullptr;
 	static inline unsigned char* m_pRawData			 = nullptr;
 	unsigned int m_LightOffsetInArray = 0;
 };

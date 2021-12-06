@@ -19,6 +19,9 @@ TODO(To be replaced by a D3D12Manager some point in the future(needed to access 
 
 // TODO ABSTRACTION
 #include "../API/D3D12/D3D12GraphicsManager.h"
+#include "../API/D3D12/D3D12GraphicsBuffer.h"
+#include "../API/D3D12/D3D12GraphicsTexture.h"
+
 
 DeferredLightRenderTask::DeferredLightRenderTask(
 	ID3D12Device5* device,
@@ -98,9 +101,9 @@ void DeferredLightRenderTask::Execute()
 		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		// Set cbvs
-		commandList->SetGraphicsRootConstantBufferView(RootParam_CBV_B3, m_Resources["cbPerFrame"]->GetGPUVirtualAdress());
-		commandList->SetGraphicsRootConstantBufferView(RootParam_CBV_B4, m_Resources["cbPerScene"]->GetGPUVirtualAdress());
-		commandList->SetGraphicsRootShaderResourceView(RootParam_SRV_T0, m_Resources["rawBufferLights"]->GetGPUVirtualAdress());
+		commandList->SetComputeRootConstantBufferView(RootParam_CBV_B3, static_cast<D3D12GraphicsBuffer*>(m_GraphicBuffers["cbPerFrame"])->GetTempResource()->GetGPUVirtualAddress());
+		commandList->SetComputeRootConstantBufferView(RootParam_CBV_B4, static_cast<D3D12GraphicsBuffer*>(m_GraphicBuffers["cbPerScene"])->GetTempResource()->GetGPUVirtualAddress());
+		commandList->SetComputeRootShaderResourceView(RootParam_SRV_T0, static_cast<D3D12GraphicsBuffer*>(m_GraphicBuffers["rawBufferLights"])->GetTempResource()->GetGPUVirtualAddress());
 
 		Resource* mainDSV = const_cast<Resource*>(m_pDepthStencil->GetDefaultResource());
 		CD3DX12_RESOURCE_BARRIER transition = CD3DX12_RESOURCE_BARRIER::Transition(

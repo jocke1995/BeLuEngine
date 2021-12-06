@@ -730,6 +730,9 @@ void D3D12GraphicsManager::End()
 	}
 
 	mFrameIndex++;
+
+	// Reset the offset of the dynamic upload heap for next frame
+	m_pIntermediateUploadHeapAtomicCurrent = 0;
 }
 
 void D3D12GraphicsManager::Execute(const std::vector<ID3D12CommandList*>& m_DirectCommandLists, unsigned int numCommandLists)

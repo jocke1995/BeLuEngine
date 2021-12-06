@@ -10,7 +10,6 @@ class Model;
 class Mesh;
 class Shader;
 class Texture;
-class TextureCubeMap;
 class Texture2DGUI;
 class Material;
 class Window;

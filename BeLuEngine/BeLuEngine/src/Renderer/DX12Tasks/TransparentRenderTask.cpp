@@ -16,8 +16,11 @@
 
 TODO(To be replaced by a D3D12Manager some point in the future(needed to access RootSig));
 #include "../Renderer.h"
+
 // TODO ABSTRACTION
 #include "../API/D3D12/D3D12GraphicsManager.h"
+#include "../API/D3D12/D3D12GraphicsBuffer.h"
+#include "../API/D3D12/D3D12GraphicsTexture.h"
 
 TransparentRenderTask::TransparentRenderTask(	
 	ID3D12Device5* device,
@@ -75,9 +78,9 @@ void TransparentRenderTask::Execute()
 
 		// Create a CB_PER_FRAME struct
 		CB_PER_FRAME_STRUCT perFrame = { m_pCamera->GetPosition().x, m_pCamera->GetPosition().y, m_pCamera->GetPosition().z };
-		commandList->SetGraphicsRootConstantBufferView(RootParam_CBV_B3, m_Resources["cbPerFrame"]->GetGPUVirtualAdress());
-		commandList->SetGraphicsRootConstantBufferView(RootParam_CBV_B4, m_Resources["cbPerScene"]->GetGPUVirtualAdress());
-		commandList->SetGraphicsRootShaderResourceView(RootParam_SRV_T0, m_Resources["rawBufferLights"]->GetGPUVirtualAdress());
+		commandList->SetComputeRootConstantBufferView(RootParam_CBV_B3, static_cast<D3D12GraphicsBuffer*>(m_GraphicBuffers["cbPerFrame"])->GetTempResource()->GetGPUVirtualAddress());
+		commandList->SetComputeRootConstantBufferView(RootParam_CBV_B4, static_cast<D3D12GraphicsBuffer*>(m_GraphicBuffers["cbPerScene"])->GetTempResource()->GetGPUVirtualAddress());
+		commandList->SetComputeRootShaderResourceView(RootParam_SRV_T0, static_cast<D3D12GraphicsBuffer*>(m_GraphicBuffers["rawBufferLights"])->GetTempResource()->GetGPUVirtualAddress());
 
 		const DirectX::XMMATRIX* viewProjMatTrans = m_pCamera->GetViewProjectionTranposed();
 
@@ -98,7 +101,7 @@ void TransparentRenderTask::Execute()
 				Transform* t = tc->GetTransform();
 
 				commandList->SetGraphicsRoot32BitConstants(Constants_SlotInfo_B0, sizeof(SlotInfo) / sizeof(UINT), info, 0);
-				commandList->SetGraphicsRootConstantBufferView(RootParam_CBV_B2, t->m_pCB->GetDefaultResource()->GetGPUVirtualAdress());
+				commandList->SetGraphicsRootConstantBufferView(RootParam_CBV_B2, static_cast<D3D12GraphicsBuffer*>(t->m_pConstantBuffer)->GetTempResource()->GetGPUVirtualAddress());
 
 				commandList->IASetIndexBuffer(mc->GetMeshAt(j)->GetIndexBufferView());
 				// Draw each object twice with different PSO 

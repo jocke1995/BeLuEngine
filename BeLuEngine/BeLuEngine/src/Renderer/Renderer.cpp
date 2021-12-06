@@ -41,7 +41,6 @@
 #include "Texture/Texture.h"
 #include "Texture/Texture2D.h"
 #include "Texture/Texture2DGUI.h"
-#include "Texture/TextureCubeMap.h"
 #include "Geometry/Material.h"
 
 #include "GPUMemory/GPUMemory.h"
@@ -84,6 +83,10 @@
 
 // ABSTRACTION TEMP
 #include "API/D3D12/D3D12GraphicsManager.h"
+#include "API/D3D12/D3D12GraphicsBuffer.h"
+#include "API/D3D12/D3D12GraphicsTexture.h"
+
+#include "API/IGraphicsBuffer.h"
 
 Renderer::Renderer()
 {
@@ -159,10 +162,10 @@ void Renderer::deleteRenderer()
 
 	delete m_pMousePicker;
 
-	delete m_pCbPerScene;
-	delete m_pCbPerSceneData;
-	delete m_pCbPerFrame;
-	delete m_pCbPerFrameData;
+	BL_SAFE_DELETE(m_pCbPerScene);
+	BL_SAFE_DELETE(m_pCbPerSceneData);
+	BL_SAFE_DELETE(m_pCbPerFrame);
+	BL_SAFE_DELETE(m_pCbPerFrameData);
 
 	delete Light::m_pLightsRawBuffer;
 	free(Light::m_pRawData);
@@ -322,21 +325,11 @@ void Renderer::InitD3D12(HWND hwnd, unsigned int width, unsigned int height, HIN
 	BoundingBoxPool::Get(m_pDevice5, mainHeap);
 
 	// Allocate memory for cbPerScene
-	m_pCbPerScene = new ConstantBuffer(
-		m_pDevice5, 
-		sizeof(CB_PER_SCENE_STRUCT),
-		L"CB_PER_SCENE",
-		mainHeap);
-	
+	m_pCbPerScene = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::ConstantBuffer, E_GRAPHICSBUFFER_UPLOADFREQUENCY::Static, sizeof(CB_PER_SCENE_STRUCT), L"CB_PER_SCENE");
 	m_pCbPerSceneData = new CB_PER_SCENE_STRUCT();
 
 	// Allocate memory for cbPerFrame
-	m_pCbPerFrame = new ConstantBuffer(
-		m_pDevice5,
-		sizeof(CB_PER_FRAME_STRUCT),
-		L"CB_PER_FRAME",
-		mainHeap);
-
+	m_pCbPerFrame = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::ConstantBuffer, E_GRAPHICSBUFFER_UPLOADFREQUENCY::Static, sizeof(CB_PER_FRAME_STRUCT), L"CB_PER_FRAME");
 	m_pCbPerFrameData = new CB_PER_FRAME_STRUCT();
 
 #ifdef DEBUG
@@ -724,11 +717,16 @@ void Renderer::InitModelComponent(component::ModelComponent* mc)
 	if (tc != nullptr)
 	{
 		Transform* t = tc->GetTransform();
-		t->m_pCB = new ConstantBuffer(m_pDevice5, sizeof(DirectX::XMMATRIX) * 2, L"Transform", mainHeap);
-		ConstantBuffer* cb = t->m_pCB;
+		t->m_pConstantBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::ConstantBuffer, E_GRAPHICSBUFFER_UPLOADFREQUENCY::Static, sizeof(DirectX::XMMATRIX) * 2, L"Transform");
 
 		t->UpdateWorldMatrix();
-		m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME_MATRICES]->Submit(&std::make_tuple(cb->GetUploadResource(), cb->GetDefaultResource(), static_cast<const void*>(t)));
+		DirectX::XMMATRIX w_wvp[2] = {};
+		// World
+		w_wvp[0] = *t->GetWorldMatrixTransposed();
+		// WVP
+		w_wvp[1] = *m_pScenePrimaryCamera->GetViewProjectionTranposed() * w_wvp[0];
+
+		m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME_MATRICES]->SubmitBuffer(t->m_pConstantBuffer, w_wvp);
 
 		// Finally store the object in the corresponding renderComponent vectors so it will be drawn
 		if (F_DRAW_FLAGS::DRAW_TRANSPARENT & mc->GetDrawFlag())
@@ -874,13 +872,14 @@ void Renderer::UnInitModelComponent(component::ModelComponent* mc)
 	component::TransformComponent* tc = mc->GetParent()->GetComponent<component::TransformComponent>();
 
 	// Unsubmit from updating to GPU every frame
-	m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME_MATRICES]->ClearSpecific(tc->GetTransform()->m_pCB->GetUploadResource());
+	TODO("Possible memory leak");
+	//m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME_MATRICES]->ClearSpecific(tc->GetTransform()->m_pCB->GetUploadResource());
 
 	// Delete constantBuffer for matrices
-	if (tc->GetTransform()->m_pCB != nullptr)
+	if (tc->GetTransform()->m_pConstantBuffer != nullptr)
 	{
-		delete tc->GetTransform()->m_pCB;
-		tc->GetTransform()->m_pCB = nullptr;
+		delete tc->GetTransform()->m_pConstantBuffer;
+		tc->GetTransform()->m_pConstantBuffer = nullptr;
 	}
 
 	// Update Render Tasks components (forward the change in renderComponents)
@@ -941,12 +940,6 @@ void Renderer::OnResetScene()
 	m_pScenePrimaryCamera = nullptr;
 	static_cast<WireframeRenderTask*>(m_RenderTasks[E_RENDER_TASK_TYPE::WIREFRAME])->Clear();
 	m_BoundingBoxesToBePicked.clear();
-}
-
-void Renderer::submitToCodt(std::tuple<Resource*, Resource*, const void*>* Upload_Default_Data)
-{
-	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]);
-	codt->Submit(Upload_Default_Data);
 }
 
 void Renderer::submitMeshToCodt(Mesh* mesh)
@@ -1196,10 +1189,10 @@ void Renderer::initRenderTasks()
 		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
 		F_THREAD_FLAGS::RENDER);
 
-	reflectionTask->AddResource("cbPerFrame", m_pCbPerFrame->GetDefaultResource());
-	reflectionTask->AddResource("cbPerScene", m_pCbPerScene->GetDefaultResource());
-	reflectionTask->AddResource("rawBufferLights", Light::m_pLightsRawBuffer->GetDefaultResource());
-	reflectionTask->AddResource("mainDSV", const_cast<Resource*>(m_pMainDepthStencil->GetDefaultResource()));	// To transition from depthWrite to depthRead
+	reflectionTask->AddGraphicsBuffer("cbPerFrame", m_pCbPerFrame);
+	reflectionTask->AddGraphicsBuffer("cbPerScene", m_pCbPerScene);
+	reflectionTask->AddGraphicsBuffer("rawBufferLights", Light::m_pLightsRawBuffer);
+	reflectionTask->AddGraphicsTexture("mainDSV", const_cast<Resource*>(m_pMainDepthStencil->GetDefaultResource()));	// To transition from depthWrite to depthRead
 	
 #pragma endregion DXRTasks
 
@@ -1310,7 +1303,7 @@ void Renderer::initRenderTasks()
 		F_THREAD_FLAGS::RENDER);
 
 	deferredGeometryRenderTask->SetMainDepthStencil(m_pMainDepthStencil);
-	deferredGeometryRenderTask->AddResource("cbPerScene", m_pCbPerScene->GetDefaultResource());
+	deferredGeometryRenderTask->AddGraphicsBuffer("cbPerScene", m_pCbPerScene);
 	deferredGeometryRenderTask->AddRenderTargetView("gBufferAlbedo", m_GBufferAlbedo.first->GetRTV());
 	deferredGeometryRenderTask->AddRenderTargetView("gBufferNormal", m_GBufferNormal.first->GetRTV());
 	deferredGeometryRenderTask->AddRenderTargetView("gBufferMaterialProperties", m_GBufferMaterialProperties.first->GetRTV());
@@ -1388,9 +1381,9 @@ void Renderer::initRenderTasks()
 		L"DeferredLightRenderingPSO",
 		F_THREAD_FLAGS::RENDER);
 
-	deferredLightRenderTask->AddResource("cbPerFrame", m_pCbPerFrame->GetDefaultResource());
-	deferredLightRenderTask->AddResource("cbPerScene", m_pCbPerScene->GetDefaultResource());
-	deferredLightRenderTask->AddResource("rawBufferLights", Light::m_pLightsRawBuffer->GetDefaultResource());
+	deferredLightRenderTask->AddGraphicsBuffer("cbPerFrame", m_pCbPerFrame);
+	deferredLightRenderTask->AddGraphicsBuffer("cbPerScene", m_pCbPerScene);
+	deferredLightRenderTask->AddGraphicsBuffer("rawBufferLights", Light::m_pLightsRawBuffer);
 	deferredLightRenderTask->SetMainDepthStencil(m_pMainDepthStencil);
 
 	deferredLightRenderTask->AddRenderTargetView("brightTarget", std::get<1>(*m_pBloomResources->GetBrightTuple()));
@@ -1572,9 +1565,9 @@ void Renderer::initRenderTasks()
 		L"BlendPSOTexture",
 		F_THREAD_FLAGS::RENDER);
 
-	transparentRenderTask->AddResource("cbPerFrame", m_pCbPerFrame->GetDefaultResource());
-	transparentRenderTask->AddResource("cbPerScene", m_pCbPerScene->GetDefaultResource());
-	transparentRenderTask->AddResource("rawBufferLights", Light::m_pLightsRawBuffer->GetDefaultResource());
+	transparentRenderTask->AddGraphicsBuffer("cbPerFrame", m_pCbPerFrame);
+	transparentRenderTask->AddGraphicsBuffer("cbPerScene", m_pCbPerScene);
+	transparentRenderTask->AddGraphicsBuffer("rawBufferLights", Light::m_pLightsRawBuffer);
 	transparentRenderTask->SetMainDepthStencil(m_pMainDepthStencil);
 	transparentRenderTask->AddRenderTargetView("finalColorBuffer", m_FinalColorBuffer.first->GetRTV());
 
@@ -1810,30 +1803,16 @@ void Renderer::initRenderTasks()
 
 void Renderer::createRawBufferForLights()
 {
-	// TODO ABSTRACTION
-	ID3D12Device5* m_pDevice5 = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pDevice5;
-	DescriptorHeap* mainHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
-	DescriptorHeap* rtvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetRTVDescriptorHeap();
-	DescriptorHeap* dsvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetDSVDescriptorHeap();
-	ID3D12CommandQueue* pDirectQueue = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pGraphicsCommandQueue;
-
-	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
-	srvDesc.Buffer.FirstElement = 0;
-	srvDesc.Format = DXGI_FORMAT_R32_TYPELESS;
-	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	srvDesc.Buffer.NumElements = 1; // Wierd to specify this?? But crashes otherwise.
-	//srvDesc.Buffer.StructureByteStride = sizeof(unsigned int);
-	srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
-
 	unsigned int rawBufferSize   = sizeof(LightHeader)		+
 				MAX_DIR_LIGHTS	 * sizeof(DirectionalLight) +
 				MAX_POINT_LIGHTS * sizeof(PointLight)		+
 				MAX_SPOT_LIGHTS  * sizeof(SpotLight);
 
-	Light::m_pLightsRawBuffer = new ShaderResource(m_pDevice5, rawBufferSize, L"rawBufferLights", &srvDesc, mainHeap);
+	// Memory on GPU
+	BL_ASSERT(Light::m_pLightsRawBuffer == nullptr);
+	Light::m_pLightsRawBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::RawBuffer, E_GRAPHICSBUFFER_UPLOADFREQUENCY::Static, rawBufferSize, L"RAW_BUFFER_LIGHTS");
 
-	// Allocate memory on CPU
+	// Memory on CPU
 	Light::m_pRawData = (unsigned char*)malloc(rawBufferSize);
 	memset(Light::m_pRawData, 0, rawBufferSize);
 }
@@ -1907,29 +1886,26 @@ void Renderer::submitUploadPerSceneData()
 {
 	// Submit CB_PER_SCENE to be uploaded to VRAM
 	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]);
-	const void* data = static_cast<const void*>(m_pCbPerSceneData);
-	codt->Submit(&std::make_tuple(m_pCbPerScene->GetUploadResource(), m_pCbPerScene->GetDefaultResource(), data));
+	BL_ASSERT(codt);
+	
+	BL_ASSERT(m_pCbPerScene && m_pCbPerSceneData);
+	codt->SubmitBuffer(m_pCbPerScene, m_pCbPerSceneData);
 }
 
 void Renderer::submitUploadPerFrameData()
 {
 	// Submit dynamic-light-data to be uploaded to VRAM
 	CopyPerFrameTask* cpft = static_cast<CopyPerFrameTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME]);
+	BL_ASSERT(cpft);
 
 	// CB_PER_FRAME_STRUCT
-	if (cpft != nullptr)
-	{
-		const void* data = static_cast<void*>(m_pCbPerFrameData);
-		cpft->Submit(&std::tuple(m_pCbPerFrame->GetUploadResource(), m_pCbPerFrame->GetDefaultResource(), data));
-	}
+	BL_ASSERT(m_pCbPerFrame && m_pCbPerFrameData);
+	cpft->SubmitBuffer(m_pCbPerFrame, m_pCbPerFrameData);
 
 	// All lights (data and header with information)
 	// Sending entire buffer (4kb as of writing this code), every frame for simplicity. Even if some lights might be static.
-	cpft->Submit(&std::make_tuple(
-		Light::m_pLightsRawBuffer->GetUploadResource(),
-		Light::m_pLightsRawBuffer->GetDefaultResource(),
-		const_cast<const void*>(static_cast<void*>(Light::m_pRawData))));	// Yes, its great!
-
+	BL_ASSERT(Light::m_pLightsRawBuffer && Light::m_pRawData);
+	cpft->SubmitBuffer(Light::m_pLightsRawBuffer, Light::m_pRawData);
 }
 
 //void Renderer::toggleFullscreen(WindowChange* event)

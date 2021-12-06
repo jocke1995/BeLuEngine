@@ -23,7 +23,6 @@
 
 #include "../Renderer/Texture/Texture2D.h"
 #include "../Renderer/Texture/Texture2DGUI.h"
-#include "../Renderer/Texture/TextureCubeMap.h"
 
 #include "../Renderer/GPUMemory/GPUMemory.h"
 

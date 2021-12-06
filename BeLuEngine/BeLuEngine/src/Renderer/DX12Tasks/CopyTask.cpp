@@ -25,6 +25,12 @@ void CopyTask::Submit(std::tuple<Resource*, Resource*, const void*>* Upload_Defa
 	m_UploadDefaultData.push_back(*Upload_Default_Data);
 }
 
+void CopyTask::SubmitBuffer(IGraphicsBuffer* graphicsBuffer, void* data)
+{
+	GraphicsUploadParams params = {graphicsBuffer, data};
+	m_GraphicBuffersToUpload.push_back(params);
+}
+
 void CopyTask::ClearSpecific(const Resource* uploadResource)
 {
 	unsigned int i = 0;

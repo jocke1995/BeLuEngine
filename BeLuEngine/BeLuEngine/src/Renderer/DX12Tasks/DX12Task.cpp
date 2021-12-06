@@ -11,6 +11,10 @@
 
 // PIX Events
 #include "WinPixEventRuntime/pix3.h"
+
+#include "../API/IGraphicsBuffer.h"
+#include "../API/IGraphicsTexture.h"
+
 ScopedPIXEvent::ScopedPIXEvent(const char* nameOfTask, ID3D12GraphicsCommandList* cl)
 {
 	BL_ASSERT(cl);
@@ -48,22 +52,25 @@ void DX12Task::SetBackBufferIndex(int backBufferIndex)
 
 void DX12Task::SetCommandInterfaceIndex(int index)
 {
+	BL_ASSERT(index > 0);
+
 	m_CommandInterfaceIndex = index;
 }
 
-void DX12Task::AddResource(std::string id, Resource* resource)
+void DX12Task::AddGraphicsBuffer(std::string id, IGraphicsBuffer* graphicBuffer)
 {
-	if (m_Resources[id] == nullptr)
-	{
-		m_Resources[id] = resource;
-	}
-	else
-	{
-		BL_LOG_CRITICAL("Trying to add Resource with name: \'%s\' that already exists.\n", id);
-	}
+	BL_ASSERT_MESSAGE(m_GraphicBuffers[id] == nullptr, "Trying to add graphicBuffer with name: \'%s\' that already exists.\n, id");
+	m_GraphicBuffers[id] = graphicBuffer;
+}
+
+void DX12Task::AddGraphicsTexture(std::string id, IGraphicsTexture* graphicTexture)
+{
+	BL_ASSERT_MESSAGE(m_GraphicTextures[id] == nullptr, "Trying to add graphicTexture with name: \'%s\' that already exists.\n, id");
+	m_GraphicTextures[id] = graphicTexture;
 }
 
 CommandInterface* const DX12Task::GetCommandInterface() const
 {
+	BL_ASSERT(m_pCommandInterface);
 	return m_pCommandInterface;
 }

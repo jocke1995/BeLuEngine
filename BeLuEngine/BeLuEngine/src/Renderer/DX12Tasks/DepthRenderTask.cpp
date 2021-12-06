@@ -16,8 +16,14 @@
 
 TODO(To be replaced by a D3D12Manager some point in the future(needed to access RootSig));
 #include "../Renderer.h"
+
 // TODO ABSTRACTION
 #include "../API/D3D12/D3D12GraphicsManager.h"
+#include "../API/D3D12/D3D12GraphicsBuffer.h"
+#include "../API/D3D12/D3D12GraphicsTexture.h"
+
+
+
 DepthRenderTask::DepthRenderTask(ID3D12Device5* device, 
 	const std::wstring& VSName, const std::wstring& PSName,
 	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*>* gpsds, 
@@ -107,7 +113,7 @@ void DepthRenderTask::drawRenderComponent(component::ModelComponent* mc, compone
 
 		Transform* t = tc->GetTransform();
 		cl->SetGraphicsRoot32BitConstants(Constants_SlotInfo_B0, sizeof(SlotInfo) / sizeof(UINT), info, 0);
-		cl->SetGraphicsRootConstantBufferView(RootParam_CBV_B2, t->m_pCB->GetDefaultResource()->GetGPUVirtualAdress());
+		cl->SetGraphicsRootConstantBufferView(RootParam_CBV_B2, static_cast<D3D12GraphicsBuffer*>(t->m_pConstantBuffer)->GetTempResource()->GetGPUVirtualAddress());
 
 		cl->IASetIndexBuffer(m->GetIndexBufferView());
 		cl->DrawIndexedInstanced(num_Indices, 1, 0, 0, 0);

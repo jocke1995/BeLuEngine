@@ -4,6 +4,13 @@
 #include "DX12Task.h"
 
 class Resource;
+class IGraphicsBuffer;
+
+struct GraphicsUploadParams
+{
+	IGraphicsBuffer* graphicsBuffer;
+	void* data;
+};
 
 class CopyTask : public DX12Task
 {
@@ -19,11 +26,13 @@ public:
 
 	// tuple(Upload, Default, Data)
 	void Submit(std::tuple<Resource*, Resource*, const void*>* Upload_Default_Data);
+	void SubmitBuffer(IGraphicsBuffer* graphicsBuffer, void* data);
 
 	virtual void Clear() = 0;
 
 protected:
 	std::vector<std::tuple<Resource*, Resource*, const void*>> m_UploadDefaultData;
+	std::vector<GraphicsUploadParams> m_GraphicBuffersToUpload;
 
 	void copyResource(
 		ID3D12GraphicsCommandList5* commandList,
