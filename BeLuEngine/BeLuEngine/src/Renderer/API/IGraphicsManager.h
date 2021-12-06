@@ -34,6 +34,7 @@ enum class E_GRAPHICS_API
 {
 	D3D12,
 	VULKAN,		// One bright day.. :)
+	NONE,
 	NUM_PARAMS
 };
 
@@ -44,13 +45,18 @@ public:
 
 	static IGraphicsManager* Create(const E_GRAPHICS_API graphicsApi);
 	static IGraphicsManager* GetBaseInstance();
+	static E_GRAPHICS_API GetGraphicsApiType() { return m_sGraphicsAPI; }
 
 	virtual void Init(HWND hwnd, unsigned int width, unsigned int height, DXGI_FORMAT dxgiFormat) = 0;
-	virtual void Present() = 0;
+
+	virtual void Begin() = 0;
+	virtual void SyncAndPresent() = 0;
+	virtual void End() = 0;
 
 	void Destroy();
 private:
 	static inline IGraphicsManager* m_sInstance = nullptr;
+	static inline E_GRAPHICS_API m_sGraphicsAPI = E_GRAPHICS_API::NONE;
 };
 
 #endif

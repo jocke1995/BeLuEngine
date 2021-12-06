@@ -26,10 +26,15 @@ public:
 	static D3D12GraphicsManager* GetInstance();
 
 	void Init(HWND hwnd, unsigned int width, unsigned int height, DXGI_FORMAT dxgiFormat) override;
+
+	void Begin() override;
 	void Execute(const std::vector<ID3D12CommandList*>& m_DirectCommandLists, unsigned int numCommandLists); // This will later take in GPUContext and be overriding from base
-	void Present() override;
+	void SyncAndPresent() override;
+	void End() override;
 
 	static bool SucceededHRESULT(HRESULT hrParam);
+
+	void AddD3D12ObjectToDefferedDeletion(ID3D12Object* object);
 
 	// Getters
 	DescriptorHeap* GetMainDescriptorHeap() const;
@@ -89,9 +94,14 @@ private:
 
 	// Root Signature
 	ID3D12RootSignature* m_pGlobalRootSig = nullptr;
+
+	// Objects to be deffered deleted.
+	// Tuple information: <indexSubmitted, objectItSelf>
+	std::vector<std::tuple<unsigned int, ID3D12Object*>> m_ObjectsToBeDeleted;
 	// -------------------------- Native D3D12 Objects -------------------------- 
 
 	unsigned int mCommandInterfaceIndex = 0;
+	unsigned int mFrameIndex = 0;
 	void waitForGPU(ID3D12CommandQueue* commandQueue);
 };
 

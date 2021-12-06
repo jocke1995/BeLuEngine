@@ -483,6 +483,9 @@ void Renderer::SortObjects()
 
 void Renderer::ExecuteMT()
 {
+	IGraphicsManager* graphicsManager = IGraphicsManager::GetBaseInstance();
+	graphicsManager->Begin();
+
 	unsigned int commandInterfaceIndex = m_FrameCounter++ % NUM_SWAP_BUFFERS;
 
 	DX12Task::SetBackBufferIndex(commandInterfaceIndex);
@@ -586,14 +589,19 @@ void Renderer::ExecuteMT()
 
 
 	/*------------------- Present -------------------*/
-	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->Present();
+	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->SyncAndPresent();
 	
 	// Check to end ImGui if its active
 	ImGuiHandler::GetInstance().EndFrame();
+
+	graphicsManager->End();
 }
 
 void Renderer::ExecuteST()
 {
+	IGraphicsManager* graphicsManager = IGraphicsManager::GetBaseInstance();
+	graphicsManager->Begin();
+
 	unsigned int commandInterfaceIndex = m_FrameCounter++ % NUM_SWAP_BUFFERS;
 
 	DX12Task::SetBackBufferIndex(commandInterfaceIndex);
@@ -691,10 +699,12 @@ void Renderer::ExecuteST()
 #endif
 
 	/*------------------- Present -------------------*/
-	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->Present();
+	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->SyncAndPresent();
 
 	// Check to end ImGui if its active
 	ImGuiHandler::GetInstance().EndFrame();
+
+	graphicsManager->End();
 }
 
 void Renderer::InitModelComponent(component::ModelComponent* mc)

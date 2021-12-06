@@ -50,6 +50,7 @@ D3D12GraphicsManager* D3D12GraphicsManager::GetInstance()
 void D3D12GraphicsManager::Init(HWND hwnd, unsigned int width, unsigned int height, DXGI_FORMAT dxgiFormat)
 {
 	HRESULT hr;
+
 #pragma region CreateDevice
 	bool deviceCreated = false;
 
@@ -644,24 +645,54 @@ void D3D12GraphicsManager::Init(HWND hwnd, unsigned int width, unsigned int heig
 	m_pGlobalRootSig->SetName(L"GlobalRootSig");
 }
 
+void D3D12GraphicsManager::Begin()
+{
+	mCommandInterfaceIndex = (mCommandInterfaceIndex + 1) % NUM_SWAP_BUFFERS;
+}
+
+void D3D12GraphicsManager::End()
+{
+	// Delete D3D12 resources that are guaranteed not used anymore
+	{
+		TODO("Possible memory leak");
+
+		std::vector<std::tuple<unsigned int, ID3D12Object*>> remainingDeviceChilds;
+		remainingDeviceChilds.reserve(m_ObjectsToBeDeleted.size());
+
+		for (auto [frameDeleted, object] : m_ObjectsToBeDeleted)
+		{
+			if ((frameDeleted + NUM_SWAP_BUFFERS) == mFrameIndex)
+			{
+				BL_SAFE_RELEASE(&object);
+			}
+			else
+			{
+				remainingDeviceChilds.push_back(std::make_tuple(frameDeleted, object));
+			}
+		}
+
+		m_ObjectsToBeDeleted = remainingDeviceChilds;
+	}
+
+	mFrameIndex++;
+}
+
 void D3D12GraphicsManager::Execute(const std::vector<ID3D12CommandList*>& m_DirectCommandLists, unsigned int numCommandLists)
 {
 	m_pGraphicsCommandQueue->ExecuteCommandLists(numCommandLists, m_DirectCommandLists.data());
 }
 
-void D3D12GraphicsManager::Present()
+void D3D12GraphicsManager::SyncAndPresent()
 {
 	// Hardsync atm
 	waitForGPU(m_pGraphicsCommandQueue);
 
 	HRESULT hr = m_pSwapChain4->Present(0, 0);
 
-	if (FAILED(hr))
+	if(!SucceededHRESULT(hr))
 	{
 		BL_LOG_CRITICAL("Swapchain Failed to present\n");
 	}
-
-	mCommandInterfaceIndex = (mCommandInterfaceIndex + 1) % NUM_SWAP_BUFFERS;
 }
 
 bool D3D12GraphicsManager::SucceededHRESULT(HRESULT hrParam)
@@ -673,7 +704,7 @@ bool D3D12GraphicsManager::SucceededHRESULT(HRESULT hrParam)
 	std::string message = std::system_category().message(hrParam);
 	std::string deviceRemovedMessage;
 
-	buffer = "\n\nA D3D12 Error has occurred and the app is forced to terminate. Verify your graphics drivers are up to date. (HRESULT:" + std::to_string(hrParam) + "), " + message;
+	buffer = "\n\nSomething is horribly and badly designed! (HRESULT:" + std::to_string(hrParam) + "), " + message;
 
 	if (hrParam == DXGI_ERROR_DEVICE_REMOVED)
 	{
@@ -695,6 +726,12 @@ bool D3D12GraphicsManager::SucceededHRESULT(HRESULT hrParam)
 	BL_LOG_CRITICAL(buffer.c_str());
 
 	return false;
+}
+
+void D3D12GraphicsManager::AddD3D12ObjectToDefferedDeletion(ID3D12Object* object)
+{
+	TODO("Possible memory leak");
+	m_ObjectsToBeDeleted.push_back(std::make_tuple(mFrameIndex, object));
 }
 
 DescriptorHeap* D3D12GraphicsManager::GetMainDescriptorHeap() const

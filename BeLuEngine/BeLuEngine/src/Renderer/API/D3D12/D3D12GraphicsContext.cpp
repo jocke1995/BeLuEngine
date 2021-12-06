@@ -97,3 +97,82 @@ void D3D12GraphicsContext::End()
 
 	D3D12GraphicsManager::SucceededHRESULT(m_pCommandList->Close());
 }
+
+void D3D12GraphicsContext::SetPipelineState(ID3D12PipelineState* pso)
+{
+	m_pCommandList->SetPipelineState(pso);
+}
+
+void D3D12GraphicsContext::SetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY primTop)
+{
+	m_pCommandList->IASetPrimitiveTopology(primTop);
+}
+
+void D3D12GraphicsContext::SetViewPort(unsigned int width, unsigned int height, float topLeftX, float topLeftY, float minDepth, float maxDepth)
+{
+	D3D12_VIEWPORT viewPort = {};
+	viewPort.Width = width;
+	viewPort.Height = height;
+	viewPort.TopLeftX = topLeftX;
+	viewPort.TopLeftY = topLeftY;
+	viewPort.MinDepth = minDepth;
+	viewPort.MaxDepth = maxDepth;
+
+	m_pCommandList->RSSetViewports(1, &viewPort);
+}
+
+void D3D12GraphicsContext::SetScizzorRect(unsigned int right, unsigned int bottom, float left, unsigned int top)
+{
+	D3D12_RECT rect = {};
+	rect.right = right;
+	rect.bottom = bottom;
+	rect.left = left;
+	rect.top = top;
+
+	m_pCommandList->RSSetScissorRects(1, &rect);
+}
+
+void D3D12GraphicsContext::ClearRenderTargetView(D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, float clearColor[4])
+{
+	m_pCommandList->ClearRenderTargetView(cpuHandle, clearColor, 0, nullptr);
+}
+
+void D3D12GraphicsContext::SetRenderTargets(unsigned int numRenderTargets, D3D12_CPU_DESCRIPTOR_HANDLE* renderTargetDescriptors, bool RTsSingleHandleToDescriptorRange, D3D12_CPU_DESCRIPTOR_HANDLE* depthStencilDescriptor)
+{
+	m_pCommandList->OMSetRenderTargets(numRenderTargets, renderTargetDescriptors, RTsSingleHandleToDescriptorRange, depthStencilDescriptor);
+}
+
+
+void D3D12GraphicsContext::SetConstantBufferView(unsigned int slot, Resource* resource, bool isComputePipeline)
+{
+	if (isComputePipeline)
+		m_pCommandList->SetComputeRootConstantBufferView(slot, resource->GetGPUVirtualAdress());
+	else
+		m_pCommandList->SetGraphicsRootConstantBufferView(slot, resource->GetGPUVirtualAdress());
+}
+
+void D3D12GraphicsContext::SetShaderResourceView(unsigned int slot, Resource* resource, bool isComputePipeline)
+{
+	if (isComputePipeline)
+		m_pCommandList->SetComputeRootShaderResourceView(slot, resource->GetGPUVirtualAdress());
+	else
+		m_pCommandList->SetComputeRootShaderResourceView(slot, resource->GetGPUVirtualAdress());
+}
+
+void D3D12GraphicsContext::Set32BitConstant(unsigned int slot, unsigned int num32BitValuesToSet, unsigned int* pSrcData, unsigned int offsetIn32BitValues, bool isComputePipeline)
+{
+	if (isComputePipeline)
+		m_pCommandList->SetComputeRoot32BitConstant(slot, *pSrcData, offsetIn32BitValues);
+	else
+		m_pCommandList->SetGraphicsRoot32BitConstant(slot, *pSrcData, offsetIn32BitValues);
+}
+
+void D3D12GraphicsContext::SetIndexBuffer(D3D12_INDEX_BUFFER_VIEW* indexBufferView)
+{
+	m_pCommandList->IASetIndexBuffer(indexBufferView);
+}
+
+void D3D12GraphicsContext::DrawIndexedInstanced(unsigned int indexCountPerInstance, unsigned int instanceCount, unsigned int startIndexLocation, int baseVertexLocation, unsigned int startInstanceLocation)
+{
+	m_pCommandList->DrawIndexedInstanced(indexCountPerInstance, instanceCount, startIndexLocation, baseVertexLocation, startInstanceLocation);
+}

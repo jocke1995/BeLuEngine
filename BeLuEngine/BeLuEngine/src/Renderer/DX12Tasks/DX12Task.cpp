@@ -13,7 +13,7 @@
 #include "WinPixEventRuntime/pix3.h"
 ScopedPIXEvent::ScopedPIXEvent(const char* nameOfTask, ID3D12GraphicsCommandList* cl)
 {
-	assert(cl);
+	BL_ASSERT(cl);
 
 	m_pCommandList = cl;
 	UINT64 col = 0;

@@ -22,12 +22,14 @@ IGraphicsManager* IGraphicsManager::Create(const E_GRAPHICS_API graphicsApi)
 {
     BL_ASSERT_MESSAGE(m_sInstance == nullptr, "Trying to create a new graphics manager without deleting the old one!");
 
-    if (graphicsApi == E_GRAPHICS_API::D3D12)
+    m_sGraphicsAPI = graphicsApi;
+
+    if (m_sGraphicsAPI == E_GRAPHICS_API::D3D12)
     {
         m_sInstance = new D3D12GraphicsManager();
         return m_sInstance;
     }
-    else if (graphicsApi == E_GRAPHICS_API::VULKAN)
+    else if (m_sGraphicsAPI == E_GRAPHICS_API::VULKAN)
     {
         BL_ASSERT_MESSAGE(false, "Vulkan not yet supported!\n");
         return nullptr;
