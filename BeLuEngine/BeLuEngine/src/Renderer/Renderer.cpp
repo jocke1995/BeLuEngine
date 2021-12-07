@@ -40,7 +40,6 @@
 #include "Geometry/Mesh.h"
 #include "Texture/Texture.h"
 #include "Texture/Texture2D.h"
-#include "Texture/Texture2DGUI.h"
 #include "Geometry/Material.h"
 
 #include "GPUMemory/GPUMemory.h"

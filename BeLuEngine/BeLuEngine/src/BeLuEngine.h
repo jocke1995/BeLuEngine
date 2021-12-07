@@ -27,7 +27,6 @@
 
 // Textures
 #include "Renderer/Geometry/Material.h"
-#include "Renderer/Texture/Texture2DGUI.h"
 
 // Event-handling
 #include "Events/EventBus.h"

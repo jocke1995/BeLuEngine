@@ -1,6 +1,7 @@
-
 #include "stdafx.h"
 #include "AssetLoader.h"
+
+#include "Log.h"
 
 #include "../Misc/Log.h"
 
@@ -22,7 +23,6 @@
 #include "assimp/pbrmaterial.h"
 
 #include "../Renderer/Texture/Texture2D.h"
-#include "../Renderer/Texture/Texture2DGUI.h"
 
 #include "../Renderer/GPUMemory/GPUMemory.h"
 
@@ -197,14 +197,8 @@ Texture* AssetLoader::LoadTexture2D(const std::wstring& path)
 	// Check if the texture is DDS or of other commonType
 	std::string fileEnding = GetFileExtension(to_string(path));
 	Texture* texture = nullptr;
-	if (fileEnding == "dds")
-	{
-		texture = new Texture2D(path);
-	}
-	else
-	{
-		texture = new Texture2DGUI(path);
-	}
+	BL_ASSERT(fileEnding == "dds");
+	texture = new Texture2D(path);
 
 	m_LoadedTextures[path].first = false;
 	m_LoadedTextures[path].second = texture;

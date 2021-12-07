@@ -9,6 +9,7 @@ public:
 	D3D12GraphicsTexture();
 	virtual ~D3D12GraphicsTexture();
 
+	bool CreateTexture2D(const std::wstring& filePath, DXGI_FORMAT dxgiFormat, F_TEXTURE_USAGE textureUsage) override;
 
 	ID3D12Resource1* GetTempResource() { return m_pResource; }
 private:
