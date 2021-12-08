@@ -10,10 +10,8 @@
 #include "../Renderer/DescriptorHeap.h"
 #include "../Entity.h"
 
-#include "../Renderer/GPUMemory/GPUMemory.h"
-
 // TODO ABSTRACTION
-#include "../Renderer/API/D3D12/D3D12GraphicsManager.h"
+#include "../Renderer/API/IGraphicsBuffer.h"
 
 namespace component
 {
@@ -24,8 +22,8 @@ namespace component
 
 	ModelComponent::~ModelComponent()
 	{
-		delete m_SlotInfoByteAdressBuffer;
-		delete m_MaterialByteAdressBuffer;
+		BL_SAFE_DELETE(m_SlotInfoByteAdressBuffer);
+		BL_SAFE_DELETE(m_MaterialByteAdressBuffer);
 	}
 
 	void ModelComponent::SetModel(Model* model)
@@ -43,33 +41,10 @@ namespace component
 			this->SetMaterialAt(i, m_pModel->GetOriginalMaterial()->at(i));
 
 		updateSlotInfoBuffer();
-
-		D3D12_SHADER_RESOURCE_VIEW_DESC rawBufferDesc = {};
-		rawBufferDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
-		rawBufferDesc.Buffer.FirstElement = 0;
-		rawBufferDesc.Format = DXGI_FORMAT_R32_TYPELESS;
-		rawBufferDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-		rawBufferDesc.Buffer.NumElements = numMeshes;
-		rawBufferDesc.Buffer.StructureByteStride = 0;
-		rawBufferDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
 		
-		ID3D12Device5* m_pDevice5 = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pDevice5;
-		DescriptorHeap* mainHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
-		DescriptorHeap* rtvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetRTVDescriptorHeap();
-		DescriptorHeap* dsvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetDSVDescriptorHeap();
-
 		std::string fileName = std::filesystem::path(to_string(m_pModel->GetPath())).filename().string();
-		m_SlotInfoByteAdressBuffer = new ShaderResource(
-			m_pDevice5, sizeof(SlotInfo) * numMeshes,
-			to_wstring(fileName) + L"_RAWBUFFER_SLOTINFO",
-			&rawBufferDesc,
-			mainHeap);
-
-		m_MaterialByteAdressBuffer = new ShaderResource(
-			m_pDevice5, sizeof(MaterialData) * numMeshes,
-			to_wstring(fileName) + L"_RAWBUFFER_MATERIALDATA",
-			&rawBufferDesc,
-			mainHeap);
+		m_SlotInfoByteAdressBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::RawBuffer, E_GRAPHICSBUFFER_UPLOADFREQUENCY::Static, sizeof(SlotInfo)	 , numMeshes, DXGI_FORMAT_R32_TYPELESS, to_wstring(fileName) + L"_RAWBUFFER_SLOTINFO");
+		m_MaterialByteAdressBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::RawBuffer, E_GRAPHICSBUFFER_UPLOADFREQUENCY::Static, sizeof(MaterialData), numMeshes, DXGI_FORMAT_R32_TYPELESS, to_wstring(fileName) + L"_RAWBUFFER_MATERIALDATA");
 	}
 
 	void ModelComponent::SetDrawFlag(unsigned int drawFlag)
@@ -137,7 +112,7 @@ namespace component
 		return &m_MaterialDataRawBuffer[index];
 	}
 
-	ShaderResource* ModelComponent::GetMaterialByteAdressBuffer() const
+	IGraphicsBuffer* ModelComponent::GetMaterialByteAdressBuffer() const
 	{
 		return m_MaterialByteAdressBuffer;
 	}
@@ -147,7 +122,7 @@ namespace component
 		return &m_SlotInfos[index];
 	}
 
-	ShaderResource* ModelComponent::GetSlotInfoByteAdressBufferDXR() const
+	IGraphicsBuffer* ModelComponent::GetSlotInfoByteAdressBufferDXR() const
 	{
 		return m_SlotInfoByteAdressBuffer;
 	}
@@ -158,9 +133,9 @@ namespace component
 		{
 			m_SlotInfos[i] =
 			{
-				m_pModel->GetMeshAt(i)->GetVBSRV()->GetDescriptorHeapIndex(),
-				m_pModel->GetMeshAt(i)->GetIBSRV()->GetDescriptorHeapIndex(),
-				i,	// This will be used for raster, to move (sizeof(MaterialData) * i) in the buffer
+				m_pModel->GetMeshAt(i)->GetVertexBuffer()->GetShaderResourceHeapIndex(),
+				m_pModel->GetMeshAt(i)->GetIndexBuffer()->GetShaderResourceHeapIndex(),
+				i,	// This will be used for raster, to move (sizeof(MaterialData) * i) in the raw structuredBuffer
 				0 // Padding
 			};
 		}

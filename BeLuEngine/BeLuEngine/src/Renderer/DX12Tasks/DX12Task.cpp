@@ -6,8 +6,6 @@
 // DX12 Specifics
 #include "../CommandInterface.h"
 #include "../DescriptorHeap.h"
-#include "../GPUMemory/GPUMemory.h"
-
 
 // PIX Events
 #include "WinPixEventRuntime/pix3.h"
@@ -31,13 +29,12 @@ ScopedPIXEvent::~ScopedPIXEvent()
 
 // DX12 TASK
 DX12Task::DX12Task(
-	ID3D12Device5* device,
 	E_COMMAND_INTERFACE_TYPE interfaceType,
 	unsigned int FLAG_THREAD,
 	const std::wstring& clName)
 	:MultiThreadedTask(FLAG_THREAD)
 {
-	m_pCommandInterface = new CommandInterface(device, interfaceType, clName);
+	m_pCommandInterface = new CommandInterface(interfaceType, clName);
 }
 
 DX12Task::~DX12Task()

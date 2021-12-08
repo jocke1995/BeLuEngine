@@ -22,19 +22,15 @@
 #include "assimp/postprocess.h"
 #include "assimp/pbrmaterial.h"
 
-#include "../Renderer/Texture/Texture2D.h"
-
-#include "../Renderer/GPUMemory/GPUMemory.h"
-
 #include "MultiThreading/ThreadPool.h"
 
 #include "EngineMath.h"
 
-AssetLoader::AssetLoader(ID3D12Device5* device, DescriptorHeap* descriptorHeap_CBV_UAV_SRV)
-{
-	m_pDevice = device;
-	m_pDescriptorHeap_CBV_UAV_SRV = descriptorHeap_CBV_UAV_SRV;
+// API
+#include "../Renderer/API/IGraphicsTexture.h"
 
+AssetLoader::AssetLoader()
+{
 	// Load default textures
 	loadDefaultMaterial();
 }
@@ -90,7 +86,7 @@ bool AssetLoader::IsTextureLoadedOnGpu(const std::wstring& name) const
 	return m_LoadedTextures.at(name).first;
 }
 
-bool AssetLoader::IsTextureLoadedOnGpu(const Texture* texture) const
+bool AssetLoader::IsTextureLoadedOnGpu(const IGraphicsTexture* texture) const
 {
 	return m_LoadedTextures.at(texture->GetPath()).first;
 }
@@ -98,7 +94,7 @@ bool AssetLoader::IsTextureLoadedOnGpu(const Texture* texture) const
 void AssetLoader::loadDefaultMaterial()
 {
 	// Load default textures
-	std::map<E_TEXTURE2D_TYPE, Texture*> matTextures;
+	std::map<E_TEXTURE2D_TYPE, IGraphicsTexture*> matTextures;
 	matTextures[E_TEXTURE2D_TYPE::ALBEDO]	 = LoadTexture2D(m_FilePathDefaultTextures + L"default_albedo.dds");
 	matTextures[E_TEXTURE2D_TYPE::ROUGHNESS] = LoadTexture2D(m_FilePathDefaultTextures + L"default_roughness.dds");
 	matTextures[E_TEXTURE2D_TYPE::METALLIC]  = LoadTexture2D(m_FilePathDefaultTextures + L"default_metallic.dds");
@@ -144,9 +140,9 @@ AssetLoader::~AssetLoader()
 	}
 }
 
-AssetLoader* AssetLoader::Get(ID3D12Device5* device, DescriptorHeap* descriptorHeap_CBV_UAV_SRV)
+AssetLoader* AssetLoader::Get()
 {
-	static AssetLoader instance(device, descriptorHeap_CBV_UAV_SRV);
+	static AssetLoader instance;
 
 	return &instance;
 }
@@ -181,12 +177,12 @@ Model* AssetLoader::LoadModel(const std::wstring& path)
 	m_LoadedModels[path].first = false;
 
 	processModel(assimpScene, &meshes, &materials, path);
-	m_LoadedModels[path].second = new Model(&path, &meshes, &materials, m_pDevice);
+	m_LoadedModels[path].second = new Model(&path, &meshes, &materials);
 
 	return m_LoadedModels[path].second;
 }
 
-Texture* AssetLoader::LoadTexture2D(const std::wstring& path)
+IGraphicsTexture* AssetLoader::LoadTexture2D(const std::wstring& path)
 {
 	// Check if the texture already exists
 	if (m_LoadedTextures.count(path) != 0)
@@ -196,15 +192,14 @@ Texture* AssetLoader::LoadTexture2D(const std::wstring& path)
 
 	// Check if the texture is DDS or of other commonType
 	std::string fileEnding = GetFileExtension(to_string(path));
-	Texture* texture = nullptr;
 	BL_ASSERT(fileEnding == "dds");
-	texture = new Texture2D(path);
+
+	IGraphicsTexture* texture = IGraphicsTexture::Create();
+	bool loaded = texture->LoadTextureDDS(path);
+	BL_ASSERT(loaded);
 
 	m_LoadedTextures[path].first = false;
 	m_LoadedTextures[path].second = texture;
-
-	// Create dx resources etc..
-	texture->Init(m_pDevice, m_pDescriptorHeap_CBV_UAV_SRV);
 
 	return texture;
 }
@@ -248,7 +243,7 @@ Mesh* AssetLoader::processMesh(aiMesh* assimpMesh, const aiScene* assimpScene, s
 		&vertices, &indices,
 		filePath);
 
-	mesh->Init(m_pDevice, m_pDescriptorHeap_CBV_UAV_SRV);
+	mesh->Init();
 	// save mesh
 	m_LoadedMeshes.push_back(mesh);
 
@@ -353,13 +348,13 @@ Material* AssetLoader::loadMaterial(aiMaterial* mat, const std::wstring& folderP
 	if (m_LoadedMaterials.count(matName) == 0)
 	{
 		// Load material
-		std::map<E_TEXTURE2D_TYPE, Texture*> matTextures;
+		std::map<E_TEXTURE2D_TYPE, IGraphicsTexture*> matTextures;
 
 		// Add the textures to the m_pMesh
 		for (unsigned int i = 0; i < static_cast<unsigned int>(E_TEXTURE2D_TYPE::NUM_TYPES); i++)
 		{
 			E_TEXTURE2D_TYPE type = static_cast<E_TEXTURE2D_TYPE>(i);
-			Texture* texture = processTexture(mat, type, folderPath);
+			IGraphicsTexture* texture = processTexture(mat, type, folderPath);
 			matTextures[type] = texture;
 		}
 
@@ -379,11 +374,11 @@ Material* AssetLoader::loadMaterial(aiMaterial* mat, const std::wstring& folderP
 	}
 }
 
-Texture* AssetLoader::processTexture(aiMaterial* mat, E_TEXTURE2D_TYPE texture_type, const std::wstring& filePathWithoutTexture)
+IGraphicsTexture* AssetLoader::processTexture(aiMaterial* mat, E_TEXTURE2D_TYPE texture_type, const std::wstring& filePathWithoutTexture)
 {
 	aiTextureType type = aiTextureType::aiTextureType_NONE;
 	aiString str;
-	Texture* texture = nullptr;
+	IGraphicsTexture* texture = nullptr;
 
 	// incase of the texture doesn't exist
 	std::wstring defaultPath = L"";

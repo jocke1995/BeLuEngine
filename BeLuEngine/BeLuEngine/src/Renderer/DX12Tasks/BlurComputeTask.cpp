@@ -4,7 +4,6 @@
 // DX12 Specifics
 #include "../CommandInterface.h"
 #include "../DescriptorHeap.h"
-#include "../GPUMemory/GPUMemory.h"
 #include "../PipelineState/ComputeState.h"
 
 // Techniques
@@ -17,7 +16,6 @@ TODO(To be replaced by a D3D12Manager some point in the future (needed to access
 #include "../API/D3D12/D3D12GraphicsManager.h"
 
 BlurComputeTask::BlurComputeTask(
-	ID3D12Device5* device,
 	std::vector<std::pair< std::wstring, std::wstring>> csNamePSOName,
 	E_COMMAND_INTERFACE_TYPE interfaceType,
 	ShaderResourceView* brightSRV,
@@ -25,7 +23,7 @@ BlurComputeTask::BlurComputeTask(
 	const PingPongResource* Bloom1_RESOURCE,
 	unsigned int screenWidth, unsigned int screenHeight,
 	unsigned int FLAG_THREAD)
-	:ComputeTask(device, csNamePSOName, FLAG_THREAD, interfaceType)
+	:ComputeTask(csNamePSOName, FLAG_THREAD, interfaceType)
 {
 	m_pSRV = brightSRV;
 

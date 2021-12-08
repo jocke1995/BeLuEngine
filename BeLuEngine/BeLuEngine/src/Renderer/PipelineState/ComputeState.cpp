@@ -7,7 +7,7 @@
 
 #include "../API/D3D12/D3D12GraphicsManager.h"
 
-ComputeState::ComputeState(ID3D12Device5* device, std::wstring& CSName, std::wstring& psoName)
+ComputeState::ComputeState(std::wstring& CSName, std::wstring& psoName)
 	:PipelineState(psoName)
 {
 	m_Cpsd.pRootSignature = static_cast<D3D12GraphicsManager*>(IGraphicsManager::GetBaseInstance())->m_pGlobalRootSig;
@@ -20,7 +20,7 @@ ComputeState::ComputeState(ID3D12Device5* device, std::wstring& CSName, std::wst
 	m_Cpsd.CS.BytecodeLength = csBlob->GetBufferSize();
 
 	// Create pipelineStateObject
-	HRESULT hr = device->CreateComputePipelineState(&m_Cpsd, IID_PPV_ARGS(&m_pPSO));
+	HRESULT hr = D3D12GraphicsManager::GetInstance()->GetDevice()->CreateComputePipelineState(&m_Cpsd, IID_PPV_ARGS(&m_pPSO));
 
 	m_pPSO->SetName(psoName.c_str());
 	if (!SUCCEEDED(hr))

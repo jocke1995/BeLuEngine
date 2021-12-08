@@ -3,11 +3,9 @@
 
 // DX12 Specifics
 #include "../CommandInterface.h"
-#include "../GPUMemory/GPUMemory.h"
 
 // Stuff to copy
 #include "../Renderer/Geometry/Mesh.h"
-#include "../Texture/Texture.h"
 
 CopyOnDemandTask::CopyOnDemandTask(
 	ID3D12Device5* device,
@@ -25,14 +23,11 @@ CopyOnDemandTask::~CopyOnDemandTask()
 
 void CopyOnDemandTask::Clear()
 {
-	m_UploadDefaultData.clear();
+	TODO("Possible memory leak");
+	//m_UploadDefaultData.clear();
 	m_Textures.clear();
 }
 
-void CopyOnDemandTask::SubmitTexture(Texture* texture)
-{
-	m_Textures.push_back(texture);
-}
 
 void CopyOnDemandTask::Execute()
 {
@@ -44,17 +39,17 @@ void CopyOnDemandTask::Execute()
 		ScopedPixEvent(CopyOnDemand, commandList);
 
 		// record the "small" data, such as constantbuffers..
-		for (auto& tuple : m_UploadDefaultData)
-		{
-			copyResource(
-				commandList,
-				std::get<0>(tuple),		// UploadHeap
-				std::get<1>(tuple),		// DefaultHeap
-				std::get<2>(tuple));	// Data
-		}
+		//for (auto& tuple : m_UploadDefaultData)
+		//{
+		//	copyResource(
+		//		commandList,
+		//		std::get<0>(tuple),		// UploadHeap
+		//		std::get<1>(tuple),		// DefaultHeap
+		//		std::get<2>(tuple));	// Data
+		//}
 
 		// record texturedata
-		for (Texture* texture : m_Textures)
+		for (IGraphicsTexture* texture : m_Textures)
 		{
 			copyTexture(commandList, texture);
 		}
@@ -62,7 +57,7 @@ void CopyOnDemandTask::Execute()
 	commandList->Close();
 }
 
-void CopyOnDemandTask::copyTexture(ID3D12GraphicsCommandList5* commandList, Texture* texture)
+void CopyOnDemandTask::copyTexture(ID3D12GraphicsCommandList5* commandList, IGraphicsTexture* texture)
 {
 	ID3D12Resource* defaultHeap = texture->m_pDefaultResource->GetID3D12Resource1();
 	ID3D12Resource* uploadHeap  = texture->m_pUploadResource->GetID3D12Resource1();

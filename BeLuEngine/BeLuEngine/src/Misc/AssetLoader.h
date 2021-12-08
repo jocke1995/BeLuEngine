@@ -5,37 +5,35 @@
 #include "assimp/matrix4x4.h"
 #include <map>
 
-class DescriptorHeap;
 class Model;
 class Mesh;
 class Shader;
-class Texture;
-class Texture2DGUI;
 class Material;
 class Window;
 class Scene;
-class ShaderResource;
 
-struct ID3D12Device5;
+// Assimp
 struct Vertex;
 struct aiNode;
 struct aiScene;
 struct aiMesh;
 struct aiMaterial;
 
+// API
+class IGraphicsTexture;
 
 class AssetLoader
 {
 public:
     ~AssetLoader();
 
-    static AssetLoader* Get(ID3D12Device5* device = nullptr, DescriptorHeap* descriptorHeap_CBV_UAV_SRV = nullptr);
+    static AssetLoader* Get();
 
     /* Load Functions */
     // Model ---------------
     Model* LoadModel(const std::wstring& path);
     // Textures ------------
-    Texture* LoadTexture2D(const std::wstring& path);
+    IGraphicsTexture* LoadTexture2D(const std::wstring& path);
 
     // Creates material from parameter.
     // If no parameter is specified, a default material is created.
@@ -46,7 +44,7 @@ public:
     bool IsModelLoadedOnGpu(const std::wstring& name) const;
     bool IsModelLoadedOnGpu(const Model* model) const;
     bool IsTextureLoadedOnGpu(const std::wstring& name) const;
-    bool IsTextureLoadedOnGpu(const Texture* texture) const;
+    bool IsTextureLoadedOnGpu(const IGraphicsTexture* texture) const;
 
 private:
     // PipelineState loads all shaders
@@ -56,13 +54,10 @@ private:
     // Renderer needs access to m_LoadedModels & m_LoadedTextures so it can check if they are uploaded to GPU.
     friend class Renderer;
 
-    // Constructor currently called from m_pRenderer to set dx12 specific objects
-    AssetLoader(ID3D12Device5* device = nullptr, DescriptorHeap* descriptorHeap_CBV_UAV_SRV = nullptr);
+    AssetLoader();
     AssetLoader(AssetLoader const&) = delete;
     void operator=(AssetLoader const&) = delete;
 
-    ID3D12Device5* m_pDevice = nullptr;
-    DescriptorHeap* m_pDescriptorHeap_CBV_UAV_SRV = nullptr;
     Window* m_pWindow = nullptr;
     
     void loadDefaultMaterial();
@@ -73,7 +68,7 @@ private:
     // Every model & texture also has a bool which indicates if its data is on the GPU or not
     // name, pair<isOnGpu, Model*>
     std::map<std::wstring, std::pair<bool, Model*>> m_LoadedModels;
-    std::map<std::wstring, std::pair<bool, Texture*>> m_LoadedTextures;
+    std::map<std::wstring, std::pair<bool, IGraphicsTexture*>> m_LoadedTextures;
     std::map<std::wstring, Material*> m_LoadedMaterials;
     std::vector<Mesh*> m_LoadedMeshes;
     std::map<std::wstring, Shader*> m_LoadedShaders;
@@ -93,7 +88,7 @@ private:
     void processMeshData(const aiScene* assimpScene, const aiMesh* assimpMesh, std::vector<Vertex>* vertices, std::vector<unsigned int>* indices);
     Material* processMaterial(std::wstring path, const aiScene* assimpScene, const aiMesh* assimpMesh);
     Material* loadMaterial(aiMaterial* mat, const std::wstring& folderPath);
-    Texture* processTexture(aiMaterial* mat, E_TEXTURE2D_TYPE texture_type, const std::wstring& filePathWithoutTexture);
+    IGraphicsTexture* processTexture(aiMaterial* mat, E_TEXTURE2D_TYPE texture_type, const std::wstring& filePathWithoutTexture);
    
     Shader* loadShader(const std::wstring& fileName, E_SHADER_TYPE type);
 };

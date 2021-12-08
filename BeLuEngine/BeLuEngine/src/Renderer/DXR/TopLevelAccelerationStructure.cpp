@@ -3,9 +3,13 @@
 
 #include "../Misc/Log.h"
 
-#include "../GPUMemory/Resource.h"
-#include "../GPUMemory/ShaderResourceView.h"
 #include "BottomLevelAccelerationStructure.h"
+
+// TODO ABSTRACTION
+#include "../API/D3D12/D3D12GraphicsManager.h"
+#include "../API/D3D12/D3D12GraphicsBuffer.h"
+#include "../API/D3D12/D3D12GraphicsTexture.h"
+
 TopLevelAccelerationStructure::TopLevelAccelerationStructure()
 {
 	
@@ -32,8 +36,11 @@ void TopLevelAccelerationStructure::Reset()
 	m_InstanceCounter = 0;
 }
 
-void TopLevelAccelerationStructure::GenerateBuffers(ID3D12Device5* pDevice, DescriptorHeap* dhHeap)
+void TopLevelAccelerationStructure::GenerateBuffers()
 {
+	D3D12GraphicsManager* manager = D3D12GraphicsManager::GetInstance();
+	ID3D12Device5* device5 = manager->GetDevice();
+
 	// TODO: fast trace?
 	D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE;
 
@@ -46,7 +53,7 @@ void TopLevelAccelerationStructure::GenerateBuffers(ID3D12Device5* pDevice, Desc
 
 	// This structure is used to hold the sizes of the required scratch memory and resulting AS
 	D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO info = {};
-	pDevice->GetRaytracingAccelerationStructurePrebuildInfo(&prebuildDesc, &info);
+	device5->GetRaytracingAccelerationStructurePrebuildInfo(&prebuildDesc, &info);
 
 	// Buffer sizes need to be 256-byte-aligned
 	unsigned int scratchSizeInBytes = (info.ScratchDataSizeInBytes + 255) & ~255;
@@ -60,21 +67,21 @@ void TopLevelAccelerationStructure::GenerateBuffers(ID3D12Device5* pDevice, Desc
 
 	D3D12_RESOURCE_STATES stateResourceAS = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	m_pScratch = new Resource(
-		pDevice, scratchSizeInBytes,
+		device5, scratchSizeInBytes,
 		RESOURCE_TYPE::DEFAULT, L"scratchTopLevel",
 		D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
 		&stateResourceAS);
 
 	stateResourceAS = D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE;
 	m_pResult = new Resource(
-		pDevice, resultSizeInBytes,
+		device5, resultSizeInBytes,
 		RESOURCE_TYPE::DEFAULT, L"resultTopLevel",
 		D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
 		&stateResourceAS);
 
 	stateResourceAS = D3D12_RESOURCE_STATE_GENERIC_READ;
 	m_pInstanceDesc = new Resource(
-		pDevice, m_InstanceDescsSizeInBytes,
+		device5, m_InstanceDescsSizeInBytes,
 		RESOURCE_TYPE::UPLOAD, L"instanceDescTopLevel",
 		D3D12_RESOURCE_FLAG_NONE,
 		&stateResourceAS);
@@ -85,10 +92,10 @@ void TopLevelAccelerationStructure::GenerateBuffers(ID3D12Device5* pDevice, Desc
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
 	srvDesc.RaytracingAccelerationStructure.Location = m_pResult->GetID3D12Resource1()->GetGPUVirtualAddress();
 
-	m_pSRV = new ShaderResourceView(pDevice, dhHeap, &srvDesc, m_pResult);
+	m_pSRV = new ShaderResourceView(device5, dhHeap, &srvDesc, m_pResult);
 }
 
-void TopLevelAccelerationStructure::SetupAccelerationStructureForBuilding(ID3D12Device5* pDevice, bool update)
+void TopLevelAccelerationStructure::SetupAccelerationStructureForBuilding(bool update)
 {
 	// Ignore first
 	if (m_IsBuilt == false && update == true)

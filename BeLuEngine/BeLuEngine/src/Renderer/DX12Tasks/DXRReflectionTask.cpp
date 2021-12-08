@@ -7,7 +7,6 @@
 
 // DX12 Specifics
 #include "../DescriptorHeap.h"
-#include "../GPUMemory/GPUMemory.h"
 #include "../Shader.h"
 #include "../Misc/AssetLoader.h"
 
@@ -27,11 +26,10 @@ TODO(To be replaced by a D3D12Manager some point in the future(needed to access 
 #include "../API/D3D12/D3D12GraphicsTexture.h"
 
 DXRReflectionTask::DXRReflectionTask(
-	ID3D12Device5* device,
-	Resource_UAV_SRV* resourceUavSrv,
+	IGraphicsTexture* reflectionTexture,
 	unsigned int width, unsigned int height,
 	unsigned int FLAG_THREAD)
-	:DXRTask(device, FLAG_THREAD, E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE, L"ReflectionCommandList")
+	:DXRTask(FLAG_THREAD, E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE, L"ReflectionCommandList")
 {
 #pragma region PipelineState Object
 	// Gets deleted in Assetloader
@@ -39,7 +37,10 @@ DXRReflectionTask::DXRReflectionTask(
 	m_pHitShader = AssetLoader::Get()->loadShader(L"DXR/Hit.hlsl", E_SHADER_TYPE::DXR);
 	m_pMissShader = AssetLoader::Get()->loadShader(L"DXR/Miss.hlsl", E_SHADER_TYPE::DXR);
 
-	RayTracingPipelineGenerator rtPipelineGenerator(device);
+	D3D12GraphicsManager* manager = D3D12GraphicsManager::GetInstance();
+	ID3D12Device5* device5 = manager->GetDevice();
+
+	RayTracingPipelineGenerator rtPipelineGenerator(device5);
 
 
 	// In a way similar to DLLs, each library is associated with a number of
@@ -55,7 +56,7 @@ DXRReflectionTask::DXRReflectionTask(
 	// parameters and buffers will be accessed.
 #pragma region CreateLocalRootSignatures
 
-	auto createLocalRootSig = [device](const D3D12_ROOT_SIGNATURE_DESC& rootDesc) -> ID3D12RootSignature*
+	auto createLocalRootSig = [device5](const D3D12_ROOT_SIGNATURE_DESC& rootDesc) -> ID3D12RootSignature*
 	{
 		BL_ASSERT(rootDesc.Flags & D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE);
 
@@ -77,7 +78,7 @@ DXRReflectionTask::DXRReflectionTask(
 		}
 
 		ID3D12RootSignature* pRootSig;
-		hr = device->CreateRootSignature(
+		hr = device5->CreateRootSignature(
 			0,
 			m_pBlob->GetBufferPointer(),
 			m_pBlob->GetBufferSize(),
@@ -198,7 +199,7 @@ DXRReflectionTask::DXRReflectionTask(
 #pragma endregion
 
 	// Rest
-	m_pResourceUavSrv = resourceUavSrv;
+	m_pReflectionTexture = reflectionTexture;
 	m_DispatchWidth = width;
 	m_DispatchHeight = height;
 }
@@ -207,7 +208,7 @@ DXRReflectionTask::~DXRReflectionTask()
 {
 	// ShaderBindingTable
 	BL_SAFE_DELETE(m_pSbtGenerator);
-	BL_SAFE_DELETE(m_pSbtStorage);
+	BL_SAFE_DELETE(m_pShaderTableBuffer);
 
 	// Local rootSignatures
 	BL_SAFE_RELEASE(&m_pRayGenSignature);
@@ -219,9 +220,9 @@ DXRReflectionTask::~DXRReflectionTask()
 	BL_SAFE_RELEASE(&m_pRTStateObjectProps);
 }
 
-void DXRReflectionTask::CreateShaderBindingTable(ID3D12Device5* device, const std::vector<RenderComponent>& rayTracedRenderComponents)
+void DXRReflectionTask::CreateShaderBindingTable(const std::vector<RenderComponent>& rayTracedRenderComponents)
 {
-	BL_SAFE_DELETE(m_pSbtStorage);
+	BL_SAFE_DELETE(m_pShaderTableBuffer);
 
 	// The SBT helper class collects calls to Add*Program.  If called several
 	// times, the helper must be emptied before re-adding shaders.
@@ -239,9 +240,9 @@ void DXRReflectionTask::CreateShaderBindingTable(ID3D12Device5* device, const st
 	{
 		m_pSbtGenerator->AddHitGroup(L"HitGroup",
 		{
-			(void*)rc.mc->GetSlotInfoByteAdressBufferDXR()->GetUploadResource()->GetGPUVirtualAdress(),	// SlotInfoRawBuffer
-			(void*)rc.mc->GetMaterialByteAdressBuffer()->GetUploadResource()->GetGPUVirtualAdress(),	// MaterialData
-			(void*)static_cast<D3D12GraphicsBuffer*>(rc.tc->GetTransform()->m_pConstantBuffer)->GetTempResource()->GetGPUVirtualAddress()			// MATRICES_PER_OBJECT_STRUCT
+			(void*)static_cast<D3D12GraphicsBuffer*>(rc.mc->GetSlotInfoByteAdressBufferDXR())->GetTempResource()->GetGPUVirtualAddress(),	// SlotInfoRawBuffer
+			(void*)static_cast<D3D12GraphicsBuffer*>(rc.mc->GetMaterialByteAdressBuffer())->GetTempResource()->GetGPUVirtualAddress(),		// MaterialData
+			(void*)static_cast<D3D12GraphicsBuffer*>(rc.tc->GetTransform()->m_pConstantBuffer)->GetTempResource()->GetGPUVirtualAddress()	// MATRICES_PER_OBJECT_STRUCT
 		});
 	}
 
@@ -253,11 +254,10 @@ void DXRReflectionTask::CreateShaderBindingTable(ID3D12Device5* device, const st
 	// mapping to write the SBT contents. After the SBT compilation it could be
 	// copied to the default heap for performance.
 
-	D3D12_RESOURCE_STATES startState = D3D12_RESOURCE_STATE_GENERIC_READ;
-	m_pSbtStorage = new Resource(device, sbtSize, RESOURCE_TYPE::UPLOAD, L"ShaderBindingTable_Resource", D3D12_RESOURCE_FLAG_NONE, &startState);
+	m_pShaderTableBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::CPUBuffer, E_GRAPHICSBUFFER_UPLOADFREQUENCY::Dynamic, sbtSize, 1, DXGI_FORMAT_UNKNOWN, L"ShaderBindingTable_CPUBUFFER");
 
 	// Compile the SBT from the shader and parameters info
-	m_pSbtGenerator->Generate(m_pSbtStorage->GetID3D12Resource1(), m_pRTStateObjectProps);
+	m_pSbtGenerator->Generate(static_cast<D3D12GraphicsBuffer*>(m_pShaderTableBuffer)->GetTempResource(), m_pRTStateObjectProps);
 }
 
 void DXRReflectionTask::Execute()
@@ -299,7 +299,7 @@ void DXRReflectionTask::Execute()
 		// copy its contents into the render target. Now we need to transition it to
 		// a UAV so that the shaders can write in it.
 		transition = CD3DX12_RESOURCE_BARRIER::Transition(
-			m_pResourceUavSrv->resource->GetID3D12Resource1(),
+			static_cast<D3D12GraphicsTexture*>(m_pReflectionTexture)->GetTempResource(),
 			D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,	// StateBefore
 			D3D12_RESOURCE_STATE_UNORDERED_ACCESS);			// StateAfter
 		commandList->ResourceBarrier(1, &transition);
@@ -312,7 +312,7 @@ void DXRReflectionTask::Execute()
 
 		// The ray generation shaders are always at the beginning of the SBT. 
 		uint32_t rayGenerationSectionSizeInBytes = m_pSbtGenerator->GetRayGenSectionSize();
-		desc.RayGenerationShaderRecord.StartAddress = m_pSbtStorage->GetID3D12Resource1()->GetGPUVirtualAddress();
+		desc.RayGenerationShaderRecord.StartAddress = static_cast<D3D12GraphicsBuffer*>(m_pShaderTableBuffer)->GetTempResource()->GetGPUVirtualAddress();
 		desc.RayGenerationShaderRecord.SizeInBytes = rayGenerationSectionSizeInBytes;
 
 		// The miss shaders are in the second SBT section, right after the ray
@@ -321,13 +321,13 @@ void DXRReflectionTask::Execute()
 		// also indicate the stride between the two miss shaders, which is the size
 		// of a SBT entry
 		uint32_t missSectionSizeInBytes = m_pSbtGenerator->GetMissSectionSize();
-		desc.MissShaderTable.StartAddress = m_pSbtStorage->GetID3D12Resource1()->GetGPUVirtualAddress() + rayGenerationSectionSizeInBytes;
+		desc.MissShaderTable.StartAddress = static_cast<D3D12GraphicsBuffer*>(m_pShaderTableBuffer)->GetTempResource()->GetGPUVirtualAddress() + rayGenerationSectionSizeInBytes;
 		desc.MissShaderTable.SizeInBytes = missSectionSizeInBytes;
 		desc.MissShaderTable.StrideInBytes = m_pSbtGenerator->GetMissEntrySize();
 
 		// The hit groups section start after the miss shaders.
 		uint32_t hitGroupsSectionSize = m_pSbtGenerator->GetHitGroupSectionSize();
-		desc.HitGroupTable.StartAddress = m_pSbtStorage->GetID3D12Resource1()->GetGPUVirtualAddress() +
+		desc.HitGroupTable.StartAddress = static_cast<D3D12GraphicsBuffer*>(m_pShaderTableBuffer)->GetTempResource()->GetGPUVirtualAddress() +
 			rayGenerationSectionSizeInBytes +
 			missSectionSizeInBytes;
 		desc.HitGroupTable.SizeInBytes = hitGroupsSectionSize;
@@ -347,7 +347,7 @@ void DXRReflectionTask::Execute()
 		D3D12_RESOURCE_BARRIER b = {};
 		b.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
 		b.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-		b.UAV.pResource = m_pResourceUavSrv->resource->GetID3D12Resource1();
+		b.UAV.pResource = static_cast<D3D12GraphicsTexture*>(m_pReflectionTexture)->GetTempResource();
 		commandList->ResourceBarrier(1, &b);
 
 		// Transition DepthBuffer
@@ -363,7 +363,7 @@ void DXRReflectionTask::Execute()
 		// We can then do the actual copy, before transitioning the render target
 		// buffer into a render target, that will be then used to display the image
 		transition = CD3DX12_RESOURCE_BARRIER::Transition(
-			m_pResourceUavSrv->resource->GetID3D12Resource1(),
+			static_cast<D3D12GraphicsTexture*>(m_pReflectionTexture)->GetTempResource(),
 			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,				// StateBefore
 			D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);	// StateAfter
 		commandList->ResourceBarrier(1, &transition);

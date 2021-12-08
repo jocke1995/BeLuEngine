@@ -16,7 +16,6 @@ class CommandInterface
 {
 public:
 	CommandInterface(
-		ID3D12Device5* device,
 		E_COMMAND_INTERFACE_TYPE interfaceType,
 		const std::wstring& clName);
 	~CommandInterface();
@@ -31,7 +30,7 @@ private:
 	ID3D12CommandAllocator* m_pCommandAllocators[NUM_SWAP_BUFFERS]{ nullptr };
 
 	std::wstring m_Name = L"CL_Default";
-	void createCommandInterfaces(ID3D12Device5* device, E_COMMAND_INTERFACE_TYPE interfaceType);
+	void createCommandInterfaces(E_COMMAND_INTERFACE_TYPE interfaceType);
 };
 
 #endif

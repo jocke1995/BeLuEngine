@@ -10,7 +10,7 @@ class PipelineState;
 class ComputeTask : public DX12Task
 {
 public:
-	ComputeTask(ID3D12Device5* device,
+	ComputeTask(
 		std::vector<std::pair< std::wstring, std::wstring>> csNamePSOName,
 		unsigned int FLAG_THREAD,
 		E_COMMAND_INTERFACE_TYPE interfaceType = E_COMMAND_INTERFACE_TYPE::COMPUTE_TYPE,

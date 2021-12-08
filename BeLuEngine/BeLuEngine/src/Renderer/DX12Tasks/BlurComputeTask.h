@@ -9,7 +9,6 @@ class BlurComputeTask : public ComputeTask
 {
 public:
 	BlurComputeTask(
-		ID3D12Device5* device,
 		std::vector<std::pair<std::wstring, std::wstring>> csNamePSOName,
 		E_COMMAND_INTERFACE_TYPE interfaceType,
 		ShaderResourceView* brightSRV,

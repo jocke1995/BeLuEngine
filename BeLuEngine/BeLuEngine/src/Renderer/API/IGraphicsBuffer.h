@@ -5,6 +5,9 @@ enum class E_GRAPHICSBUFFER_TYPE
 {
 	ConstantBuffer,
 	RawBuffer,
+	VertexBuffer,
+	IndexBuffer,
+	CPUBuffer,
 	None,
 	NUM_PARAMS
 };
@@ -22,7 +25,10 @@ class IGraphicsBuffer
 public:
 	virtual ~IGraphicsBuffer();
 
-	static IGraphicsBuffer* Create(E_GRAPHICSBUFFER_TYPE type, E_GRAPHICSBUFFER_UPLOADFREQUENCY uploadFrequency, unsigned int size, std::wstring name);
+	static IGraphicsBuffer* Create(E_GRAPHICSBUFFER_TYPE type, E_GRAPHICSBUFFER_UPLOADFREQUENCY uploadFrequency, unsigned int sizeOfSingleItem, unsigned int numItems, DXGI_FORMAT format, std::wstring name);
+
+	virtual unsigned int GetConstantBufferDescriptorIndex() const = 0;
+	virtual unsigned int GetShaderResourceHeapIndex() const = 0;
 
 	virtual unsigned int GetSize() const = 0;
 

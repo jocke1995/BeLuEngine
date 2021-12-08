@@ -4,25 +4,18 @@
 #include "../Misc/Log.h"
 #include "../Misc/AssetLoader.h"
 
-#include "../Texture/Texture.h"
+#include "../API/IGraphicsTexture.h"
 
 #include "../Renderer/Renderer.h"
 #include "../Renderer/DescriptorHeap.h"
 
-#include "../Renderer/GPUMemory/GPUMemory.h"
 Material::Material(const std::wstring& name)
 {
 	AssetLoader* al = AssetLoader::Get();
 	
 	Material* defaultMat = al->LoadMaterial(L"DefaultMaterial");
 	
-#ifdef DEBUG
-	// Sanity check
-	if (defaultMat == nullptr)
-	{
-		BL_LOG_CRITICAL("Trying to create a material from the default material when it has not been created yet.\n");
-	}
-#endif 
+	BL_ASSERT_MESSAGE(defaultMat != nullptr, "Trying to create a material from the default material when it has not been created yet.\n");
 
 	m_MaterialData =
 	{
@@ -49,18 +42,18 @@ Material::Material(const std::wstring& name)
 	m_Textures = defaultMat->m_Textures;
 }
 
-Material::Material(const std::wstring* name, std::map<E_TEXTURE2D_TYPE, Texture*>* textures)
+Material::Material(const std::wstring* name, std::map<E_TEXTURE2D_TYPE, IGraphicsTexture*>* textures)
 {
 	m_Name = *name;
 
 	m_MaterialData = 
 	{	
-			textures->at(E_TEXTURE2D_TYPE::ALBEDO)->GetDescriptorHeapIndex(),
-			textures->at(E_TEXTURE2D_TYPE::ROUGHNESS)->GetDescriptorHeapIndex(),
-			textures->at(E_TEXTURE2D_TYPE::METALLIC)->GetDescriptorHeapIndex(),
-			textures->at(E_TEXTURE2D_TYPE::NORMAL)->GetDescriptorHeapIndex(),
-			textures->at(E_TEXTURE2D_TYPE::EMISSIVE)->GetDescriptorHeapIndex(),
-			textures->at(E_TEXTURE2D_TYPE::OPACITY)->GetDescriptorHeapIndex(),
+			textures->at(E_TEXTURE2D_TYPE::ALBEDO)->GetShaderResourceHeapIndex(),
+			textures->at(E_TEXTURE2D_TYPE::ROUGHNESS)->GetShaderResourceHeapIndex(),
+			textures->at(E_TEXTURE2D_TYPE::METALLIC)->GetShaderResourceHeapIndex(),
+			textures->at(E_TEXTURE2D_TYPE::NORMAL)->GetShaderResourceHeapIndex(),
+			textures->at(E_TEXTURE2D_TYPE::EMISSIVE)->GetShaderResourceHeapIndex(),
+			textures->at(E_TEXTURE2D_TYPE::OPACITY)->GetShaderResourceHeapIndex(),
 			1,	// useEmissiveTexture
 			1,	// useRoughnessTexture
 			1,	// useMetallicTexture
@@ -108,7 +101,7 @@ std::wstring Material::GetName() const
 	return m_Name;
 }
 
-Texture* Material::GetTexture(E_TEXTURE2D_TYPE type) const
+IGraphicsTexture* Material::GetTexture(E_TEXTURE2D_TYPE type) const
 {
 	return m_Textures.at(type);
 }
@@ -118,7 +111,7 @@ MaterialData* Material::GetSharedMaterialData()
 	return &m_MaterialData;
 }
 
-void Material::SetTexture(E_TEXTURE2D_TYPE type, Texture* texture)
+void Material::SetTexture(E_TEXTURE2D_TYPE type, IGraphicsTexture* texture)
 {
 	m_Textures[type] = texture;
 }

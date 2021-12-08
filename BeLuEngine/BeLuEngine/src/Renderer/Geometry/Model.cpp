@@ -7,15 +7,13 @@
 #include "Mesh.h"
 #include "Material.h"
 #include "../Texture/Texture2D.h"
-#include "../GPUMemory/GPUMemory.h"
 
 #include "../DXR/BottomLevelAccelerationStructure.h"
 
 Model::Model(
 	const std::wstring* path,
 	std::vector<Mesh*>* meshes,
-	std::vector<Material*>* materials,
-	ID3D12Device5* pdevice)
+	std::vector<Material*>* materials)
 {
 	m_Path = *path;
 	m_Size = (*meshes).size();
@@ -33,8 +31,8 @@ Model::Model(
 			mesh->GetDefaultResourceIndices(), mesh->GetNumIndices());
 	}
 
-	m_pBLAS->GenerateBuffers(pdevice);
-	m_pBLAS->SetupAccelerationStructureForBuilding(pdevice, false);
+	m_pBLAS->GenerateBuffers();
+	m_pBLAS->SetupAccelerationStructureForBuilding(false);
 }
 
 Model::~Model()

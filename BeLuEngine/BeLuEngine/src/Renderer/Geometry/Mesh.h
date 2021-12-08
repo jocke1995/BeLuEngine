@@ -4,14 +4,9 @@
 #include "../ECS/Components/BoundingBoxComponent.h"
 
 class Texture;
-class Resource;
-class ShaderResourceView;
-class DescriptorHeap;
 struct SlotInfo;
 
-// DX12 Forward Declarations
-struct ID3D12Device5;
-struct D3D12_INDEX_BUFFER_VIEW;
+class IGraphicsBuffer;
 
 struct Vertex
 {
@@ -35,25 +30,22 @@ public:
     bool operator != (const Mesh& other);
 
     // Virtual so that animatedMesh can override this
-    virtual void Init(ID3D12Device5* m_pDevice5, DescriptorHeap* CBV_UAV_SRV_heap);
+    virtual void Init();
 
     // Vertices
-    Resource* GetDefaultResourceVertices() const;
     const std::vector<Vertex>* GetVertices() const;
     virtual const unsigned int GetSizeOfVertices() const;
     virtual const unsigned int GetNumVertices() const;
 
     // Indices
-    Resource* GetDefaultResourceIndices() const;
     const std::vector<unsigned int>* GetIndices() const;
     virtual const unsigned int GetSizeOfIndices() const;
     virtual const unsigned int GetNumIndices() const;
-    const D3D12_INDEX_BUFFER_VIEW* GetIndexBufferView() const;
 
     const std::wstring& GetPath() const;
 
-	ShaderResourceView* const GetVBSRV() const;
-	ShaderResourceView* const GetIBSRV() const;
+    IGraphicsBuffer* GetVertexBuffer() const;
+    IGraphicsBuffer* GetIndexBuffer() const;
 
 protected:
     friend class MergeRenderTask;
@@ -71,15 +63,8 @@ protected:
     std::vector<unsigned int> m_Indices;
     std::wstring m_Path = L"NOPATH";
 
-    Resource* m_pUploadResourceVertices = nullptr;
-    Resource* m_pUploadResourceIndices = nullptr;
-    Resource* m_pDefaultResourceVertices = nullptr;
-    Resource* m_pDefaultResourceIndices = nullptr;
-
-    ShaderResourceView* m_pVertexBufferSRV = nullptr;
-    ShaderResourceView* m_pIndexBufferSRV = nullptr;
-
-    D3D12_INDEX_BUFFER_VIEW* m_pIndexBufferView = nullptr;
+    IGraphicsBuffer* m_pVertexBuffer = nullptr;
+    IGraphicsBuffer* m_pIndexBuffer = nullptr;
 
     unsigned int m_Id = 0;
 };

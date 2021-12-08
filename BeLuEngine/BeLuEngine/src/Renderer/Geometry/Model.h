@@ -20,8 +20,7 @@ class Model
 public:
     Model(const std::wstring* path,
         std::vector<Mesh*>* meshes,
-        std::vector<Material*>* materials,
-        ID3D12Device5* pdevice);
+        std::vector<Material*>* materials);
     virtual ~Model();
 
     bool operator == (const Model& other);

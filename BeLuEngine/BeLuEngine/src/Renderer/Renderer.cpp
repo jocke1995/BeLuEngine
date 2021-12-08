@@ -38,11 +38,7 @@
 #include "Camera/BaseCamera.h"
 #include "Geometry/Model.h"
 #include "Geometry/Mesh.h"
-#include "Texture/Texture.h"
-#include "Texture/Texture2D.h"
 #include "Geometry/Material.h"
-
-#include "GPUMemory/GPUMemory.h"
 
 // Techniques
 #include "Techniques/Bloom.h"
@@ -123,26 +119,19 @@ void Renderer::deleteRenderer()
 	TODO("Fix this");
 	//waitForGPU();
 
-	delete m_pFullScreenQuad;
+	// Delete Textures
+	BL_SAFE_DELETE(m_pFullScreenQuad);
+	BL_SAFE_DELETE(m_FinalColorBuffer);
+	BL_SAFE_DELETE(m_GBufferAlbedo);
+	BL_SAFE_DELETE(m_GBufferNormal);
+	BL_SAFE_DELETE(m_GBufferMaterialProperties);
+	BL_SAFE_DELETE(m_GBufferEmissive);
+	BL_SAFE_DELETE(m_ReflectionTexture);
 
-	delete m_FinalColorBuffer.first;
-	delete m_FinalColorBuffer.second;
+	// Delete Depthbuffer
+	BL_SAFE_DELETE(m_pMainDepthStencil);
 
-	delete m_GBufferAlbedo.first;
-	delete m_GBufferAlbedo.second;
-	delete m_GBufferNormal.first;
-	delete m_GBufferNormal.second;
-	delete m_GBufferMaterialProperties.first;
-	delete m_GBufferMaterialProperties.second;
-	delete m_GBufferEmissive.first;
-	delete m_GBufferEmissive.second;
-
-	delete m_ReflectionTexture.resource;
-	delete m_ReflectionTexture.uav;
-	delete m_ReflectionTexture.srv;
-
-	delete m_pBloomResources;
-	delete m_pMainDepthStencil;
+	BL_SAFE_DELETE(m_pBloomResources);
 
 	for (ComputeTask* computeTask : m_ComputeTasks)
 		delete computeTask;
@@ -191,122 +180,72 @@ void Renderer::InitD3D12(HWND hwnd, unsigned int width, unsigned int height, HIN
 
 #pragma region RenderTargets
 	// Main color renderTarget (used until the swapchain RT is drawn to)
-	m_FinalColorBuffer.first = new RenderTarget(
-		m_pDevice5,
+	m_FinalColorBuffer = IGraphicsTexture::Create();
+	m_FinalColorBuffer->CreateTexture2D(
 		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
-		L"finalColorBuffer_RESOURCE",
-		rtvHeap,
+		DXGI_FORMAT_R16G16B16A16_FLOAT,
+		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget,
+		L"FinalColorbuffer",
 		D3D12_RESOURCE_STATE_RENDER_TARGET);
 
-	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	m_FinalColorBuffer.second = new ShaderResourceView(
-		m_pDevice5,
-		mainHeap,
-		m_FinalColorBuffer.first->GetDefaultResource());
-
 	// GBufferAlbedo
-	m_GBufferAlbedo.first = new RenderTarget(
-		m_pDevice5,
+	m_GBufferAlbedo = IGraphicsTexture::Create();
+	m_GBufferAlbedo->CreateTexture2D(
 		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
-		L"gBufferAlbedo_RESOURCE",
-		rtvHeap,
+		DXGI_FORMAT_R16G16B16A16_FLOAT,
+		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget,
+		L"gBufferAlbedo",
 		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-
-	srvDesc = {};
-	m_GBufferAlbedo.second = new ShaderResourceView(
-		m_pDevice5,
-		mainHeap,
-		m_GBufferAlbedo.first->GetDefaultResource());
 
 	// Normal
-	m_GBufferNormal.first = new RenderTarget(
-		m_pDevice5,
+	m_GBufferNormal = IGraphicsTexture::Create();
+	m_GBufferNormal->CreateTexture2D(
 		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
-		L"gBufferNormal_RESOURCE",
-		rtvHeap,
+		DXGI_FORMAT_R16G16B16A16_FLOAT,
+		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget,
+		L"gBufferNormal",
 		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-
-	m_GBufferNormal.second = new ShaderResourceView(
-		m_pDevice5,
-		mainHeap,
-		m_GBufferNormal.first->GetDefaultResource());
 
 	// Material Properties (Roughness, Metallic, glow..
-	m_GBufferMaterialProperties.first = new RenderTarget(
-		m_pDevice5,
+	m_GBufferMaterialProperties = IGraphicsTexture::Create();
+	m_GBufferMaterialProperties->CreateTexture2D(
 		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
-		L"gBufferMaterials_RESOURCE",
-		rtvHeap,
+		DXGI_FORMAT_R16G16B16A16_FLOAT,
+		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget,
+		L"gBufferMaterials",
 		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-
-	m_GBufferMaterialProperties.second = new ShaderResourceView(
-		m_pDevice5,
-		mainHeap,
-		m_GBufferMaterialProperties.first->GetDefaultResource());
 
 	// Emissive Color
-	m_GBufferEmissive.first = new RenderTarget(
-		m_pDevice5,
+	m_GBufferEmissive = IGraphicsTexture::Create();
+	m_GBufferEmissive->CreateTexture2D(
 		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
-		L"gBufferEmissive_RESOURCE",
-		rtvHeap,
+		DXGI_FORMAT_R16G16B16A16_FLOAT,
+		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget,
+		L"gBufferEmissive",
 		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-	m_GBufferEmissive.second = new ShaderResourceView(
-		m_pDevice5,
-		mainHeap,
-		m_GBufferEmissive.first->GetDefaultResource());
+	// Resource
+	m_ReflectionTexture = IGraphicsTexture::Create();
+	m_ReflectionTexture->CreateTexture2D(
+		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
+		DXGI_FORMAT_R16G16B16A16_FLOAT,
+		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::UnorderedAccess | F_TEXTURE_USAGE::RayTracing,
+		L"ReflectionTexture",
+		D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
-#pragma region ReflectionTexture
-	{
-		// Resource
-		D3D12_RESOURCE_DESC resourceDesc = {};
-		resourceDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
-		resourceDesc.Width = m_CurrentRenderingWidth;
-		resourceDesc.Height = m_CurrentRenderingHeight;
-		resourceDesc.DepthOrArraySize = 1;
-		resourceDesc.MipLevels = 1;
-		resourceDesc.SampleDesc.Count = 1;
-		resourceDesc.SampleDesc.Quality = 0;
-		resourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-		resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-		resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-
-		m_ReflectionTexture.resource = new Resource(m_pDevice5, &resourceDesc, nullptr, L"ReflectionTexture_RESOURCE", D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-
-		// UAV
-		D3D12_UNORDERED_ACCESS_VIEW_DESC uavDescReflection = {};
-		uavDescReflection.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
-		uavDescReflection.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-		uavDescReflection.Texture2D.MipSlice = 0;
-		uavDescReflection.Texture2D.PlaneSlice = 0;
-
-		m_ReflectionTexture.uav = new UnorderedAccessView(
-			m_pDevice5,
-			mainHeap,
-			&uavDescReflection,
-			m_ReflectionTexture.resource);
-
-		// SRV
-		D3D12_SHADER_RESOURCE_VIEW_DESC srvDescReflection = {};
-		srvDescReflection.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-		srvDescReflection.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
-		srvDescReflection.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-		srvDescReflection.Texture2D.MipLevels = -1;
-
-		m_ReflectionTexture.srv = new ShaderResourceView(
-			m_pDevice5,
-			mainHeap,
-			&srvDescReflection,
-			m_ReflectionTexture.resource);
-	}
-#pragma endregion
+	// DepthBuffer
+	m_pMainDepthStencil = IGraphicsTexture::Create();
+	m_pMainDepthStencil->CreateTexture2D(
+		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
+		DXGI_FORMAT_R24_UNORM_X8_TYPELESS,
+		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::DepthStencil,
+		L"gBufferEmissive",
+		D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
 	// Bloom
-	m_pBloomResources = new Bloom(m_pDevice5, rtvHeap,mainHeap);
+	m_pBloomResources = new Bloom(m_pDevice5, rtvHeap, mainHeap);
 
-	// Create Main DepthBuffer
-	createMainDSV();
+	
 #pragma endregion RenderTargets
 
 	// Picking
@@ -317,18 +256,18 @@ void Renderer::InitD3D12(HWND hwnd, unsigned int width, unsigned int height, HIN
 	// FullScreenQuad
 	createFullScreenQuad();
 
-	// Init Assetloader
-	AssetLoader* al = AssetLoader::Get(m_pDevice5, mainHeap);
+	// Init Assetloader (Note: This should be free to use before this line, before it wasn't)
+	AssetLoader* al = AssetLoader::Get();
 
 	// Init BoundingBoxPool
 	BoundingBoxPool::Get(m_pDevice5, mainHeap);
 
 	// Allocate memory for cbPerScene
-	m_pCbPerScene = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::ConstantBuffer, E_GRAPHICSBUFFER_UPLOADFREQUENCY::Static, sizeof(CB_PER_SCENE_STRUCT), L"CB_PER_SCENE");
+	m_pCbPerScene = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::ConstantBuffer, E_GRAPHICSBUFFER_UPLOADFREQUENCY::Static, sizeof(CB_PER_SCENE_STRUCT), 1, DXGI_FORMAT_UNKNOWN, L"CB_PER_SCENE");
 	m_pCbPerSceneData = new CB_PER_SCENE_STRUCT();
 
 	// Allocate memory for cbPerFrame
-	m_pCbPerFrame = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::ConstantBuffer, E_GRAPHICSBUFFER_UPLOADFREQUENCY::Static, sizeof(CB_PER_FRAME_STRUCT), L"CB_PER_FRAME");
+	m_pCbPerFrame = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::ConstantBuffer, E_GRAPHICSBUFFER_UPLOADFREQUENCY::Static, sizeof(CB_PER_FRAME_STRUCT), 1, DXGI_FORMAT_UNKNOWN, L"CB_PER_FRAME");
 	m_pCbPerFrameData = new CB_PER_FRAME_STRUCT();
 
 #ifdef DEBUG
@@ -716,7 +655,8 @@ void Renderer::InitModelComponent(component::ModelComponent* mc)
 	if (tc != nullptr)
 	{
 		Transform* t = tc->GetTransform();
-		t->m_pConstantBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::ConstantBuffer, E_GRAPHICSBUFFER_UPLOADFREQUENCY::Static, sizeof(DirectX::XMMATRIX) * 2, L"Transform");
+		TODO("Possible problem");
+		t->m_pConstantBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::ConstantBuffer, E_GRAPHICSBUFFER_UPLOADFREQUENCY::Static, sizeof(DirectX::XMMATRIX), 2, DXGI_FORMAT_UNKNOWN, L"Transform");
 
 		t->UpdateWorldMatrix();
 		DirectX::XMMATRIX w_wvp[2] = {};
@@ -750,7 +690,8 @@ void Renderer::InitModelComponent(component::ModelComponent* mc)
 
 		m_RayTracedRenderComponents.emplace_back(mc, tc);
 
-		submitSlotInfoRawBufferToGPU(mc);
+		CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]);
+		codt->SubmitBuffer(mc->GetSlotInfoByteAdressBufferDXR(), mc->m_SlotInfos.data());
 	}
 }
 
@@ -834,7 +775,9 @@ void Renderer::InitBoundingBoxComponent(component::BoundingBoxComponent* compone
 
 			if (toBeSubmitted == true)
 			{
-				submitMeshToCodt(mesh);
+				CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]);
+				codt->SubmitBuffer(mesh->GetVertexBuffer(), mesh->GetVertices()->data());
+				codt->SubmitBuffer(mesh->GetIndexBuffer(), mesh->GetIndices()->data());
 			}
 
 			component->AddMesh(mesh);
@@ -941,17 +884,6 @@ void Renderer::OnResetScene()
 	m_BoundingBoxesToBePicked.clear();
 }
 
-void Renderer::submitMeshToCodt(Mesh* mesh)
-{
-	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]);
-
-	std::tuple<Resource*, Resource*, const void*> Vert_Upload_Default_Data(mesh->m_pUploadResourceVertices, mesh->m_pDefaultResourceVertices, mesh->m_Vertices.data());
-	std::tuple<Resource*, Resource*, const void*> Indi_Upload_Default_Data(mesh->m_pUploadResourceIndices, mesh->m_pDefaultResourceIndices, mesh->m_Indices.data());
-
-	codt->Submit(&Vert_Upload_Default_Data);
-	codt->Submit(&Indi_Upload_Default_Data);
-}
-
 void Renderer::submitModelToGPU(Model* model)
 {
 	// Dont submit if already on GPU
@@ -965,7 +897,9 @@ void Renderer::submitModelToGPU(Model* model)
 		Mesh* mesh = model->GetMeshAt(i);
 
 		// Submit Mesh
-		submitMeshToCodt(mesh);
+		CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]);
+		codt->SubmitBuffer(mesh->GetVertexBuffer(), mesh->GetVertices()->data());
+		codt->SubmitBuffer(mesh->GetIndexBuffer(), mesh->GetIndices()->data());
 	}
 
 	AssetLoader::Get()->m_LoadedModels.at(model->GetPath()).first = true;
@@ -975,61 +909,38 @@ void Renderer::submitModelToGPU(Model* model)
 	static_cast<BottomLevelRenderTask*>(m_DX12Tasks[E_DX12_TASK_TYPE::BLAS])->SubmitBLAS(model->m_pBLAS);
 }
 
-void Renderer::submitSlotInfoRawBufferToGPU(component::ModelComponent* mc)
-{
-	// Slotinfo
-	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]);
-	const void* data = static_cast<const void*>(mc->m_SlotInfos.data());
-	codt->Submit(&std::make_tuple(
-		mc->m_SlotInfoByteAdressBuffer->GetUploadResource(),
-		mc->m_SlotInfoByteAdressBuffer->GetDefaultResource(),
-		data));
-}
-
 void Renderer::submitMaterialToGPU(component::ModelComponent* mc)
 {
+	auto SubmitTextureLambda = [=](IGraphicsTexture* graphicsTexture)
+	{
+		if (AssetLoader::Get()->IsTextureLoadedOnGpu(graphicsTexture) == true)
+		{
+			return;
+		}
+
+		CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]);
+		codt->SubmitTexture(graphicsTexture, static_cast<D3D12GraphicsTexture*>(graphicsTexture)->GetTempData());
+
+		AssetLoader::Get()->m_LoadedTextures.at(graphicsTexture->GetPath()).first = true;
+	};
+
 	// Submit Textures
 	for (unsigned int i = 0; i < mc->GetNrOfMeshes(); i++)
 	{
 		Material* mat = mc->GetMaterialAt(i);
 
-		Texture* texture;
-		texture = mat->GetTexture(E_TEXTURE2D_TYPE::ALBEDO);
-		submitTextureToCodt(texture);
-		texture = mat->GetTexture(E_TEXTURE2D_TYPE::ROUGHNESS);
-		submitTextureToCodt(texture);
-		texture = mat->GetTexture(E_TEXTURE2D_TYPE::METALLIC);
-		submitTextureToCodt(texture);
-		texture = mat->GetTexture(E_TEXTURE2D_TYPE::NORMAL);
-		submitTextureToCodt(texture);
-		texture = mat->GetTexture(E_TEXTURE2D_TYPE::EMISSIVE);
-		submitTextureToCodt(texture);
-		texture = mat->GetTexture(E_TEXTURE2D_TYPE::OPACITY);
-		submitTextureToCodt(texture);
+		SubmitTextureLambda(mat->GetTexture(E_TEXTURE2D_TYPE::ALBEDO));
+		SubmitTextureLambda(mat->GetTexture(E_TEXTURE2D_TYPE::ROUGHNESS));
+		SubmitTextureLambda(mat->GetTexture(E_TEXTURE2D_TYPE::METALLIC));
+		SubmitTextureLambda(mat->GetTexture(E_TEXTURE2D_TYPE::NORMAL));
+		SubmitTextureLambda(mat->GetTexture(E_TEXTURE2D_TYPE::EMISSIVE));
+		SubmitTextureLambda(mat->GetTexture(E_TEXTURE2D_TYPE::OPACITY));
 	}
 	
 	// MaterialData
 	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]);
-	const void* data = static_cast<const void*>(mc->m_MaterialDataRawBuffer.data());
-	codt->Submit(&std::make_tuple(
-		mc->m_MaterialByteAdressBuffer->GetUploadResource(),
-		mc->m_MaterialByteAdressBuffer->GetDefaultResource(),
-		data));
+	codt->SubmitBuffer(mc->GetSlotInfoByteAdressBufferDXR(), mc->m_MaterialDataRawBuffer.data());
 }
-
-void Renderer::submitTextureToCodt(Texture* texture)
-{
-	if (AssetLoader::Get()->IsTextureLoadedOnGpu(texture) == true)
-	{
-		return;
-	}
-
-	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]);
-	codt->SubmitTexture(texture);
-
-	AssetLoader::Get()->m_LoadedTextures.at(texture->GetPath()).first = true;
-}
-
 
 Entity* const Renderer::GetPickedEntity() const
 {
@@ -1053,28 +964,6 @@ void Renderer::setRenderTasksPrimaryCamera()
 	{
 		m_RenderTasks[E_RENDER_TASK_TYPE::WIREFRAME]->SetCamera(m_pScenePrimaryCamera);
 	}
-}
-
-void Renderer::createMainDSV()
-{
-	ID3D12Device5* m_pDevice5 = D3D12GraphicsManager::GetInstance()->m_pDevice5;
-	DescriptorHeap* mainHeap = D3D12GraphicsManager::GetInstance()->GetMainDescriptorHeap();
-	DescriptorHeap* rtvHeap  = D3D12GraphicsManager::GetInstance()->GetRTVDescriptorHeap();
-	DescriptorHeap* dsvHeap  = D3D12GraphicsManager::GetInstance()->GetDSVDescriptorHeap();
-	ID3D12CommandQueue* pDirectQueue = D3D12GraphicsManager::GetInstance()->m_pGraphicsCommandQueue;
-
-	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
-	dsvDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-	dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
-
-	m_pMainDepthStencil = new DepthStencil(
-		m_pDevice5,
-		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
-		L"MainDSV",
-		&dsvDesc,
-		dsvHeap,
-		mainHeap);
 }
 
 void Renderer::createFullScreenQuad()
@@ -1115,7 +1004,7 @@ void Renderer::createFullScreenQuad()
 	m_pFullScreenQuad = new Mesh(&vertexVector, &indexVector);
 
 	// init dx12 resources
-	m_pFullScreenQuad->Init(m_pDevice5, mainHeap);
+	m_pFullScreenQuad->Init();
 }
 
 void Renderer::updateMousePicker()
@@ -1170,28 +1059,21 @@ void Renderer::updateMousePicker()
 
 void Renderer::initRenderTasks()
 {
-	ID3D12Device5* m_pDevice5 = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pDevice5;
-	DescriptorHeap* mainHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
-	DescriptorHeap* rtvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetRTVDescriptorHeap();
-	DescriptorHeap* dsvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetDSVDescriptorHeap();
-	ID3D12CommandQueue* pDirectQueue = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pGraphicsCommandQueue;
-
 #pragma region DXRTasks
-	DX12Task* blasTask = new BottomLevelRenderTask(m_pDevice5, F_THREAD_FLAGS::RENDER, L"BL_RenderTask_CommandList");
-	DX12Task* tlasTask = new TopLevelRenderTask(m_pDevice5, F_THREAD_FLAGS::RENDER, L"TL_RenderTask_CommandList");
+	DX12Task* blasTask = new BottomLevelRenderTask(F_THREAD_FLAGS::RENDER, L"BL_RenderTask_CommandList");
+	DX12Task* tlasTask = new TopLevelRenderTask(F_THREAD_FLAGS::RENDER, L"TL_RenderTask_CommandList");
 
 	TODO(Create all PSOs in corresponding classes like reflectionTask is done, instead of out here);
 	// Everything is created inside here
 	DXRTask* reflectionTask = new DXRReflectionTask(
-		m_pDevice5,
-		&m_ReflectionTexture,
+		m_ReflectionTexture,
 		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
 		F_THREAD_FLAGS::RENDER);
 
 	reflectionTask->AddGraphicsBuffer("cbPerFrame", m_pCbPerFrame);
 	reflectionTask->AddGraphicsBuffer("cbPerScene", m_pCbPerScene);
 	reflectionTask->AddGraphicsBuffer("rawBufferLights", Light::m_pLightsRawBuffer);
-	reflectionTask->AddGraphicsTexture("mainDSV", const_cast<Resource*>(m_pMainDepthStencil->GetDefaultResource()));	// To transition from depthWrite to depthRead
+	reflectionTask->AddGraphicsTexture("mainDSV", m_pMainDepthStencil);	// To transition from depthWrite to depthRead
 	
 #pragma endregion DXRTasks
 
@@ -1233,13 +1115,12 @@ void Renderer::initRenderTasks()
 	// DepthStencil
 	depthPrePassDsd.StencilEnable = false;
 	gpsdDepthPrePass.DepthStencilState = depthPrePassDsd;
-	gpsdDepthPrePass.DSVFormat = m_pMainDepthStencil->GetDSV()->GetDXGIFormat();
+	gpsdDepthPrePass.DSVFormat = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
 
 	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*> gpsdDepthPrePassVector;
 	gpsdDepthPrePassVector.push_back(&gpsdDepthPrePass);
 
 	RenderTask* DepthPrePassRenderTask = new DepthRenderTask(
-		m_pDevice5,
 		L"DepthVertex.hlsl", L"DepthPixel.hlsl",
 		&gpsdDepthPrePassVector,
 		L"DepthPrePassPSO",
@@ -1289,13 +1170,12 @@ void Renderer::initRenderTasks()
 	// DepthStencil
 	deferredGeometryDsd.StencilEnable = false;
 	gpsdDeferredGeometryPass.DepthStencilState = deferredGeometryDsd;
-	gpsdDeferredGeometryPass.DSVFormat = m_pMainDepthStencil->GetDSV()->GetDXGIFormat();
+	gpsdDeferredGeometryPass.DSVFormat = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
 
 	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*> gpsdDeferredGeometryPassVector;
 	gpsdDeferredGeometryPassVector.push_back(&gpsdDeferredGeometryPass);
 
 	RenderTask* deferredGeometryRenderTask = new DeferredGeometryRenderTask(
-		m_pDevice5,
 		L"DeferredGeometryVertex.hlsl", L"DeferredGeometryPixel.hlsl",
 		&gpsdDeferredGeometryPassVector,
 		L"DeferredGeometryRenderTaskPSO",
@@ -1344,7 +1224,7 @@ void Renderer::initRenderTasks()
 	// DepthStencil
 	dsd.StencilEnable = false;
 	gpsdDeferredLightRender.DepthStencilState = dsd;
-	gpsdDeferredLightRender.DSVFormat = m_pMainDepthStencil->GetDSV()->GetDXGIFormat();
+	gpsdDeferredLightRender.DSVFormat = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
 
 	/* Forward rendering with stencil testing */
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsdForwardRenderStencilTest = gpsdDeferredLightRender;
@@ -1374,7 +1254,6 @@ void Renderer::initRenderTasks()
 	gpsdDeferredLightRenderVector.push_back(&gpsdForwardRenderStencilTest);
 
 	RenderTask* deferredLightRenderTask = new DeferredLightRenderTask(
-		m_pDevice5,
 		L"DeferredLightVertex.hlsl", L"DeferredLightPixel.hlsl",
 		&gpsdDeferredLightRenderVector,
 		L"DeferredLightRenderingPSO",
@@ -1422,7 +1301,6 @@ void Renderer::initRenderTasks()
 	gpsdDownSampleTextureVector.push_back(&gpsdDownSampleTexture);
 
 	RenderTask* downSampleTask = new DownSampleRenderTask(
-		m_pDevice5,
 		L"DownSampleVertex.hlsl", L"DownSamplePixel.hlsl",
 		&gpsdDownSampleTextureVector,
 		L"DownSampleTexturePSO",
@@ -1458,17 +1336,15 @@ void Renderer::initRenderTasks()
 	dsd.BackFace = stencilNotEqual;
 
 	gpsdModelOutlining.DepthStencilState = dsd;
-	gpsdModelOutlining.DSVFormat = m_pMainDepthStencil->GetDSV()->GetDXGIFormat();
+	gpsdModelOutlining.DSVFormat = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
 
 	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*> gpsdOutliningVector;
 	gpsdOutliningVector.push_back(&gpsdModelOutlining);
 
 	RenderTask* outliningRenderTask = new OutliningRenderTask(
-		m_pDevice5,
 		L"OutlinedVertex.hlsl", L"OutlinedPixel.hlsl",
 		&gpsdOutliningVector,
 		L"outliningScaledPSO",
-		mainHeap,
 		F_THREAD_FLAGS::RENDER);
 	
 	outliningRenderTask->SetMainDepthStencil(m_pMainDepthStencil);
@@ -1526,7 +1402,7 @@ void Renderer::initRenderTasks()
 	dsdBlend.BackFace = blendStencilOP;
 
 	gpsdBlendFrontCull.DepthStencilState = dsdBlend;
-	gpsdBlendFrontCull.DSVFormat = m_pMainDepthStencil->GetDSV()->GetDXGIFormat();
+	gpsdBlendFrontCull.DSVFormat = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
 
 	// ------------------------ BLEND ---------------------------- BACKCULL
 
@@ -1550,14 +1426,14 @@ void Renderer::initRenderTasks()
 	dsdBlend.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
 
 	gpsdBlendBackCull.DepthStencilState = dsdBlend;
-	gpsdBlendBackCull.DSVFormat = m_pMainDepthStencil->GetDSV()->GetDXGIFormat();
+	gpsdBlendBackCull.DSVFormat = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
 
 	// Push back to vector
 	gpsdBlendVector.push_back(&gpsdBlendFrontCull);
 	gpsdBlendVector.push_back(&gpsdBlendBackCull);
 	
 	/*---------------------------------- TRANSPARENT_TEXTURE_RENDERTASK -------------------------------------*/
-	RenderTask* transparentRenderTask = new TransparentRenderTask(m_pDevice5,
+	RenderTask* transparentRenderTask = new TransparentRenderTask(
 		L"TransparentTextureVertex.hlsl",
 		L"TransparentTexturePixel.hlsl",
 		&gpsdBlendVector,
@@ -1594,7 +1470,7 @@ void Renderer::initRenderTasks()
 	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*> gpsdWireFrameVector;
 	gpsdWireFrameVector.push_back(&gpsdWireFrame);
 
-	RenderTask* wireFrameRenderTask = new WireframeRenderTask(m_pDevice5,
+	RenderTask* wireFrameRenderTask = new WireframeRenderTask(
 		L"WhiteVertex.hlsl", L"WhitePixel.hlsl",
 		&gpsdWireFrameVector,
 		L"WireFramePSO",
@@ -1632,7 +1508,6 @@ void Renderer::initRenderTasks()
 	gpsdMergePassVector.push_back(&gpsdMergePass);
 
 	RenderTask* mergeTask = new MergeRenderTask(
-		m_pDevice5,
 		L"MergeVertex.hlsl", L"MergePixel.hlsl",
 		&gpsdMergePassVector,
 		L"MergePassPSO",
@@ -1647,7 +1522,6 @@ void Renderer::initRenderTasks()
 
 #pragma region IMGUIRENDERTASK
 	RenderTask* imGuiRenderTask = new ImGuiRenderTask(
-		m_pDevice5,
 		L"", L"",
 		nullptr,
 		L"",
@@ -1660,7 +1534,6 @@ void Renderer::initRenderTasks()
 	csNamePSOName.push_back(std::make_pair(L"ComputeBlurHorizontal.hlsl", L"blurHorizontalPSO"));
 	csNamePSOName.push_back(std::make_pair(L"ComputeBlurVertical.hlsl", L"blurVerticalPSO"));
 	ComputeTask* blurComputeTask = new BlurComputeTask(
-		m_pDevice5,
 		csNamePSOName,
 		E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE,
 		std::get<2>(*m_pBloomResources->GetBrightTuple()),
@@ -1670,9 +1543,9 @@ void Renderer::initRenderTasks()
 		F_THREAD_FLAGS::RENDER);
 
 	// CopyTasks
-	CopyTask* copyPerFrameTask			= new CopyPerFrameTask(m_pDevice5, E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE, F_THREAD_FLAGS::RENDER, L"copyPerFrameCL");
-	CopyTask* copyPerFrameMatricesTask  = new CopyPerFrameMatricesTask(m_pDevice5, E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE, F_THREAD_FLAGS::RENDER, L"copyPerFrameMatricesCL");
-	CopyTask* copyOnDemandTask			= new CopyOnDemandTask(m_pDevice5, E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE, F_THREAD_FLAGS::RENDER, L"copyOnDemandCL");
+	CopyTask* copyPerFrameTask			= new CopyPerFrameTask(E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE, F_THREAD_FLAGS::RENDER, L"copyPerFrameCL");
+	CopyTask* copyPerFrameMatricesTask  = new CopyPerFrameMatricesTask(E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE, F_THREAD_FLAGS::RENDER, L"copyPerFrameMatricesCL");
+	CopyTask* copyOnDemandTask			= new CopyOnDemandTask(E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE, F_THREAD_FLAGS::RENDER, L"copyOnDemandCL");
 
 #pragma endregion ComputeAndCopyTasks
 
@@ -1809,7 +1682,7 @@ void Renderer::createRawBufferForLights()
 
 	// Memory on GPU
 	BL_ASSERT(Light::m_pLightsRawBuffer == nullptr);
-	Light::m_pLightsRawBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::RawBuffer, E_GRAPHICSBUFFER_UPLOADFREQUENCY::Static, rawBufferSize, L"RAW_BUFFER_LIGHTS");
+	Light::m_pLightsRawBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::RawBuffer, E_GRAPHICSBUFFER_UPLOADFREQUENCY::Static, rawBufferSize, 1, DXGI_FORMAT_R32_TYPELESS, L"RAW_BUFFER_LIGHTS");
 
 	// Memory on CPU
 	Light::m_pRawData = (unsigned char*)malloc(rawBufferSize);
@@ -1826,12 +1699,6 @@ void Renderer::setRenderTasksRenderComponents()
 
 void Renderer::prepareScene(Scene* activeScene)
 {
-	ID3D12Device5* m_pDevice5 = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pDevice5;
-	DescriptorHeap* mainHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
-	DescriptorHeap* rtvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetRTVDescriptorHeap();
-	DescriptorHeap* dsvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetDSVDescriptorHeap();
-	ID3D12CommandQueue* pDirectQueue = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pGraphicsCommandQueue;
-
 	m_pCurrActiveScene = activeScene;
 	submitUploadPerFrameData();
 	submitUploadPerSceneData();
@@ -1863,22 +1730,22 @@ void Renderer::prepareScene(Scene* activeScene)
 		pTLAS->AddInstance(rc.mc->GetModel()->m_pBLAS, *rc.tc->GetTransform()->GetWorldMatrix(), i);	// TODO: HitgroupID
 		i++;
 	}
-	pTLAS->GenerateBuffers(m_pDevice5, mainHeap);
-	pTLAS->SetupAccelerationStructureForBuilding(m_pDevice5, false);
+	pTLAS->GenerateBuffers();
+	pTLAS->SetupAccelerationStructureForBuilding(false);
 
-	static_cast<DXRReflectionTask*>(m_DXRTasks[E_DXR_TASK_TYPE::REFLECTIONS])->CreateShaderBindingTable(m_pDevice5, m_RayTracedRenderComponents);
+	static_cast<DXRReflectionTask*>(m_DXRTasks[E_DXR_TASK_TYPE::REFLECTIONS])->CreateShaderBindingTable(m_RayTracedRenderComponents);
 	// Currently unused
 	//static_cast<DeferredLightRenderTask*>(m_RenderTasks[E_RENDER_TASK_TYPE::DEFERRED_GEOMETRY])->SetSceneBVHSRV(pTLAS->GetSRV());
 
 	// PerSceneData 
 	m_pCbPerSceneData->rayTracingBVH			 = pTLAS->GetSRV()->GetDescriptorHeapIndex();
-	m_pCbPerSceneData->gBufferAlbedo			 = m_GBufferAlbedo.second->GetDescriptorHeapIndex();
-	m_pCbPerSceneData->gBufferNormal			 = m_GBufferNormal.second->GetDescriptorHeapIndex();
-	m_pCbPerSceneData->gBufferMaterialProperties = m_GBufferMaterialProperties.second->GetDescriptorHeapIndex();
-	m_pCbPerSceneData->gBufferEmissive			 = m_GBufferEmissive.second->GetDescriptorHeapIndex();
-	m_pCbPerSceneData->depth					 = m_pMainDepthStencil->GetSRV()->GetDescriptorHeapIndex();
-	m_pCbPerSceneData->reflectionUAV			 = m_ReflectionTexture.uav->GetDescriptorHeapIndex();
-	m_pCbPerSceneData->reflectionSRV			 = m_ReflectionTexture.srv->GetDescriptorHeapIndex();
+	m_pCbPerSceneData->gBufferAlbedo			 = m_GBufferAlbedo->GetShaderResourceHeapIndex();
+	m_pCbPerSceneData->gBufferNormal			 = m_GBufferNormal->GetShaderResourceHeapIndex();
+	m_pCbPerSceneData->gBufferMaterialProperties = m_GBufferMaterialProperties->GetShaderResourceHeapIndex();
+	m_pCbPerSceneData->gBufferEmissive			 = m_GBufferEmissive->GetShaderResourceHeapIndex();
+	m_pCbPerSceneData->depth					 = m_pMainDepthStencil->GetShaderResourceHeapIndex();
+	m_pCbPerSceneData->reflectionUAV			 = m_ReflectionTexture->GetUnorderedAccessIndex();
+	m_pCbPerSceneData->reflectionSRV			 = m_ReflectionTexture->GetShaderResourceHeapIndex();
 }
 
 void Renderer::submitUploadPerSceneData()

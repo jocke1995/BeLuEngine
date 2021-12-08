@@ -11,22 +11,6 @@ class DescriptorHeap;
 class Mesh;
 class Texture;
 class Model;
-class Resource;
-
-// GPU Resources
-class ShaderResource;
-class UnorderedAccess;
-class DepthStencil;
-class RenderTarget;
-class Resource;
-
-// Descriptors
-class RenderTargetView;
-class ShaderResourceView;
-class UnorderedAccessView;
-class ConstantBufferView;
-class DepthStencilView;
-
 
 // techniques
 class MousePicker;
@@ -54,6 +38,7 @@ class Entity;
 
 // API
 class IGraphicsBuffer;
+class IGraphicsTexture;
 
 TODO("Replace with GraphicsContext");
 struct ID3D12CommandList;
@@ -143,21 +128,20 @@ private:
 
 	HANDLE m_ProcessHandle = nullptr;
 
-	// -------------- RenderTargets -------------- 
-	std::pair<RenderTarget*, ShaderResourceView*> m_FinalColorBuffer;
-	std::pair<RenderTarget*, ShaderResourceView*> m_GBufferAlbedo;
-	std::pair<RenderTarget*, ShaderResourceView*> m_GBufferNormal;
-	std::pair<RenderTarget*, ShaderResourceView*> m_GBufferMaterialProperties;
-	std::pair<RenderTarget*, ShaderResourceView*> m_GBufferEmissive;
-
-	// -------------- RenderTargets -------------- 
-	Resource_UAV_SRV m_ReflectionTexture;
+	// -------------- Textures -------------- 
+	IGraphicsTexture* m_FinalColorBuffer;
+	IGraphicsTexture* m_GBufferAlbedo;
+	IGraphicsTexture* m_GBufferNormal;
+	IGraphicsTexture* m_GBufferMaterialProperties;
+	IGraphicsTexture* m_GBufferEmissive;
+	IGraphicsTexture* m_ReflectionTexture;
 	
+	// Depthbuffer
+	IGraphicsTexture* m_pMainDepthStencil = nullptr;
+
 	// Bloom (includes rtv, uav and srv)
 	Bloom* m_pBloomResources = nullptr;
 
-	// Depthbuffer
-	DepthStencil* m_pMainDepthStencil = nullptr;
 
 	// -------------- RenderTargets -------------- 
 	// Picking
@@ -188,7 +172,6 @@ private:
 	IGraphicsBuffer* m_pCbPerFrame = nullptr;
 
 	void setRenderTasksPrimaryCamera();
-	void createMainDSV();
 	void createFullScreenQuad();
 	void updateMousePicker();
 	void initRenderTasks();

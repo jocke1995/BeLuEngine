@@ -1,8 +1,6 @@
 #include "stdafx.h"
 #include "AccelerationStructure.h"
 
-#include "../GPUMemory/Resource.h"
-
 AccelerationStructure::AccelerationStructure()
 {
 }

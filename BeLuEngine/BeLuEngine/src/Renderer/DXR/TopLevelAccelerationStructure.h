@@ -3,8 +3,6 @@
 
 #include "AccelerationStructure.h"
 
-class Resource;
-class ShaderResourceView;
 class BottomLevelAccelerationStructure;
 
 struct Instance
@@ -35,10 +33,8 @@ public:
         unsigned int hitGroupIndex);
 
     void Reset() override;
-    void GenerateBuffers(ID3D12Device5* pDevice, DescriptorHeap* dhHeap) override;
-    void SetupAccelerationStructureForBuilding(ID3D12Device5* pDevice, bool update) override;
-
-    ShaderResourceView* GetSRV() const;
+    void GenerateBuffers() override;
+    void SetupAccelerationStructureForBuilding(bool update) override;
 
 private:
     friend class TopLevelRenderTask;

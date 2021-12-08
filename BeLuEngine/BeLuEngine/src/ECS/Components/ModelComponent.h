@@ -10,7 +10,7 @@ class Model;
 class Material;
 struct SlotInfo;
 
-class ShaderResource;
+class IGraphicsBuffer;
 
 namespace component
 {
@@ -40,10 +40,10 @@ namespace component
         void SetMaterialAt(unsigned int index, Material* material);
         Material* GetMaterialAt(unsigned int index);
         MaterialData* GetUniqueMaterialDataAt(unsigned int index);
-        ShaderResource* GetMaterialByteAdressBuffer() const;
+        IGraphicsBuffer* GetMaterialByteAdressBuffer() const;
 
         const SlotInfo* GetSlotInfoAt(unsigned int index) const;
-        ShaderResource* GetSlotInfoByteAdressBufferDXR() const;
+        IGraphicsBuffer* GetSlotInfoByteAdressBufferDXR() const;
 
         void UpdateMaterialRawBufferFromMaterial();
     private:
@@ -63,8 +63,8 @@ namespace component
         std::vector<SlotInfo> m_SlotInfos;
         void updateSlotInfoBuffer();
 
-        ShaderResource* m_SlotInfoByteAdressBuffer;
-        ShaderResource* m_MaterialByteAdressBuffer;
+        IGraphicsBuffer* m_SlotInfoByteAdressBuffer;
+        IGraphicsBuffer* m_MaterialByteAdressBuffer;
     };
 }
 #endif

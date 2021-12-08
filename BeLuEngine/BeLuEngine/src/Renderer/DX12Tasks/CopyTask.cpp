@@ -25,10 +25,16 @@ void CopyTask::Submit(std::tuple<Resource*, Resource*, const void*>* Upload_Defa
 	m_UploadDefaultData.push_back(*Upload_Default_Data);
 }
 
-void CopyTask::SubmitBuffer(IGraphicsBuffer* graphicsBuffer, void* data)
+void CopyTask::SubmitBuffer(IGraphicsBuffer* graphicsBuffer, const void* data)
 {
-	GraphicsUploadParams params = {graphicsBuffer, data};
-	m_GraphicBuffersToUpload.push_back(params);
+	GraphicsBufferUploadParams param = {graphicsBuffer, data};
+	m_GraphicBuffersToUpload.push_back(param);
+}
+
+void CopyTask::SubmitTexture(IGraphicsTexture* graphicsTexture, const void* data)
+{
+	GraphicsTextureUploadParams param = { graphicsTexture, data };
+	m_GraphicTexturesToUpload.push_back(param);
 }
 
 void CopyTask::ClearSpecific(const Resource* uploadResource)

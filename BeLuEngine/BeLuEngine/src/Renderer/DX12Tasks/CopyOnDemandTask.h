@@ -15,16 +15,14 @@ public:
 		const std::wstring& clName);
 	virtual ~CopyOnDemandTask();
 
-	void SubmitTexture(Texture* texture);
-
 	// Removal
 	void Clear() override;
 
 	void Execute() override final;
 
 private:
-	std::vector<Texture*> m_Textures;
-	void copyTexture(ID3D12GraphicsCommandList5* commandList, Texture* texture);
+	std::vector<IGraphicsTexture*> m_Textures;
+	void copyTexture(ID3D12GraphicsCommandList5* commandList, IGraphicsTexture* texture);
 };
 
 #endif

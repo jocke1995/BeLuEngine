@@ -98,7 +98,6 @@ class DX12Task : public MultiThreadedTask
 {
 public:
 	DX12Task(
-		ID3D12Device5* device,
 		E_COMMAND_INTERFACE_TYPE interfaceType,
 		unsigned int FLAG_THREAD,
 		const std::wstring& clName);

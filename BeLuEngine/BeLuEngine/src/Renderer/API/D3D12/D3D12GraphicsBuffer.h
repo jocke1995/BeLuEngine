@@ -6,23 +6,22 @@
 class D3D12GraphicsBuffer : public IGraphicsBuffer
 {
 public:
-	D3D12GraphicsBuffer(E_GRAPHICSBUFFER_TYPE type, E_GRAPHICSBUFFER_UPLOADFREQUENCY uploadFrequency, unsigned int size, std::wstring name);
+	D3D12GraphicsBuffer(E_GRAPHICSBUFFER_TYPE type, E_GRAPHICSBUFFER_UPLOADFREQUENCY uploadFrequency, unsigned int sizeOfSingleItem, unsigned int numItems, DXGI_FORMAT format, std::wstring name);
 	virtual ~D3D12GraphicsBuffer();
+
+
+	unsigned int GetConstantBufferDescriptorIndex() const override;
+	unsigned int GetShaderResourceHeapIndex() const override;
 
 	unsigned int GetSize() const override { return m_Size; }
 
-	unsigned int GetConstantBufferDescriptorIndex() const;
-	unsigned int GetRawBufferDescriptorIndex() const;
-
 	ID3D12Resource1* GetTempResource() { return m_pResource; }
 private:
-	E_GRAPHICSBUFFER_TYPE m_BufferType = E_GRAPHICSBUFFER_TYPE::None;
-
 	ID3D12Resource1* m_pResource = nullptr;
+	unsigned int m_ConstantBufferDescriptorHeapIndex = -1;
+	unsigned int m_ShaderResourceDescriptorHeapIndex = -1;
 
-	// DescriptorBindings
-	unsigned int m_ConstantBufferSlot = 0;
-	unsigned int m_RawBufferSlot = 0;
+	E_GRAPHICSBUFFER_TYPE m_BufferType = E_GRAPHICSBUFFER_TYPE::None;
 };
 
 #endif

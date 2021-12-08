@@ -3,13 +3,12 @@
 
 #include "../Misc/Log.h"
 
-CommandInterface::CommandInterface(
-	ID3D12Device5* device,
-	E_COMMAND_INTERFACE_TYPE interfaceType,
-	const std::wstring& clName)
+#include "API/D3D12/D3D12GraphicsManager.h"
+
+CommandInterface::CommandInterface(E_COMMAND_INTERFACE_TYPE interfaceType, const std::wstring& clName)
 {
 	m_Name = clName;
-	createCommandInterfaces(device, interfaceType);
+	createCommandInterfaces(interfaceType);
 }
 
 CommandInterface::~CommandInterface()
@@ -38,8 +37,11 @@ void CommandInterface::Reset(unsigned int index)
 	m_pCommandLists[index]->Reset(m_pCommandAllocators[index], NULL);
 }
 
-void CommandInterface::createCommandInterfaces(ID3D12Device5* device, E_COMMAND_INTERFACE_TYPE interfaceType)
+void CommandInterface::createCommandInterfaces(E_COMMAND_INTERFACE_TYPE interfaceType)
 {
+	D3D12GraphicsManager* manager = D3D12GraphicsManager::GetInstance();
+	ID3D12Device* device = manager->GetDevice();
+
 	D3D12_COMMAND_LIST_TYPE D3D12type;
 	switch (interfaceType)
 	{

@@ -1,9 +1,6 @@
 #ifndef ACCELERATIONSTRUCTURE_H
 #define ACCELERATIONSTRUCTURE_H
 
-class Resource;
-class DescriptorHeap;
-
 class AccelerationStructure
 {
 public:
@@ -14,10 +11,10 @@ public:
     virtual void Reset() = 0;
 
     // Call when adding or removing geometry from the AS
-    virtual void GenerateBuffers(ID3D12Device5* pDevice, DescriptorHeap* dhHeap = nullptr) = 0;
+    virtual void GenerateBuffers() = 0;
 
     // Setup the buildDesc after each element is added in the AS
-    virtual void SetupAccelerationStructureForBuilding(ID3D12Device5* pDevice, bool update) = 0;
+    virtual void SetupAccelerationStructureForBuilding(bool update) = 0;
 
     void BuildAccelerationStructure(ID3D12GraphicsCommandList4* commandList) const;
 

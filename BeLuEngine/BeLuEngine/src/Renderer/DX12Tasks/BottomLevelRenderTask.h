@@ -9,7 +9,6 @@ class BottomLevelRenderTask : public DX12Task
 {
 public:
 	BottomLevelRenderTask(
-		ID3D12Device5* device,
 		unsigned int FLAG_THREAD,
 		const std::wstring& clName = L"DXRDefaultCommandListName");
 	virtual ~BottomLevelRenderTask();

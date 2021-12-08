@@ -5,11 +5,18 @@
 
 class Resource;
 class IGraphicsBuffer;
+class IGraphicsTexture;
 
-struct GraphicsUploadParams
+struct GraphicsBufferUploadParams
 {
 	IGraphicsBuffer* graphicsBuffer;
-	void* data;
+	const void* data;
+};
+
+struct GraphicsTextureUploadParams
+{
+	IGraphicsTexture* graphicsTexture;
+	const void* data;
 };
 
 class CopyTask : public DX12Task
@@ -24,15 +31,14 @@ public:
 
 	void CopyTask::ClearSpecific(const Resource* uploadResource);
 
-	// tuple(Upload, Default, Data)
-	void Submit(std::tuple<Resource*, Resource*, const void*>* Upload_Default_Data);
-	void SubmitBuffer(IGraphicsBuffer* graphicsBuffer, void* data);
+	void SubmitBuffer(IGraphicsBuffer* graphicsBuffer, const void* data);
+	void SubmitTexture(IGraphicsTexture* graphicsTexture, const void* data);
 
 	virtual void Clear() = 0;
 
 protected:
-	std::vector<std::tuple<Resource*, Resource*, const void*>> m_UploadDefaultData;
-	std::vector<GraphicsUploadParams> m_GraphicBuffersToUpload;
+	std::vector<GraphicsBufferUploadParams> m_GraphicBuffersToUpload;
+	std::vector<GraphicsTextureUploadParams> m_GraphicTexturesToUpload;
 
 	void copyResource(
 		ID3D12GraphicsCommandList5* commandList,

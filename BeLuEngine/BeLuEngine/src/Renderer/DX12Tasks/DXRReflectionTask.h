@@ -5,7 +5,9 @@
 
 class Shader;
 class ShaderBindingTableGenerator;
-class Resource;
+
+class IGraphicsBuffer;
+class IGraphicsTexture;
 
 enum E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION
 {
@@ -20,14 +22,11 @@ struct Resource_UAV_SRV;
 class DXRReflectionTask : public DXRTask
 {
 public:
-	DXRReflectionTask(ID3D12Device5* device,
-		Resource_UAV_SRV* resourceUavSrv,
-		unsigned int width, unsigned int height,
-		unsigned int FLAG_THREAD);
+	DXRReflectionTask(IGraphicsTexture* reflectionTexture, unsigned int width, unsigned int height, unsigned int FLAG_THREAD);
 	~DXRReflectionTask();
 
 	// Call this whenever new instances has been added/or removed from the rayTraced-scene
-	void CreateShaderBindingTable(ID3D12Device5* device, const std::vector<RenderComponent>& rayTracedRenderComponents);
+	void CreateShaderBindingTable(const std::vector<RenderComponent>& rayTracedRenderComponents);
 
 	void Execute() override final;
 
@@ -44,12 +43,12 @@ private:
 
 	// Shader binding table
 	ShaderBindingTableGenerator* m_pSbtGenerator = nullptr;
-	Resource* m_pSbtStorage = nullptr;
+	IGraphicsBuffer* m_pShaderTableBuffer = nullptr;
 	ID3D12StateObject* m_pStateObject = nullptr;
 	ID3D12StateObjectProperties* m_pRTStateObjectProps = nullptr;
 
 	// Texture
-	Resource_UAV_SRV* m_pResourceUavSrv;
+	IGraphicsTexture* m_pReflectionTexture;
 
 	unsigned int m_DispatchWidth = 0, m_DispatchHeight = 0;
 };

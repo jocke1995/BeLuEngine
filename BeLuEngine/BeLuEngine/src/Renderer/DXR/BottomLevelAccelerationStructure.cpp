@@ -3,8 +3,6 @@
 
 #include "../Misc/Log.h"
 
-#include "../GPUMemory/Resource.h"
-
 // For the sizeof(Vertex)
 #include "../Geometry/Mesh.h"
 
@@ -44,7 +42,7 @@ void BottomLevelAccelerationStructure::Reset()
 {
 }
 
-void BottomLevelAccelerationStructure::GenerateBuffers(ID3D12Device5* pDevice, DescriptorHeap* dhHeap)
+void BottomLevelAccelerationStructure::GenerateBuffers()
 {
 	D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
 
@@ -85,7 +83,7 @@ void BottomLevelAccelerationStructure::GenerateBuffers(ID3D12Device5* pDevice, D
 	idCounter++;
 }
 
-void BottomLevelAccelerationStructure::SetupAccelerationStructureForBuilding(ID3D12Device5* pDevice, bool update)
+void BottomLevelAccelerationStructure::SetupAccelerationStructureForBuilding(bool update)
 {
 	D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
 

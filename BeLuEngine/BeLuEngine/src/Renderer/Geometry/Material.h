@@ -3,7 +3,7 @@
 
 #include "GPU_Structs.h"
 
-class Texture;
+class IGraphicsTexture;
 class Resource;
 class ShaderResourceView;
 class DescriptorHeap;
@@ -18,7 +18,7 @@ class Material
 {
 public:
     Material(const std::wstring& name); // Default
-    Material(const std::wstring* path, std::map<E_TEXTURE2D_TYPE, Texture*>* textures); // From parameters (used when loading objects from files)
+    Material(const std::wstring* path, std::map<E_TEXTURE2D_TYPE, IGraphicsTexture*>* textures); // From parameters (used when loading objects from files)
     Material(const Material& other, const std::wstring& name); // Copy constructor
     virtual ~Material();
 
@@ -29,16 +29,16 @@ public:
     std::wstring GetName() const;
 
     // Material
-    Texture* GetTexture(E_TEXTURE2D_TYPE type) const;
+    IGraphicsTexture* GetTexture(E_TEXTURE2D_TYPE type) const;
     MaterialData* GetSharedMaterialData();
 
-    void SetTexture(E_TEXTURE2D_TYPE type, Texture* texture);
+    void SetTexture(E_TEXTURE2D_TYPE type, IGraphicsTexture* texture);
 
 private:
     friend class Renderer;
 
     std::wstring m_Name;
-    std::map<E_TEXTURE2D_TYPE, Texture*> m_Textures;
+    std::map<E_TEXTURE2D_TYPE, IGraphicsTexture*> m_Textures;
     MaterialData m_MaterialData = {};
     
 };
