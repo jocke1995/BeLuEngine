@@ -40,9 +40,8 @@ bool D3D12GraphicsTexture::LoadTextureDDS(const std::wstring& filePath)
 	// DDSLoader uses this data type to load the image data
 	// converts this to m_pImageData when it is used.
 	std::unique_ptr<uint8_t[]> m_DdsData;
-	std::vector<D3D12_SUBRESOURCE_DATA> subresourceData;
 	// Loads the texture and creates a default resource;
-	hr = DirectX::LoadDDSTextureFromFile(device5, m_Path.c_str(), reinterpret_cast<ID3D12Resource**>(&m_pResource), m_DdsData, subresourceData);
+	hr = DirectX::LoadDDSTextureFromFile(device5, m_Path.c_str(), reinterpret_cast<ID3D12Resource**>(&m_pResource), m_DdsData, m_Subresources);
 
 	if (!D3D12GraphicsManager::SucceededHRESULT(hr))
 	{
@@ -56,7 +55,7 @@ bool D3D12GraphicsTexture::LoadTextureDDS(const std::wstring& filePath)
 
 	// Set resource desc created in LoadDDSTextureFromFile
 	D3D12_RESOURCE_DESC resourceDesc = m_pResource->GetDesc();
-	unsigned int rowPitch = subresourceData[0].RowPitch;
+	unsigned int rowPitch = m_Subresources[0].RowPitch;
 
 	m_NumMipLevels = resourceDesc.MipLevels;
 
@@ -70,44 +69,6 @@ bool D3D12GraphicsTexture::LoadTextureDDS(const std::wstring& filePath)
 		nullptr, nullptr, nullptr,
 		&m_Size);
 
-#pragma endregion
-
-#pragma region CreateImmediateBuffer
-	//D3D12_HEAP_PROPERTIES heapProps = {};
-	//heapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
-	//heapProps.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-	//heapProps.CreationNodeMask = 1; //used when multi-gpu
-	//heapProps.VisibleNodeMask = 1; //used when multi-gpu
-	//heapProps.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-	//
-	//D3D12_RESOURCE_DESC uploadResourceDesc = {};
-	//uploadResourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-	//uploadResourceDesc.Width = m_Size;
-	//uploadResourceDesc.Height = 1;
-	//uploadResourceDesc.DepthOrArraySize = 1;
-	//uploadResourceDesc.MipLevels = 1;
-	//uploadResourceDesc.SampleDesc.Count = 1;
-	//uploadResourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-	//uploadResourceDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
-	//
-	//hr = graphicsManager->GetDevice()->CreateCommittedResource(
-	//	&heapProps,
-	//	D3D12_HEAP_FLAG_NONE,
-	//	&uploadResourceDesc,
-	//	D3D12_RESOURCE_STATE_COMMON,
-	//	nullptr,
-	//	IID_PPV_ARGS(&m_pResource)
-	//);
-	//
-	//resourceName = filePath + L"_UPLOAD_RESOURCE";
-	//
-	//if (!graphicsManager->SucceededHRESULT(hr))
-	//{
-	//	BL_LOG_CRITICAL("Failed to create D3D12GraphicsTexture with name: \'%s\'\n", resourceName.c_str());
-	//	return false;
-	//}
-	//
-	//graphicsManager->SucceededHRESULT(m_pResource->SetName(resourceName.c_str()));
 #pragma endregion
 
 #pragma region CreateDescriptors
@@ -182,7 +143,7 @@ bool D3D12GraphicsTexture::CreateTexture2D(unsigned int width, unsigned int heig
 		D3D12_HEAP_FLAG_NONE,
 		&resourceDesc,
 		startStateTemp,
-		&clearValue,
+		nullptr,
 		IID_PPV_ARGS(&m_pResource)
 	);
 
@@ -206,13 +167,7 @@ bool D3D12GraphicsTexture::CreateTexture2D(unsigned int width, unsigned int heig
 		m_ShaderResourceDescriptorHeapIndex = mainDHeap->GetNextDescriptorHeapIndex(1);
 		D3D12_CPU_DESCRIPTOR_HANDLE cdh = mainDHeap->GetCPUHeapAt(m_ShaderResourceDescriptorHeapIndex);
 
-		ID3D12Resource1* tmp = m_pResource;
-		if (textureUsage & F_TEXTURE_USAGE::RayTracing)
-		{
-			tmp = nullptr;
-		}
-
-		device5->CreateShaderResourceView(tmp, &srvDesc, cdh);
+		device5->CreateShaderResourceView(m_pResource, &srvDesc, cdh);
 	}
 
 	if (textureUsage & F_TEXTURE_USAGE::RenderTarget)
@@ -224,7 +179,7 @@ bool D3D12GraphicsTexture::CreateTexture2D(unsigned int width, unsigned int heig
 		rtvDesc.Texture2D.PlaneSlice = 0;
 
 		m_RenderTargetDescriptorHeapIndex = rtvDHeap->GetNextDescriptorHeapIndex(1);
-		D3D12_CPU_DESCRIPTOR_HANDLE cdh = mainDHeap->GetCPUHeapAt(m_RenderTargetDescriptorHeapIndex);
+		D3D12_CPU_DESCRIPTOR_HANDLE cdh = rtvDHeap->GetCPUHeapAt(m_RenderTargetDescriptorHeapIndex);
 
 		device5->CreateRenderTargetView(m_pResource, &rtvDesc, cdh);
 	}
@@ -255,7 +210,7 @@ bool D3D12GraphicsTexture::CreateTexture2D(unsigned int width, unsigned int heig
 		dsvDesc.Texture2D.MipSlice = 0;
 
 		m_DepthStencilDescriptorHeapIndex = dsvDHeap->GetNextDescriptorHeapIndex(1);
-		D3D12_CPU_DESCRIPTOR_HANDLE cdh = mainDHeap->GetCPUHeapAt(m_DepthStencilDescriptorHeapIndex);
+		D3D12_CPU_DESCRIPTOR_HANDLE cdh = dsvDHeap->GetCPUHeapAt(m_DepthStencilDescriptorHeapIndex);
 
 		device5->CreateDepthStencilView(m_pResource, &dsvDesc, cdh);
 	}

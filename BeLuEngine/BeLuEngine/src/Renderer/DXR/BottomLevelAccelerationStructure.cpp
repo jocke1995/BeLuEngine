@@ -6,6 +6,11 @@
 // For the sizeof(Vertex)
 #include "../Geometry/Mesh.h"
 
+// TODO ABSTRACTION
+#include "../API/D3D12/D3D12GraphicsManager.h"
+#include "../API/D3D12/D3D12GraphicsBuffer.h"
+#include "../API/D3D12/D3D12GraphicsTexture.h"
+
 BottomLevelAccelerationStructure::BottomLevelAccelerationStructure()
 {
 }
@@ -15,8 +20,8 @@ BottomLevelAccelerationStructure::~BottomLevelAccelerationStructure()
 }
 
 void BottomLevelAccelerationStructure::AddVertexBuffer(
-	Resource* vertexBuffer, uint32_t vertexCount,
-	Resource* indexBuffer, uint32_t indexCount)
+	IGraphicsBuffer* vertexBuffer, uint32_t vertexCount,
+	IGraphicsBuffer* indexBuffer, uint32_t indexCount)
 {
 	D3D12_RAYTRACING_GEOMETRY_DESC rtGeometryDesc = {};
 
@@ -25,13 +30,13 @@ void BottomLevelAccelerationStructure::AddVertexBuffer(
 	rtGeometryDesc.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
 
 	// Vertex Buffer
-	rtGeometryDesc.Triangles.VertexBuffer.StartAddress = vertexBuffer->GetID3D12Resource1()->GetGPUVirtualAddress();
+	rtGeometryDesc.Triangles.VertexBuffer.StartAddress = static_cast<D3D12GraphicsBuffer*>(vertexBuffer)->GetTempResource()->GetGPUVirtualAddress();
 	rtGeometryDesc.Triangles.VertexBuffer.StrideInBytes = sizeof(Vertex);
 	rtGeometryDesc.Triangles.VertexCount = vertexCount;
 	rtGeometryDesc.Triangles.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT;
 
 	// Index Buffer
-	rtGeometryDesc.Triangles.IndexBuffer = indexBuffer->GetID3D12Resource1()->GetGPUVirtualAddress();
+	rtGeometryDesc.Triangles.IndexBuffer = static_cast<D3D12GraphicsBuffer*>(indexBuffer)->GetTempResource()->GetGPUVirtualAddress();
 	rtGeometryDesc.Triangles.IndexCount = indexCount;
 	rtGeometryDesc.Triangles.IndexFormat = DXGI_FORMAT_R32_UINT;
 
@@ -44,6 +49,9 @@ void BottomLevelAccelerationStructure::Reset()
 
 void BottomLevelAccelerationStructure::GenerateBuffers()
 {
+	D3D12GraphicsManager* manager = D3D12GraphicsManager::GetInstance();
+	ID3D12Device5* device5 = manager->GetDevice();
+
 	D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
 
 	// Cause of crash? How to update BottomLevel efficiently?
@@ -60,25 +68,15 @@ void BottomLevelAccelerationStructure::GenerateBuffers()
 	// This structure is used to hold the sizes of the required scratch memory and
 	// resulting AS
 	D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO info = {};
-	pDevice->GetRaytracingAccelerationStructurePrebuildInfo(&prebuildDesc, &info);
+	device5->GetRaytracingAccelerationStructurePrebuildInfo(&prebuildDesc, &info);
 
 	// Buffer sizes need to be 256-byte-aligned
 	unsigned int scratchSizeInBytes = (info.ScratchDataSizeInBytes   + 255) & ~255;
 	unsigned int resultSizeInBytes  = (info.ResultDataMaxSizeInBytes + 255) & ~255;
 
 	static unsigned int idCounter = 0;
-	// Create buffers for scratch and result
-	m_pScratch = new Resource(
-		pDevice, scratchSizeInBytes,
-		RESOURCE_TYPE::DEFAULT, L"scratchBottomLevel" + std::to_wstring(idCounter),
-		D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-
-	D3D12_RESOURCE_STATES stateRAS = D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE;
-	m_pResult = new Resource(
-		pDevice, resultSizeInBytes,
-		RESOURCE_TYPE::DEFAULT, L"resultBottomLevel" + std::to_wstring(idCounter),
-		D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
-		&stateRAS);
+	m_pScratchBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::UnorderedAccessBuffer, E_GRAPHICSBUFFER_UPLOADFREQUENCY::Static, scratchSizeInBytes, 1, DXGI_FORMAT_UNKNOWN, L"SCRATCHBUFFER_TLAS");
+	m_pResultBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::RayTracingBuffer, E_GRAPHICSBUFFER_UPLOADFREQUENCY::Static, resultSizeInBytes, 1, DXGI_FORMAT_UNKNOWN, L"RESULTBUFFER_TLAS");
 
 	idCounter++;
 }
@@ -93,8 +91,8 @@ void BottomLevelAccelerationStructure::SetupAccelerationStructureForBuilding(boo
 	m_BuildDesc.Inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
 	m_BuildDesc.Inputs.NumDescs = static_cast<UINT>(m_vertexBuffers.size());
 	m_BuildDesc.Inputs.pGeometryDescs = m_vertexBuffers.data();
-	m_BuildDesc.DestAccelerationStructureData = { m_pResult->GetID3D12Resource1()->GetGPUVirtualAddress() };
-	m_BuildDesc.ScratchAccelerationStructureData = { m_pScratch->GetID3D12Resource1()->GetGPUVirtualAddress() };
+	m_BuildDesc.DestAccelerationStructureData = { static_cast<D3D12GraphicsBuffer*>(m_pResultBuffer)->GetTempResource()->GetGPUVirtualAddress() };
+	m_BuildDesc.ScratchAccelerationStructureData = { static_cast<D3D12GraphicsBuffer*>(m_pScratchBuffer)->GetTempResource()->GetGPUVirtualAddress() };
 	m_BuildDesc.SourceAccelerationStructureData = 0;
 
 	m_BuildDesc.Inputs.Flags = flags;

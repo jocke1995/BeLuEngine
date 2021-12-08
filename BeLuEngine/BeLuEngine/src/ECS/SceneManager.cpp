@@ -9,8 +9,6 @@
 // Renderer
 #include "../Renderer/Renderer.h"
 #include "../Renderer/CommandInterface.h"
-#include "../Renderer/GPUMemory/ShaderResourceView.h"
-#include "../Renderer/Texture/Texture.h"
 #include "../Renderer/Geometry/Mesh.h"
 
 // CopyTasks

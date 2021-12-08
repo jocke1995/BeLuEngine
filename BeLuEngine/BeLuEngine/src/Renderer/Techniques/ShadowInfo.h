@@ -1,6 +1,7 @@
+
 #ifndef SHADOWINFO_H
 #define SHADOWINFO_H
-
+/*
 class DepthStencilView;
 class ShaderResourceView;
 class RenderView;
@@ -45,4 +46,5 @@ private:
 	void createDSV(ID3D12Device5* device, DescriptorHeap* dh_DSV);
 	void createSRV(ID3D12Device5* device, DescriptorHeap* dh_SRV);
 };
+*/
 #endif

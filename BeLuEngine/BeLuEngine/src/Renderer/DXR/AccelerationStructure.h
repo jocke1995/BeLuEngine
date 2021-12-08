@@ -1,6 +1,8 @@
 #ifndef ACCELERATIONSTRUCTURE_H
 #define ACCELERATIONSTRUCTURE_H
 
+class IGraphicsBuffer;
+
 class AccelerationStructure
 {
 public:
@@ -18,9 +20,11 @@ public:
 
     void BuildAccelerationStructure(ID3D12GraphicsCommandList4* commandList) const;
 
+    IGraphicsBuffer* GetRayTracingResultBuffer() const;
+
 protected:
-    Resource* m_pScratch = nullptr;
-    Resource* m_pResult = nullptr;
+    IGraphicsBuffer* m_pScratchBuffer = nullptr;
+    IGraphicsBuffer* m_pResultBuffer = nullptr;
 
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC m_BuildDesc = {};
 };

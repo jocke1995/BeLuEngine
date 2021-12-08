@@ -20,6 +20,7 @@ D3D12GraphicsBuffer::D3D12GraphicsBuffer(E_GRAPHICSBUFFER_TYPE type, E_GRAPHICSB
 
 	unsigned int totalSizeUnpadded = sizeOfSingleItem * numItems;
 
+#pragma region SetParamsDependingOnType
 	// Pad
 	if(type == E_GRAPHICSBUFFER_TYPE::ConstantBuffer)
 		m_Size = (totalSizeUnpadded + 255) & ~255;
@@ -31,6 +32,20 @@ D3D12GraphicsBuffer::D3D12GraphicsBuffer(E_GRAPHICSBUFFER_TYPE type, E_GRAPHICSB
 		heapType = D3D12_HEAP_TYPE_UPLOAD;
 		startState = D3D12_RESOURCE_STATE_GENERIC_READ;
 	}
+
+	D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE;
+	if (type == E_GRAPHICSBUFFER_TYPE::UnorderedAccessBuffer)
+	{
+		flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+		startState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	}
+
+	if (type == E_GRAPHICSBUFFER_TYPE::RayTracingBuffer)
+	{
+		flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+		startState = D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE;
+	}
+#pragma endregion
 
 #pragma region CreateBuffer
 	D3D12_HEAP_PROPERTIES heapProps = {};
@@ -45,10 +60,7 @@ D3D12GraphicsBuffer::D3D12GraphicsBuffer(E_GRAPHICSBUFFER_TYPE type, E_GRAPHICSB
 	resourceDesc.Width = m_Size;
 	resourceDesc.Height = 1;
 	resourceDesc.DepthOrArraySize = 1;
-	resourceDesc.MipLevels = 1;
-	resourceDesc.SampleDesc.Count = 1;
-	resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-	resourceDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+	resourceDesc.Flags = flags;
 	resourceDesc.Format = format;
 
 	HRESULT hr = graphicsManager->GetDevice()->CreateCommittedResource(
@@ -62,7 +74,7 @@ D3D12GraphicsBuffer::D3D12GraphicsBuffer(E_GRAPHICSBUFFER_TYPE type, E_GRAPHICSB
 
 	if (!graphicsManager->SucceededHRESULT(hr))
 	{
-		BL_LOG_CRITICAL("Failed to create D3D12GraphicsBuffer with name: \'%s\'\n", name.c_str());
+		BL_LOG_CRITICAL("Failed to create D3D12GraphicsBuffer with name: \'%S\'\n", name.c_str());
 	}
 
 	m_pResource->SetName(name.c_str());
@@ -126,6 +138,19 @@ D3D12GraphicsBuffer::D3D12GraphicsBuffer(E_GRAPHICSBUFFER_TYPE type, E_GRAPHICSB
 
 			m_ShaderResourceDescriptorHeapIndex = mainDHeap->GetNextDescriptorHeapIndex(1);
 			device5->CreateShaderResourceView(m_pResource, &srvDesc, mainDHeap->GetCPUHeapAt(m_ShaderResourceDescriptorHeapIndex));
+
+			break;
+		}
+		case E_GRAPHICSBUFFER_TYPE::RayTracingBuffer:
+		{
+			D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+			srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+			srvDesc.Format = DXGI_FORMAT_UNKNOWN;
+			srvDesc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
+			srvDesc.RaytracingAccelerationStructure.Location = m_pResource->GetGPUVirtualAddress();
+
+			m_ShaderResourceDescriptorHeapIndex = mainDHeap->GetNextDescriptorHeapIndex(1);
+			device5->CreateShaderResourceView(nullptr, &srvDesc, mainDHeap->GetCPUHeapAt(m_ShaderResourceDescriptorHeapIndex));
 
 			break;
 		}

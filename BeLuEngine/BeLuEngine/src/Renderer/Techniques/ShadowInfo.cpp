@@ -1,9 +1,8 @@
+/*
 #include "stdafx.h"
 #include "ShadowInfo.h"
 
-#include "../GPUMemory/GPUMemory.h"
 #include "../DescriptorHeap.h"
-#include "../RenderView.h"
 
 ShadowInfo::ShadowInfo(
 	E_LIGHT_TYPE lightType,
@@ -191,3 +190,4 @@ void ShadowInfo::createSRV(ID3D12Device5* device, DescriptorHeap* dh_SRV)
 		&srvd,
 		m_pResource);
 }
+*/

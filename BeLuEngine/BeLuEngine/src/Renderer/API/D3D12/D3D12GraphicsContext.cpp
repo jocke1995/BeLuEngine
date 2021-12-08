@@ -143,21 +143,21 @@ void D3D12GraphicsContext::SetRenderTargets(unsigned int numRenderTargets, D3D12
 }
 
 
-void D3D12GraphicsContext::SetConstantBufferView(unsigned int slot, Resource* resource, bool isComputePipeline)
-{
-	if (isComputePipeline)
-		m_pCommandList->SetComputeRootConstantBufferView(slot, resource->GetGPUVirtualAdress());
-	else
-		m_pCommandList->SetGraphicsRootConstantBufferView(slot, resource->GetGPUVirtualAdress());
-}
-
-void D3D12GraphicsContext::SetShaderResourceView(unsigned int slot, Resource* resource, bool isComputePipeline)
-{
-	if (isComputePipeline)
-		m_pCommandList->SetComputeRootShaderResourceView(slot, resource->GetGPUVirtualAdress());
-	else
-		m_pCommandList->SetComputeRootShaderResourceView(slot, resource->GetGPUVirtualAdress());
-}
+//void D3D12GraphicsContext::SetConstantBufferView(unsigned int slot, Resource* resource, bool isComputePipeline)
+//{
+//	if (isComputePipeline)
+//		m_pCommandList->SetComputeRootConstantBufferView(slot, resource->GetGPUVirtualAdress());
+//	else
+//		m_pCommandList->SetGraphicsRootConstantBufferView(slot, resource->GetGPUVirtualAdress());
+//}
+//
+//void D3D12GraphicsContext::SetShaderResourceView(unsigned int slot, Resource* resource, bool isComputePipeline)
+//{
+//	if (isComputePipeline)
+//		m_pCommandList->SetComputeRootShaderResourceView(slot, resource->GetGPUVirtualAdress());
+//	else
+//		m_pCommandList->SetComputeRootShaderResourceView(slot, resource->GetGPUVirtualAdress());
+//}
 
 void D3D12GraphicsContext::Set32BitConstant(unsigned int slot, unsigned int num32BitValuesToSet, unsigned int* pSrcData, unsigned int offsetIn32BitValues, bool isComputePipeline)
 {

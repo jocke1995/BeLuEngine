@@ -36,12 +36,6 @@ void Mesh::Init()
 	// create vertices resource
 	m_pVertexBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::VertexBuffer, E_GRAPHICSBUFFER_UPLOADFREQUENCY::Static, sizeof(Vertex), m_Vertices.size(), DXGI_FORMAT_UNKNOWN, to_wstring(modelPathName) + L"_VERTEXBUFFER");
 	m_pIndexBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::IndexBuffer, E_GRAPHICSBUFFER_UPLOADFREQUENCY::Static, sizeof(unsigned int), m_Indices.size(), DXGI_FORMAT_UNKNOWN, to_wstring(modelPathName) + L"_INDEXBUFFER");
-
-	// Set indexBufferView
-	//m_pIndexBufferView = new D3D12_INDEX_BUFFER_VIEW();
-	//m_pIndexBufferView->BufferLocation = m_pIndexBuffer->GetGPUVirtualAdress();
-	//m_pIndexBufferView->Format = DXGI_FORMAT_R32_UINT;
-	//m_pIndexBufferView->SizeInBytes = GetSizeOfIndices();
 }
 
 const std::vector<Vertex>* Mesh::GetVertices() const

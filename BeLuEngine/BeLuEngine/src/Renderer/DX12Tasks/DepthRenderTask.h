@@ -6,7 +6,7 @@
 class DepthRenderTask : public RenderTask
 {
 public:
-	DepthRenderTask(ID3D12Device5* device,
+	DepthRenderTask(
 		const std::wstring& VSName, const std::wstring& PSName,
 		std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*>* gpsds,
 		const std::wstring& psoName,

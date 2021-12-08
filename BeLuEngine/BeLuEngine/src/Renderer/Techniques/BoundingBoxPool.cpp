@@ -86,7 +86,7 @@ std::pair<Mesh*, bool> BoundingBoxPool::CreateBoundingBoxMesh(std::wstring uniqu
 	{
 		BoundingBoxData* bbd = m_BoundingBoxesData[uniquePath];
 		m_BoundingBoxesMesh[uniquePath] = new Mesh(&bbd->boundingBoxVertices, &bbd->boundingBoxIndices, uniquePath);
-		m_BoundingBoxesMesh[uniquePath]->Init(m_pDevice, m_pDescriptorHeap_CBV_UAV_SRV);
+		m_BoundingBoxesMesh[uniquePath]->Init();
 		return std::make_pair(m_BoundingBoxesMesh.at(uniquePath), true);
 	}
 

@@ -17,8 +17,7 @@ TopLevelAccelerationStructure::TopLevelAccelerationStructure()
 
 TopLevelAccelerationStructure::~TopLevelAccelerationStructure()
 {
-	BL_SAFE_DELETE(m_pInstanceDesc);
-	delete m_pSRV;
+	BL_SAFE_DELETE(m_pInstanceDescBuffer);
 }
 
 void TopLevelAccelerationStructure::AddInstance(
@@ -26,7 +25,7 @@ void TopLevelAccelerationStructure::AddInstance(
 	const DirectX::XMMATRIX& m_Transform,
 	unsigned int hitGroupIndex)
 {
-	m_Instances.emplace_back(Instance(BLAS->m_pResult, m_Transform, m_InstanceCounter++, hitGroupIndex));
+	m_Instances.emplace_back(Instance(BLAS->m_pResultBuffer, m_Transform, m_InstanceCounter++, hitGroupIndex));
 	//BL_LOG_INFO("Added instance! %d\n", m_InstanceCounter);
 }
 
@@ -61,38 +60,21 @@ void TopLevelAccelerationStructure::GenerateBuffers()
 	m_InstanceDescsSizeInBytes = (sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * static_cast<UINT64>(m_Instances.size() + 255)) & ~255;
 
 	// Create buffers for scratch, result and instance
-	BL_SAFE_DELETE(m_pScratch);
-	BL_SAFE_DELETE(m_pResult);
-	BL_SAFE_DELETE(m_pInstanceDesc);
+	BL_SAFE_DELETE(m_pScratchBuffer);
+	BL_SAFE_DELETE(m_pResultBuffer);
+	BL_SAFE_DELETE(m_pInstanceDescBuffer);
 
-	D3D12_RESOURCE_STATES stateResourceAS = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-	m_pScratch = new Resource(
-		device5, scratchSizeInBytes,
-		RESOURCE_TYPE::DEFAULT, L"scratchTopLevel",
-		D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
-		&stateResourceAS);
+	m_pScratchBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::UnorderedAccessBuffer, E_GRAPHICSBUFFER_UPLOADFREQUENCY::Static, scratchSizeInBytes, 1, DXGI_FORMAT_UNKNOWN, L"SCRATCHBUFFER_TLAS");
+	m_pResultBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::RayTracingBuffer, E_GRAPHICSBUFFER_UPLOADFREQUENCY::Static, resultSizeInBytes, 1, DXGI_FORMAT_UNKNOWN, L"RESULTBUFFER_TLAS");
+	m_pInstanceDescBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::CPUBuffer, E_GRAPHICSBUFFER_UPLOADFREQUENCY::Static, m_InstanceDescsSizeInBytes, 1, DXGI_FORMAT_UNKNOWN, L"INSTANCEDESCBUFFER_TLAS");
 
-	stateResourceAS = D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE;
-	m_pResult = new Resource(
-		device5, resultSizeInBytes,
-		RESOURCE_TYPE::DEFAULT, L"resultTopLevel",
-		D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
-		&stateResourceAS);
-
-	stateResourceAS = D3D12_RESOURCE_STATE_GENERIC_READ;
-	m_pInstanceDesc = new Resource(
-		device5, m_InstanceDescsSizeInBytes,
-		RESOURCE_TYPE::UPLOAD, L"instanceDescTopLevel",
-		D3D12_RESOURCE_FLAG_NONE,
-		&stateResourceAS);
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	srvDesc.Format = DXGI_FORMAT_UNKNOWN;
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
-	srvDesc.RaytracingAccelerationStructure.Location = m_pResult->GetID3D12Resource1()->GetGPUVirtualAddress();
+	srvDesc.RaytracingAccelerationStructure.Location = static_cast<D3D12GraphicsBuffer*>(m_pResultBuffer)->GetTempResource()->GetGPUVirtualAddress();
 
-	m_pSRV = new ShaderResourceView(device5, dhHeap, &srvDesc, m_pResult);
 }
 
 void TopLevelAccelerationStructure::SetupAccelerationStructureForBuilding(bool update)
@@ -109,7 +91,7 @@ void TopLevelAccelerationStructure::SetupAccelerationStructureForBuilding(bool u
 
 	// Copy the descriptors in the target descriptor buffer
 	D3D12_RAYTRACING_INSTANCE_DESC* instanceDescs;
-	HRESULT hr = m_pInstanceDesc->GetID3D12Resource1()->Map(0, nullptr, reinterpret_cast<void**>(&instanceDescs));
+	HRESULT hr = static_cast<D3D12GraphicsBuffer*>(m_pInstanceDescBuffer)->GetTempResource()->Map(0, nullptr, reinterpret_cast<void**>(&instanceDescs));
 
 	BL_ASSERT_MESSAGE(instanceDescs != nullptr && SUCCEEDED(hr), "Failed to Map into the TLAS.\n");
 
@@ -128,28 +110,23 @@ void TopLevelAccelerationStructure::SetupAccelerationStructureForBuilding(bool u
 		instanceDescs[i].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
 		DirectX::XMMATRIX m = XMMatrixTranspose(m_Instances[i].m_Transform);
 		memcpy(instanceDescs[i].Transform, &m, sizeof(instanceDescs[i].Transform));
-		instanceDescs[i].AccelerationStructure = m_Instances[i].m_pBLAS->GetID3D12Resource1()->GetGPUVirtualAddress();
+		instanceDescs[i].AccelerationStructure = static_cast<D3D12GraphicsBuffer*>(m_Instances[i].m_pBLAS)->GetTempResource()->GetGPUVirtualAddress();
 
 		// TODO: Add the possibilty to set flags for enabling shadows etc..
 		instanceDescs[i].InstanceMask = 0xFF;
 	}
 
-	m_pInstanceDesc->GetID3D12Resource1()->Unmap(0, nullptr);
+	static_cast<D3D12GraphicsBuffer*>(m_pInstanceDescBuffer)->GetTempResource()->Unmap(0, nullptr);
 
 	// Create a descriptor of the requested builder work, to generate a TLAS
 	m_BuildDesc = {};
 	m_BuildDesc.Inputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
 	m_BuildDesc.Inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
-	m_BuildDesc.Inputs.InstanceDescs = m_pInstanceDesc->GetID3D12Resource1()->GetGPUVirtualAddress();
+	m_BuildDesc.Inputs.InstanceDescs = static_cast<D3D12GraphicsBuffer*>(m_pInstanceDescBuffer)->GetTempResource()->GetGPUVirtualAddress();
 	m_BuildDesc.Inputs.NumDescs = numInstances;
 	m_BuildDesc.Inputs.Flags = flags;
 
-	m_BuildDesc.DestAccelerationStructureData = { m_pResult->GetID3D12Resource1()->GetGPUVirtualAddress() };
-	m_BuildDesc.ScratchAccelerationStructureData = { m_pScratch->GetID3D12Resource1()->GetGPUVirtualAddress()};
-	m_BuildDesc.SourceAccelerationStructureData = 0;// update ? m_pResult->GetID3D12Resource1()->GetGPUVirtualAddress() : 0;
-}
-
-ShaderResourceView* TopLevelAccelerationStructure::GetSRV() const
-{
-	return m_pSRV;
+	m_BuildDesc.DestAccelerationStructureData	 = static_cast<D3D12GraphicsBuffer*>(m_pResultBuffer)->GetTempResource()->GetGPUVirtualAddress();
+	m_BuildDesc.ScratchAccelerationStructureData = static_cast<D3D12GraphicsBuffer*>(m_pScratchBuffer)->GetTempResource()->GetGPUVirtualAddress();
+	m_BuildDesc.SourceAccelerationStructureData	 = 0;// update ? m_pResult->GetID3D12Resource1()->GetGPUVirtualAddress() : 0;
 }

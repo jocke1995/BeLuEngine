@@ -56,7 +56,6 @@ protected:
     friend class AssetLoader;
     friend class SceneManager;
 	friend class Model;
-	friend class component::BoundingBoxComponent;
 	friend class CopyOnDemandTask;
 
     std::vector<Vertex> m_Vertices;

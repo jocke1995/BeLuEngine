@@ -31,7 +31,6 @@
 #include "../ECS/Components/Lights/SpotLightComponent.h"
 
 // Renderer-Engine 
-#include "SwapChain.h"
 #include "CommandInterface.h"
 #include "DescriptorHeap.h"
 #include "Geometry/Transform.h"
@@ -42,7 +41,6 @@
 
 // Techniques
 #include "Techniques/Bloom.h"
-#include "Techniques/PingPongResource.h"
 #include "Techniques/ShadowInfo.h"
 #include "Techniques/MousePicker.h"
 #include "Techniques/BoundingBoxPool.h"
@@ -131,7 +129,7 @@ void Renderer::deleteRenderer()
 	// Delete Depthbuffer
 	BL_SAFE_DELETE(m_pMainDepthStencil);
 
-	BL_SAFE_DELETE(m_pBloomResources);
+	BL_SAFE_DELETE(m_pBloomWrapperTemp);
 
 	for (ComputeTask* computeTask : m_ComputeTasks)
 		delete computeTask;
@@ -229,7 +227,7 @@ void Renderer::InitD3D12(HWND hwnd, unsigned int width, unsigned int height, HIN
 	m_ReflectionTexture->CreateTexture2D(
 		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
 		DXGI_FORMAT_R16G16B16A16_FLOAT,
-		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::UnorderedAccess | F_TEXTURE_USAGE::RayTracing,
+		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::UnorderedAccess,
 		L"ReflectionTexture",
 		D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
@@ -239,11 +237,11 @@ void Renderer::InitD3D12(HWND hwnd, unsigned int width, unsigned int height, HIN
 		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
 		DXGI_FORMAT_R24_UNORM_X8_TYPELESS,
 		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::DepthStencil,
-		L"gBufferEmissive",
+		L"MainDepthStencilBuffer",
 		D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
 	// Bloom
-	m_pBloomResources = new Bloom(m_pDevice5, rtvHeap, mainHeap);
+	m_pBloomWrapperTemp = new Bloom();
 
 	
 #pragma endregion RenderTargets
@@ -297,7 +295,10 @@ void Renderer::InitD3D12(HWND hwnd, unsigned int width, unsigned int height, HIN
 
 	initRenderTasks();
 
-	submitMeshToCodt(m_pFullScreenQuad);
+	// Submit fullscreenquad
+	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]);
+	codt->SubmitBuffer(m_pFullScreenQuad->GetVertexBuffer(), m_pFullScreenQuad->GetVertices()->data());
+	codt->SubmitBuffer(m_pFullScreenQuad->GetIndexBuffer(), m_pFullScreenQuad->GetIndices()->data());
 }
 
 void Renderer::Update(double dt)
@@ -323,6 +324,8 @@ void Renderer::Update(double dt)
 	m_pCbPerFrameData->view			= *m_pScenePrimaryCamera->GetViewMatrix();
 	m_pCbPerFrameData->viewI		= *m_pScenePrimaryCamera->GetViewMatrixInverse();
 
+	submitUploadPerFrameData();
+
 	// Picking
 	updateMousePicker();
 
@@ -343,9 +346,7 @@ void Renderer::Update(double dt)
 		i++;
 	}
 
-	// ABSTRACTION TEMP
-	ID3D12Device5* m_pDevice5 = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pDevice5;
-	pTLAS->SetupAccelerationStructureForBuilding(m_pDevice5, true);
+	pTLAS->SetupAccelerationStructureForBuilding(true);
 }
 
 void Renderer::SortObjects()
@@ -434,13 +435,13 @@ void Renderer::ExecuteMT()
 	m_pThreadPool->AddTask(copyTask);
 
 	// Copy per frame
-	copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME];
-	m_pThreadPool->AddTask(copyTask);
-
-	// Copy per frame (matrices, world and wvp)
-	copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME_MATRICES];
-	static_cast<CopyPerFrameMatricesTask*>(copyTask)->SetCamera(m_pScenePrimaryCamera);
-	m_pThreadPool->AddTask(copyTask);
+	//copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME];
+	//m_pThreadPool->AddTask(copyTask);
+	//
+	//// Copy per frame (matrices, world and wvp)
+	//copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME_MATRICES];
+	//static_cast<CopyPerFrameMatricesTask*>(copyTask)->SetCamera(m_pScenePrimaryCamera);
+	//m_pThreadPool->AddTask(copyTask);
 
 	// Update BLASes if any...
 	dx12Task = m_DX12Tasks[E_DX12_TASK_TYPE::BLAS];
@@ -550,13 +551,13 @@ void Renderer::ExecuteST()
 	copyTask->Execute();
 
 	// Copy per frame
-	copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME];
-	copyTask->Execute();
-
-	// Copy per frame (matrices, world and wvp)
-	copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME_MATRICES];
-	static_cast<CopyPerFrameMatricesTask*>(copyTask)->SetCamera(m_pScenePrimaryCamera);
-	copyTask->Execute();
+	//copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME];
+	//copyTask->Execute();
+	//
+	//// Copy per frame (matrices, world and wvp)
+	//copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME_MATRICES];
+	//static_cast<CopyPerFrameMatricesTask*>(copyTask)->SetCamera(m_pScenePrimaryCamera);
+	//copyTask->Execute();
 
 	// Update BLASes if any...
 	dx12Task = m_DX12Tasks[E_DX12_TASK_TYPE::BLAS];
@@ -665,7 +666,7 @@ void Renderer::InitModelComponent(component::ModelComponent* mc)
 		// WVP
 		w_wvp[1] = *m_pScenePrimaryCamera->GetViewProjectionTranposed() * w_wvp[0];
 
-		m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME_MATRICES]->SubmitBuffer(t->m_pConstantBuffer, w_wvp);
+		m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]->SubmitBuffer(t->m_pConstantBuffer, w_wvp);
 
 		// Finally store the object in the corresponding renderComponent vectors so it will be drawn
 		if (F_DRAW_FLAGS::DRAW_TRANSPARENT & mc->GetDrawFlag())
@@ -878,7 +879,7 @@ void Renderer::UnInitBoundingBoxComponent(component::BoundingBoxComponent* compo
 void Renderer::OnResetScene()
 {
 	m_RenderComponents.clear();
-	m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME]->Clear();
+	m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]->Clear();
 	m_pScenePrimaryCamera = nullptr;
 	static_cast<WireframeRenderTask*>(m_RenderTasks[E_RENDER_TASK_TYPE::WIREFRAME])->Clear();
 	m_BoundingBoxesToBePicked.clear();
@@ -919,7 +920,7 @@ void Renderer::submitMaterialToGPU(component::ModelComponent* mc)
 		}
 
 		CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]);
-		codt->SubmitTexture(graphicsTexture, static_cast<D3D12GraphicsTexture*>(graphicsTexture)->GetTempData());
+		codt->SubmitTexture(graphicsTexture, nullptr);
 
 		AssetLoader::Get()->m_LoadedTextures.at(graphicsTexture->GetPath()).first = true;
 	};
@@ -1126,7 +1127,7 @@ void Renderer::initRenderTasks()
 		L"DepthPrePassPSO",
 		F_THREAD_FLAGS::RENDER);
 
-	DepthPrePassRenderTask->SetMainDepthStencil(m_pMainDepthStencil);
+	DepthPrePassRenderTask->AddGraphicsTexture("mainDepthStencilBuffer", m_pMainDepthStencil);
 
 #pragma endregion DepthPrePass
 
@@ -1181,12 +1182,12 @@ void Renderer::initRenderTasks()
 		L"DeferredGeometryRenderTaskPSO",
 		F_THREAD_FLAGS::RENDER);
 
-	deferredGeometryRenderTask->SetMainDepthStencil(m_pMainDepthStencil);
 	deferredGeometryRenderTask->AddGraphicsBuffer("cbPerScene", m_pCbPerScene);
-	deferredGeometryRenderTask->AddRenderTargetView("gBufferAlbedo", m_GBufferAlbedo.first->GetRTV());
-	deferredGeometryRenderTask->AddRenderTargetView("gBufferNormal", m_GBufferNormal.first->GetRTV());
-	deferredGeometryRenderTask->AddRenderTargetView("gBufferMaterialProperties", m_GBufferMaterialProperties.first->GetRTV());
-	deferredGeometryRenderTask->AddRenderTargetView("gBufferEmissive", m_GBufferEmissive.first->GetRTV());
+	deferredGeometryRenderTask->AddGraphicsTexture("gBufferAlbedo", m_GBufferAlbedo);
+	deferredGeometryRenderTask->AddGraphicsTexture("gBufferNormal", m_GBufferNormal);
+	deferredGeometryRenderTask->AddGraphicsTexture("gBufferMaterialProperties", m_GBufferMaterialProperties);
+	deferredGeometryRenderTask->AddGraphicsTexture("gBufferEmissive", m_GBufferEmissive);
+	deferredGeometryRenderTask->AddGraphicsTexture("mainDepthStencilBuffer", m_pMainDepthStencil);
 #pragma endregion DeferredRenderingGeometry
 
 #pragma region DeferredRenderingLight
@@ -1262,10 +1263,10 @@ void Renderer::initRenderTasks()
 	deferredLightRenderTask->AddGraphicsBuffer("cbPerFrame", m_pCbPerFrame);
 	deferredLightRenderTask->AddGraphicsBuffer("cbPerScene", m_pCbPerScene);
 	deferredLightRenderTask->AddGraphicsBuffer("rawBufferLights", Light::m_pLightsRawBuffer);
-	deferredLightRenderTask->SetMainDepthStencil(m_pMainDepthStencil);
+	deferredLightRenderTask->AddGraphicsTexture("mainDepthStencilBuffer", m_pMainDepthStencil);
 
-	deferredLightRenderTask->AddRenderTargetView("brightTarget", std::get<1>(*m_pBloomResources->GetBrightTuple()));
-	deferredLightRenderTask->AddRenderTargetView("finalColorBuffer", m_FinalColorBuffer.first->GetRTV());
+	deferredLightRenderTask->AddGraphicsTexture("brightTarget", m_pBloomWrapperTemp->GetBrightTexture());
+	deferredLightRenderTask->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
 
 	static_cast<DeferredLightRenderTask*>(deferredLightRenderTask)->SetFullScreenQuad(m_pFullScreenQuad);
 
@@ -1304,8 +1305,8 @@ void Renderer::initRenderTasks()
 		L"DownSampleVertex.hlsl", L"DownSamplePixel.hlsl",
 		&gpsdDownSampleTextureVector,
 		L"DownSampleTexturePSO",
-		std::get<2>(*m_pBloomResources->GetBrightTuple()),		// Read from this in actual resolution
-		m_pBloomResources->GetPingPongResource(0)->GetRTV(),	// Write to this in 1280x720
+		m_pBloomWrapperTemp->GetBrightTexture(),		// Read from this in actual resolution
+		m_pBloomWrapperTemp->GetPingPongTexture(0),		// Write to this in 1280x720
 		F_THREAD_FLAGS::RENDER);
 	
 	static_cast<DownSampleRenderTask*>(downSampleTask)->SetFullScreenQuad(m_pFullScreenQuad);
@@ -1347,8 +1348,8 @@ void Renderer::initRenderTasks()
 		L"outliningScaledPSO",
 		F_THREAD_FLAGS::RENDER);
 	
-	outliningRenderTask->SetMainDepthStencil(m_pMainDepthStencil);
-	outliningRenderTask->AddRenderTargetView("finalColorBuffer", m_FinalColorBuffer.first->GetRTV());
+	outliningRenderTask->AddGraphicsTexture("mainDepthStencilBuffer", m_pMainDepthStencil);
+	outliningRenderTask->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
 
 #pragma endregion ModelOutlining
 
@@ -1443,8 +1444,8 @@ void Renderer::initRenderTasks()
 	transparentRenderTask->AddGraphicsBuffer("cbPerFrame", m_pCbPerFrame);
 	transparentRenderTask->AddGraphicsBuffer("cbPerScene", m_pCbPerScene);
 	transparentRenderTask->AddGraphicsBuffer("rawBufferLights", Light::m_pLightsRawBuffer);
-	transparentRenderTask->SetMainDepthStencil(m_pMainDepthStencil);
-	transparentRenderTask->AddRenderTargetView("finalColorBuffer", m_FinalColorBuffer.first->GetRTV());
+	transparentRenderTask->AddGraphicsTexture("mainDepthStencilBuffer", m_pMainDepthStencil);
+	transparentRenderTask->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
 
 #pragma endregion Blend
 
@@ -1476,7 +1477,7 @@ void Renderer::initRenderTasks()
 		L"WireFramePSO",
 		F_THREAD_FLAGS::RENDER);
 
-	wireFrameRenderTask->AddRenderTargetView("finalColorBuffer", m_FinalColorBuffer.first->GetRTV());
+	wireFrameRenderTask->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
 #pragma endregion WireFrame
 
 #pragma region MergePass
@@ -1514,9 +1515,9 @@ void Renderer::initRenderTasks()
 		F_THREAD_FLAGS::RENDER);
 
 	static_cast<MergeRenderTask*>(mergeTask)->SetFullScreenQuad(m_pFullScreenQuad);
-	static_cast<MergeRenderTask*>(mergeTask)->AddSRVToMerge(m_pBloomResources->GetPingPongResource(0)->GetSRV());
-	static_cast<MergeRenderTask*>(mergeTask)->AddSRVToMerge(m_FinalColorBuffer.second);
-	static_cast<MergeRenderTask*>(mergeTask)->AddSRVToMerge(m_ReflectionTexture.srv);
+	mergeTask->AddGraphicsTexture("bloomPingPong0", m_pBloomWrapperTemp->GetPingPongTexture(0));
+	mergeTask->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
+	mergeTask->AddGraphicsTexture("reflectionTexture", m_ReflectionTexture);
 	static_cast<MergeRenderTask*>(mergeTask)->CreateSlotInfo();
 #pragma endregion MergePass
 
@@ -1536,15 +1537,13 @@ void Renderer::initRenderTasks()
 	ComputeTask* blurComputeTask = new BlurComputeTask(
 		csNamePSOName,
 		E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE,
-		std::get<2>(*m_pBloomResources->GetBrightTuple()),
-		m_pBloomResources->GetPingPongResource(0),
-		m_pBloomResources->GetPingPongResource(1),
-		m_pBloomResources->GetBlurWidth(), m_pBloomResources->GetBlurHeight(),
+		m_pBloomWrapperTemp,
+		m_pBloomWrapperTemp->GetBlurWidth(), m_pBloomWrapperTemp->GetBlurHeight(),
 		F_THREAD_FLAGS::RENDER);
 
 	// CopyTasks
-	CopyTask* copyPerFrameTask			= new CopyPerFrameTask(E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE, F_THREAD_FLAGS::RENDER, L"copyPerFrameCL");
-	CopyTask* copyPerFrameMatricesTask  = new CopyPerFrameMatricesTask(E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE, F_THREAD_FLAGS::RENDER, L"copyPerFrameMatricesCL");
+	//CopyTask* copyPerFrameTask			= new CopyPerFrameTask(E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE, F_THREAD_FLAGS::RENDER, L"copyPerFrameCL");
+	//CopyTask* copyPerFrameMatricesTask  = new CopyPerFrameMatricesTask(E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE, F_THREAD_FLAGS::RENDER, L"copyPerFrameMatricesCL");
 	CopyTask* copyOnDemandTask			= new CopyOnDemandTask(E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE, F_THREAD_FLAGS::RENDER, L"copyOnDemandCL");
 
 #pragma endregion ComputeAndCopyTasks
@@ -1555,8 +1554,8 @@ void Renderer::initRenderTasks()
 
 	/* ------------------------- CopyQueue Tasks ------------------------ */
 
-	m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME] = copyPerFrameTask;
-	m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME_MATRICES] = copyPerFrameMatricesTask;
+	//m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME] = copyPerFrameTask;
+	//m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME_MATRICES] = copyPerFrameMatricesTask;
 	m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND] = copyOnDemandTask;
 
 	/* ------------------------- ComputeQueue Tasks ------------------------ */
@@ -1587,15 +1586,15 @@ void Renderer::initRenderTasks()
 		m_DirectCommandLists[i].push_back(copyOnDemandTask->GetCommandInterface()->GetCommandList(i));
 	}
 
-	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
-	{
-		m_DirectCommandLists[i].push_back(copyPerFrameTask->GetCommandInterface()->GetCommandList(i));
-	}
-
-	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
-	{
-		m_DirectCommandLists[i].push_back(copyPerFrameMatricesTask->GetCommandInterface()->GetCommandList(i));
-	}
+	//for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
+	//{
+	//	m_DirectCommandLists[i].push_back(copyPerFrameTask->GetCommandInterface()->GetCommandList(i));
+	//}
+	//
+	//for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
+	//{
+	//	m_DirectCommandLists[i].push_back(copyPerFrameMatricesTask->GetCommandInterface()->GetCommandList(i));
+	//}
 
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
@@ -1738,7 +1737,7 @@ void Renderer::prepareScene(Scene* activeScene)
 	//static_cast<DeferredLightRenderTask*>(m_RenderTasks[E_RENDER_TASK_TYPE::DEFERRED_GEOMETRY])->SetSceneBVHSRV(pTLAS->GetSRV());
 
 	// PerSceneData 
-	m_pCbPerSceneData->rayTracingBVH			 = pTLAS->GetSRV()->GetDescriptorHeapIndex();
+	m_pCbPerSceneData->rayTracingBVH			 = pTLAS->GetRayTracingResultBuffer()->GetShaderResourceHeapIndex();
 	m_pCbPerSceneData->gBufferAlbedo			 = m_GBufferAlbedo->GetShaderResourceHeapIndex();
 	m_pCbPerSceneData->gBufferNormal			 = m_GBufferNormal->GetShaderResourceHeapIndex();
 	m_pCbPerSceneData->gBufferMaterialProperties = m_GBufferMaterialProperties->GetShaderResourceHeapIndex();
@@ -1761,17 +1760,17 @@ void Renderer::submitUploadPerSceneData()
 void Renderer::submitUploadPerFrameData()
 {
 	// Submit dynamic-light-data to be uploaded to VRAM
-	CopyPerFrameTask* cpft = static_cast<CopyPerFrameTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME]);
-	BL_ASSERT(cpft);
+	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]);
+	BL_ASSERT(codt);
 
 	// CB_PER_FRAME_STRUCT
 	BL_ASSERT(m_pCbPerFrame && m_pCbPerFrameData);
-	cpft->SubmitBuffer(m_pCbPerFrame, m_pCbPerFrameData);
+	codt->SubmitBuffer(m_pCbPerFrame, m_pCbPerFrameData);
 
 	// All lights (data and header with information)
 	// Sending entire buffer (4kb as of writing this code), every frame for simplicity. Even if some lights might be static.
 	BL_ASSERT(Light::m_pLightsRawBuffer && Light::m_pRawData);
-	cpft->SubmitBuffer(Light::m_pLightsRawBuffer, Light::m_pRawData);
+	codt->SubmitBuffer(Light::m_pLightsRawBuffer, Light::m_pRawData);
 }
 
 //void Renderer::toggleFullscreen(WindowChange* event)

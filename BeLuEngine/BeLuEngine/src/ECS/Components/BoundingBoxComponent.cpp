@@ -14,9 +14,9 @@
 #include "../Renderer/Techniques/BoundingBoxPool.h"
 
 #include "../Renderer/Geometry/Mesh.h"
-#include "../Renderer/GPUMemory/ShaderResourceView.h"
 #include "../Renderer/Renderer.h"
 
+#include "../Renderer/API/IGraphicsBuffer.h"
 
 namespace component
 {
@@ -80,7 +80,7 @@ namespace component
 
 		m_SlotInfos.push_back(new SlotInfo());
 
-		m_SlotInfos.back()->vertexDataIndex = mesh->m_pVertexBufferSRV->GetDescriptorHeapIndex();
+		m_SlotInfos.back()->vertexDataIndex = mesh->GetVertexBuffer()->GetShaderResourceHeapIndex();
 		// Textures are not used in the WireframeRenderTask
 	}
 

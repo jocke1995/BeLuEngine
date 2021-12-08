@@ -5,10 +5,7 @@
 #include "../Camera/BaseCamera.h"
 #include "../CommandInterface.h"
 #include "../DescriptorHeap.h"
-#include "../GPUMemory/GPUMemory.h"
 #include "../PipelineState/PipelineState.h"
-#include "../RenderView.h"
-#include "../SwapChain.h"
 
 // Model info
 #include "../Geometry/Mesh.h"
@@ -24,12 +21,12 @@ TODO(To be replaced by a D3D12Manager some point in the future(needed to access 
 
 
 
-DepthRenderTask::DepthRenderTask(ID3D12Device5* device, 
+DepthRenderTask::DepthRenderTask(
 	const std::wstring& VSName, const std::wstring& PSName,
 	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*>* gpsds, 
 	const std::wstring& psoName,
 	unsigned int FLAG_THREAD)
-	: RenderTask(device, VSName, PSName, gpsds, psoName, FLAG_THREAD)
+	: RenderTask(VSName, PSName, gpsds, psoName, FLAG_THREAD)
 {
 }
 
@@ -82,10 +79,10 @@ void DepthRenderTask::Execute()
 
 		const DirectX::XMMATRIX* viewProjMatTrans = m_pCamera->GetViewProjectionTranposed();
 
-		unsigned int index = m_pDepthStencil->GetDSV()->GetDescriptorHeapIndex();
+		unsigned int depthIndex = m_GraphicTextures["mainDepthStencilBuffer"]->GetDepthStencilIndex();
 
 		// Clear and set depth + stencil
-		D3D12_CPU_DESCRIPTOR_HANDLE dsh = depthBufferHeap->GetCPUHeapAt(index);
+		D3D12_CPU_DESCRIPTOR_HANDLE dsh = depthBufferHeap->GetCPUHeapAt(depthIndex);
 		commandList->ClearDepthStencilView(dsh, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 		commandList->OMSetRenderTargets(0, nullptr, false, &dsh);
 
@@ -115,7 +112,12 @@ void DepthRenderTask::drawRenderComponent(component::ModelComponent* mc, compone
 		cl->SetGraphicsRoot32BitConstants(Constants_SlotInfo_B0, sizeof(SlotInfo) / sizeof(UINT), info, 0);
 		cl->SetGraphicsRootConstantBufferView(RootParam_CBV_B2, static_cast<D3D12GraphicsBuffer*>(t->m_pConstantBuffer)->GetTempResource()->GetGPUVirtualAddress());
 
-		cl->IASetIndexBuffer(m->GetIndexBufferView());
+		D3D12_INDEX_BUFFER_VIEW indexBufferView = {};
+		indexBufferView.BufferLocation = static_cast<D3D12GraphicsBuffer*>(m->GetIndexBuffer())->GetTempResource()->GetGPUVirtualAddress();
+		indexBufferView.Format = DXGI_FORMAT_R32_UINT;
+		indexBufferView.SizeInBytes = m->GetSizeOfIndices();
+
+		cl->IASetIndexBuffer(&indexBufferView);
 		cl->DrawIndexedInstanced(num_Indices, 1, 0, 0, 0);
 	}
 }

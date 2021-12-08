@@ -19,7 +19,7 @@ public:
 
 	virtual unsigned __int64 GetSize() const override;
 
-	void* GetTempData() { return m_pTextureData; }
+	std::vector<D3D12_SUBRESOURCE_DATA>* GetTempSubresources() { return &m_Subresources; }
 	ID3D12Resource1* GetTempResource() { return m_pResource; }
 private:
 	ID3D12Resource1* m_pResource = nullptr;
@@ -32,6 +32,8 @@ private:
 	unsigned char* m_pTextureData = nullptr;
 
 	unsigned int m_NumMipLevels = 0;
+
+	std::vector<D3D12_SUBRESOURCE_DATA> m_Subresources;
 };
 
 #endif

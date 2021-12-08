@@ -1,53 +1,31 @@
 #ifndef BLOOM_H
 #define BLOOM_H
 
-class SwapChain;
-class DescriptorHeap;
-
-class ShaderResourceView;
-class RenderTargetView;
-class Resource;
-
-class PingPongResource;
-
-struct ID3D12Device5;
-
 #include <array>
+
+class IGraphicsTexture;
+
 class Bloom
 {
 public:
-	Bloom(
-		ID3D12Device5* device,
-		DescriptorHeap* dhRTV, DescriptorHeap* dh_CBV_UAV_SRV);
+	Bloom();
 	virtual ~Bloom();
 
 	unsigned int GetBlurWidth() const;
 	unsigned int GetBlurHeight() const;
 
-	const std::tuple<Resource*, RenderTargetView*, ShaderResourceView*>* GetBrightTuple() const;
-	const PingPongResource* GetPingPongResource(unsigned int index) const;
+	IGraphicsTexture* GetPingPongTexture(unsigned int index) const;
+	IGraphicsTexture* GetBrightTexture() const;
 
 private:
 	unsigned int m_BlurWidth = 1280;
 	unsigned int m_BlurHeight = 720;
-	std::tuple<Resource*, RenderTargetView*, ShaderResourceView*> m_BrightTuple;
 
 	// The compute shader will read and write in a "Ping-Pong"-order to these objects.
-	std::array<Resource*, 2> m_Resources;
-	std::array<PingPongResource*, 2> m_PingPongResources;
-	
-	Resource* createResource(
-		ID3D12Device5* device,
-		unsigned int width, unsigned int height,
-		std::wstring resourceName,
-		D3D12_RESOURCE_FLAGS flags,
-		D3D12_RESOURCE_STATES startState);
+	std::array<IGraphicsTexture*, 2> m_PingPongTextures;
 
-	void createBrightTuple(
-		ID3D12Device5* device,
-		DescriptorHeap* dhRTV,
-		DescriptorHeap* dh_CBV_UAV_SRV,
-		unsigned int width, unsigned int height);
+	// The final bright color will be stored in this texture
+	IGraphicsTexture* m_BrightTexture;
 };
 
 #endif

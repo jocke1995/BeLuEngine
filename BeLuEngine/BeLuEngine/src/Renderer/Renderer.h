@@ -112,12 +112,8 @@ private:
 	void deleteRenderer();
 
 	// SubmitToCodt functions
-	void submitToCodt(std::tuple<Resource*, Resource*, const void*>* Upload_Default_Data);
 	void submitModelToGPU(Model* model);
-	void submitSlotInfoRawBufferToGPU(component::ModelComponent* mc);
 	void submitMaterialToGPU(component::ModelComponent* mc);
-	void submitMeshToCodt(Mesh* mesh);
-	void submitTextureToCodt(Texture* texture);
 
 	ThreadPool* m_pThreadPool = nullptr;
 
@@ -139,9 +135,8 @@ private:
 	// Depthbuffer
 	IGraphicsTexture* m_pMainDepthStencil = nullptr;
 
-	// Bloom (includes rtv, uav and srv)
-	Bloom* m_pBloomResources = nullptr;
-
+	// Bloom
+	Bloom* m_pBloomWrapperTemp = nullptr;
 
 	// -------------- RenderTargets -------------- 
 	// Picking

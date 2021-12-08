@@ -6,8 +6,7 @@ enum F_TEXTURE_USAGE
 	ShaderResource	 = BIT(0),
 	RenderTarget	 = BIT(1),
 	UnorderedAccess  = BIT(2),
-	DepthStencil	 = BIT(3),
-	RayTracing		 = BIT(4)
+	DepthStencil	 = BIT(3)
 };
 
 class IGraphicsTexture

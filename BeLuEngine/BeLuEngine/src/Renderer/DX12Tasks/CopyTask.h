@@ -3,7 +3,6 @@
 
 #include "DX12Task.h"
 
-class Resource;
 class IGraphicsBuffer;
 class IGraphicsTexture;
 
@@ -19,30 +18,27 @@ struct GraphicsTextureUploadParams
 	const void* data;
 };
 
+struct ID3D12GraphicsCommandList;
+
 class CopyTask : public DX12Task
 {
 public:
 	CopyTask(
-		ID3D12Device5* device,
 		E_COMMAND_INTERFACE_TYPE interfaceType,
 		unsigned int FLAG_THREAD,
 		const std::wstring& clName);
 	virtual ~CopyTask();
 
-	void CopyTask::ClearSpecific(const Resource* uploadResource);
-
 	void SubmitBuffer(IGraphicsBuffer* graphicsBuffer, const void* data);
 	void SubmitTexture(IGraphicsTexture* graphicsTexture, const void* data);
 
-	virtual void Clear() = 0;
+	void Clear();
 
 protected:
 	std::vector<GraphicsBufferUploadParams> m_GraphicBuffersToUpload;
 	std::vector<GraphicsTextureUploadParams> m_GraphicTexturesToUpload;
 
-	void copyResource(
-		ID3D12GraphicsCommandList5* commandList,
-		Resource* uploadResource, Resource* defaultResource,
-		const void* data);
+	void CopyTexture(ID3D12GraphicsCommandList* cl, GraphicsTextureUploadParams* uploadParams);
+	void CopyBuffer(ID3D12GraphicsCommandList* cl, GraphicsBufferUploadParams* uploadParams);
 };
 #endif

@@ -32,8 +32,8 @@ public:
     virtual void SetRenderTargets(  unsigned int numRenderTargets, D3D12_CPU_DESCRIPTOR_HANDLE* renderTargetDescriptors,
                                     bool RTsSingleHandleToDescriptorRange, D3D12_CPU_DESCRIPTOR_HANDLE* depthStencilDescriptor) override;
 
-    virtual void SetConstantBufferView(unsigned int slot, Resource* resource, bool isComputePipeline) override;
-    virtual void SetShaderResourceView(unsigned int slot, Resource* resource, bool isComputePipeline) override;
+    //virtual void SetConstantBufferView(unsigned int slot, Resource* resource, bool isComputePipeline) override;
+    //virtual void SetShaderResourceView(unsigned int slot, Resource* resource, bool isComputePipeline) override;
     virtual void Set32BitConstant(unsigned int slot, unsigned int num32BitValuesToSet, unsigned int* pSrcData, unsigned int offsetIn32BitValues, bool isComputePipeline) override;
 
     virtual void SetIndexBuffer(D3D12_INDEX_BUFFER_VIEW* indexBufferView) override;

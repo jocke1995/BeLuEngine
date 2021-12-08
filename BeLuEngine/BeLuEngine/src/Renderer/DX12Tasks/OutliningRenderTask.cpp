@@ -5,9 +5,7 @@
 #include "../Camera/BaseCamera.h"
 #include "../CommandInterface.h"
 #include "../DescriptorHeap.h"
-#include "../GPUMemory/GPUMemory.h"
 #include "../PipelineState/GraphicsState.h"
-#include "../RenderView.h"
 
 // Model info
 #include "../Renderer/Geometry/Mesh.h"
@@ -22,18 +20,20 @@ TODO(To be replaced by a D3D12Manager some point in the future(needed to access 
 
 
 OutliningRenderTask::OutliningRenderTask(
-	ID3D12Device5* device,
 	const std::wstring& VSName, const std::wstring& PSName,
 	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*>* gpsds,
 	const std::wstring& psoName,
-	DescriptorHeap* cbvHeap,
 	unsigned int FLAG_THREAD)
-	:RenderTask(device, VSName, PSName, gpsds, psoName, FLAG_THREAD)
+	:RenderTask(VSName, PSName, gpsds, psoName, FLAG_THREAD)
 {
 	// Init with nullptr
 	Clear();
 
-	m_OutlineTransformToScale.m_pConstantBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::ConstantBuffer, E_GRAPHICSBUFFER_UPLOADFREQUENCY::Static, sizeof(DirectX::XMMATRIX) * 2, L"OutlinedTransform");
+	m_OutlineTransformToScale.m_pConstantBuffer = IGraphicsBuffer::Create(
+		E_GRAPHICSBUFFER_TYPE::ConstantBuffer,
+		E_GRAPHICSBUFFER_UPLOADFREQUENCY::Static,
+		sizeof(DirectX::XMMATRIX), 1,
+		DXGI_FORMAT_UNKNOWN, L"OutlinedTransform");
 }
 
 OutliningRenderTask::~OutliningRenderTask()
@@ -45,12 +45,12 @@ void OutliningRenderTask::Execute()
 {
 	ID3D12CommandAllocator* commandAllocator = m_pCommandInterface->GetCommandAllocator(m_CommandInterfaceIndex);
 	ID3D12GraphicsCommandList5* commandList = m_pCommandInterface->GetCommandList(m_CommandInterfaceIndex);
-	const RenderTargetView* gBufferAlbedoRenderTarget = m_RenderTargetViews["finalColorBuffer"];
-	ID3D12Resource1* gBufferAlbedoResource = gBufferAlbedoRenderTarget->GetResource()->GetID3D12Resource1();
 
 	DescriptorHeap* mainHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
 	DescriptorHeap* rtvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetRTVDescriptorHeap();
 	DescriptorHeap* dsvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetDSVDescriptorHeap();
+
+	ID3D12Resource1* gBufferAlbedoResource = static_cast<D3D12GraphicsTexture*>(m_GraphicTextures["finalColorBuffer"])->GetTempResource();
 
 	m_pCommandInterface->Reset(m_CommandInterfaceIndex);
 	{
@@ -63,9 +63,11 @@ void OutliningRenderTask::Execute()
 		DescriptorHeap* renderTargetHeap = rtvHeap;
 		DescriptorHeap* depthBufferHeap = dsvHeap;
 
-		const unsigned int gBufferAlbedoIndex = gBufferAlbedoRenderTarget->GetDescriptorHeapIndex();
+		const unsigned int gBufferAlbedoIndex = static_cast<D3D12GraphicsTexture*>(m_GraphicTextures["finalColorBuffer"])->GetRenderTargetHeapIndex();
+		const unsigned int dsvIndex = static_cast<D3D12GraphicsTexture*>(m_GraphicTextures["mainDepthStencilBuffer"])->GetDepthStencilIndex();
+
 		D3D12_CPU_DESCRIPTOR_HANDLE cdh = renderTargetHeap->GetCPUHeapAt(gBufferAlbedoIndex);
-		D3D12_CPU_DESCRIPTOR_HANDLE dsh = depthBufferHeap->GetCPUHeapAt(m_pDepthStencil->GetDSV()->GetDescriptorHeapIndex());
+		D3D12_CPU_DESCRIPTOR_HANDLE dsh = depthBufferHeap->GetCPUHeapAt(dsvIndex);
 
 		// Check if there is an object to outline
 		if (m_ObjectToOutline.first == nullptr)
@@ -80,10 +82,23 @@ void OutliningRenderTask::Execute()
 
 		commandList->OMSetRenderTargets(1, &cdh, true, &dsh);
 
-		const D3D12_VIEWPORT* viewPort = gBufferAlbedoRenderTarget->GetRenderView()->GetViewPort();
-		const D3D12_RECT* rect = gBufferAlbedoRenderTarget->GetRenderView()->GetScissorRect();
-		commandList->RSSetViewports(1, viewPort);
-		commandList->RSSetScissorRects(1, rect);
+		TODO("Fix the sizes");
+		D3D12_VIEWPORT viewPort = {};
+		viewPort.TopLeftX = 0.0f;
+		viewPort.TopLeftY = 0.0f;
+		viewPort.Width = 1280;
+		viewPort.Height = 720;
+		viewPort.MinDepth = 0.0f;
+		viewPort.MaxDepth = 1.0f;
+
+		D3D12_RECT rect = {};
+		rect.left = 0;
+		rect.right = 1280;
+		rect.top = 0;
+		rect.bottom = 720;
+
+		commandList->RSSetViewports(1, &viewPort);
+		commandList->RSSetScissorRects(1, &rect);
 		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		commandList->SetPipelineState(m_PipelineStates[0]->GetPSO());
@@ -108,12 +123,16 @@ void OutliningRenderTask::Execute()
 			w_wvp[0] = *newScaledTransform.GetWorldMatrixTransposed();
 			w_wvp[1] = (*viewProjMatTrans) * w_wvp[0];
 
-			D3D12_GPU_VIRTUAL_ADDRESS vAddr = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->SetDynamicData(sizeof(DirectX::XMMATRIX) * 2, &w_wvp);
+			DynamicDataParams params = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->SetDynamicData(sizeof(DirectX::XMMATRIX) * 2, &w_wvp);
 
 			commandList->SetGraphicsRoot32BitConstants(Constants_SlotInfo_B0, sizeof(SlotInfo) / sizeof(UINT), info, 0);
-			commandList->SetGraphicsRootConstantBufferView(RootParam_CBV_B2, vAddr);
+			commandList->SetGraphicsRootConstantBufferView(RootParam_CBV_B2, params.vAddr);
 
-			commandList->IASetIndexBuffer(m->GetIndexBufferView());
+			D3D12_INDEX_BUFFER_VIEW indexBufferView = {};
+			indexBufferView.BufferLocation = static_cast<D3D12GraphicsBuffer*>(m->GetIndexBuffer())->GetTempResource()->GetGPUVirtualAddress();
+			indexBufferView.Format = DXGI_FORMAT_R32_UINT;
+			indexBufferView.SizeInBytes = m->GetSizeOfIndices();
+			commandList->IASetIndexBuffer(&indexBufferView);
 
 			commandList->OMSetStencilRef(1);
 			commandList->DrawIndexedInstanced(num_Indices, 1, 0, 0, 0);

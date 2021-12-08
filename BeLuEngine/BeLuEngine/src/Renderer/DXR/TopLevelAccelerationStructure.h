@@ -8,14 +8,14 @@ class BottomLevelAccelerationStructure;
 struct Instance
 {
     Instance(
-        Resource* BLAS,
+        IGraphicsBuffer* BLAS,
         const DirectX::XMMATRIX& transform,
         unsigned int instanceID,
         unsigned int hitGroupIndex)
         :m_pBLAS(BLAS), m_Transform(transform), m_ID(instanceID), m_HitGroupIndex(hitGroupIndex)
     {}
 
-    Resource* m_pBLAS = nullptr;
+    IGraphicsBuffer* m_pBLAS = nullptr;
     const DirectX::XMMATRIX& m_Transform = {};
     unsigned int m_ID = 0;
     unsigned int m_HitGroupIndex = 0;
@@ -40,8 +40,7 @@ private:
     friend class TopLevelRenderTask;
 
     unsigned int m_InstanceDescsSizeInBytes = 0;
-    Resource* m_pInstanceDesc = nullptr;
-    ShaderResourceView* m_pSRV = nullptr;
+    IGraphicsBuffer* m_pInstanceDescBuffer = nullptr;
 
     std::vector<Instance> m_Instances;
 

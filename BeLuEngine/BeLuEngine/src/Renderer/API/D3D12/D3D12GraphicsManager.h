@@ -9,13 +9,17 @@ struct ID3D12Device5;
 // D3D12 Wrappers
 class DescriptorHeap;
 
-// TEMP
-#include "../Renderer/GPUMemory/GPUMemory.h"
-
 namespace component
 {
 	class ModelComponent;
 }
+
+struct DynamicDataParams
+{
+	ID3D12Resource* uploadResource = nullptr;
+	unsigned __int64 offsetFromStart = 0;
+	D3D12_GPU_VIRTUAL_ADDRESS vAddr = 0;
+};
 
 class D3D12GraphicsManager : public IGraphicsManager
 {
@@ -36,7 +40,7 @@ public:
 	static bool SucceededHRESULT(HRESULT hrParam);
 
 	void AddD3D12ObjectToDefferedDeletion(ID3D12Object* object);
-	D3D12_GPU_VIRTUAL_ADDRESS SetDynamicData(unsigned int size, void* data);
+	DynamicDataParams SetDynamicData(unsigned int size, const void* data);
 
 	// Getters
 	DescriptorHeap* GetMainDescriptorHeap() const;
@@ -90,9 +94,9 @@ private:
 
 	// Swapchain
 	IDXGISwapChain4* m_pSwapChain4 = nullptr;
-	std::array<Resource*, NUM_SWAP_BUFFERS> m_Resources;
-	std::array<RenderTargetView*, NUM_SWAP_BUFFERS> m_RTVs;
-	std::array<ShaderResourceView*, NUM_SWAP_BUFFERS> m_SRVs;
+	std::array<ID3D12Resource*, NUM_SWAP_BUFFERS> m_SwapchainResources;
+	std::array<unsigned int, NUM_SWAP_BUFFERS> m_SwapchainRTVIndices;
+	std::array<unsigned int, NUM_SWAP_BUFFERS> m_SwapchainSRVIndices;
 
 	// Root Signature
 	ID3D12RootSignature* m_pGlobalRootSig = nullptr;

@@ -37,10 +37,10 @@ public:
                                     bool RTsSingleHandleToDescriptorRange, D3D12_CPU_DESCRIPTOR_HANDLE* depthStencilDescriptor) = 0;
 
     // Use E_COMMON_DESCRIPTOR_BINDINGS as first param if possible
-    virtual void SetConstantBufferView(unsigned int slot, Resource* resource, bool isComputePipeline) = 0;
+    //virtual void SetConstantBufferView(unsigned int slot, Resource* resource, bool isComputePipeline) = 0;
 
     // Use E_COMMON_DESCRIPTOR_BINDINGS as first param if possible
-    virtual void SetShaderResourceView(unsigned int slot, Resource* resource, bool isComputePipeline) = 0;
+    //virtual void SetShaderResourceView(unsigned int slot, Resource* resource, bool isComputePipeline) = 0;
 
     // Use E_COMMON_DESCRIPTOR_BINDINGS as first param if possible
     virtual void Set32BitConstant(unsigned int slot, unsigned int num32BitValuesToSet, unsigned int* pSrcData, unsigned int offsetIn32BitValues, bool isComputePipeline) = 0;

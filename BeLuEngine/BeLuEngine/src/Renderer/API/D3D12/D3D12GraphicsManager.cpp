@@ -32,9 +32,7 @@ D3D12GraphicsManager::~D3D12GraphicsManager()
 
 	for (unsigned int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
-		BL_SAFE_DELETE(m_Resources[i]);
-		BL_SAFE_DELETE(m_RTVs[i]);
-		BL_SAFE_DELETE(m_SRVs[i]);
+		BL_SAFE_RELEASE(&m_SwapchainResources[i]);
 	}
 
 	BL_SAFE_RELEASE(&m_pGlobalRootSig);
@@ -311,27 +309,35 @@ void D3D12GraphicsManager::Init(HWND hwnd, unsigned int width, unsigned int heig
 
 	BL_SAFE_RELEASE(&factorySwapChain);
 
-	// Set RTVs
-	for (unsigned int i = 0; i < NUM_SWAP_BUFFERS; i++)
-	{
-		m_Resources[i] = new Resource();
-		m_RTVs[i] = new RenderTargetView(m_pDevice5, width, height, m_pRTVDescriptorHeap, nullptr, m_Resources[i], false);
-	}
-
 	// Connect the m_RenderTargets to the swapchain, so that the swapchain can easily swap between these two m_RenderTargets
 	for (unsigned int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
-		HRESULT hr = m_pSwapChain4->GetBuffer(i, IID_PPV_ARGS(const_cast<Resource*>(m_RTVs[i]->GetResource())->GetID3D12Resource1PP()));
-		if (FAILED(hr))
+		HRESULT hr = m_pSwapChain4->GetBuffer(i, IID_PPV_ARGS(&m_SwapchainResources[i]));
+		if (!SucceededHRESULT(hr))
 		{
 			BL_LOG_CRITICAL("Failed to GetBuffer from RenderTarget to Swapchain\n");
 		}
 
-		m_RTVs[i]->CreateRTV(m_pDevice5, m_pRTVDescriptorHeap, nullptr);
+		hr = m_SwapchainResources[i]->SetName(L"SwapchainResource");
+		if (!SucceededHRESULT(hr))
+		{
+			BL_LOG_CRITICAL("Failed to Setname on Swapchain\n");
+		}
 	}
 
-	m_RTVs[0]->GetResource()->GetID3D12Resource1()->SetName(L"RTV0_Resource");
-	m_RTVs[1]->GetResource()->GetID3D12Resource1()->SetName(L"RTV1_Resource");
+	D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
+	rtvDesc.Format = dxgiFormat;
+	rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+	rtvDesc.Texture2D.MipSlice = 0;
+	rtvDesc.Texture2D.PlaneSlice = 0;
+
+	for (unsigned int i = 0; i < NUM_SWAP_BUFFERS; i++)
+	{
+		m_SwapchainRTVIndices[i] = m_pRTVDescriptorHeap->GetNextDescriptorHeapIndex(1);
+		D3D12_CPU_DESCRIPTOR_HANDLE cdh = m_pRTVDescriptorHeap->GetCPUHeapAt(m_SwapchainRTVIndices[i]);
+		
+		m_pDevice5->CreateRenderTargetView(m_SwapchainResources[i], &rtvDesc, cdh);
+	}
 
 	// Create SRVs
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
@@ -342,7 +348,9 @@ void D3D12GraphicsManager::Init(HWND hwnd, unsigned int width, unsigned int heig
 
 	for (unsigned int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
-		m_SRVs[i] = new ShaderResourceView(m_pDevice5, m_pMainDescriptorHeap, &srvDesc, m_Resources[i]);
+		m_SwapchainSRVIndices[i] = m_pMainDescriptorHeap->GetNextDescriptorHeapIndex(1);
+		D3D12_CPU_DESCRIPTOR_HANDLE cdh = m_pMainDescriptorHeap->GetCPUHeapAt(m_SwapchainSRVIndices[i]);
+		m_pDevice5->CreateShaderResourceView(m_SwapchainResources[i], &srvDesc, cdh);
 	}
 
 #pragma endregion
@@ -792,14 +800,16 @@ void D3D12GraphicsManager::AddD3D12ObjectToDefferedDeletion(ID3D12Object* object
 	m_ObjectsToBeDeleted.push_back(std::make_tuple(mFrameIndex, object));
 }
 
-D3D12_GPU_VIRTUAL_ADDRESS D3D12GraphicsManager::SetDynamicData(unsigned int size, void* data)
+DynamicDataParams D3D12GraphicsManager::SetDynamicData(unsigned int size, const void* data)
 {
+	// Make this threadsafe
 	long offset = InterlockedAdd(&m_pIntermediateUploadHeapAtomicCurrent, size);
 
 	if (offset > m_IntermediateUploadHeapSize)
 	{
 		BL_LOG_CRITICAL("IntermediateUploadHeap to small");
-		return (D3D12_GPU_VIRTUAL_ADDRESS)0;
+		DynamicDataParams emptyParam = {};
+		return emptyParam;
 	}
 
 	long currentOffset = offset - size;
@@ -808,9 +818,11 @@ D3D12_GPU_VIRTUAL_ADDRESS D3D12GraphicsManager::SetDynamicData(unsigned int size
 	void* cpuAddress = (char*)m_pIntermediateUploadHeapBegin[mCommandInterfaceIndex] + currentOffset;
 	memcpy(cpuAddress, data, size);
 
-	// Return GPU address
-	D3D12_GPU_VIRTUAL_ADDRESS gpuAddress = m_pIntermediateUploadHeap[mCommandInterfaceIndex]->GetGPUVirtualAddress() + currentOffset;
-	return gpuAddress;
+	DynamicDataParams returnVal = {};
+	returnVal.offsetFromStart = currentOffset;
+	returnVal.uploadResource = m_pIntermediateUploadHeap[mCommandInterfaceIndex];
+	returnVal.vAddr = m_pIntermediateUploadHeap[mCommandInterfaceIndex]->GetGPUVirtualAddress() + currentOffset;
+	return returnVal;
 }
 
 DescriptorHeap* D3D12GraphicsManager::GetMainDescriptorHeap() const

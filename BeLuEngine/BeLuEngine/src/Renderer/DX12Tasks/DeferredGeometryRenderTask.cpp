@@ -5,10 +5,7 @@
 #include "../Camera/BaseCamera.h"
 #include "../CommandInterface.h"
 #include "../DescriptorHeap.h"
-#include "../GPUMemory/GPUMemory.h"
 #include "../PipelineState/PipelineState.h"
-#include "../RenderView.h"
-#include "../SwapChain.h"
 
 // Model info
 #include "../Geometry/Mesh.h"
@@ -23,12 +20,12 @@ TODO(To be replaced by a D3D12Manager some point in the future(needed to access 
 #include "../API/D3D12/D3D12GraphicsBuffer.h"
 #include "../API/D3D12/D3D12GraphicsTexture.h"
 
-DeferredGeometryRenderTask::DeferredGeometryRenderTask(ID3D12Device5* device,
+DeferredGeometryRenderTask::DeferredGeometryRenderTask(
 	const std::wstring& VSName, const std::wstring& PSName,
 	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*>* gpsds, 
 	const std::wstring& psoName,
 	unsigned int FLAG_THREAD)
-	: RenderTask(device, VSName, PSName, gpsds, psoName, FLAG_THREAD)
+	: RenderTask(VSName, PSName, gpsds, psoName, FLAG_THREAD)
 {
 }
 
@@ -85,10 +82,10 @@ void DeferredGeometryRenderTask::Execute()
 		const DirectX::XMMATRIX* viewProjMatTrans = m_pCamera->GetViewProjectionTranposed();
 
 		// RenderTargets
-		const unsigned int gBufferAlbedoIndex = m_RenderTargetViews["gBufferAlbedo"]->GetDescriptorHeapIndex();
-		const unsigned int gBufferNormalIndex = m_RenderTargetViews["gBufferNormal"]->GetDescriptorHeapIndex();
-		const unsigned int gBufferMaterialIndex = m_RenderTargetViews["gBufferMaterialProperties"]->GetDescriptorHeapIndex();
-		const unsigned int gBufferEmissiveIndex = m_RenderTargetViews["gBufferEmissive"]->GetDescriptorHeapIndex();
+		const unsigned int gBufferAlbedoIndex = m_GraphicTextures["gBufferAlbedo"]->GetRenderTargetHeapIndex();
+		const unsigned int gBufferNormalIndex = m_GraphicTextures["gBufferNormal"]->GetRenderTargetHeapIndex();
+		const unsigned int gBufferMaterialIndex = m_GraphicTextures["gBufferMaterialProperties"]->GetRenderTargetHeapIndex();
+		const unsigned int gBufferEmissiveIndex = m_GraphicTextures["gBufferEmissive"]->GetRenderTargetHeapIndex();
 
 		D3D12_CPU_DESCRIPTOR_HANDLE cdhgBufferAlbedo = renderTargetHeap->GetCPUHeapAt(gBufferAlbedoIndex);
 		D3D12_CPU_DESCRIPTOR_HANDLE cdhgBufferNormal = renderTargetHeap->GetCPUHeapAt(gBufferNormalIndex);
@@ -96,8 +93,9 @@ void DeferredGeometryRenderTask::Execute()
 		D3D12_CPU_DESCRIPTOR_HANDLE cdhgBufferEmissive = renderTargetHeap->GetCPUHeapAt(gBufferEmissiveIndex);
 		D3D12_CPU_DESCRIPTOR_HANDLE cdhs[] = { cdhgBufferAlbedo, cdhgBufferNormal, cdhgBufferMaterial, cdhgBufferEmissive };
 
-		auto TransferResourceState = [commandList](ID3D12Resource* resource, D3D12_RESOURCE_STATES stateBefore, D3D12_RESOURCE_STATES stateAfter)
+		auto TransferResourceState = [commandList](IGraphicsTexture* graphicsTexture, D3D12_RESOURCE_STATES stateBefore, D3D12_RESOURCE_STATES stateAfter)
 		{
+			ID3D12Resource* resource = static_cast<D3D12GraphicsTexture*>(graphicsTexture)->GetTempResource();
 			D3D12_RESOURCE_BARRIER barrier{};
 			barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 			barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
@@ -109,14 +107,14 @@ void DeferredGeometryRenderTask::Execute()
 			commandList->ResourceBarrier(1, &barrier);
 		};
 
-		// TODO: Batch into 1 resourceBarrier
-		TransferResourceState(m_RenderTargetViews["gBufferAlbedo"]->GetResource()->GetID3D12Resource1(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
-		TransferResourceState(m_RenderTargetViews["gBufferNormal"]->GetResource()->GetID3D12Resource1(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
-		TransferResourceState(m_RenderTargetViews["gBufferMaterialProperties"]->GetResource()->GetID3D12Resource1(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
-		TransferResourceState(m_RenderTargetViews["gBufferEmissive"]->GetResource()->GetID3D12Resource1(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+		TODO("Batch into 1 resourceBarrier");
+		TransferResourceState(m_GraphicTextures["gBufferAlbedo"], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+		TransferResourceState(m_GraphicTextures["gBufferNormal"], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+		TransferResourceState(m_GraphicTextures["gBufferMaterialProperties"], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+		TransferResourceState(m_GraphicTextures["gBufferEmissive"], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
 		// Depth
-		unsigned int depthIndex = m_pDepthStencil->GetDSV()->GetDescriptorHeapIndex();
+		unsigned int depthIndex = m_GraphicTextures["mainDepthStencilBuffer"]->GetDepthStencilIndex();
 		D3D12_CPU_DESCRIPTOR_HANDLE dsh = depthBufferHeap->GetCPUHeapAt(depthIndex);
 
 		float clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -139,17 +137,17 @@ void DeferredGeometryRenderTask::Execute()
 		}
 
 		// TODO: Batch into 1 resourceBarrier
-		TransferResourceState(m_RenderTargetViews["gBufferAlbedo"]->GetResource()->GetID3D12Resource1(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-		TransferResourceState(m_RenderTargetViews["gBufferNormal"]->GetResource()->GetID3D12Resource1(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-		TransferResourceState(m_RenderTargetViews["gBufferMaterialProperties"]->GetResource()->GetID3D12Resource1(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-		TransferResourceState(m_RenderTargetViews["gBufferEmissive"]->GetResource()->GetID3D12Resource1(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		TransferResourceState(m_GraphicTextures["gBufferAlbedo"], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		TransferResourceState(m_GraphicTextures["gBufferNormal"], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		TransferResourceState(m_GraphicTextures["gBufferMaterialProperties"], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		TransferResourceState(m_GraphicTextures["gBufferEmissive"], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	}
 	commandList->Close();
 }
 
 void DeferredGeometryRenderTask::drawRenderComponent(component::ModelComponent* mc, component::TransformComponent* tc, const DirectX::XMMATRIX* viewProjTransposed, ID3D12GraphicsCommandList5* cl)
 {
-	cl->SetGraphicsRootShaderResourceView(RootParam_SRV_T1, mc->GetMaterialByteAdressBuffer()->GetDefaultResource()->GetGPUVirtualAdress());
+	cl->SetGraphicsRootShaderResourceView(RootParam_SRV_T1, static_cast<D3D12GraphicsBuffer*>(mc->GetMaterialByteAdressBuffer())->GetTempResource()->GetGPUVirtualAddress());
 
 	// Draw for every m_pMesh the meshComponent has
 	for (unsigned int i = 0; i < mc->GetNrOfMeshes(); i++)
@@ -162,7 +160,12 @@ void DeferredGeometryRenderTask::drawRenderComponent(component::ModelComponent* 
 		cl->SetGraphicsRoot32BitConstants(Constants_SlotInfo_B0, sizeof(SlotInfo) / sizeof(UINT), info, 0);
 		cl->SetGraphicsRootConstantBufferView(RootParam_CBV_B2, static_cast<D3D12GraphicsBuffer*>(t->m_pConstantBuffer)->GetTempResource()->GetGPUVirtualAddress());
 
-		cl->IASetIndexBuffer(m->GetIndexBufferView());
+		D3D12_INDEX_BUFFER_VIEW indexBufferView = {};
+		indexBufferView.BufferLocation = static_cast<D3D12GraphicsBuffer*>(m->GetIndexBuffer())->GetTempResource()->GetGPUVirtualAddress();
+		indexBufferView.Format = DXGI_FORMAT_R32_UINT;
+		indexBufferView.SizeInBytes = m->GetSizeOfIndices();
+
+		cl->IASetIndexBuffer(&indexBufferView);
 		cl->DrawIndexedInstanced(num_Indices, 1, 0, 0, 0);
 	}
 }

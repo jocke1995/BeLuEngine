@@ -6,7 +6,6 @@
 
 #include "Mesh.h"
 #include "Material.h"
-#include "../Texture/Texture2D.h"
 
 #include "../DXR/BottomLevelAccelerationStructure.h"
 
@@ -27,8 +26,8 @@ Model::Model(
 	for (const Mesh* mesh : m_Meshes)
 	{
 		m_pBLAS->AddVertexBuffer(
-			mesh->GetDefaultResourceVertices(), mesh->GetNumVertices(),
-			mesh->GetDefaultResourceIndices(), mesh->GetNumIndices());
+			mesh->GetVertexBuffer(), mesh->GetNumVertices(),
+			mesh->GetIndexBuffer(), mesh->GetNumIndices());
 	}
 
 	m_pBLAS->GenerateBuffers();

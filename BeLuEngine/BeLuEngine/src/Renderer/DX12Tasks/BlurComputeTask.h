@@ -2,8 +2,8 @@
 #define BRIGHTBLURTASK_H
 
 #include "ComputeTask.h"
-class ShaderResourceView;
-class PingPongResource;
+
+class Bloom;
 
 class BlurComputeTask : public ComputeTask
 {
@@ -11,9 +11,7 @@ public:
 	BlurComputeTask(
 		std::vector<std::pair<std::wstring, std::wstring>> csNamePSOName,
 		E_COMMAND_INTERFACE_TYPE interfaceType,
-		ShaderResourceView* brightSRV,
-		const PingPongResource* Bloom0_RESOURCE,
-		const PingPongResource* Bloom1_RESOURCE,
+		Bloom* bloom,
 		unsigned int screenWidth, unsigned int screenHeight,
 		unsigned int FLAG_THREAD
 		);
@@ -21,9 +19,8 @@ public:
 
 	void Execute() override final;
 private:
-	ShaderResourceView* m_pSRV = nullptr;
+	Bloom* m_pTempBloom = nullptr;
 
-	std::array<const PingPongResource*, 2> m_PingPongResources;
 	unsigned int m_HorizontalThreadGroupsX;
 	unsigned int m_HorizontalThreadGroupsY;
 	unsigned int m_VerticalThreadGroupsX;

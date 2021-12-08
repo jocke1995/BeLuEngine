@@ -5,9 +5,7 @@
 #include "../Camera/BaseCamera.h"
 #include "../CommandInterface.h"
 #include "../DescriptorHeap.h"
-#include "../GPUMemory/GPUMemory.h"
 #include "../PipelineState/PipelineState.h"
-#include "../RenderView.h"
 
 // Model info
 #include "../Renderer/Geometry/Transform.h"
@@ -22,12 +20,11 @@ TODO(To be replaced by a D3D12Manager some point in the future(needed to access 
 #include "../API/D3D12/D3D12GraphicsTexture.h"
 
 WireframeRenderTask::WireframeRenderTask(
-	ID3D12Device5* device,
 	const std::wstring& VSName, const std::wstring& PSName,
 	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*>* gpsds,
 	const std::wstring& psoName,
 	unsigned int FLAG_THREAD)
-	:RenderTask(device, VSName, PSName, gpsds, psoName, FLAG_THREAD)
+	:RenderTask(VSName, PSName, gpsds, psoName, FLAG_THREAD)
 {
 	
 }
@@ -65,8 +62,6 @@ void WireframeRenderTask::Execute()
 {
 	ID3D12CommandAllocator* commandAllocator = m_pCommandInterface->GetCommandAllocator(m_CommandInterfaceIndex);
 	ID3D12GraphicsCommandList5* commandList = m_pCommandInterface->GetCommandList(m_CommandInterfaceIndex);
-	
-	const RenderTargetView* mainColorRenderTarget = m_RenderTargetViews["finalColorBuffer"];
 
 	DescriptorHeap* mainHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
 	DescriptorHeap* rtvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetRTVDescriptorHeap();
@@ -85,15 +80,28 @@ void WireframeRenderTask::Execute()
 
 		DescriptorHeap* renderTargetHeap = rtvHeap;
 
-		unsigned int renderTargetIndex = mainColorRenderTarget->GetDescriptorHeapIndex();
+		unsigned int renderTargetIndex = static_cast<D3D12GraphicsTexture*>(m_GraphicTextures["finalColorBuffer"])->GetRenderTargetHeapIndex();
 		D3D12_CPU_DESCRIPTOR_HANDLE cdh = renderTargetHeap->GetCPUHeapAt(renderTargetIndex);
 
 		commandList->OMSetRenderTargets(1, &cdh, false, nullptr);
 
-		const D3D12_VIEWPORT* viewPort = mainColorRenderTarget->GetRenderView()->GetViewPort();
-		const D3D12_RECT* rect = mainColorRenderTarget->GetRenderView()->GetScissorRect();
-		commandList->RSSetViewports(1, viewPort);
-		commandList->RSSetScissorRects(1, rect);
+		TODO("Fix the sizes");
+		D3D12_VIEWPORT viewPort = {};
+		viewPort.TopLeftX = 0.0f;
+		viewPort.TopLeftY = 0.0f;
+		viewPort.Width = 1280;
+		viewPort.Height = 720;
+		viewPort.MinDepth = 0.0f;
+		viewPort.MaxDepth = 1.0f;
+
+		D3D12_RECT rect = {};
+		rect.left = 0;
+		rect.right = 1280;
+		rect.top = 0;
+		rect.bottom = 720;
+
+		commandList->RSSetViewports(1, &viewPort);
+		commandList->RSSetScissorRects(1, &rect);
 		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		commandList->SetPipelineState(m_PipelineStates[0]->GetPSO());
@@ -114,7 +122,12 @@ void WireframeRenderTask::Execute()
 				commandList->SetGraphicsRoot32BitConstants(Constants_SlotInfo_B0, sizeof(SlotInfo) / sizeof(UINT), info, 0);
 				commandList->SetGraphicsRootConstantBufferView(RootParam_CBV_B2, static_cast<D3D12GraphicsBuffer*>(t->m_pConstantBuffer)->GetTempResource()->GetGPUVirtualAddress());
 
-				commandList->IASetIndexBuffer(m->GetIndexBufferView());
+				D3D12_INDEX_BUFFER_VIEW indexBufferView = {};
+				indexBufferView.BufferLocation = static_cast<D3D12GraphicsBuffer*>(m->GetIndexBuffer())->GetTempResource()->GetGPUVirtualAddress();
+				indexBufferView.Format = DXGI_FORMAT_R32_UINT;
+				indexBufferView.SizeInBytes = m->GetSizeOfIndices();
+				commandList->IASetIndexBuffer(&indexBufferView);
+
 				commandList->DrawIndexedInstanced(num_Indices, 1, 0, 0, 0);
 			}
 		}

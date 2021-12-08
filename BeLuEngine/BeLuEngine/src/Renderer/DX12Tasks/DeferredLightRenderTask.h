@@ -10,7 +10,7 @@ class mesh;
 class DeferredLightRenderTask : public RenderTask
 {
 public:
-	DeferredLightRenderTask(ID3D12Device5* device,
+	DeferredLightRenderTask(
 		const std::wstring& VSName, const std::wstring& PSName,
 		std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*>* gpsds, 
 		const std::wstring& psoName,

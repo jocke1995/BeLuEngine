@@ -2,6 +2,9 @@
 #define BOTTOMLEVELACCELERATIONSTRUCTURE_H
 
 #include "AccelerationStructure.h"
+
+class IGraphicsBuffer;
+
 class BottomLevelAccelerationStructure : public AccelerationStructure
 {
 public:
@@ -9,8 +12,8 @@ public:
     virtual ~BottomLevelAccelerationStructure();
 
     void AddVertexBuffer(
-        Resource* vertexBuffer, uint32_t vertexCount,
-        Resource* indexBuffer , uint32_t indexCount);
+        IGraphicsBuffer* vertexBuffer, uint32_t vertexCount,
+        IGraphicsBuffer* indexBuffer , uint32_t indexCount);
 
     void Reset() override;
     void GenerateBuffers() override;

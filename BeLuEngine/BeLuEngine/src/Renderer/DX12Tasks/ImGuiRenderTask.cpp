@@ -2,11 +2,7 @@
 #include "ImGUIRenderTask.h"
 
 #include "../CommandInterface.h"
-#include "../SwapChain.h"
-#include "../GPUMemory/GPUMemory.h"
-
 #include "../DescriptorHeap.h"
-#include "../RenderView.h"
 
 //ImGui
 #include "../ImGUI/imgui.h"
@@ -17,12 +13,11 @@
 #include "../API/D3D12/D3D12GraphicsManager.h"
 
 ImGuiRenderTask::ImGuiRenderTask(
-	ID3D12Device5* device,
 	LPCWSTR VSName, LPCWSTR PSName,
 	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*>* gpsds,
 	LPCTSTR psoName,
 	unsigned int FLAG_THREAD)
-	:RenderTask(device, VSName, PSName, gpsds, psoName, FLAG_THREAD)
+	:RenderTask(VSName, PSName, gpsds, psoName, FLAG_THREAD)
 {
 }
 
@@ -36,8 +31,7 @@ void ImGuiRenderTask::Execute()
 	ID3D12CommandAllocator* commandAllocator = m_pCommandInterface->GetCommandAllocator(m_CommandInterfaceIndex);
 	ID3D12GraphicsCommandList5* commandList = m_pCommandInterface->GetCommandList(m_CommandInterfaceIndex);
 
-	const RenderTargetView* swapChainRenderTarget = static_cast<D3D12GraphicsManager*>(IGraphicsManager::GetBaseInstance())->m_RTVs[m_CommandInterfaceIndex];
-	Resource* swapChainResource = swapChainRenderTarget->GetResource();
+	ID3D12Resource* swapChainResource = static_cast<D3D12GraphicsManager*>(IGraphicsManager::GetBaseInstance())->m_SwapchainResources[m_CommandInterfaceIndex];
 
 	DescriptorHeap* mainHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
 	DescriptorHeap* rtvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetRTVDescriptorHeap();
@@ -51,15 +45,16 @@ void ImGuiRenderTask::Execute()
 		commandList->SetDescriptorHeaps(1, &d3d12DescriptorHeap);
 
 		// Change state on front/backbuffer
-		swapChainResource->TransResourceState(
-			commandList,
-			D3D12_RESOURCE_STATE_PRESENT,
-			D3D12_RESOURCE_STATE_RENDER_TARGET);
+		// Transition DepthBuffer
+		CD3DX12_RESOURCE_BARRIER transition = CD3DX12_RESOURCE_BARRIER::Transition(
+			swapChainResource,
+			D3D12_RESOURCE_STATE_PRESENT,			// StateBefore
+			D3D12_RESOURCE_STATE_RENDER_TARGET);	// StateAfter
 
 		DescriptorHeap* renderTargetHeap = rtvHeap;
 
-		const unsigned int swapChainIndex = swapChainRenderTarget->GetDescriptorHeapIndex();
-		D3D12_CPU_DESCRIPTOR_HANDLE cdh = renderTargetHeap->GetCPUHeapAt(swapChainIndex);
+		const unsigned int swapChainRTVIndex = static_cast<D3D12GraphicsManager*>(IGraphicsManager::GetBaseInstance())->m_SwapchainRTVIndices[m_CommandInterfaceIndex];
+		D3D12_CPU_DESCRIPTOR_HANDLE cdh = renderTargetHeap->GetCPUHeapAt(swapChainRTVIndex);
 
 		commandList->OMSetRenderTargets(1, &cdh, true, nullptr);
 
@@ -72,10 +67,10 @@ void ImGuiRenderTask::Execute()
 		ImGui_ImplDX12_RenderDrawData(drawData, commandList);
 
 		// Change state on front/backbuffer
-		swapChainResource->TransResourceState(
-			commandList,
-			D3D12_RESOURCE_STATE_RENDER_TARGET,
-			D3D12_RESOURCE_STATE_PRESENT);
+		transition = CD3DX12_RESOURCE_BARRIER::Transition(
+			swapChainResource,
+			D3D12_RESOURCE_STATE_RENDER_TARGET,	// StateBefore
+			D3D12_RESOURCE_STATE_PRESENT);		// StateAfter
 	}
 	commandList->Close();
 }

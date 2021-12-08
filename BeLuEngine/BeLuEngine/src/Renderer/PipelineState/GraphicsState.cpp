@@ -7,9 +7,12 @@
 
 #include "../API/D3D12/D3D12GraphicsManager.h"
 
-GraphicsState::GraphicsState(ID3D12Device5* device, const std::wstring& VSName, const std::wstring& PSName, D3D12_GRAPHICS_PIPELINE_STATE_DESC* gpsd, const std::wstring& psoName)
+GraphicsState::GraphicsState(const std::wstring& VSName, const std::wstring& PSName, D3D12_GRAPHICS_PIPELINE_STATE_DESC* gpsd, const std::wstring& psoName)
 	:PipelineState(psoName)
 {
+	D3D12GraphicsManager* manager = D3D12GraphicsManager::GetInstance();
+	ID3D12Device5* device5 = manager->GetDevice();
+
 	// Set the rootSignature in the pipeline state object descriptor
 	m_pGPSD = gpsd;
 
@@ -27,7 +30,7 @@ GraphicsState::GraphicsState(ID3D12Device5* device, const std::wstring& VSName, 
 	m_pGPSD->PS.BytecodeLength = psBlob->GetBufferSize();
 
 	// Create pipelineStateObject
-	HRESULT hr = device->CreateGraphicsPipelineState(m_pGPSD, IID_PPV_ARGS(&m_pPSO));
+	HRESULT hr = device5->CreateGraphicsPipelineState(m_pGPSD, IID_PPV_ARGS(&m_pPSO));
 
 	if (FAILED(hr))
 	{

@@ -5,9 +5,7 @@
 #include "../Camera/BaseCamera.h"
 #include "../CommandInterface.h"
 #include "../DescriptorHeap.h"
-#include "../GPUMemory/GPUMemory.h"
 #include "../PipelineState/PipelineState.h"
-#include "../RenderView.h"
 
 // Model info
 #include "../Renderer/Geometry/Transform.h"
@@ -23,12 +21,11 @@ TODO(To be replaced by a D3D12Manager some point in the future(needed to access 
 #include "../API/D3D12/D3D12GraphicsTexture.h"
 
 TransparentRenderTask::TransparentRenderTask(	
-	ID3D12Device5* device,
 	const std::wstring& VSName, const std::wstring& PSName,
 	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*>* gpsds,
 	const std::wstring& psoName,
 	unsigned int FLAG_THREAD)
-	:RenderTask(device, VSName, PSName, gpsds, psoName, FLAG_THREAD)
+	:RenderTask(VSName, PSName, gpsds, psoName, FLAG_THREAD)
 {
 }
 
@@ -41,8 +38,6 @@ void TransparentRenderTask::Execute()
 {
 	ID3D12CommandAllocator* commandAllocator = m_pCommandInterface->GetCommandAllocator(m_CommandInterfaceIndex);
 	ID3D12GraphicsCommandList5* commandList = m_pCommandInterface->GetCommandList(m_CommandInterfaceIndex);
-	const RenderTargetView* gBufferAlbedoRenderTarget = m_RenderTargetViews["finalColorBuffer"];
-	ID3D12Resource1* gBufferAlbedoResource = gBufferAlbedoRenderTarget->GetResource()->GetID3D12Resource1();
 
 	DescriptorHeap* mainHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
 	DescriptorHeap* rtvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetRTVDescriptorHeap();
@@ -64,16 +59,31 @@ void TransparentRenderTask::Execute()
 		DescriptorHeap* renderTargetHeap = rtvHeap;
 		DescriptorHeap* depthBufferHeap = dsvHeap;
 
-		unsigned int renderTargetIndex = gBufferAlbedoRenderTarget->GetDescriptorHeapIndex();
-		D3D12_CPU_DESCRIPTOR_HANDLE cdh = renderTargetHeap->GetCPUHeapAt(renderTargetIndex);
-		D3D12_CPU_DESCRIPTOR_HANDLE dsh = depthBufferHeap->GetCPUHeapAt(m_pDepthStencil->GetDSV()->GetDescriptorHeapIndex());
+		unsigned int rtvIndex = static_cast<D3D12GraphicsTexture*>(m_GraphicTextures["finalColorBuffer"])->GetRenderTargetHeapIndex();
+		unsigned int dsvIndex = static_cast<D3D12GraphicsTexture*>(m_GraphicTextures["mainDepthStencilBuffer"])->GetDepthStencilIndex();
+
+		D3D12_CPU_DESCRIPTOR_HANDLE cdh = renderTargetHeap->GetCPUHeapAt(rtvIndex);
+		D3D12_CPU_DESCRIPTOR_HANDLE dsh = depthBufferHeap->GetCPUHeapAt(dsvIndex);
 
 		commandList->OMSetRenderTargets(1, &cdh, true, &dsh);
 
-		const D3D12_VIEWPORT* viewPort = gBufferAlbedoRenderTarget->GetRenderView()->GetViewPort();
-		const D3D12_RECT* rect = gBufferAlbedoRenderTarget->GetRenderView()->GetScissorRect();
-		commandList->RSSetViewports(1, viewPort);
-		commandList->RSSetScissorRects(1, rect);
+		TODO("Fix the sizes");
+		D3D12_VIEWPORT viewPort = {};
+		viewPort.TopLeftX = 0.0f;
+		viewPort.TopLeftY = 0.0f;
+		viewPort.Width = 1280;
+		viewPort.Height = 720;
+		viewPort.MinDepth = 0.0f;
+		viewPort.MaxDepth = 1.0f;
+
+		D3D12_RECT rect = {};
+		rect.left = 0;
+		rect.right = 1280;
+		rect.top = 0;
+		rect.bottom = 720;
+
+		commandList->RSSetViewports(1, &viewPort);
+		commandList->RSSetScissorRects(1, &rect);
 		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		// Create a CB_PER_FRAME struct
@@ -91,8 +101,7 @@ void TransparentRenderTask::Execute()
 			component::TransformComponent* tc = m_RenderComponents.at(i).tc;
 
 			// Draw for every m_pMesh the MeshComponent has
-			commandList->SetGraphicsRootShaderResourceView(RootParam_SRV_T1, mc->GetMaterialByteAdressBuffer()->GetDefaultResource()->GetGPUVirtualAdress());
-			for (unsigned int j = 0; j < mc->GetNrOfMeshes(); j++)
+			commandList->SetGraphicsRootShaderResourceView(RootParam_SRV_T1, static_cast<D3D12GraphicsBuffer*>(mc->GetMaterialByteAdressBuffer())->GetTempResource()->GetGPUVirtualAddress());			for (unsigned int j = 0; j < mc->GetNrOfMeshes(); j++)
 			{
 				Mesh* m = mc->GetMeshAt(j);
 				unsigned int num_Indices = m->GetNumIndices();
@@ -103,7 +112,12 @@ void TransparentRenderTask::Execute()
 				commandList->SetGraphicsRoot32BitConstants(Constants_SlotInfo_B0, sizeof(SlotInfo) / sizeof(UINT), info, 0);
 				commandList->SetGraphicsRootConstantBufferView(RootParam_CBV_B2, static_cast<D3D12GraphicsBuffer*>(t->m_pConstantBuffer)->GetTempResource()->GetGPUVirtualAddress());
 
-				commandList->IASetIndexBuffer(mc->GetMeshAt(j)->GetIndexBufferView());
+				D3D12_INDEX_BUFFER_VIEW indexBufferView = {};
+				indexBufferView.BufferLocation = static_cast<D3D12GraphicsBuffer*>(mc->GetMeshAt(j)->GetIndexBuffer())->GetTempResource()->GetGPUVirtualAddress();
+				indexBufferView.Format = DXGI_FORMAT_R32_UINT;
+				indexBufferView.SizeInBytes = mc->GetMeshAt(j)->GetSizeOfIndices();
+				commandList->IASetIndexBuffer(&indexBufferView);
+
 				// Draw each object twice with different PSO 
 				for (int k = 0; k < 2; k++)
 				{

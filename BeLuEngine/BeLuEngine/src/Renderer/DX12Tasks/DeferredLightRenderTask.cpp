@@ -5,9 +5,7 @@
 #include "../Camera/BaseCamera.h"
 #include "../CommandInterface.h"
 #include "../DescriptorHeap.h"
-#include "../GPUMemory/GPUMemory.h"
 #include "../PipelineState/PipelineState.h"
-#include "../RenderView.h"
 
 // Model info
 #include "../Renderer/Geometry/Transform.h"
@@ -24,12 +22,11 @@ TODO(To be replaced by a D3D12Manager some point in the future(needed to access 
 
 
 DeferredLightRenderTask::DeferredLightRenderTask(
-	ID3D12Device5* device,
 	const std::wstring& VSName, const std::wstring& PSName,
 	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*>* gpsds,
 	const std::wstring& psoName,
 	unsigned int FLAG_THREAD)
-	:RenderTask(device, VSName, PSName, gpsds, psoName, FLAG_THREAD)
+	:RenderTask(VSName, PSName, gpsds, psoName, FLAG_THREAD)
 {
 	
 }
@@ -43,7 +40,7 @@ void DeferredLightRenderTask::SetFullScreenQuad(Mesh* mesh)
 	m_pFullScreenQuadMesh = mesh;
 
 	//m_NumIndices = m_pFullScreenQuadMesh->GetNumIndices();
-	m_Info.vertexDataIndex = m_pFullScreenQuadMesh->m_pVertexBufferSRV->GetDescriptorHeapIndex();
+	m_Info.vertexDataIndex = static_cast<D3D12GraphicsBuffer*>(m_pFullScreenQuadMesh->GetVertexBuffer())->GetShaderResourceHeapIndex();
 }
 
 void DeferredLightRenderTask::Execute()
@@ -51,11 +48,11 @@ void DeferredLightRenderTask::Execute()
 	ID3D12CommandAllocator* commandAllocator = m_pCommandInterface->GetCommandAllocator(m_CommandInterfaceIndex);
 	ID3D12GraphicsCommandList5* commandList = m_pCommandInterface->GetCommandList(m_CommandInterfaceIndex);
 
-	const RenderTargetView* finalColorRTV = m_RenderTargetViews["finalColorBuffer"];
-	ID3D12Resource1* finalColorResource = finalColorRTV->GetResource()->GetID3D12Resource1();
-
 	DescriptorHeap* mainHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
 	DescriptorHeap* rtvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetRTVDescriptorHeap();
+
+	D3D12GraphicsTexture* finalColorTexture = static_cast<D3D12GraphicsTexture*>(m_GraphicTextures["finalColorBuffer"]);
+	D3D12GraphicsTexture* brightColorTexture = static_cast<D3D12GraphicsTexture*>(m_GraphicTextures["brightTarget"]);
 
 	m_pCommandInterface->Reset(m_CommandInterfaceIndex);
 	{
@@ -73,8 +70,8 @@ void DeferredLightRenderTask::Execute()
 		DescriptorHeap* renderTargetHeap = rtvHeap;
 
 		// RenderTargets
-		const unsigned int finalColorTargetIndex = finalColorRTV->GetDescriptorHeapIndex();
-		const unsigned int brightTargetIndex = m_RenderTargetViews["brightTarget"]->GetDescriptorHeapIndex();
+		const unsigned int finalColorTargetIndex = finalColorTexture->GetRenderTargetHeapIndex();
+		const unsigned int brightTargetIndex = brightColorTexture->GetRenderTargetHeapIndex();
 		D3D12_CPU_DESCRIPTOR_HANDLE cdhgFinalColorTarget = renderTargetHeap->GetCPUHeapAt(finalColorTargetIndex);
 		D3D12_CPU_DESCRIPTOR_HANDLE cdhBrightTarget = renderTargetHeap->GetCPUHeapAt(brightTargetIndex);
 		D3D12_CPU_DESCRIPTOR_HANDLE cdhs[] = { cdhgFinalColorTarget, cdhBrightTarget };
@@ -88,13 +85,24 @@ void DeferredLightRenderTask::Execute()
 		commandList->ClearRenderTargetView(cdhBrightTarget, clearColor, 0, nullptr);
 		commandList->ClearRenderTargetView(cdhgFinalColorTarget, clearColor, 0, nullptr);
 
-		const D3D12_VIEWPORT viewPortFinalColorTarget = *finalColorRTV->GetRenderView()->GetViewPort();
-		const D3D12_VIEWPORT viewPortBrightTarget = *m_RenderTargetViews["brightTarget"]->GetRenderView()->GetViewPort();
-		const D3D12_VIEWPORT viewPorts[2] = { viewPortFinalColorTarget, viewPortBrightTarget };
+		TODO("Fix the sizes");
+		D3D12_VIEWPORT viewPort = {};
+		viewPort.TopLeftX = 0.0f;
+		viewPort.TopLeftY = 0.0f;
+		viewPort.Width = 1280;
+		viewPort.Height = 720;
+		viewPort.MinDepth = 0.0f;
+		viewPort.MaxDepth = 1.0f;
 
-		const D3D12_RECT rectFinalColorTarget = *finalColorRTV->GetRenderView()->GetScissorRect();
-		const D3D12_RECT rectBrightTarget = *m_RenderTargetViews["brightTarget"]->GetRenderView()->GetScissorRect();
-		const D3D12_RECT rects[2] = { rectFinalColorTarget, rectBrightTarget };
+		D3D12_RECT rect = {};
+		rect.left = 0;
+		rect.right = 1280;
+		rect.top = 0;
+		rect.bottom = 720;
+
+
+		const D3D12_VIEWPORT viewPorts[2] = { viewPort, viewPort };
+		const D3D12_RECT rects[2] = { rect, rect };
 
 		commandList->RSSetViewports(2, viewPorts);
 		commandList->RSSetScissorRects(2, rects);
@@ -105,11 +113,11 @@ void DeferredLightRenderTask::Execute()
 		commandList->SetComputeRootConstantBufferView(RootParam_CBV_B4, static_cast<D3D12GraphicsBuffer*>(m_GraphicBuffers["cbPerScene"])->GetTempResource()->GetGPUVirtualAddress());
 		commandList->SetComputeRootShaderResourceView(RootParam_SRV_T0, static_cast<D3D12GraphicsBuffer*>(m_GraphicBuffers["rawBufferLights"])->GetTempResource()->GetGPUVirtualAddress());
 
-		Resource* mainDSV = const_cast<Resource*>(m_pDepthStencil->GetDefaultResource());
+		D3D12GraphicsTexture* mainDSV = static_cast<D3D12GraphicsTexture*>(m_GraphicTextures["mainDepthStencilBuffer"]);
 		CD3DX12_RESOURCE_BARRIER transition = CD3DX12_RESOURCE_BARRIER::Transition(
-			mainDSV->GetID3D12Resource1(),
+			mainDSV->GetTempResource(),
 			D3D12_RESOURCE_STATE_DEPTH_WRITE,				// StateBefore
-			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);// StateAfter
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);	// StateAfter
 		commandList->ResourceBarrier(1, &transition);
 
 		// This pair for m_RenderComponents will be used for model-outlining in case any model is picked.
@@ -132,7 +140,12 @@ void DeferredLightRenderTask::Execute()
 
 		// Draw a fullscreen quad 
 		commandList->SetGraphicsRoot32BitConstants(Constants_SlotInfo_B0, sizeof(SlotInfo) / sizeof(UINT), &m_Info, 0);
-		commandList->IASetIndexBuffer(m_pFullScreenQuadMesh->GetIndexBufferView());
+
+		D3D12_INDEX_BUFFER_VIEW indexBufferView = {};
+		indexBufferView.BufferLocation = static_cast<D3D12GraphicsBuffer*>(m_pFullScreenQuadMesh->GetIndexBuffer())->GetTempResource()->GetGPUVirtualAddress();
+		indexBufferView.Format = DXGI_FORMAT_R32_UINT;
+		indexBufferView.SizeInBytes = m_pFullScreenQuadMesh->GetSizeOfIndices();
+		commandList->IASetIndexBuffer(&indexBufferView);
 
 		commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
 
@@ -145,7 +158,7 @@ void DeferredLightRenderTask::Execute()
 		//}
 
 		transition = CD3DX12_RESOURCE_BARRIER::Transition(
-			mainDSV->GetID3D12Resource1(),
+			mainDSV->GetTempResource(),
 			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,	// StateBefore
 			D3D12_RESOURCE_STATE_DEPTH_WRITE);				// StateAfter
 		commandList->ResourceBarrier(1, &transition);

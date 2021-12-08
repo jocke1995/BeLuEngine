@@ -6,15 +6,7 @@
 #include "DX12Task.h"
 
 // Renderer
-class RootSignature;
-class Resource;
-
-class DepthStencil;
-class RenderTargetView;
-class ShaderResourceView;
-
 class BaseCamera;
-class SwapChain;
 class PipelineState;
 
 // Components
@@ -25,13 +17,12 @@ class PipelineState;
 #include "../../ECS/Components/Lights/SpotLightComponent.h"
 
 // DX12 Forward Declarations
-struct ID3D12RootSignature;
 struct D3D12_GRAPHICS_PIPELINE_STATE_DESC;
 
 class RenderTask : public DX12Task
 {
 public:
-	RenderTask(ID3D12Device5* device,
+	RenderTask(
 		const std::wstring& VSName, const std::wstring& PSName,
 		std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*> *gpsds,
 		const std::wstring& psoName,
@@ -41,19 +32,12 @@ public:
 
 	PipelineState* GetPipelineState(unsigned int index);
 
-	
-	void AddRenderTargetView(std::string, const RenderTargetView* renderTargetView);
-	
 	void SetRenderComponents(std::vector<RenderComponent>* renderComponents);
-	void SetMainDepthStencil(DepthStencil* depthStencil);
 
 	void SetCamera(BaseCamera* camera);
 	
 protected:
 	std::vector<RenderComponent> m_RenderComponents;
-	std::map<std::string, const RenderTargetView*> m_RenderTargetViews;
-	
-	DepthStencil* m_pDepthStencil = nullptr;
 	BaseCamera* m_pCamera = nullptr;
 	std::vector<PipelineState*> m_PipelineStates;
 };

@@ -4,19 +4,17 @@
 #include "RenderTask.h"
 class Mesh;
 
-class ShaderResourceView;
-class UnorderedAccessView;
+class IGraphicsTexture;
 
 class DownSampleRenderTask : public RenderTask
 {
 public:
 	DownSampleRenderTask(
-		ID3D12Device5* device,
 		const std::wstring& VSName, const std::wstring& PSName,
 		std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*>* gpsds,
 		const std::wstring& psoName,
-		const ShaderResourceView* sourceSRV,
-		const RenderTargetView* destinationRTV,
+		IGraphicsTexture* sourceTexture,
+		IGraphicsTexture* destinationTexture,
 		unsigned int FLAG_THREAD);
 	virtual ~DownSampleRenderTask();
 	
@@ -25,8 +23,8 @@ public:
 
 	void Execute() override final;
 private:
-	ShaderResourceView* m_pSourceSRV = nullptr;
-	const RenderTargetView* m_pDestinationRTV = nullptr;
+	IGraphicsTexture* m_pSourceTexture = nullptr;
+	IGraphicsTexture* m_pDestinationTexture = nullptr;
 
 	Mesh* m_pFullScreenQuadMesh = nullptr;
 

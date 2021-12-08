@@ -8,6 +8,8 @@ enum class E_GRAPHICSBUFFER_TYPE
 	VertexBuffer,
 	IndexBuffer,
 	CPUBuffer,
+	UnorderedAccessBuffer,
+	RayTracingBuffer,
 	None,
 	NUM_PARAMS
 };
