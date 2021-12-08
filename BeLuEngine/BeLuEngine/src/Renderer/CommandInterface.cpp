@@ -74,8 +74,11 @@ void CommandInterface::createCommandInterfaces(E_COMMAND_INTERFACE_TYPE interfac
 			nullptr,
 			IID_PPV_ARGS(&m_pCommandLists[i]));
 
-		m_pCommandAllocators[i]->SetName((m_Name + L"_CmdList").c_str());
-		m_pCommandLists[i]->SetName((m_Name + L"_CmdList").c_str());
+		std::wstring name = m_Name + L"_CmdAllocator";
+		m_pCommandAllocators[i]->SetName(name.c_str());
+
+		name = m_Name + L"_CmdList";
+		m_pCommandLists[i]->SetName(name.c_str());
 		if (FAILED(hr))
 		{
 			BL_LOG_CRITICAL("Failed to Create CommandList\n");

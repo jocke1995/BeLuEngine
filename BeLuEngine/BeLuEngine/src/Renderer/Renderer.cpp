@@ -56,7 +56,6 @@
 #include "DX12Tasks/MergeRenderTask.h"
 
 // Copy 
-#include "DX12Tasks/CopyPerFrameTask.h"
 #include "DX12Tasks/CopyPerFrameMatricesTask.h"
 #include "DX12Tasks/CopyOnDemandTask.h"
 
@@ -235,7 +234,7 @@ void Renderer::InitD3D12(HWND hwnd, unsigned int width, unsigned int height, HIN
 	m_pMainDepthStencil = IGraphicsTexture::Create();
 	m_pMainDepthStencil->CreateTexture2D(
 		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
-		DXGI_FORMAT_R24_UNORM_X8_TYPELESS,
+		DXGI_FORMAT_D24_UNORM_S8_UINT,
 		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::DepthStencil,
 		L"MainDepthStencilBuffer",
 		D3D12_RESOURCE_STATE_DEPTH_WRITE);
@@ -326,8 +325,13 @@ void Renderer::Update(double dt)
 
 	submitUploadPerFrameData();
 
+	// Submit Transforms
+	
+
 	// Picking
 	updateMousePicker();
+
+	
 
 	// ImGui
 #ifdef DEBUG
@@ -418,11 +422,6 @@ void Renderer::ExecuteMT()
 	IGraphicsManager* graphicsManager = IGraphicsManager::GetBaseInstance();
 	graphicsManager->Begin();
 
-	unsigned int commandInterfaceIndex = m_FrameCounter++ % NUM_SWAP_BUFFERS;
-
-	DX12Task::SetBackBufferIndex(commandInterfaceIndex);
-	DX12Task::SetCommandInterfaceIndex(commandInterfaceIndex);
-
 	CopyTask* copyTask = nullptr;
 	ComputeTask* computeTask = nullptr;
 	RenderTask* renderTask = nullptr;
@@ -437,11 +436,11 @@ void Renderer::ExecuteMT()
 	// Copy per frame
 	//copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME];
 	//m_pThreadPool->AddTask(copyTask);
-	//
-	//// Copy per frame (matrices, world and wvp)
-	//copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME_MATRICES];
-	//static_cast<CopyPerFrameMatricesTask*>(copyTask)->SetCamera(m_pScenePrimaryCamera);
-	//m_pThreadPool->AddTask(copyTask);
+	
+	// Copy per frame (matrices, world and wvp)
+	copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME_MATRICES];
+	static_cast<CopyPerFrameMatricesTask*>(copyTask)->SetCamera(m_pScenePrimaryCamera);
+	m_pThreadPool->AddTask(copyTask);
 
 	// Update BLASes if any...
 	dx12Task = m_DX12Tasks[E_DX12_TASK_TYPE::BLAS];
@@ -500,13 +499,10 @@ void Renderer::ExecuteMT()
 	m_pThreadPool->WaitForThreads(F_THREAD_FLAGS::RENDER);
 
 
-	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->Execute(m_DirectCommandLists[commandInterfaceIndex], m_DirectCommandLists[commandInterfaceIndex].size());
+	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->Execute(m_DirectCommandLists, m_DirectCommandLists[0].size());
 
 
 	/* --------------------------------------------------------------- */
-
-	// Clear copy on demand
-	m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]->Clear();
 
 	// ImGui
 #ifdef DEBUG
@@ -516,7 +512,7 @@ void Renderer::ExecuteMT()
 	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::IMGUI];
 	renderTask->Execute();
 
-	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->Execute(m_ImGuiCommandLists[commandInterfaceIndex], m_ImGuiCommandLists[commandInterfaceIndex].size());
+	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->Execute(m_ImGuiCommandLists, m_ImGuiCommandLists[0].size());
 #endif
 
 
@@ -534,11 +530,6 @@ void Renderer::ExecuteST()
 	IGraphicsManager* graphicsManager = IGraphicsManager::GetBaseInstance();
 	graphicsManager->Begin();
 
-	unsigned int commandInterfaceIndex = m_FrameCounter++ % NUM_SWAP_BUFFERS;
-
-	DX12Task::SetBackBufferIndex(commandInterfaceIndex);
-	DX12Task::SetCommandInterfaceIndex(commandInterfaceIndex);
-
 	CopyTask* copyTask = nullptr;
 	ComputeTask* computeTask = nullptr;
 	RenderTask* renderTask = nullptr;
@@ -549,15 +540,11 @@ void Renderer::ExecuteST()
 	// Copy on demand
 	copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND];
 	copyTask->Execute();
-
-	// Copy per frame
-	//copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME];
-	//copyTask->Execute();
-	//
-	//// Copy per frame (matrices, world and wvp)
-	//copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME_MATRICES];
-	//static_cast<CopyPerFrameMatricesTask*>(copyTask)->SetCamera(m_pScenePrimaryCamera);
-	//copyTask->Execute();
+	
+	// Copy per frame (matrices, world and wvp)
+	copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME_MATRICES];
+	static_cast<CopyPerFrameMatricesTask*>(copyTask)->SetCamera(m_pScenePrimaryCamera);
+	copyTask->Execute();
 
 	// Update BLASes if any...
 	dx12Task = m_DX12Tasks[E_DX12_TASK_TYPE::BLAS];
@@ -607,17 +594,15 @@ void Renderer::ExecuteST()
 	if (DEVELOPERMODE_DRAWBOUNDINGBOX == true)
 	{
 		renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::WIREFRAME];
-		renderTask->Execute();
+		//renderTask->Execute();
 	}
 
 	/* ----------------------------- DEVELOPERMODE CommandLists ----------------------------- */
-	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->Execute(m_DirectCommandLists[commandInterfaceIndex], m_DirectCommandLists[commandInterfaceIndex].size());
+	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->Execute(m_DirectCommandLists, m_DirectCommandLists[0].size());
 
 	/* --------------------------------------------------------------- */
 
 	/*------------------- Post draw stuff -------------------*/
-	// Clear copy on demand
-	m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]->Clear();
 
 	// ImGui
 #ifdef DEBUG
@@ -627,7 +612,7 @@ void Renderer::ExecuteST()
 	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::IMGUI];
 	renderTask->Execute();
 
-	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->Execute(m_ImGuiCommandLists[commandInterfaceIndex], m_ImGuiCommandLists[commandInterfaceIndex].size());
+	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->Execute(m_ImGuiCommandLists, m_ImGuiCommandLists[0].size());
 #endif
 
 	/*------------------- Present -------------------*/
@@ -660,13 +645,7 @@ void Renderer::InitModelComponent(component::ModelComponent* mc)
 		t->m_pConstantBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::ConstantBuffer, E_GRAPHICSBUFFER_UPLOADFREQUENCY::Static, sizeof(DirectX::XMMATRIX), 2, DXGI_FORMAT_UNKNOWN, L"Transform");
 
 		t->UpdateWorldMatrix();
-		DirectX::XMMATRIX w_wvp[2] = {};
-		// World
-		w_wvp[0] = *t->GetWorldMatrixTransposed();
-		// WVP
-		w_wvp[1] = *m_pScenePrimaryCamera->GetViewProjectionTranposed() * w_wvp[0];
-
-		m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]->SubmitBuffer(t->m_pConstantBuffer, w_wvp);
+		static_cast<CopyPerFrameMatricesTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME_MATRICES])->SubmitTransform(t);
 
 		// Finally store the object in the corresponding renderComponent vectors so it will be drawn
 		if (F_DRAW_FLAGS::DRAW_TRANSPARENT & mc->GetDrawFlag())
@@ -879,7 +858,6 @@ void Renderer::UnInitBoundingBoxComponent(component::BoundingBoxComponent* compo
 void Renderer::OnResetScene()
 {
 	m_RenderComponents.clear();
-	m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]->Clear();
 	m_pScenePrimaryCamera = nullptr;
 	static_cast<WireframeRenderTask*>(m_RenderTasks[E_RENDER_TASK_TYPE::WIREFRAME])->Clear();
 	m_BoundingBoxesToBePicked.clear();
@@ -920,7 +898,7 @@ void Renderer::submitMaterialToGPU(component::ModelComponent* mc)
 		}
 
 		CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]);
-		codt->SubmitTexture(graphicsTexture, nullptr);
+		codt->SubmitTexture(graphicsTexture);
 
 		AssetLoader::Get()->m_LoadedTextures.at(graphicsTexture->GetPath()).first = true;
 	};
@@ -940,7 +918,7 @@ void Renderer::submitMaterialToGPU(component::ModelComponent* mc)
 	
 	// MaterialData
 	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]);
-	codt->SubmitBuffer(mc->GetSlotInfoByteAdressBufferDXR(), mc->m_MaterialDataRawBuffer.data());
+	codt->SubmitBuffer(mc->GetMaterialByteAdressBuffer(), mc->m_MaterialDataRawBuffer.data());
 }
 
 Entity* const Renderer::GetPickedEntity() const
@@ -1116,7 +1094,7 @@ void Renderer::initRenderTasks()
 	// DepthStencil
 	depthPrePassDsd.StencilEnable = false;
 	gpsdDepthPrePass.DepthStencilState = depthPrePassDsd;
-	gpsdDepthPrePass.DSVFormat = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+	gpsdDepthPrePass.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 
 	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*> gpsdDepthPrePassVector;
 	gpsdDepthPrePassVector.push_back(&gpsdDepthPrePass);
@@ -1171,7 +1149,7 @@ void Renderer::initRenderTasks()
 	// DepthStencil
 	deferredGeometryDsd.StencilEnable = false;
 	gpsdDeferredGeometryPass.DepthStencilState = deferredGeometryDsd;
-	gpsdDeferredGeometryPass.DSVFormat = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+	gpsdDeferredGeometryPass.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 
 	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*> gpsdDeferredGeometryPassVector;
 	gpsdDeferredGeometryPassVector.push_back(&gpsdDeferredGeometryPass);
@@ -1225,7 +1203,7 @@ void Renderer::initRenderTasks()
 	// DepthStencil
 	dsd.StencilEnable = false;
 	gpsdDeferredLightRender.DepthStencilState = dsd;
-	gpsdDeferredLightRender.DSVFormat = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+	gpsdDeferredLightRender.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 
 	/* Forward rendering with stencil testing */
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsdForwardRenderStencilTest = gpsdDeferredLightRender;
@@ -1337,7 +1315,7 @@ void Renderer::initRenderTasks()
 	dsd.BackFace = stencilNotEqual;
 
 	gpsdModelOutlining.DepthStencilState = dsd;
-	gpsdModelOutlining.DSVFormat = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+	gpsdModelOutlining.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 
 	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*> gpsdOutliningVector;
 	gpsdOutliningVector.push_back(&gpsdModelOutlining);
@@ -1403,7 +1381,7 @@ void Renderer::initRenderTasks()
 	dsdBlend.BackFace = blendStencilOP;
 
 	gpsdBlendFrontCull.DepthStencilState = dsdBlend;
-	gpsdBlendFrontCull.DSVFormat = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+	gpsdBlendFrontCull.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 
 	// ------------------------ BLEND ---------------------------- BACKCULL
 
@@ -1427,7 +1405,7 @@ void Renderer::initRenderTasks()
 	dsdBlend.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
 
 	gpsdBlendBackCull.DepthStencilState = dsdBlend;
-	gpsdBlendBackCull.DSVFormat = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+	gpsdBlendBackCull.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 
 	// Push back to vector
 	gpsdBlendVector.push_back(&gpsdBlendFrontCull);
@@ -1525,7 +1503,7 @@ void Renderer::initRenderTasks()
 	RenderTask* imGuiRenderTask = new ImGuiRenderTask(
 		L"", L"",
 		nullptr,
-		L"",
+		L"ImGui",
 		F_THREAD_FLAGS::RENDER);
 #pragma endregion IMGUIRENDERTASK
 
@@ -1542,8 +1520,7 @@ void Renderer::initRenderTasks()
 		F_THREAD_FLAGS::RENDER);
 
 	// CopyTasks
-	//CopyTask* copyPerFrameTask			= new CopyPerFrameTask(E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE, F_THREAD_FLAGS::RENDER, L"copyPerFrameCL");
-	//CopyTask* copyPerFrameMatricesTask  = new CopyPerFrameMatricesTask(E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE, F_THREAD_FLAGS::RENDER, L"copyPerFrameMatricesCL");
+	CopyTask* copyPerFrameMatricesTask  = new CopyPerFrameMatricesTask(E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE, F_THREAD_FLAGS::RENDER, L"copyPerFrameMatricesCL");
 	CopyTask* copyOnDemandTask			= new CopyOnDemandTask(E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE, F_THREAD_FLAGS::RENDER, L"copyOnDemandCL");
 
 #pragma endregion ComputeAndCopyTasks
@@ -1553,9 +1530,7 @@ void Renderer::initRenderTasks()
 
 
 	/* ------------------------- CopyQueue Tasks ------------------------ */
-
-	//m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME] = copyPerFrameTask;
-	//m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME_MATRICES] = copyPerFrameMatricesTask;
+	m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME_MATRICES] = copyPerFrameMatricesTask;
 	m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND] = copyOnDemandTask;
 
 	/* ------------------------- ComputeQueue Tasks ------------------------ */
@@ -1585,16 +1560,11 @@ void Renderer::initRenderTasks()
 	{
 		m_DirectCommandLists[i].push_back(copyOnDemandTask->GetCommandInterface()->GetCommandList(i));
 	}
-
-	//for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
-	//{
-	//	m_DirectCommandLists[i].push_back(copyPerFrameTask->GetCommandInterface()->GetCommandList(i));
-	//}
-	//
-	//for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
-	//{
-	//	m_DirectCommandLists[i].push_back(copyPerFrameMatricesTask->GetCommandInterface()->GetCommandList(i));
-	//}
+	
+	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
+	{
+		m_DirectCommandLists[i].push_back(copyPerFrameMatricesTask->GetCommandInterface()->GetCommandList(i));
+	}
 
 	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
@@ -1681,7 +1651,7 @@ void Renderer::createRawBufferForLights()
 
 	// Memory on GPU
 	BL_ASSERT(Light::m_pLightsRawBuffer == nullptr);
-	Light::m_pLightsRawBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::RawBuffer, E_GRAPHICSBUFFER_UPLOADFREQUENCY::Static, rawBufferSize, 1, DXGI_FORMAT_R32_TYPELESS, L"RAW_BUFFER_LIGHTS");
+	Light::m_pLightsRawBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::RawBuffer, E_GRAPHICSBUFFER_UPLOADFREQUENCY::Static, rawBufferSize, 1, DXGI_FORMAT_UNKNOWN, L"RAW_BUFFER_LIGHTS");
 
 	// Memory on CPU
 	Light::m_pRawData = (unsigned char*)malloc(rawBufferSize);

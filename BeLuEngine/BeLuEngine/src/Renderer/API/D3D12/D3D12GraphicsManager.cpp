@@ -6,6 +6,9 @@ TODO("This should be inside stdafx.h");
 
 #include "../Renderer/Statistics/EngineStatistics.h"
 #include "../Renderer/DescriptorHeap.h"
+
+#include "../Renderer/DX12Tasks/DX12Task.h"
+
 D3D12GraphicsManager::D3D12GraphicsManager()
 {
 }
@@ -318,7 +321,8 @@ void D3D12GraphicsManager::Init(HWND hwnd, unsigned int width, unsigned int heig
 			BL_LOG_CRITICAL("Failed to GetBuffer from RenderTarget to Swapchain\n");
 		}
 
-		hr = m_SwapchainResources[i]->SetName(L"SwapchainResource");
+		std::wstring swapchainName = L"SwapchainResource_" + std::to_wstring(i);
+		hr = m_SwapchainResources[i]->SetName(swapchainName.c_str());
 		if (!SucceededHRESULT(hr))
 		{
 			BL_LOG_CRITICAL("Failed to Setname on Swapchain\n");
@@ -710,7 +714,8 @@ void D3D12GraphicsManager::Init(HWND hwnd, unsigned int width, unsigned int heig
 
 void D3D12GraphicsManager::Begin()
 {
-	mCommandInterfaceIndex = (mCommandInterfaceIndex + 1) % NUM_SWAP_BUFFERS;
+	DX12Task::SetBackBufferIndex(mCommandInterfaceIndex);
+	DX12Task::SetCommandInterfaceIndex(mCommandInterfaceIndex);
 }
 
 void D3D12GraphicsManager::End()
@@ -738,14 +743,17 @@ void D3D12GraphicsManager::End()
 	}
 
 	mFrameIndex++;
+	mCommandInterfaceIndex = (mCommandInterfaceIndex + 1) % NUM_SWAP_BUFFERS;
 
 	// Reset the offset of the dynamic upload heap for next frame
 	m_pIntermediateUploadHeapAtomicCurrent = 0;
 }
 
-void D3D12GraphicsManager::Execute(const std::vector<ID3D12CommandList*>& m_DirectCommandLists, unsigned int numCommandLists)
+void D3D12GraphicsManager::Execute(std::vector<ID3D12CommandList*>* commandLists, unsigned int numCommandLists)
 {
-	m_pGraphicsCommandQueue->ExecuteCommandLists(numCommandLists, m_DirectCommandLists.data());
+	std::vector<ID3D12CommandList*> cList = commandLists[mCommandInterfaceIndex];
+
+	m_pGraphicsCommandQueue->ExecuteCommandLists(numCommandLists, cList.data());
 }
 
 void D3D12GraphicsManager::SyncAndPresent()

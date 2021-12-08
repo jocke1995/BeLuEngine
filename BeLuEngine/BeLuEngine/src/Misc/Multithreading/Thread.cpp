@@ -74,8 +74,11 @@ Thread::Thread(
 	m_Mutex = mutex;
 	m_pWorkerThreadCV = workerThreadCV;
 	m_pMainThreadCV = mainThreadCV;
-
 	m_ThreadId = threadId;
+
+	TODO("Wrap this in a debug or other macro to not use it in Dist-builds")
+	m_pStatistics = new IM_ThreadStats();
+
 	// Create and start the thread function
 	m_ThreadHandle = reinterpret_cast<HANDLE>(_beginthreadex(0, 0, threadFunc, static_cast<void*>(this), 0, 0));
 
@@ -85,7 +88,6 @@ Thread::Thread(
 		BL_LOG_CRITICAL("Failed to 'SetThreadPriority' belonging to a thread with id: %d\n", m_ThreadId);
 	}
 
-	m_pStatistics = new IM_ThreadStats();
 
 	EngineStatistics::GetIM_ThreadStats().push_back(m_pStatistics);
 }

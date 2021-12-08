@@ -13,7 +13,6 @@
 
 // CopyTasks
 #include "../Renderer/DX12Tasks/CopyOnDemandTask.h"
-#include "../Renderer/DX12Tasks/CopyPerFrameTask.h"
 
 // RenderTasks
 #include "../Renderer/DX12Tasks/WireframeRenderTask.h"

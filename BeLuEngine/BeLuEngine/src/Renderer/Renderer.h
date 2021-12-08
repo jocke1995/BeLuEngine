@@ -5,7 +5,6 @@
 class ThreadPool;
 
 // Renderer Engine
-class SwapChain;
 class BoundingBoxPool;
 class DescriptorHeap;
 class Mesh;

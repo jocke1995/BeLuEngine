@@ -139,8 +139,13 @@ void MergeRenderTask::Execute()
 		// Change state on mainColorBuffer
 		TransferResourceState(mainColorBufferResource, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
+		//float col[4] = { 1.0f, 0.0f, 1.0f, 1.0f };
+		//commandList->ClearRenderTargetView(cdh, col, 0, nullptr);
+
 		// Change state on front/backbuffer
 		TransferResourceState(swapChainResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+
+		
 	}
 	commandList->Close();
 }

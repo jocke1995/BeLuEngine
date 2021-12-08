@@ -49,14 +49,14 @@ void DX12Task::SetBackBufferIndex(int backBufferIndex)
 
 void DX12Task::SetCommandInterfaceIndex(int index)
 {
-	BL_ASSERT(index > 0);
+	BL_ASSERT(index >= 0 && index < NUM_SWAP_BUFFERS);
 
 	m_CommandInterfaceIndex = index;
 }
 
 void DX12Task::AddGraphicsBuffer(std::string id, IGraphicsBuffer* graphicBuffer)
 {
-	BL_ASSERT_MESSAGE(m_GraphicBuffers[id] == nullptr, "Trying to add graphicBuffer with name: \'%s\' that already exists.\n, id");
+	BL_ASSERT_MESSAGE(m_GraphicBuffers[id] == nullptr, "Trying to add graphicBuffer with name: \'%s\' that already exists.\n", id);
 	m_GraphicBuffers[id] = graphicBuffer;
 }
 

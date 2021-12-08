@@ -4,6 +4,7 @@
 #include "CopyTask.h"
 
 class BaseCamera;
+class Transform;
 
 class CopyPerFrameMatricesTask : public CopyTask
 {
@@ -14,12 +15,15 @@ public:
 		const std::wstring& clName);
 	virtual ~CopyPerFrameMatricesTask();
 
-	void SetCamera(BaseCamera* cam);
 
 	void Execute();
 
+	void SubmitTransform(Transform* transform);
+	void SetCamera(BaseCamera* cam);
+
 private:
 	BaseCamera* m_pCameraRef = nullptr;
+	std::vector<Transform*> m_TransformsToUpdate;
 };
 
 #endif

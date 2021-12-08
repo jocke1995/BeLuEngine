@@ -131,19 +131,36 @@ bool D3D12GraphicsTexture::CreateTexture2D(unsigned int width, unsigned int heig
 	heapProps.VisibleNodeMask = 1; //used when multi-gpu
 	heapProps.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
 
+	D3D12_CLEAR_VALUE* pClearValue = nullptr;
 	D3D12_CLEAR_VALUE clearValue = {};
-	clearValue.Format = resourceDesc.Format;
-	clearValue.Color[0] = 0.0f;
-	clearValue.Color[1] = 0.0f;
-	clearValue.Color[2] = 0.0f;
-	clearValue.Color[3] = 1.0f;
+
+	if (textureUsage & F_TEXTURE_USAGE::DepthStencil)
+	{
+		clearValue.Format = resourceDesc.Format;
+		clearValue.DepthStencil.Depth = 1;
+		clearValue.DepthStencil.Stencil = 0;
+
+		pClearValue = &clearValue;
+	}
+
+	if (textureUsage & F_TEXTURE_USAGE::RenderTarget)
+	{
+		clearValue.Format = resourceDesc.Format;
+		clearValue.Color[0] = 0.0f;
+		clearValue.Color[1] = 0.0f;
+		clearValue.Color[2] = 0.0f;
+		clearValue.Color[3] = 1.0f;
+
+		pClearValue = &clearValue;
+	}
+	
 
 	hr = device5->CreateCommittedResource(
 		&heapProps,
 		D3D12_HEAP_FLAG_NONE,
 		&resourceDesc,
 		startStateTemp,
-		nullptr,
+		pClearValue,
 		IID_PPV_ARGS(&m_pResource)
 	);
 
@@ -158,9 +175,14 @@ bool D3D12GraphicsTexture::CreateTexture2D(unsigned int width, unsigned int heig
 #pragma region CreateDescriptors
 	if (textureUsage & F_TEXTURE_USAGE::ShaderResource)
 	{
+		TODO("Fix format wrapper");
+		DXGI_FORMAT dxgiFormatTemp = dxgiFormat;
+		if (dxgiFormat == DXGI_FORMAT_D24_UNORM_S8_UINT)
+			dxgiFormatTemp = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-		srvDesc.Format = dxgiFormat;
+		srvDesc.Format = dxgiFormatTemp;
 		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 		srvDesc.Texture2D.MipLevels = 1;
 
@@ -200,9 +222,6 @@ bool D3D12GraphicsTexture::CreateTexture2D(unsigned int width, unsigned int heig
 
 	if (textureUsage & F_TEXTURE_USAGE::DepthStencil)
 	{
-		TODO("Fix format wrapper");
-		// DXGI_FORMAT_R24_UNORM_X8_TYPELESS For the srv
-
 		D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
 		dsvDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 		dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;

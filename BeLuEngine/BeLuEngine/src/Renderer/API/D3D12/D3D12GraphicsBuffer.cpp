@@ -19,6 +19,8 @@ D3D12GraphicsBuffer::D3D12GraphicsBuffer(E_GRAPHICSBUFFER_TYPE type, E_GRAPHICSB
 	DescriptorHeap* mainDHeap = graphicsManager->GetMainDescriptorHeap();
 
 	unsigned int totalSizeUnpadded = sizeOfSingleItem * numItems;
+	m_Size = totalSizeUnpadded;
+	m_BufferType = type;
 
 #pragma region SetParamsDependingOnType
 	// Pad
@@ -60,6 +62,9 @@ D3D12GraphicsBuffer::D3D12GraphicsBuffer(E_GRAPHICSBUFFER_TYPE type, E_GRAPHICSB
 	resourceDesc.Width = m_Size;
 	resourceDesc.Height = 1;
 	resourceDesc.DepthOrArraySize = 1;
+	resourceDesc.MipLevels = 1;
+	resourceDesc.SampleDesc.Count = 1;
+	resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
 	resourceDesc.Flags = flags;
 	resourceDesc.Format = format;
 
@@ -96,12 +101,10 @@ D3D12GraphicsBuffer::D3D12GraphicsBuffer(E_GRAPHICSBUFFER_TYPE type, E_GRAPHICSB
 		}
 		case E_GRAPHICSBUFFER_TYPE::RawBuffer:
 		{
-			BL_ASSERT(format == DXGI_FORMAT_R32_TYPELESS);
-
 			D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 			srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
 			srvDesc.Buffer.FirstElement = 0;
-			srvDesc.Format = format; // DXGI_FORMAT_R32_TYPELESS;
+			srvDesc.Format = DXGI_FORMAT_R32_TYPELESS;
 			srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 			srvDesc.Buffer.NumElements = numItems;
 			srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
@@ -172,6 +175,15 @@ unsigned int D3D12GraphicsBuffer::GetConstantBufferDescriptorIndex() const
 
 unsigned int D3D12GraphicsBuffer::GetShaderResourceHeapIndex() const
 {
-	BL_ASSERT(m_BufferType == E_GRAPHICSBUFFER_TYPE::VertexBuffer || m_BufferType == E_GRAPHICSBUFFER_TYPE::IndexBuffer || m_BufferType == E_GRAPHICSBUFFER_TYPE::RawBuffer);
+	BL_ASSERT(	m_BufferType == E_GRAPHICSBUFFER_TYPE::RawBuffer ||
+				m_BufferType == E_GRAPHICSBUFFER_TYPE::VertexBuffer ||
+				m_BufferType == E_GRAPHICSBUFFER_TYPE::IndexBuffer ||
+				m_BufferType == E_GRAPHICSBUFFER_TYPE::RayTracingBuffer);
 	return m_ShaderResourceDescriptorHeapIndex;
+}
+
+ID3D12Resource1* D3D12GraphicsBuffer::GetTempResource()
+{
+	BL_ASSERT(m_pResource);
+	return m_pResource;;
 }

@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "Transform.h"
 
+#include "../Misc/Log.h"
+
 Transform::Transform(bool invertDirection)
 {
 	m_Position = DirectX::XMFLOAT3(0.0, 0.0, 0.0);
@@ -186,4 +188,10 @@ float3 Transform::GetUpFloat3() const
 	DirectX::XMStoreFloat3(&up, rotMat.r[1]);
 
 	return { up.x, up.y, up.z };
+}
+
+IGraphicsBuffer* Transform::GetConstantBuffer()
+{
+	BL_ASSERT(m_pConstantBuffer);
+	return m_pConstantBuffer;
 }

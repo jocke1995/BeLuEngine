@@ -33,7 +33,7 @@ public:
 
 	// Call everyframe
 	void Begin() override;
-	void Execute(const std::vector<ID3D12CommandList*>& m_DirectCommandLists, unsigned int numCommandLists); // This will later take in GPUContext and be overriding from base
+	void Execute(std::vector<ID3D12CommandList*>* commandLists, unsigned int numCommandLists); // This will later take in GPUContext and be overriding from base
 	void SyncAndPresent() override;
 	void End() override;
 

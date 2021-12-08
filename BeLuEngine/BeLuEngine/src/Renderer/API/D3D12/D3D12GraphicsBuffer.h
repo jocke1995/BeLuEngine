@@ -15,7 +15,7 @@ public:
 
 	unsigned int GetSize() const override { return m_Size; }
 
-	ID3D12Resource1* GetTempResource() { return m_pResource; }
+	ID3D12Resource1* GetTempResource();
 private:
 	ID3D12Resource1* m_pResource = nullptr;
 	unsigned int m_ConstantBufferDescriptorHeapIndex = -1;

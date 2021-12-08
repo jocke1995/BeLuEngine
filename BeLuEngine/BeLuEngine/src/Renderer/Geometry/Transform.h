@@ -44,6 +44,8 @@ public:
 
 	DirectX::XMFLOAT3 GetUpXMFLOAT3() const;
 	float3 GetUpFloat3() const;
+
+	IGraphicsBuffer* GetConstantBuffer();
 private:
 	friend class Renderer;
 	friend class OutliningRenderTask;
