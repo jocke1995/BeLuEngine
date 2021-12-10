@@ -45,12 +45,12 @@ void ImGuiRenderTask::Execute()
 		commandList->SetDescriptorHeaps(1, &d3d12DescriptorHeap);
 
 		// Change state on front/backbuffer
-		// Transition DepthBuffer
 		CD3DX12_RESOURCE_BARRIER transition = CD3DX12_RESOURCE_BARRIER::Transition(
 			swapChainResource,
 			D3D12_RESOURCE_STATE_PRESENT,			// StateBefore
 			D3D12_RESOURCE_STATE_RENDER_TARGET);	// StateAfter
 
+		commandList->ResourceBarrier(1, &transition);
 		DescriptorHeap* renderTargetHeap = rtvHeap;
 
 		const unsigned int swapChainRTVIndex = static_cast<D3D12GraphicsManager*>(IGraphicsManager::GetBaseInstance())->m_SwapchainRTVIndices[m_CommandInterfaceIndex];
@@ -71,6 +71,7 @@ void ImGuiRenderTask::Execute()
 			swapChainResource,
 			D3D12_RESOURCE_STATE_RENDER_TARGET,	// StateBefore
 			D3D12_RESOURCE_STATE_PRESENT);		// StateAfter
+		commandList->ResourceBarrier(1, &transition);
 	}
 	commandList->Close();
 }

@@ -432,10 +432,6 @@ void Renderer::ExecuteMT()
 	// Copy on demand
 	copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND];
 	m_pThreadPool->AddTask(copyTask);
-
-	// Copy per frame
-	//copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME];
-	//m_pThreadPool->AddTask(copyTask);
 	
 	// Copy per frame (matrices, world and wvp)
 	copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME_MATRICES];
@@ -500,8 +496,6 @@ void Renderer::ExecuteMT()
 
 
 	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->Execute(m_DirectCommandLists, m_DirectCommandLists[0].size());
-
-
 	/* --------------------------------------------------------------- */
 
 	// ImGui
@@ -594,7 +588,7 @@ void Renderer::ExecuteST()
 	if (DEVELOPERMODE_DRAWBOUNDINGBOX == true)
 	{
 		renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::WIREFRAME];
-		//renderTask->Execute();
+		renderTask->Execute();
 	}
 
 	/* ----------------------------- DEVELOPERMODE CommandLists ----------------------------- */

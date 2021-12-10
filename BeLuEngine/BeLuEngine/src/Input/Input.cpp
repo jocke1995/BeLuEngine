@@ -29,7 +29,7 @@ void Input::RegisterDevices(HWND hWnd)
 	m_Rid[1].dwFlags = 0;
 	m_Rid[1].hwndTarget = hWnd;
 
-	if (RegisterRawInputDevices(m_Rid, 2, sizeof(m_Rid[0])) == FALSE)
+	if (!RegisterRawInputDevices(m_Rid, 2, sizeof(m_Rid[0])))
 	{
 		BL_LOG_CRITICAL("Device registration error: %f\n", GetLastError());
 	}
