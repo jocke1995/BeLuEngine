@@ -3,14 +3,11 @@
 
 class Mesh;
 class Material;
-class Resource;
-class ShaderResourceView;
 class DescriptorHeap;
 struct SlotInfo;
 
 // DX12 Forward Declarations
 struct ID3D12Device5;
-struct D3D12_INDEX_BUFFER_VIEW;
 
 // DXR
 class BottomLevelAccelerationStructure;

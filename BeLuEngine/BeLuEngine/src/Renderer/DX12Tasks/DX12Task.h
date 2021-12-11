@@ -4,11 +4,9 @@
 
 #include "../../Misc/MultiThreading/MultiThreadedTask.h"
 class CommandInterface;
-class Resource;
 class DescriptorHeap;
 
 enum E_COMMAND_INTERFACE_TYPE;
-enum class E_DESCRIPTOR_HEAP_TYPE;
 enum D3D12_RESOURCE_STATES;
 
 // DX12 Forward Declarations

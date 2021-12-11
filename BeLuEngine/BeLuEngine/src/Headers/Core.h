@@ -178,14 +178,5 @@ enum F_THREAD_FLAGS
 
 
 // TODO: Make a renderCore.h with renderstuff, and keep Core.h for commonStuff
-class Resource;
-class UnorderedAccessView;
-class ShaderResourceView;
-struct Resource_UAV_SRV
-{
-	Resource* resource;
-	UnorderedAccessView* uav;
-	ShaderResourceView* srv;
-};
 
 #endif

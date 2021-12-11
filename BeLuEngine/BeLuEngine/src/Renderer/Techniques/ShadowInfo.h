@@ -2,11 +2,7 @@
 #ifndef SHADOWINFO_H
 #define SHADOWINFO_H
 /*
-class DepthStencilView;
-class ShaderResourceView;
-class RenderView;
 class DescriptorHeap;
-class Resource;
 
 #include "../ECS/Components/Lights/Light.h"
 

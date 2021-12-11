@@ -753,7 +753,7 @@ void D3D12GraphicsManager::End()
 	mCommandInterfaceIndex = (mCommandInterfaceIndex + 1) % NUM_SWAP_BUFFERS;
 
 	// Reset the offset of the dynamic upload heap for next frame
-	m_pIntermediateUploadHeapAtomicCurrent = 0;
+	m_pIntermediateUploadHeapAtomicCurrentOffset = 0;
 }
 
 void D3D12GraphicsManager::Execute(std::vector<ID3D12CommandList*>* commandLists, unsigned int numCommandLists)
@@ -817,7 +817,7 @@ void D3D12GraphicsManager::AddD3D12ObjectToDefferedDeletion(ID3D12Object* object
 DynamicDataParams D3D12GraphicsManager::SetDynamicData(unsigned int size, const void* data)
 {
 	// Makes this function threadsafe
-	long offset = InterlockedAdd(&m_pIntermediateUploadHeapAtomicCurrent, size);
+	long offset = InterlockedAdd(&m_pIntermediateUploadHeapAtomicCurrentOffset, size);
 
 	if (offset > m_IntermediateUploadHeapSize)
 	{
@@ -886,8 +886,8 @@ void D3D12GraphicsManager::deleteDefferedDeletionObjects(bool forceDeleteAll)
 {
 	unsigned int framesToWait = forceDeleteAll ? 0 : NUM_SWAP_BUFFERS;
 	{
-		std::vector<std::pair<unsigned int, ID3D12Object*>> remainingDeviceChilds;
-		remainingDeviceChilds.reserve(m_ObjectsToBeDeleted.size());
+		std::vector<std::pair<unsigned int, ID3D12Object*>> remainingD3D12Objects;
+		remainingD3D12Objects.reserve(m_ObjectsToBeDeleted.size());
 
 		for (auto [frameDeleted, object] : m_ObjectsToBeDeleted)
 		{
@@ -897,10 +897,10 @@ void D3D12GraphicsManager::deleteDefferedDeletionObjects(bool forceDeleteAll)
 			}
 			else
 			{
-				remainingDeviceChilds.push_back(std::pair(frameDeleted, object));
+				remainingD3D12Objects.push_back(std::pair(frameDeleted, object));
 			}
 		}
 
-		m_ObjectsToBeDeleted = remainingDeviceChilds;
+		m_ObjectsToBeDeleted = remainingD3D12Objects;
 	}
 }

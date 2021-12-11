@@ -3,8 +3,6 @@
 
 #include "RenderTask.h"
 
-class ShaderResourceView;
-
 class mesh;
 
 class DeferredLightRenderTask : public RenderTask

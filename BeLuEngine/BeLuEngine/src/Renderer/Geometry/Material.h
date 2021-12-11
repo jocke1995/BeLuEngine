@@ -4,15 +4,7 @@
 #include "GPU_Structs.h"
 
 class IGraphicsTexture;
-class Resource;
-class ShaderResourceView;
 class DescriptorHeap;
-
-// DX12 Forward Declarations
-struct ID3D12Device5;
-struct D3D12_INDEX_BUFFER_VIEW;
-
-class ConstantBuffer;
 
 class Material
 {

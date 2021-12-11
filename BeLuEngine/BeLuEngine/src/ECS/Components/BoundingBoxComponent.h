@@ -17,7 +17,6 @@ enum F_BOUNDING_BOX_FLAGS
 };
 
 struct BoundingBoxData;
-class ShaderResourceView;
 class Mesh;
 class Transform;
 struct SlotInfo;

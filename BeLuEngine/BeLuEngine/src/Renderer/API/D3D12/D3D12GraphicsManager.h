@@ -113,7 +113,7 @@ private:
 
 	ID3D12Resource1* m_pIntermediateUploadHeap[NUM_SWAP_BUFFERS] = {};
 	void* m_pIntermediateUploadHeapBegin[NUM_SWAP_BUFFERS] = {};
-	LONG m_pIntermediateUploadHeapAtomicCurrent = 0;
+	LONG m_pIntermediateUploadHeapAtomicCurrentOffset = 0;
 	const unsigned int m_IntermediateUploadHeapSize = 1024 * 1024 * 100; // 100MB
 	// -------------------------- Native D3D12 -------------------------- 
 
