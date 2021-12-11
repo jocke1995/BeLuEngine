@@ -89,7 +89,7 @@ void CopyOnDemandTask::CopyTexture(ID3D12GraphicsCommandList* cl, IGraphicsTextu
 		D3D12_RESOURCE_BARRIER barrier{};
 		barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 		barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-		barrier.Transition.Subresource = 0;
+		barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 		barrier.Transition.pResource = resource;
 		barrier.Transition.StateBefore = stateBefore;
 		barrier.Transition.StateAfter = stateAfter;

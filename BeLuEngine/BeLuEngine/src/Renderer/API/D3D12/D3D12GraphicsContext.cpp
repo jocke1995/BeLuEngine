@@ -59,11 +59,12 @@ D3D12GraphicsContext::D3D12GraphicsContext(const std::wstring& name)
 
 D3D12GraphicsContext::~D3D12GraphicsContext()
 {
+	D3D12GraphicsManager* graphicsManager = D3D12GraphicsManager::GetInstance();
 	for (unsigned int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
-		BL_SAFE_RELEASE(&m_pCommandAllocators[i]);
+		graphicsManager->AddD3D12ObjectToDefferedDeletion(m_pCommandAllocators[i]);
 	}
-	BL_SAFE_RELEASE(&m_pCommandList);
+	graphicsManager->AddD3D12ObjectToDefferedDeletion(m_pCommandList);
 }
 
 void D3D12GraphicsContext::Begin(bool isComputePipeline)

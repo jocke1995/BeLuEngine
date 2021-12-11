@@ -4,33 +4,33 @@
 float RT_ShadowFactor(float3 worldPos, float tMin, float tMax, float3 rayDir, RaytracingAccelerationStructure sceneBVH)
 {
 	RayQuery<RAY_FLAG_SKIP_CLOSEST_HIT_SHADER | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH> q;
-
+	
 	uint rayFlags = 0;
 	uint instanceMask = 0xff;
-
+	
 	float shadowFactor = 1.0f;
-
+	
 	RayDesc ray = (RayDesc)0;
 	ray.TMin = tMin;
 	ray.TMax = tMax;
-
+	
 	ray.Direction = normalize(rayDir);
 	ray.Origin = worldPos.xyz;
-
+	
 	q.TraceRayInline(
 		sceneBVH,
 		rayFlags,
 		instanceMask,
 		ray
 	);
-
+	
 	q.Proceed();
-
+	
 	if (q.CommittedStatus() == COMMITTED_TRIANGLE_HIT)
 	{
 		shadowFactor = 0.0f;
 	}
-
+	
 	return shadowFactor;
 }
 

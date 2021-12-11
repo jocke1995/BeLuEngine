@@ -29,6 +29,8 @@ public:
 
     static AssetLoader* Get();
 
+    bool DeleteAllAssets();
+
     /* Load Functions */
     // Model ---------------
     Model* LoadModel(const std::wstring& path);

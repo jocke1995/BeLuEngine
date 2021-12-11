@@ -17,7 +17,6 @@ TopLevelAccelerationStructure::TopLevelAccelerationStructure()
 
 TopLevelAccelerationStructure::~TopLevelAccelerationStructure()
 {
-	BL_SAFE_DELETE(m_pInstanceDescBuffer);
 }
 
 void TopLevelAccelerationStructure::AddInstance(
@@ -59,15 +58,12 @@ void TopLevelAccelerationStructure::GenerateBuffers()
 	unsigned int resultSizeInBytes = (info.ResultDataMaxSizeInBytes + 255) & ~255;
 	m_InstanceDescsSizeInBytes = (sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * static_cast<UINT64>(m_Instances.size() + 255)) & ~255;
 
-	// Create buffers for scratch, result and instance
+	// Create buffers for scratch and result
 	BL_SAFE_DELETE(m_pScratchBuffer);
 	BL_SAFE_DELETE(m_pResultBuffer);
-	BL_SAFE_DELETE(m_pInstanceDescBuffer);
 
-	m_pScratchBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::UnorderedAccessBuffer, E_GRAPHICSBUFFER_UPLOADFREQUENCY::Static, scratchSizeInBytes, 1, DXGI_FORMAT_UNKNOWN, L"SCRATCHBUFFER_TLAS");
-	m_pResultBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::RayTracingBuffer, E_GRAPHICSBUFFER_UPLOADFREQUENCY::Static, resultSizeInBytes, 1, DXGI_FORMAT_UNKNOWN, L"RESULTBUFFER_TLAS");
-	m_pInstanceDescBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::CPUBuffer, E_GRAPHICSBUFFER_UPLOADFREQUENCY::Static, m_InstanceDescsSizeInBytes, 1, DXGI_FORMAT_UNKNOWN, L"INSTANCEDESCBUFFER_TLAS");
-
+	m_pScratchBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::UnorderedAccessBuffer, scratchSizeInBytes, 1, DXGI_FORMAT_UNKNOWN, L"SCRATCHBUFFER_TLAS");
+	m_pResultBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::RayTracingBuffer, resultSizeInBytes, 1, DXGI_FORMAT_UNKNOWN, L"RESULTBUFFER_TLAS");
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -79,6 +75,8 @@ void TopLevelAccelerationStructure::GenerateBuffers()
 
 void TopLevelAccelerationStructure::SetupAccelerationStructureForBuilding(bool update)
 {
+	D3D12GraphicsManager* manager = D3D12GraphicsManager::GetInstance();
+
 	// Ignore first
 	if (m_IsBuilt == false && update == true)
 		return;
@@ -89,19 +87,13 @@ void TopLevelAccelerationStructure::SetupAccelerationStructureForBuilding(bool u
 	D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;// D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
 	//flags |= update ? D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE : D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
 
-	// Copy the descriptors in the target descriptor buffer
-	D3D12_RAYTRACING_INSTANCE_DESC* instanceDescs;
-	HRESULT hr = static_cast<D3D12GraphicsBuffer*>(m_pInstanceDescBuffer)->GetTempResource()->Map(0, nullptr, reinterpret_cast<void**>(&instanceDescs));
-
-	BL_ASSERT_MESSAGE(instanceDescs != nullptr && SUCCEEDED(hr), "Failed to Map into the TLAS.\n");
-
-	// Initialize the memory to zero on the first time only
-	//if (update == false)
-	//{
-		ZeroMemory(instanceDescs, m_InstanceDescsSizeInBytes);
-	//}
-
 	unsigned int numInstances = m_Instances.size();
+
+	TODO("Fix this size");
+	unsigned int sizeInBytes = numInstances * sizeof(D3D12_RAYTRACING_INSTANCE_DESC);
+	D3D12_RAYTRACING_INSTANCE_DESC instanceDescs[50] = {};
+	
+
 	// Create the description for each instance
 	for (unsigned int i = 0; i < numInstances; i++)
 	{
@@ -116,13 +108,13 @@ void TopLevelAccelerationStructure::SetupAccelerationStructureForBuilding(bool u
 		instanceDescs[i].InstanceMask = 0xFF;
 	}
 
-	static_cast<D3D12GraphicsBuffer*>(m_pInstanceDescBuffer)->GetTempResource()->Unmap(0, nullptr);
+	DynamicDataParams dynamicDataParams = manager->SetDynamicData(sizeInBytes, instanceDescs);
 
 	// Create a descriptor of the requested builder work, to generate a TLAS
 	m_BuildDesc = {};
 	m_BuildDesc.Inputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
 	m_BuildDesc.Inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
-	m_BuildDesc.Inputs.InstanceDescs = static_cast<D3D12GraphicsBuffer*>(m_pInstanceDescBuffer)->GetTempResource()->GetGPUVirtualAddress();
+	m_BuildDesc.Inputs.InstanceDescs = dynamicDataParams.uploadResource->GetGPUVirtualAddress();
 	m_BuildDesc.Inputs.NumDescs = numInstances;
 	m_BuildDesc.Inputs.Flags = flags;
 

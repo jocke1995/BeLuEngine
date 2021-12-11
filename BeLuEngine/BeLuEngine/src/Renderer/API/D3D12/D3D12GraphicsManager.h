@@ -68,7 +68,7 @@ private:
 	friend class DeferredLightRenderTask;
 	friend class BlurComputeTask;
 	friend class TransparentRenderTask;
-	// -------------------------- Native D3D12 Objects -------------------------- 
+	// -------------------------- Native D3D12 -------------------------- 
 	// D3D12 DLL
 	HINSTANCE m_D3D12Handle;
 	ID3D12Device5* m_pDevice5 = nullptr;
@@ -83,9 +83,15 @@ private:
 	ID3D12CommandQueue* m_pCopyCommandQueue = nullptr;
 
 	// Fences
-	HANDLE m_EventHandle = nullptr;
-	ID3D12Fence1* m_pFenceFrame = nullptr;
-	UINT64 m_FenceFrameValue = 0;
+	/*---------- Main Sync primitive -----------------*/
+	HANDLE m_MainFenceEventHandle = nullptr;
+	ID3D12Fence1* m_pMainFence = nullptr;
+	UINT64 m_MainFenceValue = 0;
+
+	/*---------- Secondary Sync Primitive for hardsyncs -----------------*/
+	HANDLE m_HardSyncFenceEventHandle = nullptr;
+	ID3D12Fence1* m_pHardSyncFence = nullptr;
+	UINT64 m_HardSynceFenceValue = 0;
 
 	// DescriptorHeaps
 	DescriptorHeap* m_pMainDescriptorHeap = nullptr;
@@ -102,18 +108,26 @@ private:
 	ID3D12RootSignature* m_pGlobalRootSig = nullptr;
 
 	// Objects to be deffered deleted.
-	// Tuple information: <indexSubmitted, objectItSelf>
-	std::vector<std::tuple<unsigned int, ID3D12Object*>> m_ObjectsToBeDeleted;
+	// Pair information: <indexSubmitted, objectItSelf>
+	std::vector<std::pair<unsigned int, ID3D12Object*>> m_ObjectsToBeDeleted;
 
 	ID3D12Resource1* m_pIntermediateUploadHeap[NUM_SWAP_BUFFERS] = {};
 	void* m_pIntermediateUploadHeapBegin[NUM_SWAP_BUFFERS] = {};
 	LONG m_pIntermediateUploadHeapAtomicCurrent = 0;
 	const unsigned int m_IntermediateUploadHeapSize = 1024 * 1024 * 100; // 100MB
-	// -------------------------- Native D3D12 Objects -------------------------- 
+	// -------------------------- Native D3D12 -------------------------- 
 
+	// -------------------------- Misc -------------------------- 
 	unsigned int mCommandInterfaceIndex = 0;
 	unsigned int mFrameIndex = 0;
+
+
+	// -------------------------- Private Functions -------------------------- 
+	// Sync
+	void waitForFrame(unsigned int frameToWaitFor);
 	void waitForGPU(ID3D12CommandQueue* commandQueue);
+
+	void deleteDefferedDeletionObjects(bool forceDeleteAll);
 };
 
 #endif

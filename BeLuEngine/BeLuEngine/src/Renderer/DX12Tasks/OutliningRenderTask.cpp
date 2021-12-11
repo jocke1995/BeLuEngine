@@ -31,7 +31,6 @@ OutliningRenderTask::OutliningRenderTask(
 
 	m_OutlineTransformToScale.m_pConstantBuffer = IGraphicsBuffer::Create(
 		E_GRAPHICSBUFFER_TYPE::ConstantBuffer,
-		E_GRAPHICSBUFFER_UPLOADFREQUENCY::Static,
 		sizeof(DirectX::XMMATRIX), 1,
 		DXGI_FORMAT_UNKNOWN, L"OutlinedTransform");
 }

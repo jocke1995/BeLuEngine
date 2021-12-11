@@ -1,8 +1,12 @@
 #include "stdafx.h"
 #include "PipelineState.h"
 
+#include "../Misc/Log.h"
+
 #include "../Shader.h"
 #include "../Misc/AssetLoader.h"
+
+#include "../API/D3D12/D3D12GraphicsManager.h"
 
 PipelineState::PipelineState(const std::wstring& psoName)
 {
@@ -11,7 +15,10 @@ PipelineState::PipelineState(const std::wstring& psoName)
 
 PipelineState::~PipelineState()
 {
-	BL_SAFE_RELEASE(&m_pPSO);
+	D3D12GraphicsManager* graphicsManager = D3D12GraphicsManager::GetInstance();
+
+	BL_ASSERT(m_pPSO);
+	graphicsManager->AddD3D12ObjectToDefferedDeletion(m_pPSO);
 }
 
 ID3D12PipelineState* PipelineState::GetPSO() const

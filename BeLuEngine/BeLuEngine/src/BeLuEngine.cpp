@@ -20,6 +20,8 @@ BeLuEngine::~BeLuEngine()
 
 	BL_SAFE_DELETE(m_pWindow);
 
+	BL_ASSERT(AssetLoader::Get()->DeleteAllAssets());
+
 	IGraphicsManager* graphicsManager = IGraphicsManager::GetBaseInstance();
 	graphicsManager->Destroy();
 }

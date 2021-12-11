@@ -40,7 +40,6 @@ private:
     friend class TopLevelRenderTask;
 
     unsigned int m_InstanceDescsSizeInBytes = 0;
-    IGraphicsBuffer* m_pInstanceDescBuffer = nullptr;
 
     std::vector<Instance> m_Instances;
 

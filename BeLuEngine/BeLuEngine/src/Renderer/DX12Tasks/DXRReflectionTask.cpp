@@ -215,6 +215,7 @@ DXRReflectionTask::~DXRReflectionTask()
 	BL_SAFE_RELEASE(&m_pHitSignature);
 	BL_SAFE_RELEASE(&m_pMissSignature);
 
+	TODO("Deffered eletion");
 	// StateObject
 	BL_SAFE_RELEASE(&m_pStateObject);
 	BL_SAFE_RELEASE(&m_pRTStateObjectProps);
@@ -254,7 +255,7 @@ void DXRReflectionTask::CreateShaderBindingTable(const std::vector<RenderCompone
 	// mapping to write the SBT contents. After the SBT compilation it could be
 	// copied to the default heap for performance.
 
-	m_pShaderTableBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::CPUBuffer, E_GRAPHICSBUFFER_UPLOADFREQUENCY::Dynamic, sbtSize, 1, DXGI_FORMAT_UNKNOWN, L"ShaderBindingTable_CPUBUFFER");
+	m_pShaderTableBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::CPUBuffer, sbtSize, 1, DXGI_FORMAT_UNKNOWN, L"ShaderBindingTable_CPUBUFFER");
 
 	// Compile the SBT from the shader and parameters info
 	m_pSbtGenerator->Generate(static_cast<D3D12GraphicsBuffer*>(m_pShaderTableBuffer)->GetTempResource(), m_pRTStateObjectProps);
@@ -300,8 +301,8 @@ void DXRReflectionTask::Execute()
 		// a UAV so that the shaders can write in it.
 		transition = CD3DX12_RESOURCE_BARRIER::Transition(
 			static_cast<D3D12GraphicsTexture*>(m_pReflectionTexture)->GetTempResource(),
-			D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,	// StateBefore
-			D3D12_RESOURCE_STATE_UNORDERED_ACCESS);			// StateAfter
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,	// StateBefore
+			D3D12_RESOURCE_STATE_UNORDERED_ACCESS);		// StateAfter
 		commandList->ResourceBarrier(1, &transition);
 
 		// Setup the raytracing task
@@ -365,7 +366,7 @@ void DXRReflectionTask::Execute()
 		transition = CD3DX12_RESOURCE_BARRIER::Transition(
 			static_cast<D3D12GraphicsTexture*>(m_pReflectionTexture)->GetTempResource(),
 			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,				// StateBefore
-			D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);	// StateAfter
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);	// StateAfter
 		commandList->ResourceBarrier(1, &transition);
 	}
 	commandList->Close();

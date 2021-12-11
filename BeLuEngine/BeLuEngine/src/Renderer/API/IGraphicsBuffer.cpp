@@ -13,13 +13,13 @@ IGraphicsBuffer::~IGraphicsBuffer()
 }
 
 
-IGraphicsBuffer* IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE type, E_GRAPHICSBUFFER_UPLOADFREQUENCY uploadFrequency, unsigned int sizeOfSingleItem, unsigned int numItems, DXGI_FORMAT format, std::wstring name)
+IGraphicsBuffer* IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE type, unsigned int sizeOfSingleItem, unsigned int numItems, DXGI_FORMAT format, std::wstring name)
 {
     E_GRAPHICS_API graphicsApi = IGraphicsManager::GetGraphicsApiType();
 
     if (graphicsApi == E_GRAPHICS_API::D3D12)
     {
-        return new D3D12GraphicsBuffer(type, uploadFrequency, sizeOfSingleItem, numItems, format, name);
+        return new D3D12GraphicsBuffer(type, sizeOfSingleItem, numItems, format, name);
     }
     else if (graphicsApi == E_GRAPHICS_API::VULKAN)
     {

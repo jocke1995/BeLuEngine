@@ -8,7 +8,7 @@ TODO("This should be inside stdafx.h");
 
 #include "../Renderer/DescriptorHeap.h"
 
-D3D12GraphicsBuffer::D3D12GraphicsBuffer(E_GRAPHICSBUFFER_TYPE type, E_GRAPHICSBUFFER_UPLOADFREQUENCY uploadFrequency, unsigned int sizeOfSingleItem, unsigned int numItems, DXGI_FORMAT format, std::wstring name)
+D3D12GraphicsBuffer::D3D12GraphicsBuffer(E_GRAPHICSBUFFER_TYPE type, unsigned int sizeOfSingleItem, unsigned int numItems, DXGI_FORMAT format, std::wstring name)
 	:IGraphicsBuffer()
 {
 	BL_ASSERT_MESSAGE(sizeOfSingleItem, "Trying to create a buffer with a size of 0 bytes!\n");
@@ -164,6 +164,8 @@ D3D12GraphicsBuffer::D3D12GraphicsBuffer(E_GRAPHICSBUFFER_TYPE type, E_GRAPHICSB
 D3D12GraphicsBuffer::~D3D12GraphicsBuffer()
 {
 	D3D12GraphicsManager* graphicsManager = D3D12GraphicsManager::GetInstance();
+
+	BL_ASSERT(m_pResource);
 	graphicsManager->AddD3D12ObjectToDefferedDeletion(m_pResource);
 }
 

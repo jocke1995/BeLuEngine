@@ -109,35 +109,7 @@ void AssetLoader::loadDefaultMaterial()
 
 AssetLoader::~AssetLoader()
 {
-	// For every Mesh
-	for (auto mesh : m_LoadedMeshes)
-	{
-		delete mesh;
-	}
-
-	// For every texture
-	for (auto pair : m_LoadedTextures)
-	{
-		delete pair.second.second;
-	}
-
-	// For every Material
-	for (auto material : m_LoadedMaterials)
-	{
-		delete material.second;
-	}
-
-	// For every model
-	for (auto pair : m_LoadedModels)
-	{
-		delete pair.second.second;
-	}
-
-	// For every shader
-	for (auto shader : m_LoadedShaders)
-	{
-		delete shader.second;
-	}
+	
 }
 
 AssetLoader* AssetLoader::Get()
@@ -145,6 +117,41 @@ AssetLoader* AssetLoader::Get()
 	static AssetLoader instance;
 
 	return &instance;
+}
+
+bool AssetLoader::DeleteAllAssets()
+{
+	// For every Mesh
+	for (auto mesh : m_LoadedMeshes)
+	{
+		BL_SAFE_DELETE(mesh);
+	}
+
+	// For every texture
+	for (auto pair : m_LoadedTextures)
+	{
+		BL_SAFE_DELETE(pair.second.second);
+	}
+
+	// For every Material
+	for (auto material : m_LoadedMaterials)
+	{
+		BL_SAFE_DELETE(material.second);
+	}
+
+	// For every model
+	for (auto pair : m_LoadedModels)
+	{
+		BL_SAFE_DELETE(pair.second.second);
+	}
+
+	// For every shader
+	for (auto shader : m_LoadedShaders)
+	{
+		BL_SAFE_DELETE(shader.second);
+	}
+
+	return true;
 }
 
 Model* AssetLoader::LoadModel(const std::wstring& path)

@@ -15,10 +15,16 @@ D3D12GraphicsManager::D3D12GraphicsManager()
 
 D3D12GraphicsManager::~D3D12GraphicsManager()
 {
+	// Make sure GPU is idle
+	waitForGPU(m_pCopyCommandQueue);
+	waitForGPU(m_pComputeCommandQueue);
+	waitForGPU(m_pGraphicsCommandQueue);
+
 	if (!FreeLibrary(m_D3D12Handle))
 	{
 		BL_LOG_WARNING("Failed to Free D3D12 Handle\n");
 	}
+
 
 	BL_SAFE_RELEASE(&m_pDevice5);
 	BL_SAFE_RELEASE(&m_pAdapter4);
@@ -45,6 +51,15 @@ D3D12GraphicsManager::~D3D12GraphicsManager()
 	{
 		BL_SAFE_RELEASE(&m_pIntermediateUploadHeap[i]);
 	}
+
+	// Fences
+	BL_ASSERT(CloseHandle(m_MainFenceEventHandle));
+	BL_ASSERT(CloseHandle(m_HardSyncFenceEventHandle));
+	BL_SAFE_RELEASE(&m_pMainFence);
+	BL_SAFE_RELEASE(&m_pHardSyncFence);
+
+	// Force defferedDelete on all objects
+	deleteDefferedDeletionObjects(true);
 }
 
 D3D12GraphicsManager* D3D12GraphicsManager::GetInstance()
@@ -72,16 +87,14 @@ void D3D12GraphicsManager::Init(HWND hwnd, unsigned int width, unsigned int heig
 	hr = f(IID_PPV_ARGS(&debugController));
 	if (SUCCEEDED(hr))
 	{
-		EngineStatistics::GetIM_CommonStats().m_DebugLayerActive = true;
+		
 
 		if (ENABLE_DEBUGLAYER || ENABLE_VALIDATIONGLAYER)
 		{
-			debugController->EnableDebugLayer();
+			EngineStatistics::GetIM_CommonStats().m_DebugLayerActive = true;
 
-			if (ENABLE_VALIDATIONGLAYER)
-			{
-				debugController->SetEnableGPUBasedValidation(true);
-			}
+			debugController->EnableDebugLayer();
+			debugController->SetEnableGPUBasedValidation(ENABLE_VALIDATIONGLAYER);
 
 			IDXGIInfoQueue* dxgiInfoQueue = nullptr;
 			unsigned int dxgiFactoryFlags = 0;
@@ -238,16 +251,29 @@ void D3D12GraphicsManager::Init(HWND hwnd, unsigned int width, unsigned int heig
 #pragma endregion
 
 #pragma region Fences
-	hr = m_pDevice5->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_pFenceFrame));
+	// Main Fence
+	hr = m_pDevice5->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_pMainFence));
 
 	if (FAILED(hr))
 	{
 		BL_LOG_CRITICAL("Failed to Create Fence\n");
 	}
-	m_FenceFrameValue = 1;
+	m_MainFenceValue = 1;
 
 	// Event handle to use for GPU Sync
-	m_EventHandle = CreateEvent(0, false, false, L"EventHandle");
+	m_MainFenceEventHandle = CreateEvent(0, false, false, L"EventHandle");
+
+	// Hardsync fence
+	hr = m_pDevice5->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_pHardSyncFence));
+
+	if (FAILED(hr))
+	{
+		BL_LOG_CRITICAL("Failed to Create Fence\n");
+	}
+	m_HardSynceFenceValue = 0;
+
+	// Event handle to use for GPU Sync
+	m_HardSyncFenceEventHandle = CreateEvent(0, false, false, L"HardSyncEventHandle");
 #pragma endregion
 
 #pragma region DescriptorHeap
@@ -721,26 +747,7 @@ void D3D12GraphicsManager::Begin()
 void D3D12GraphicsManager::End()
 {
 	// Delete D3D12 resources that are guaranteed not used anymore
-	{
-		TODO("Possible memory leak");
-
-		std::vector<std::tuple<unsigned int, ID3D12Object*>> remainingDeviceChilds;
-		remainingDeviceChilds.reserve(m_ObjectsToBeDeleted.size());
-
-		for (auto [frameDeleted, object] : m_ObjectsToBeDeleted)
-		{
-			if ((frameDeleted + NUM_SWAP_BUFFERS) == mFrameIndex)
-			{
-				BL_SAFE_RELEASE(&object);
-			}
-			else
-			{
-				remainingDeviceChilds.push_back(std::make_tuple(frameDeleted, object));
-			}
-		}
-
-		m_ObjectsToBeDeleted = remainingDeviceChilds;
-	}
+	deleteDefferedDeletionObjects(false);
 
 	mFrameIndex++;
 	mCommandInterfaceIndex = (mCommandInterfaceIndex + 1) % NUM_SWAP_BUFFERS;
@@ -758,8 +765,7 @@ void D3D12GraphicsManager::Execute(std::vector<ID3D12CommandList*>* commandLists
 
 void D3D12GraphicsManager::SyncAndPresent()
 {
-	// Hardsync atm
-	waitForGPU(m_pGraphicsCommandQueue);
+	waitForFrame(1);
 
 	HRESULT hr = m_pSwapChain4->Present(0, 0);
 
@@ -805,12 +811,12 @@ bool D3D12GraphicsManager::SucceededHRESULT(HRESULT hrParam)
 void D3D12GraphicsManager::AddD3D12ObjectToDefferedDeletion(ID3D12Object* object)
 {
 	TODO("Possible memory leak");
-	m_ObjectsToBeDeleted.push_back(std::make_tuple(mFrameIndex, object));
+	m_ObjectsToBeDeleted.push_back(std::make_pair(mFrameIndex, object));
 }
 
 DynamicDataParams D3D12GraphicsManager::SetDynamicData(unsigned int size, const void* data)
 {
-	// Make this threadsafe
+	// Makes this function threadsafe
 	long offset = InterlockedAdd(&m_pIntermediateUploadHeapAtomicCurrent, size);
 
 	if (offset > m_IntermediateUploadHeapSize)
@@ -848,19 +854,53 @@ DescriptorHeap* D3D12GraphicsManager::GetDSVDescriptorHeap() const
 	return m_pDSVDescriptorHeap;
 }
 
-void D3D12GraphicsManager::waitForGPU(ID3D12CommandQueue* commandQueue)
+void D3D12GraphicsManager::waitForFrame(unsigned int frameToWaitFor)
 {
 	static const unsigned int nrOfFenceChangesPerFrame = 1;
-	static const unsigned int framesToBeAhead = 0;
-
-	unsigned int fenceValuesToBeAhead = framesToBeAhead * nrOfFenceChangesPerFrame;
-
-	m_pGraphicsCommandQueue->Signal(m_pFenceFrame, m_FenceFrameValue);
+	
+	unsigned int fenceValuesToBeAhead = frameToWaitFor * nrOfFenceChangesPerFrame;
+	
+	m_pGraphicsCommandQueue->Signal(m_pMainFence, m_MainFenceValue);
 	//Wait if the CPU is "framesToBeAhead" number of frames ahead of the GPU
-	if (m_pFenceFrame->GetCompletedValue() < m_FenceFrameValue - fenceValuesToBeAhead)
+	if (m_pMainFence->GetCompletedValue() < m_MainFenceValue - fenceValuesToBeAhead)
 	{
-		m_pFenceFrame->SetEventOnCompletion(m_FenceFrameValue - fenceValuesToBeAhead, m_EventHandle);
-		WaitForSingleObject(m_EventHandle, INFINITE);
+		m_pMainFence->SetEventOnCompletion(m_MainFenceValue - fenceValuesToBeAhead, m_MainFenceEventHandle);
+		WaitForSingleObject(m_MainFenceEventHandle, INFINITE);
 	}
-	m_FenceFrameValue++;
+	m_MainFenceValue++;
+}
+
+void D3D12GraphicsManager::waitForGPU(ID3D12CommandQueue* commandQueue)
+{
+	TODO("Make this function threadsafe");
+
+	m_HardSynceFenceValue++;
+	m_pHardSyncFence->SetEventOnCompletion(m_HardSynceFenceValue, m_HardSyncFenceEventHandle);
+
+	commandQueue->Signal(m_pHardSyncFence, m_HardSynceFenceValue);
+
+	WaitForSingleObject(m_HardSyncFenceEventHandle, INFINITE);	
+}
+
+void D3D12GraphicsManager::deleteDefferedDeletionObjects(bool forceDeleteAll)
+{
+	unsigned int framesToWait = forceDeleteAll ? 0 : NUM_SWAP_BUFFERS;
+	{
+		std::vector<std::pair<unsigned int, ID3D12Object*>> remainingDeviceChilds;
+		remainingDeviceChilds.reserve(m_ObjectsToBeDeleted.size());
+
+		for (auto [frameDeleted, object] : m_ObjectsToBeDeleted)
+		{
+			if ((frameDeleted + framesToWait) == mFrameIndex)
+			{
+				BL_SAFE_RELEASE(&object);
+			}
+			else
+			{
+				remainingDeviceChilds.push_back(std::pair(frameDeleted, object));
+			}
+		}
+
+		m_ObjectsToBeDeleted = remainingDeviceChilds;
+	}
 }

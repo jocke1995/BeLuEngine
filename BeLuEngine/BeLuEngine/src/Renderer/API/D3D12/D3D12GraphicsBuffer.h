@@ -6,7 +6,7 @@
 class D3D12GraphicsBuffer : public IGraphicsBuffer
 {
 public:
-	D3D12GraphicsBuffer(E_GRAPHICSBUFFER_TYPE type, E_GRAPHICSBUFFER_UPLOADFREQUENCY uploadFrequency, unsigned int sizeOfSingleItem, unsigned int numItems, DXGI_FORMAT format, std::wstring name);
+	D3D12GraphicsBuffer(E_GRAPHICSBUFFER_TYPE type, unsigned int sizeOfSingleItem, unsigned int numItems, DXGI_FORMAT format, std::wstring name);
 	virtual ~D3D12GraphicsBuffer();
 
 

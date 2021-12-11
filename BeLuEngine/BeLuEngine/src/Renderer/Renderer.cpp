@@ -72,7 +72,6 @@
 // Event
 #include "../Events/EventBus.h"
 
-
 // ABSTRACTION TEMP
 #include "API/D3D12/D3D12GraphicsManager.h"
 #include "API/D3D12/D3D12GraphicsBuffer.h"
@@ -113,8 +112,6 @@ Renderer::~Renderer()
 void Renderer::deleteRenderer()
 {
 	Log::Print("----------------------------  Deleting Renderer  ----------------------------------\n");
-	TODO("Fix this");
-	//waitForGPU();
 
 	// Delete Textures
 	BL_SAFE_DELETE(m_pFullScreenQuad);
@@ -145,14 +142,14 @@ void Renderer::deleteRenderer()
 	for (DXRTask* dxrTask : m_DXRTasks)
 		delete dxrTask;
 
-	delete m_pMousePicker;
+	BL_SAFE_DELETE(m_pMousePicker);
 
 	BL_SAFE_DELETE(m_pCbPerScene);
 	BL_SAFE_DELETE(m_pCbPerSceneData);
 	BL_SAFE_DELETE(m_pCbPerFrame);
 	BL_SAFE_DELETE(m_pCbPerFrameData);
 
-	delete Light::m_pLightsRawBuffer;
+	BL_SAFE_DELETE(Light::m_pLightsRawBuffer);
 	free(Light::m_pRawData);
 
 #ifdef DEBUG
@@ -228,7 +225,7 @@ void Renderer::InitD3D12(HWND hwnd, unsigned int width, unsigned int height, HIN
 		DXGI_FORMAT_R16G16B16A16_FLOAT,
 		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::UnorderedAccess,
 		L"ReflectionTexture",
-		D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 	// DepthBuffer
 	m_pMainDepthStencil = IGraphicsTexture::Create();
@@ -260,11 +257,11 @@ void Renderer::InitD3D12(HWND hwnd, unsigned int width, unsigned int height, HIN
 	BoundingBoxPool::Get(m_pDevice5, mainHeap);
 
 	// Allocate memory for cbPerScene
-	m_pCbPerScene = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::ConstantBuffer, E_GRAPHICSBUFFER_UPLOADFREQUENCY::Static, sizeof(CB_PER_SCENE_STRUCT), 1, DXGI_FORMAT_UNKNOWN, L"CB_PER_SCENE");
+	m_pCbPerScene = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::ConstantBuffer, sizeof(CB_PER_SCENE_STRUCT), 1, DXGI_FORMAT_UNKNOWN, L"CB_PER_SCENE");
 	m_pCbPerSceneData = new CB_PER_SCENE_STRUCT();
 
 	// Allocate memory for cbPerFrame
-	m_pCbPerFrame = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::ConstantBuffer, E_GRAPHICSBUFFER_UPLOADFREQUENCY::Static, sizeof(CB_PER_FRAME_STRUCT), 1, DXGI_FORMAT_UNKNOWN, L"CB_PER_FRAME");
+	m_pCbPerFrame = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::ConstantBuffer, sizeof(CB_PER_FRAME_STRUCT), 1, DXGI_FORMAT_UNKNOWN, L"CB_PER_FRAME");
 	m_pCbPerFrameData = new CB_PER_FRAME_STRUCT();
 
 #ifdef DEBUG
@@ -636,7 +633,7 @@ void Renderer::InitModelComponent(component::ModelComponent* mc)
 	{
 		Transform* t = tc->GetTransform();
 		TODO("Possible problem");
-		t->m_pConstantBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::ConstantBuffer, E_GRAPHICSBUFFER_UPLOADFREQUENCY::Static, sizeof(DirectX::XMMATRIX), 2, DXGI_FORMAT_UNKNOWN, L"Transform");
+		t->m_pConstantBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::ConstantBuffer, sizeof(DirectX::XMMATRIX), 2, DXGI_FORMAT_UNKNOWN, L"Transform");
 
 		t->UpdateWorldMatrix();
 		static_cast<CopyPerFrameMatricesTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME_MATRICES])->SubmitTransform(t);
@@ -1645,7 +1642,7 @@ void Renderer::createRawBufferForLights()
 
 	// Memory on GPU
 	BL_ASSERT(Light::m_pLightsRawBuffer == nullptr);
-	Light::m_pLightsRawBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::RawBuffer, E_GRAPHICSBUFFER_UPLOADFREQUENCY::Static, rawBufferSize, 1, DXGI_FORMAT_UNKNOWN, L"RAW_BUFFER_LIGHTS");
+	Light::m_pLightsRawBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::RawBuffer, rawBufferSize, 1, DXGI_FORMAT_UNKNOWN, L"RAW_BUFFER_LIGHTS");
 
 	// Memory on CPU
 	Light::m_pRawData = (unsigned char*)malloc(rawBufferSize);

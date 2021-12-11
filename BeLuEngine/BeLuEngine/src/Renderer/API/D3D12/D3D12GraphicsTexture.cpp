@@ -21,7 +21,7 @@ D3D12GraphicsTexture::D3D12GraphicsTexture()
 D3D12GraphicsTexture::~D3D12GraphicsTexture()
 {
 	D3D12GraphicsManager* graphicsManager = D3D12GraphicsManager::GetInstance();
-	BL_SAFE_RELEASE(&m_pResource);
+	graphicsManager->AddD3D12ObjectToDefferedDeletion(m_pResource);
 
 	TODO("Fix this properly");
 	BL_SAFE_DELETE(m_pTextureData);
