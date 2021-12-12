@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "Material.h"
 
-#include "../Misc/Log.h"
 #include "../Misc/AssetLoader.h"
 
 #include "../API/IGraphicsTexture.h"

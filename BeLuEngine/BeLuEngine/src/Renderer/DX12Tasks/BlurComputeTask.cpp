@@ -15,13 +15,8 @@ TODO(To be replaced by a D3D12Manager some point in the future (needed to access
 #include "../API/D3D12/D3D12GraphicsManager.h"
 #include "../API/D3D12/D3D12GraphicsTexture.h"
 
-BlurComputeTask::BlurComputeTask(
-	std::vector<std::pair< std::wstring, std::wstring>> csNamePSOName,
-	E_COMMAND_INTERFACE_TYPE interfaceType,
-	Bloom* bloom,
-	unsigned int screenWidth, unsigned int screenHeight,
-	unsigned int FLAG_THREAD)
-	:ComputeTask(csNamePSOName, FLAG_THREAD, interfaceType)
+BlurComputeTask::BlurComputeTask(Bloom* bloom, unsigned int screenWidth, unsigned int screenHeight)
+	:GraphicsPass(L"BloomPass")
 {
 	m_pTempBloom = bloom;
 

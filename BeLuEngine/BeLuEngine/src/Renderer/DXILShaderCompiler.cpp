@@ -1,7 +1,4 @@
 #include "stdafx.h"
-#include "../Headers/Core.h"
-#include "../Misc/Log.h"
-
 #include "DXILShaderCompiler.h"
 
 DXILShaderCompiler::DXILShaderCompiler()

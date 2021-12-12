@@ -17,37 +17,14 @@ TODO(To be replaced by a D3D12Manager some point in the future(needed to access 
 #include "../API/D3D12/D3D12GraphicsTexture.h"
 #include "../API/D3D12/D3D12GraphicsBuffer.h"
 
-MergeRenderTask::MergeRenderTask(
-	const std::wstring& VSName, const std::wstring& PSName,
-	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*>* gpsds,
-	const std::wstring& psoName,
-	unsigned int FLAG_THREAD)
-	:RenderTask(VSName, PSName, gpsds, psoName, FLAG_THREAD)
+MergeRenderTask::MergeRenderTask(Mesh* fullscreenQuad)
+	:GraphicsPass(L"MergeRenderPass")
 {
-	m_NumIndices = 0;
-	m_Info = {};
+	m_pFullScreenQuadMesh = fullscreenQuad;
 }
 
 MergeRenderTask::~MergeRenderTask()
 {
-}
-
-void MergeRenderTask::SetFullScreenQuad(Mesh* mesh)
-{
-	m_pFullScreenQuadMesh = mesh;
-}
-
-void MergeRenderTask::CreateSlotInfo()
-{
-	// Mesh
-	m_NumIndices = m_pFullScreenQuadMesh->GetNumIndices();
-	m_Info.vertexDataIndex = static_cast<D3D12GraphicsBuffer*>(m_pFullScreenQuadMesh->GetVertexBuffer())->GetShaderResourceHeapIndex();
-
-	// Textures
-	// The descriptorHeapIndices for the SRVs are currently put inside the textureSlots inside SlotInfo
-	m_dhIndices.index0 = m_GraphicTextures["bloomPingPong0"]->GetShaderResourceHeapIndex();		// Blurred srv
-	m_dhIndices.index1 = m_GraphicTextures["finalColorBuffer"]->GetShaderResourceHeapIndex();	// Main color buffer
-	m_dhIndices.index2 = m_GraphicTextures["reflectionTexture"]->GetShaderResourceHeapIndex();	// Reflection Data
 }
 
 void MergeRenderTask::Execute()
@@ -120,9 +97,18 @@ void MergeRenderTask::Execute()
 
 		commandList->SetPipelineState(m_PipelineStates[0]->GetPSO());
 
+		SlotInfo slotInfo = {};
+		slotInfo.vertexDataIndex = static_cast<D3D12GraphicsBuffer*>(m_pFullScreenQuadMesh->GetVertexBuffer())->GetShaderResourceHeapIndex();
+
+		// Textures to merge
+		DescriptorHeapIndices dhIndices = {};
+		dhIndices.index0 = m_GraphicTextures["bloomPingPong0"]->GetShaderResourceHeapIndex();		// Blurred srv
+		dhIndices.index1 = m_GraphicTextures["finalColorBuffer"]->GetShaderResourceHeapIndex();	// Main color buffer
+		dhIndices.index2 = m_GraphicTextures["reflectionTexture"]->GetShaderResourceHeapIndex();	// Reflection Data
+
 		// Draw a fullscreen quad 
-		commandList->SetGraphicsRoot32BitConstants(Constants_SlotInfo_B0, sizeof(SlotInfo) / sizeof(UINT), &m_Info, 0);
-		commandList->SetGraphicsRoot32BitConstants(Constants_DH_Indices_B1, sizeof(DescriptorHeapIndices) / sizeof(UINT), &m_dhIndices, 0);
+		commandList->SetGraphicsRoot32BitConstants(Constants_SlotInfo_B0, sizeof(SlotInfo) / sizeof(UINT), &slotInfo, 0);
+		commandList->SetGraphicsRoot32BitConstants(Constants_DH_Indices_B1, sizeof(DescriptorHeapIndices) / sizeof(UINT), &dhIndices, 0);
 
 		D3D12_INDEX_BUFFER_VIEW indexBufferView = {};
 		indexBufferView.BufferLocation = static_cast<D3D12GraphicsBuffer*>(m_pFullScreenQuadMesh->GetIndexBuffer())->GetTempResource()->GetGPUVirtualAddress();
@@ -130,7 +116,7 @@ void MergeRenderTask::Execute()
 		indexBufferView.SizeInBytes = m_pFullScreenQuadMesh->GetSizeOfIndices();
 		commandList->IASetIndexBuffer(&indexBufferView);
 
-		commandList->DrawIndexedInstanced(m_NumIndices, 1, 0, 0, 0);
+		commandList->DrawIndexedInstanced(m_pFullScreenQuadMesh->GetNumIndices(), 1, 0, 0, 0);
 
 		// Change state on bloomBuffer for next frame
 		ID3D12Resource* bloomPingPong0Texture = static_cast<D3D12GraphicsTexture*>(m_GraphicTextures["bloomPingPong0"])->GetTempResource();
@@ -139,13 +125,8 @@ void MergeRenderTask::Execute()
 		// Change state on mainColorBuffer
 		TransferResourceState(mainColorBufferResource, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
-		//float col[4] = { 1.0f, 0.0f, 1.0f, 1.0f };
-		//commandList->ClearRenderTargetView(cdh, col, 0, nullptr);
-
 		// Change state on front/backbuffer
 		TransferResourceState(swapChainResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-
-		
 	}
 	commandList->Close();
 }

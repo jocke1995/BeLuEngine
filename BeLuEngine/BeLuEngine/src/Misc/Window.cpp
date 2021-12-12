@@ -2,7 +2,6 @@
 #include "Window.h"
 
 #include "../Input/Input.h"
-#include "../Misc/Log.h"
 
 
 #ifdef DEBUG

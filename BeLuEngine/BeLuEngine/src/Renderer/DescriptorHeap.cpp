@@ -1,8 +1,6 @@
 #include "stdafx.h"
 #include "DescriptorHeap.h"
 
-#include "../Misc/Log.h"
-
 DescriptorHeap::DescriptorHeap(ID3D12Device5* device, E_DESCRIPTOR_HEAP_TYPE type)
 {
 	// Create description

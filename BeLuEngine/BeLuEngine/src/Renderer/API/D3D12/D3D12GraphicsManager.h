@@ -9,6 +9,8 @@ struct ID3D12Device5;
 // D3D12 Wrappers
 class DescriptorHeap;
 
+class IGraphicsContext;
+
 namespace component
 {
 	class ModelComponent;
@@ -33,7 +35,7 @@ public:
 
 	// Call everyframe
 	void Begin() override;
-	void Execute(std::vector<ID3D12CommandList*>* commandLists, unsigned int numCommandLists); // This will later take in GPUContext and be overriding from base
+	void Execute(const std::vector<IGraphicsContext*>& graphicsContexts, unsigned int numGraphicsContexts) override;
 	void SyncAndPresent() override;
 	void End() override;
 

@@ -1,8 +1,8 @@
 #include "stdafx.h"
 #include "Thread.h"
+
 #include "MultiThreadedTask.h"
 #include "../Misc/Timer.h"
-#include "../Misc/Log.h"
 
 unsigned int __stdcall Thread::threadFunc(void* threadParam)
 {

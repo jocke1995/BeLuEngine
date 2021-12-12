@@ -10,6 +10,10 @@
 // Model info
 #include "../Renderer/Geometry/Mesh.h"
 
+// Componennt
+#include "../ECS/Components/ModelComponent.h"
+#include "../ECS/Components/TransformComponent.h"
+
 TODO(To be replaced by a D3D12Manager some point in the future(needed to access RootSig));
 #include "../Renderer.h"
 
@@ -19,25 +23,15 @@ TODO(To be replaced by a D3D12Manager some point in the future(needed to access 
 #include "../API/D3D12/D3D12GraphicsTexture.h"
 
 
-OutliningRenderTask::OutliningRenderTask(
-	const std::wstring& VSName, const std::wstring& PSName,
-	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*>* gpsds,
-	const std::wstring& psoName,
-	unsigned int FLAG_THREAD)
-	:RenderTask(VSName, PSName, gpsds, psoName, FLAG_THREAD)
+OutliningRenderTask::OutliningRenderTask()
+	:GraphicsPass(L"OutliningPass")
 {
 	// Init with nullptr
 	Clear();
-
-	m_OutlineTransformToScale.m_pConstantBuffer = IGraphicsBuffer::Create(
-		E_GRAPHICSBUFFER_TYPE::ConstantBuffer,
-		sizeof(DirectX::XMMATRIX), 1,
-		DXGI_FORMAT_UNKNOWN, L"OutlinedTransform");
 }
 
 OutliningRenderTask::~OutliningRenderTask()
 {
-	delete m_OutlineTransformToScale.m_pConstantBuffer;
 }
 
 void OutliningRenderTask::Execute()
@@ -103,7 +97,6 @@ void OutliningRenderTask::Execute()
 		commandList->SetPipelineState(m_PipelineStates[0]->GetPSO());
 
 		const DirectX::XMMATRIX* viewProjMatTrans = m_pCamera->GetViewProjectionTranposed();
-
 		// Draw for every m_pMesh
 		for (int i = 0; i < m_ObjectToOutline.first->GetNrOfMeshes(); i++)
 		{

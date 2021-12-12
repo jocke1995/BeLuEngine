@@ -3,7 +3,6 @@
 
 // Misc
 #include "../Misc/AssetLoader.h"
-#include "../Misc/Log.h"
 #include "../Events/EventBus.h"
 
 // Renderer

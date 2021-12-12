@@ -12,12 +12,8 @@
 // TODO ABSTRACTION
 #include "../API/D3D12/D3D12GraphicsManager.h"
 
-ImGuiRenderTask::ImGuiRenderTask(
-	LPCWSTR VSName, LPCWSTR PSName,
-	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*>* gpsds,
-	LPCTSTR psoName,
-	unsigned int FLAG_THREAD)
-	:RenderTask(VSName, PSName, gpsds, psoName, FLAG_THREAD)
+ImGuiRenderTask::ImGuiRenderTask()
+	:GraphicsPass(L"ImGuiPass")
 {
 }
 

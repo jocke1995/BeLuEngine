@@ -1,14 +1,11 @@
 #include "stdafx.h"
 #include "DXRReflectionTask.h"
 
-// Core
-#include "../Headers/Core.h"
-#include "../Misc/Log.h"
-
 // DX12 Specifics
 #include "../DescriptorHeap.h"
 #include "../Shader.h"
 #include "../Misc/AssetLoader.h"
+#include "../CommandInterface.h"
 
 // Model info
 #include "../Geometry/Transform.h"
@@ -16,6 +13,10 @@
 // DXR stuff
 #include "../DXR/ShaderBindingTableGenerator.h"
 #include "../DXR/RaytracingPipelineGenerator.h"
+
+// ECS
+#include "../ECS/Components/ModelComponent.h"
+#include "../ECS/Components/TransformComponent.h"
 
 TODO(To be replaced by a D3D12Manager some point in the future(needed to access RootSig));
 #include "../Renderer.h"
@@ -25,11 +26,8 @@ TODO(To be replaced by a D3D12Manager some point in the future(needed to access 
 #include "../API/D3D12/D3D12GraphicsBuffer.h"
 #include "../API/D3D12/D3D12GraphicsTexture.h"
 
-DXRReflectionTask::DXRReflectionTask(
-	IGraphicsTexture* reflectionTexture,
-	unsigned int width, unsigned int height,
-	unsigned int FLAG_THREAD)
-	:DXRTask(FLAG_THREAD, E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE, L"ReflectionCommandList")
+DXRReflectionTask::DXRReflectionTask(IGraphicsTexture* reflectionTexture, unsigned int dispatchWidth, unsigned int dispatchHeight)
+	:GraphicsPass(L"DXR_ReflectionPass")
 {
 #pragma region PipelineState Object
 	// Gets deleted in Assetloader
@@ -200,8 +198,8 @@ DXRReflectionTask::DXRReflectionTask(
 
 	// Rest
 	m_pReflectionTexture = reflectionTexture;
-	m_DispatchWidth = width;
-	m_DispatchHeight = height;
+	m_DispatchWidth = dispatchWidth;
+	m_DispatchHeight = dispatchHeight;
 }
 
 DXRReflectionTask::~DXRReflectionTask()
@@ -215,7 +213,7 @@ DXRReflectionTask::~DXRReflectionTask()
 	BL_SAFE_RELEASE(&m_pHitSignature);
 	BL_SAFE_RELEASE(&m_pMissSignature);
 
-	TODO("Deffered eletion");
+	TODO("Deffered deletion");
 	// StateObject
 	BL_SAFE_RELEASE(&m_pStateObject);
 	BL_SAFE_RELEASE(&m_pRTStateObjectProps);
@@ -274,7 +272,6 @@ void DXRReflectionTask::Execute()
 	{
 		ScopedPixEvent(RaytracedReflections, commandList);
 
-		
 		commandList->SetComputeRootSignature(static_cast<D3D12GraphicsManager*>(IGraphicsManager::GetBaseInstance())->m_pGlobalRootSig);
 
 		DescriptorHeap* dhSRVUAVCBV = mainHeap;
@@ -294,7 +291,6 @@ void DXRReflectionTask::Execute()
 			D3D12_RESOURCE_STATE_DEPTH_WRITE,				// StateBefore
 			D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);// StateAfter
 		commandList->ResourceBarrier(1, &transition);
-
 		
 		// On the last frame, the raytracing output was used as a copy source, to
 		// copy its contents into the render target. Now we need to transition it to

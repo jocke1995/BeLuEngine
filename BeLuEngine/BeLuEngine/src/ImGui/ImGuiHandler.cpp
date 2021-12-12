@@ -11,7 +11,6 @@
 
 #include "../Renderer/Renderer.h"
 #include "../Misc/Window.h"
-#include "../Misc/Log.h"
 #include "../Misc/AssetLoader.h"
 
 #include "../Renderer/Camera/BaseCamera.h"

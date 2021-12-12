@@ -12,6 +12,10 @@
 #include "../Renderer/Geometry/Mesh.h"
 #include "../Renderer/Geometry/Material.h"
 
+// ECS
+#include "../ECS/Components/ModelComponent.h"
+#include "../ECS/Components/TransformComponent.h"
+
 TODO(To be replaced by a D3D12Manager some point in the future(needed to access RootSig));
 #include "../Renderer.h"
 
@@ -20,12 +24,8 @@ TODO(To be replaced by a D3D12Manager some point in the future(needed to access 
 #include "../API/D3D12/D3D12GraphicsBuffer.h"
 #include "../API/D3D12/D3D12GraphicsTexture.h"
 
-TransparentRenderTask::TransparentRenderTask(	
-	const std::wstring& VSName, const std::wstring& PSName,
-	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*>* gpsds,
-	const std::wstring& psoName,
-	unsigned int FLAG_THREAD)
-	:RenderTask(VSName, PSName, gpsds, psoName, FLAG_THREAD)
+TransparentRenderTask::TransparentRenderTask()
+	:GraphicsPass(L"TransparentPass")
 {
 }
 
@@ -128,4 +128,9 @@ void TransparentRenderTask::Execute()
 		}
 	}
 	commandList->Close();
+}
+
+void TransparentRenderTask::SetRenderComponents(const std::vector<RenderComponent>& renderComponents)
+{
+	m_RenderComponents = renderComponents;
 }

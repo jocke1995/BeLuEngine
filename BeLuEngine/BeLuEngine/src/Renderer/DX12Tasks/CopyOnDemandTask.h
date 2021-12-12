@@ -1,18 +1,15 @@
 #ifndef COPYONDEMANDTASK_H
 #define COPYONDEMANDTASK_H
 
-#include "CopyTask.h"
+#include "GraphicsPass.h"
 
 class IGraphicsBuffer;
 class IGraphicsTexture;
 
-class CopyOnDemandTask : public CopyTask
+class CopyOnDemandTask : public GraphicsPass
 {
 public:
-	CopyOnDemandTask(
-		E_COMMAND_INTERFACE_TYPE interfaceType,
-		unsigned int FLAG_THREAD,
-		const std::wstring& clName);
+	CopyOnDemandTask();
 	virtual ~CopyOnDemandTask();
 
 	void SubmitBuffer(IGraphicsBuffer* graphicsBuffer, const void* data);

@@ -1,26 +1,26 @@
 #ifndef OUTLININGRENDERTASK_H
 #define OUTLININGRENDERTASK_H
 
-#include "RenderTask.h"
-#include "../Renderer/Geometry/Transform.h"
-class GraphicsState;
+#include "GraphicsPass.h"
 
-class OutliningRenderTask : public RenderTask
+#include "../Renderer/Geometry/Transform.h"
+
+class BaseCamera;
+
+class OutliningRenderTask : public GraphicsPass
 {
 public:
-	OutliningRenderTask(
-		const std::wstring& VSName, const std::wstring& PSName,
-		std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*>* gpsds,
-		const std::wstring& psoName,
-		unsigned int FLAG_THREAD);
+	OutliningRenderTask();
 	~OutliningRenderTask();
 
 	void Execute() override final;
 
 	void SetObjectToOutline(std::pair<component::ModelComponent*, component::TransformComponent*>* objectToOutline);
 	void Clear();
+	void SetCamera(BaseCamera* baseCamera) { m_pCamera = baseCamera; }
 private:
 	std::pair<component::ModelComponent*, component::TransformComponent*> m_ObjectToOutline;
+	BaseCamera* m_pCamera = nullptr;
 
 	Transform m_OutlineTransformToScale = {};
 };

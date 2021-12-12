@@ -1,13 +1,12 @@
 ﻿#include "stdafx.h"
 #include "D3D12GraphicsManager.h"
 
-TODO("This should be inside stdafx.h");
-#include "../Misc/Log.h"
-
 #include "../Renderer/Statistics/EngineStatistics.h"
 #include "../Renderer/DescriptorHeap.h"
 
-#include "../Renderer/DX12Tasks/DX12Task.h"
+#include "../Renderer/DX12Tasks/GraphicsPass.h"
+
+#include "D3D12GraphicsContext.h"
 
 D3D12GraphicsManager::D3D12GraphicsManager()
 {
@@ -740,8 +739,8 @@ void D3D12GraphicsManager::Init(HWND hwnd, unsigned int width, unsigned int heig
 
 void D3D12GraphicsManager::Begin()
 {
-	DX12Task::SetBackBufferIndex(mCommandInterfaceIndex);
-	DX12Task::SetCommandInterfaceIndex(mCommandInterfaceIndex);
+	GraphicsPass::SetBackBufferIndex(mCommandInterfaceIndex);
+	GraphicsPass::SetCommandInterfaceIndex(mCommandInterfaceIndex);
 }
 
 void D3D12GraphicsManager::End()
@@ -756,16 +755,21 @@ void D3D12GraphicsManager::End()
 	m_pIntermediateUploadHeapAtomicCurrentOffset = 0;
 }
 
-void D3D12GraphicsManager::Execute(std::vector<ID3D12CommandList*>* commandLists, unsigned int numCommandLists)
+void D3D12GraphicsManager::Execute(const std::vector<IGraphicsContext*>& graphicsContexts, unsigned int numGraphicsContexts)
 {
-	std::vector<ID3D12CommandList*> cList = commandLists[mCommandInterfaceIndex];
+	std::vector<ID3D12CommandList*> cList(numGraphicsContexts);
+	
+	for (IGraphicsContext* graphicsContext : graphicsContexts)
+	{
+		cList.push_back(static_cast<D3D12GraphicsContext*>(graphicsContext)->m_pCommandList);
+	}
 
-	m_pGraphicsCommandQueue->ExecuteCommandLists(numCommandLists, cList.data());
+	m_pGraphicsCommandQueue->ExecuteCommandLists(numGraphicsContexts, cList.data());
 }
 
 void D3D12GraphicsManager::SyncAndPresent()
 {
-	waitForFrame(1);
+	waitForFrame(NUM_SWAP_BUFFERS - 1);
 
 	HRESULT hr = m_pSwapChain4->Present(0, 0);
 

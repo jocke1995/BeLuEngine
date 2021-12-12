@@ -3,14 +3,10 @@
 
 // Misc
 #include "../Misc/AssetLoader.h"
-#include "../Misc/Log.h"
 #include "../Misc/MultiThreading/ThreadPool.h"
 #include "../Misc/MultiThreading/Thread.h"
 #include "../Misc/Window.h"
 #include "DXILShaderCompiler.h"
-
-// Headers
-#include "Core.h"
 
 // Debug
 #include "../ImGUI/imgui.h"
@@ -31,7 +27,6 @@
 #include "../ECS/Components/Lights/SpotLightComponent.h"
 
 // Renderer-Engine 
-#include "CommandInterface.h"
 #include "DescriptorHeap.h"
 #include "Geometry/Transform.h"
 #include "Camera/BaseCamera.h"
@@ -54,15 +49,9 @@
 #include "DX12Tasks/TransparentRenderTask.h"
 #include "DX12Tasks/DownSampleRenderTask.h"
 #include "DX12Tasks/MergeRenderTask.h"
-
-// Copy 
 #include "DX12Tasks/CopyPerFrameMatricesTask.h"
 #include "DX12Tasks/CopyOnDemandTask.h"
-
-// Compute
 #include "DX12Tasks/BlurComputeTask.h"
-
-// DXR
 #include "DX12Tasks/BottomLevelRenderTask.h"
 #include "DX12Tasks/TopLevelRenderTask.h"
 #include "DX12Tasks/DXRReflectionTask.h"
@@ -82,11 +71,7 @@
 Renderer::Renderer()
 {
 	//EventBus::GetInstance().Subscribe(this, &Renderer::toggleFullscreen);
-	m_RenderTasks.resize(E_RENDER_TASK_TYPE::NR_OF_RENDERTASKS);
-	m_CopyTasks.resize(E_COPY_TASK_TYPE::NR_OF_COPYTASKS);
-	m_ComputeTasks.resize(E_COMPUTE_TASK_TYPE::NR_OF_COMPUTETASKS);
-	m_DX12Tasks.resize(E_DX12_TASK_TYPE::NR_OF_DX12TASKS);
-	m_DXRTasks.resize(E_DXR_TASK_TYPE::NR_OF_DXRTASKS);
+	m_GraphicsPasses.resize(E_GRAPHICS_PASS_TYPE::NR_OF_GRAPHICS_PASSES);
 	
 	// Processinfo
 	// Create handle to process
@@ -127,20 +112,8 @@ void Renderer::deleteRenderer()
 
 	BL_SAFE_DELETE(m_pBloomWrapperTemp);
 
-	for (ComputeTask* computeTask : m_ComputeTasks)
-		delete computeTask;
-
-	for (CopyTask* copyTask : m_CopyTasks)
-		delete copyTask;
-
-	for (RenderTask* renderTask : m_RenderTasks)
-		delete renderTask;
-
-	for (DX12Task* dx12Task : m_DX12Tasks)
-		delete dx12Task;
-
-	for (DXRTask* dxrTask : m_DXRTasks)
-		delete dxrTask;
+	for (GraphicsPass* graphicsPass : m_GraphicsPasses)
+		BL_SAFE_DELETE(graphicsPass);
 
 	BL_SAFE_DELETE(m_pMousePicker);
 
@@ -289,10 +262,10 @@ void Renderer::InitD3D12(HWND hwnd, unsigned int width, unsigned int height, HIN
 #endif
 	createRawBufferForLights();
 
-	initRenderTasks();
+	initGraphicsPasses();
 
 	// Submit fullscreenquad
-	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]);
+	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_ON_DEMAND]);
 	codt->SubmitBuffer(m_pFullScreenQuad->GetVertexBuffer(), m_pFullScreenQuad->GetVertices()->data());
 	codt->SubmitBuffer(m_pFullScreenQuad->GetIndexBuffer(), m_pFullScreenQuad->GetIndices()->data());
 }
@@ -336,7 +309,7 @@ void Renderer::Update(double dt)
 #endif
 
 	// DXR
-	TopLevelAccelerationStructure* pTLAS = static_cast<TopLevelRenderTask*>(m_DX12Tasks[E_DX12_TASK_TYPE::TLAS])->GetTLAS();
+	TopLevelAccelerationStructure* pTLAS = static_cast<TopLevelRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::TLAS])->GetTLAS();
 
 	pTLAS->Reset();
 
@@ -419,80 +392,75 @@ void Renderer::ExecuteMT()
 	IGraphicsManager* graphicsManager = IGraphicsManager::GetBaseInstance();
 	graphicsManager->Begin();
 
-	CopyTask* copyTask = nullptr;
-	ComputeTask* computeTask = nullptr;
-	RenderTask* renderTask = nullptr;
-	DX12Task* dx12Task = nullptr;
-	DXRTask* dxrTask = nullptr;
+	GraphicsPass* graphicsPass = nullptr;
 	/* --------------------- Record command lists --------------------- */
 
 	// Copy on demand
-	copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND];
-	m_pThreadPool->AddTask(copyTask);
+	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_ON_DEMAND];
+	m_pThreadPool->AddTask(graphicsPass);
 	
 	// Copy per frame (matrices, world and wvp)
-	copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME_MATRICES];
-	static_cast<CopyPerFrameMatricesTask*>(copyTask)->SetCamera(m_pScenePrimaryCamera);
-	m_pThreadPool->AddTask(copyTask);
+	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_PER_FRAME_MATRICES];
+	m_pThreadPool->AddTask(graphicsPass);
 
 	// Update BLASes if any...
-	dx12Task = m_DX12Tasks[E_DX12_TASK_TYPE::BLAS];
-	m_pThreadPool->AddTask(dx12Task);
+	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::BLAS];
+	m_pThreadPool->AddTask(graphicsPass);
 
 	// Depth pre-pass
-	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::DEPTH_PRE_PASS];
-	m_pThreadPool->AddTask(renderTask);
+	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DEPTH_PRE_PASS];
+	m_pThreadPool->AddTask(graphicsPass);
 
 	// Update TLAS
-	dx12Task = m_DX12Tasks[E_DX12_TASK_TYPE::TLAS];
-	m_pThreadPool->AddTask(dx12Task);
+	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::TLAS];
+	m_pThreadPool->AddTask(graphicsPass);
 
 	// Geometry pass
-	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::DEFERRED_GEOMETRY];
-	renderTask->Execute();
+	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DEFERRED_GEOMETRY];
+	graphicsPass->Execute();
 
 	// Light pass
-	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::DEFERRED_LIGHT];
-	renderTask->Execute();
+	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DEFERRED_LIGHT];
+	graphicsPass->Execute();
 
 	// DXR Reflections
-	dxrTask = m_DXRTasks[E_DXR_TASK_TYPE::REFLECTIONS];
-	m_pThreadPool->AddTask(dxrTask);
+	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::REFLECTIONS];
+	m_pThreadPool->AddTask(graphicsPass);
 
 	// DownSample the texture used for bloom
-	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::DOWNSAMPLE];
-	m_pThreadPool->AddTask(renderTask);
+	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DOWNSAMPLE];
+	m_pThreadPool->AddTask(graphicsPass);
 
 	// Blend
-	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::OPACITY];
-	m_pThreadPool->AddTask(renderTask);
+	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::OPACITY];
+	m_pThreadPool->AddTask(graphicsPass);
 
 	// Blurring for bloom
-	computeTask = m_ComputeTasks[E_COMPUTE_TASK_TYPE::BLUR];
-	m_pThreadPool->AddTask(computeTask);
+	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::BLOOM];
+	m_pThreadPool->AddTask(graphicsPass);
 
 	// Outlining, if an object is picked
-	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::OUTLINE];
-	m_pThreadPool->AddTask(renderTask);
+	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::OUTLINE];
+	m_pThreadPool->AddTask(graphicsPass);
 
 	// Merge 
-	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::MERGE];
-	m_pThreadPool->AddTask(renderTask);
+	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::MERGE];
+	m_pThreadPool->AddTask(graphicsPass);
 	
 	/* ----------------------------- DEVELOPERMODE CommandLists ----------------------------- */
 	if (DEVELOPERMODE_DRAWBOUNDINGBOX == true)
 	{
-		renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::WIREFRAME];
-		m_pThreadPool->AddTask(renderTask);
+		graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::WIREFRAME];
+		m_pThreadPool->AddTask(graphicsPass);
 	}
 
 	/* ----------------------------- DEVELOPERMODE CommandLists ----------------------------- */
 
 	// Wait for the threads which records the commandlists to complete
-	m_pThreadPool->WaitForThreads(F_THREAD_FLAGS::RENDER);
+	m_pThreadPool->WaitForThreads(F_THREAD_FLAGS::GRAPHICS);
 
 
-	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->Execute(m_DirectCommandLists, m_DirectCommandLists[0].size());
+	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->Execute(m_MainGraphicsContexts, m_MainGraphicsContexts.size());
 	/* --------------------------------------------------------------- */
 
 	// ImGui
@@ -500,10 +468,10 @@ void Renderer::ExecuteMT()
 	// Have to update ImGui here to get all information that happens inside rendering
 	ImGuiHandler::GetInstance().UpdateFrame();
 
-	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::IMGUI];
-	renderTask->Execute();
+	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::IMGUI];
+	graphicsPass->Execute();
 
-	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->Execute(m_ImGuiCommandLists, m_ImGuiCommandLists[0].size());
+	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->Execute(m_ImGuiGraphicsContext, m_ImGuiGraphicsContext.size());
 #endif
 
 
@@ -521,75 +489,70 @@ void Renderer::ExecuteST()
 	IGraphicsManager* graphicsManager = IGraphicsManager::GetBaseInstance();
 	graphicsManager->Begin();
 
-	CopyTask* copyTask = nullptr;
-	ComputeTask* computeTask = nullptr;
-	RenderTask* renderTask = nullptr;
-	DX12Task* dx12Task = nullptr;
-	DXRTask* dxrTask = nullptr;
+	GraphicsPass* graphicsPass = nullptr;
 
 	/* --------------------- Record command lists --------------------- */
 	// Copy on demand
-	copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND];
-	copyTask->Execute();
+	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_ON_DEMAND];
+	graphicsPass->Execute();
 	
 	// Copy per frame (matrices, world and wvp)
-	copyTask = m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME_MATRICES];
-	static_cast<CopyPerFrameMatricesTask*>(copyTask)->SetCamera(m_pScenePrimaryCamera);
-	copyTask->Execute();
+	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_PER_FRAME_MATRICES];
+	graphicsPass->Execute();
 
 	// Update BLASes if any...
-	dx12Task = m_DX12Tasks[E_DX12_TASK_TYPE::BLAS];
-	dx12Task->Execute();
+	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::BLAS];
+	graphicsPass->Execute();
 
 	// Depth pre-pass
-	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::DEPTH_PRE_PASS];
-	renderTask->Execute();
+	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DEPTH_PRE_PASS];
+	graphicsPass->Execute();
 
 	// Update TLAS
-	dx12Task = m_DX12Tasks[E_DX12_TASK_TYPE::TLAS];
-	dx12Task->Execute();
+	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::TLAS];
+	graphicsPass->Execute();
 
 	// Geometry pass
-	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::DEFERRED_GEOMETRY];
-	renderTask->Execute();
+	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DEFERRED_GEOMETRY];
+	graphicsPass->Execute();
 
 	// Light pass
-	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::DEFERRED_LIGHT];
-	renderTask->Execute();
+	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DEFERRED_LIGHT];
+	graphicsPass->Execute();
 
 	// DXR Reflections
-	dxrTask = m_DXRTasks[E_DXR_TASK_TYPE::REFLECTIONS];
-	dxrTask->Execute();
+	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::REFLECTIONS];
+	graphicsPass->Execute();
 
 	// DownSample the texture used for bloom
-	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::DOWNSAMPLE];
-	renderTask->Execute();
+	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DOWNSAMPLE];
+	graphicsPass->Execute();
 
 	// Blend
-	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::OPACITY];
-	renderTask->Execute();
+	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::OPACITY];
+	graphicsPass->Execute();
 
 	// Blurring for bloom
-	computeTask = m_ComputeTasks[E_COMPUTE_TASK_TYPE::BLUR];
-	computeTask->Execute();
+	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::BLOOM];
+	graphicsPass->Execute();
 
 	// Outlining, if an object is picked
-	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::OUTLINE];
-	renderTask->Execute();
+	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::OUTLINE];
+	graphicsPass->Execute();
 
 	// Merge 
-	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::MERGE];
-	renderTask->Execute();
+	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::MERGE];
+	graphicsPass->Execute();
 
 	/* ----------------------------- DEVELOPERMODE CommandLists ----------------------------- */
 	if (DEVELOPERMODE_DRAWBOUNDINGBOX == true)
 	{
-		renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::WIREFRAME];
-		renderTask->Execute();
+		graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::WIREFRAME];
+		graphicsPass->Execute();
 	}
 
 	/* ----------------------------- DEVELOPERMODE CommandLists ----------------------------- */
-	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->Execute(m_DirectCommandLists, m_DirectCommandLists[0].size());
+	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->Execute(m_MainGraphicsContexts, m_MainGraphicsContexts.size());
 
 	/* --------------------------------------------------------------- */
 
@@ -600,10 +563,10 @@ void Renderer::ExecuteST()
 	// Have to update ImGui here to get all information that happens inside rendering
 	ImGuiHandler::GetInstance().UpdateFrame();
 
-	renderTask = m_RenderTasks[E_RENDER_TASK_TYPE::IMGUI];
-	renderTask->Execute();
+	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::IMGUI];
+	graphicsPass->Execute();
 
-	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->Execute(m_ImGuiCommandLists, m_ImGuiCommandLists[0].size());
+	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->Execute(m_ImGuiGraphicsContext, m_ImGuiGraphicsContext.size());
 #endif
 
 	/*------------------- Present -------------------*/
@@ -617,9 +580,6 @@ void Renderer::ExecuteST()
 
 void Renderer::InitModelComponent(component::ModelComponent* mc)
 {
-	ID3D12Device5* m_pDevice5 = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pDevice5;
-	DescriptorHeap* mainHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
-
 	component::TransformComponent* tc = mc->GetParent()->GetComponent<component::TransformComponent>();
 
 	// Submit to codt
@@ -636,7 +596,7 @@ void Renderer::InitModelComponent(component::ModelComponent* mc)
 		t->m_pConstantBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::ConstantBuffer, sizeof(DirectX::XMMATRIX), 2, DXGI_FORMAT_UNKNOWN, L"Transform");
 
 		t->UpdateWorldMatrix();
-		static_cast<CopyPerFrameMatricesTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME_MATRICES])->SubmitTransform(t);
+		static_cast<CopyPerFrameMatricesTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_PER_FRAME_MATRICES])->SubmitTransform(t);
 
 		// Finally store the object in the corresponding renderComponent vectors so it will be drawn
 		if (F_DRAW_FLAGS::DRAW_TRANSPARENT & mc->GetDrawFlag())
@@ -661,7 +621,7 @@ void Renderer::InitModelComponent(component::ModelComponent* mc)
 
 		m_RayTracedRenderComponents.emplace_back(mc, tc);
 
-		CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]);
+		CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_ON_DEMAND]);
 		codt->SubmitBuffer(mc->GetSlotInfoByteAdressBufferDXR(), mc->m_SlotInfos.data());
 	}
 }
@@ -746,14 +706,14 @@ void Renderer::InitBoundingBoxComponent(component::BoundingBoxComponent* compone
 
 			if (toBeSubmitted == true)
 			{
-				CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]);
+				CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_ON_DEMAND]);
 				codt->SubmitBuffer(mesh->GetVertexBuffer(), mesh->GetVertices()->data());
 				codt->SubmitBuffer(mesh->GetIndexBuffer(), mesh->GetIndices()->data());
 			}
 
 			component->AddMesh(mesh);
 		}
-		static_cast<WireframeRenderTask*>(m_RenderTasks[E_RENDER_TASK_TYPE::WIREFRAME])->AddObjectToDraw(component);
+		static_cast<WireframeRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::WIREFRAME])->AddObjectToDraw(component);
 	}
 
 	// Add to vector so the mouse picker can check for intersections
@@ -786,7 +746,7 @@ void Renderer::UnInitModelComponent(component::ModelComponent* mc)
 
 	// Unsubmit from updating to GPU every frame
 	TODO("Possible memory leak");
-	//m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME_MATRICES]->ClearSpecific(tc->GetTransform()->m_pCB->GetUploadResource());
+	//m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_PER_FRAME_MATRICES]->ClearSpecific(tc->GetTransform()->m_pCB->GetUploadResource());
 
 	// Delete constantBuffer for matrices
 	if (tc->GetTransform()->m_pConstantBuffer != nullptr)
@@ -828,7 +788,7 @@ void Renderer::UnInitBoundingBoxComponent(component::BoundingBoxComponent* compo
 			// Stop drawing the wireFrame
 			if (DEVELOPERMODE_DRAWBOUNDINGBOX == true)
 			{
-				static_cast<WireframeRenderTask*>(m_RenderTasks[E_RENDER_TASK_TYPE::WIREFRAME])->ClearSpecific(component);
+				static_cast<WireframeRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::WIREFRAME])->ClearSpecific(component);
 			}
 
 			// Stop picking this boundingBox
@@ -850,7 +810,7 @@ void Renderer::OnResetScene()
 {
 	m_RenderComponents.clear();
 	m_pScenePrimaryCamera = nullptr;
-	static_cast<WireframeRenderTask*>(m_RenderTasks[E_RENDER_TASK_TYPE::WIREFRAME])->Clear();
+	static_cast<WireframeRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::WIREFRAME])->Clear();
 	m_BoundingBoxesToBePicked.clear();
 }
 
@@ -867,7 +827,7 @@ void Renderer::submitModelToGPU(Model* model)
 		Mesh* mesh = model->GetMeshAt(i);
 
 		// Submit Mesh
-		CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]);
+		CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_ON_DEMAND]);
 		codt->SubmitBuffer(mesh->GetVertexBuffer(), mesh->GetVertices()->data());
 		codt->SubmitBuffer(mesh->GetIndexBuffer(), mesh->GetIndices()->data());
 	}
@@ -876,7 +836,7 @@ void Renderer::submitModelToGPU(Model* model)
 
 	// TODO: Better structure instead of hardcoding here
 	// Submit model to BLAS
-	static_cast<BottomLevelRenderTask*>(m_DX12Tasks[E_DX12_TASK_TYPE::BLAS])->SubmitBLAS(model->m_pBLAS);
+	static_cast<BottomLevelRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::BLAS])->SubmitBLAS(model->m_pBLAS);
 }
 
 void Renderer::submitMaterialToGPU(component::ModelComponent* mc)
@@ -888,7 +848,7 @@ void Renderer::submitMaterialToGPU(component::ModelComponent* mc)
 			return;
 		}
 
-		CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]);
+		CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_ON_DEMAND]);
 		codt->SubmitTexture(graphicsTexture);
 
 		AssetLoader::Get()->m_LoadedTextures.at(graphicsTexture->GetPath()).first = true;
@@ -908,7 +868,7 @@ void Renderer::submitMaterialToGPU(component::ModelComponent* mc)
 	}
 	
 	// MaterialData
-	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]);
+	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_ON_DEMAND]);
 	codt->SubmitBuffer(mc->GetMaterialByteAdressBuffer(), mc->m_MaterialDataRawBuffer.data());
 }
 
@@ -922,28 +882,18 @@ Scene* const Renderer::GetActiveScene() const
 	return m_pCurrActiveScene;
 }
 
-void Renderer::setRenderTasksPrimaryCamera()
+void Renderer::setGraphicsPassesPrimaryCamera()
 {
-	m_RenderTasks[E_RENDER_TASK_TYPE::DEPTH_PRE_PASS]->SetCamera(m_pScenePrimaryCamera);
-	m_RenderTasks[E_RENDER_TASK_TYPE::DEFERRED_GEOMETRY]->SetCamera(m_pScenePrimaryCamera);
-	m_RenderTasks[E_RENDER_TASK_TYPE::DEFERRED_LIGHT]->SetCamera(m_pScenePrimaryCamera);	// TEMP
-	m_RenderTasks[E_RENDER_TASK_TYPE::OPACITY]->SetCamera(m_pScenePrimaryCamera);
-	m_RenderTasks[E_RENDER_TASK_TYPE::OUTLINE]->SetCamera(m_pScenePrimaryCamera);
-
-	if (DEVELOPERMODE_DRAWBOUNDINGBOX == true)
-	{
-		m_RenderTasks[E_RENDER_TASK_TYPE::WIREFRAME]->SetCamera(m_pScenePrimaryCamera);
-	}
+	static_cast<DepthRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DEPTH_PRE_PASS])->SetCamera(m_pScenePrimaryCamera);
+	static_cast<DeferredGeometryRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DEFERRED_GEOMETRY])->SetCamera(m_pScenePrimaryCamera);
+	static_cast<TransparentRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::OPACITY])->SetCamera(m_pScenePrimaryCamera);
+	static_cast<OutliningRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::OUTLINE])->SetCamera(m_pScenePrimaryCamera);
+	static_cast<CopyPerFrameMatricesTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_PER_FRAME_MATRICES])->SetCamera(m_pScenePrimaryCamera);
+	static_cast<WireframeRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::WIREFRAME])->SetCamera(m_pScenePrimaryCamera);
 }
 
 void Renderer::createFullScreenQuad()
 {
-	ID3D12Device5* m_pDevice5 = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pDevice5;
-	DescriptorHeap* mainHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
-	DescriptorHeap* rtvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetRTVDescriptorHeap();
-	DescriptorHeap* dsvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetDSVDescriptorHeap();
-	ID3D12CommandQueue* pDirectQueue = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pGraphicsCommandQueue;
-
 	std::vector<Vertex> vertexVector;
 	std::vector<unsigned int> indexVector;
 
@@ -1015,88 +965,41 @@ void Renderer::updateMousePicker()
 		component::ModelComponent*		mc = parentOfPickedObject->GetComponent<component::ModelComponent>();
 		component::TransformComponent*	tc = parentOfPickedObject->GetComponent<component::TransformComponent>();
 
-		static_cast<OutliningRenderTask*>(m_RenderTasks[E_RENDER_TASK_TYPE::OUTLINE])->SetObjectToOutline(&std::make_pair(mc, tc));
+		static_cast<OutliningRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::OUTLINE])->SetObjectToOutline(&std::make_pair(mc, tc));
 
 		m_pPickedEntity = parentOfPickedObject;
 	}
 	else
 	{
 		// No object was picked, reset the outlingRenderTask
-		static_cast<OutliningRenderTask*>(m_RenderTasks[E_RENDER_TASK_TYPE::OUTLINE])->Clear();
+		static_cast<OutliningRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::OUTLINE])->Clear();
 		m_pPickedEntity = nullptr;
 	}
 }
 
-void Renderer::initRenderTasks()
+void Renderer::initGraphicsPasses()
 {
-#pragma region DXRTasks
-	DX12Task* blasTask = new BottomLevelRenderTask(F_THREAD_FLAGS::RENDER, L"BL_RenderTask_CommandList");
-	DX12Task* tlasTask = new TopLevelRenderTask(F_THREAD_FLAGS::RENDER, L"TL_RenderTask_CommandList");
-
 	TODO(Create all PSOs in corresponding classes like reflectionTask is done, instead of out here);
-	// Everything is created inside here
-	DXRTask* reflectionTask = new DXRReflectionTask(
-		m_ReflectionTexture,
-		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
-		F_THREAD_FLAGS::RENDER);
 
-	reflectionTask->AddGraphicsBuffer("cbPerFrame", m_pCbPerFrame);
-	reflectionTask->AddGraphicsBuffer("cbPerScene", m_pCbPerScene);
-	reflectionTask->AddGraphicsBuffer("rawBufferLights", Light::m_pLightsRawBuffer);
-	reflectionTask->AddGraphicsTexture("mainDSV", m_pMainDepthStencil);	// To transition from depthWrite to depthRead
-	
+#pragma region DXR
+	GraphicsPass* blasTask = new BottomLevelRenderTask();
+	GraphicsPass* tlasTask = new TopLevelRenderTask();
+
+	// Everything is created inside here
+	GraphicsPass* reflectionPassDXR = new DXRReflectionTask(m_ReflectionTexture, m_CurrentRenderingWidth, m_CurrentRenderingHeight);
+
+	reflectionPassDXR->AddGraphicsBuffer("cbPerFrame", m_pCbPerFrame);
+	reflectionPassDXR->AddGraphicsBuffer("cbPerScene", m_pCbPerScene);
+	reflectionPassDXR->AddGraphicsBuffer("rawBufferLights", Light::m_pLightsRawBuffer);
+	reflectionPassDXR->AddGraphicsTexture("mainDSV", m_pMainDepthStencil);	// To transition from depthWrite to depthRead
+
 #pragma endregion DXRTasks
 
 #pragma region DepthPrePass
 
-	/* Depth Pre-Pass rendering without stencil testing */
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsdDepthPrePass = {};
-	gpsdDepthPrePass.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-	// RenderTarget
-	gpsdDepthPrePass.NumRenderTargets = 0;
-	gpsdDepthPrePass.RTVFormats[0] = DXGI_FORMAT_UNKNOWN;
-	// Depthstencil usage
-	gpsdDepthPrePass.SampleDesc.Count = 1;
-	gpsdDepthPrePass.SampleMask = UINT_MAX;
-	// Rasterizer behaviour
-	gpsdDepthPrePass.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
-	gpsdDepthPrePass.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
-	gpsdDepthPrePass.RasterizerState.DepthBias = 0;
-	gpsdDepthPrePass.RasterizerState.DepthBiasClamp = 0.0f;
-	gpsdDepthPrePass.RasterizerState.SlopeScaledDepthBias = 0.0f;
-	gpsdDepthPrePass.RasterizerState.FrontCounterClockwise = false;
+	GraphicsPass* depthPrePass = new DepthRenderTask();
 
-	// Specify Blend descriptions
-	// copy of defaultRTdesc
-	D3D12_RENDER_TARGET_BLEND_DESC depthPrePassRTdesc = {
-		false, false,
-		D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
-		D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
-		D3D12_LOGIC_OP_NOOP, D3D12_COLOR_WRITE_ENABLE_ALL };
-	for (unsigned int i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; i++)
-		gpsdDepthPrePass.BlendState.RenderTarget[i] = depthPrePassRTdesc;
-
-	// Depth descriptor
-	D3D12_DEPTH_STENCIL_DESC depthPrePassDsd = {};
-	depthPrePassDsd.DepthEnable = true;
-	depthPrePassDsd.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
-	depthPrePassDsd.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
-
-	// DepthStencil
-	depthPrePassDsd.StencilEnable = false;
-	gpsdDepthPrePass.DepthStencilState = depthPrePassDsd;
-	gpsdDepthPrePass.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
-
-	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*> gpsdDepthPrePassVector;
-	gpsdDepthPrePassVector.push_back(&gpsdDepthPrePass);
-
-	RenderTask* DepthPrePassRenderTask = new DepthRenderTask(
-		L"DepthVertex.hlsl", L"DepthPixel.hlsl",
-		&gpsdDepthPrePassVector,
-		L"DepthPrePassPSO",
-		F_THREAD_FLAGS::RENDER);
-
-	DepthPrePassRenderTask->AddGraphicsTexture("mainDepthStencilBuffer", m_pMainDepthStencil);
+	depthPrePass->AddGraphicsTexture("mainDepthStencilBuffer", m_pMainDepthStencil);
 
 #pragma endregion DepthPrePass
 
@@ -1145,18 +1048,14 @@ void Renderer::initRenderTasks()
 	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*> gpsdDeferredGeometryPassVector;
 	gpsdDeferredGeometryPassVector.push_back(&gpsdDeferredGeometryPass);
 
-	RenderTask* deferredGeometryRenderTask = new DeferredGeometryRenderTask(
-		L"DeferredGeometryVertex.hlsl", L"DeferredGeometryPixel.hlsl",
-		&gpsdDeferredGeometryPassVector,
-		L"DeferredGeometryRenderTaskPSO",
-		F_THREAD_FLAGS::RENDER);
+	GraphicsPass* deferredGeometryPass = new DeferredGeometryRenderTask();
 
-	deferredGeometryRenderTask->AddGraphicsBuffer("cbPerScene", m_pCbPerScene);
-	deferredGeometryRenderTask->AddGraphicsTexture("gBufferAlbedo", m_GBufferAlbedo);
-	deferredGeometryRenderTask->AddGraphicsTexture("gBufferNormal", m_GBufferNormal);
-	deferredGeometryRenderTask->AddGraphicsTexture("gBufferMaterialProperties", m_GBufferMaterialProperties);
-	deferredGeometryRenderTask->AddGraphicsTexture("gBufferEmissive", m_GBufferEmissive);
-	deferredGeometryRenderTask->AddGraphicsTexture("mainDepthStencilBuffer", m_pMainDepthStencil);
+	deferredGeometryPass->AddGraphicsBuffer("cbPerScene", m_pCbPerScene);
+	deferredGeometryPass->AddGraphicsTexture("gBufferAlbedo", m_GBufferAlbedo);
+	deferredGeometryPass->AddGraphicsTexture("gBufferNormal", m_GBufferNormal);
+	deferredGeometryPass->AddGraphicsTexture("gBufferMaterialProperties", m_GBufferMaterialProperties);
+	deferredGeometryPass->AddGraphicsTexture("gBufferEmissive", m_GBufferEmissive);
+	deferredGeometryPass->AddGraphicsTexture("mainDepthStencilBuffer", m_pMainDepthStencil);
 #pragma endregion DeferredRenderingGeometry
 
 #pragma region DeferredRenderingLight
@@ -1223,22 +1122,15 @@ void Renderer::initRenderTasks()
 	gpsdDeferredLightRenderVector.push_back(&gpsdDeferredLightRender);
 	gpsdDeferredLightRenderVector.push_back(&gpsdForwardRenderStencilTest);
 
-	RenderTask* deferredLightRenderTask = new DeferredLightRenderTask(
-		L"DeferredLightVertex.hlsl", L"DeferredLightPixel.hlsl",
-		&gpsdDeferredLightRenderVector,
-		L"DeferredLightRenderingPSO",
-		F_THREAD_FLAGS::RENDER);
+	GraphicsPass* deferredLightPass = new DeferredLightRenderTask(m_pFullScreenQuad);
 
-	deferredLightRenderTask->AddGraphicsBuffer("cbPerFrame", m_pCbPerFrame);
-	deferredLightRenderTask->AddGraphicsBuffer("cbPerScene", m_pCbPerScene);
-	deferredLightRenderTask->AddGraphicsBuffer("rawBufferLights", Light::m_pLightsRawBuffer);
-	deferredLightRenderTask->AddGraphicsTexture("mainDepthStencilBuffer", m_pMainDepthStencil);
+	deferredLightPass->AddGraphicsBuffer("cbPerFrame", m_pCbPerFrame);
+	deferredLightPass->AddGraphicsBuffer("cbPerScene", m_pCbPerScene);
+	deferredLightPass->AddGraphicsBuffer("rawBufferLights", Light::m_pLightsRawBuffer);
+	deferredLightPass->AddGraphicsTexture("mainDepthStencilBuffer", m_pMainDepthStencil);
 
-	deferredLightRenderTask->AddGraphicsTexture("brightTarget", m_pBloomWrapperTemp->GetBrightTexture());
-	deferredLightRenderTask->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
-
-	static_cast<DeferredLightRenderTask*>(deferredLightRenderTask)->SetFullScreenQuad(m_pFullScreenQuad);
-
+	deferredLightPass->AddGraphicsTexture("brightTarget", m_pBloomWrapperTemp->GetBrightTexture());
+	deferredLightPass->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
 #pragma endregion DeferredRenderingLight
 
 #pragma region DownSampleTextureTask
@@ -1270,17 +1162,10 @@ void Renderer::initRenderTasks()
 	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*> gpsdDownSampleTextureVector;
 	gpsdDownSampleTextureVector.push_back(&gpsdDownSampleTexture);
 
-	RenderTask* downSampleTask = new DownSampleRenderTask(
-		L"DownSampleVertex.hlsl", L"DownSamplePixel.hlsl",
-		&gpsdDownSampleTextureVector,
-		L"DownSampleTexturePSO",
+	GraphicsPass* downSamplePass = new DownSampleRenderTask(
 		m_pBloomWrapperTemp->GetBrightTexture(),		// Read from this in actual resolution
 		m_pBloomWrapperTemp->GetPingPongTexture(0),		// Write to this in 1280x720
-		F_THREAD_FLAGS::RENDER);
-	
-	static_cast<DownSampleRenderTask*>(downSampleTask)->SetFullScreenQuad(m_pFullScreenQuad);
-	static_cast<DownSampleRenderTask*>(downSampleTask)->SetFullScreenQuadInSlotInfo();
-
+		m_pFullScreenQuad);
 #pragma endregion DownSampleTextureTask
 
 #pragma region ModelOutlining
@@ -1298,7 +1183,7 @@ void Renderer::initRenderTasks()
 	dsd.StencilReadMask = 0xff;
 	dsd.StencilWriteMask = 0x00;
 	const D3D12_DEPTH_STENCILOP_DESC stencilNotEqual =
-	{ 
+	{
 		D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_REPLACE,
 		D3D12_COMPARISON_FUNC_NOT_EQUAL
 	};
@@ -1311,14 +1196,10 @@ void Renderer::initRenderTasks()
 	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*> gpsdOutliningVector;
 	gpsdOutliningVector.push_back(&gpsdModelOutlining);
 
-	RenderTask* outliningRenderTask = new OutliningRenderTask(
-		L"OutlinedVertex.hlsl", L"OutlinedPixel.hlsl",
-		&gpsdOutliningVector,
-		L"outliningScaledPSO",
-		F_THREAD_FLAGS::RENDER);
-	
-	outliningRenderTask->AddGraphicsTexture("mainDepthStencilBuffer", m_pMainDepthStencil);
-	outliningRenderTask->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
+	GraphicsPass* outliningPass = new OutliningRenderTask();
+
+	outliningPass->AddGraphicsTexture("mainDepthStencilBuffer", m_pMainDepthStencil);
+	outliningPass->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
 
 #pragma endregion ModelOutlining
 
@@ -1401,20 +1282,15 @@ void Renderer::initRenderTasks()
 	// Push back to vector
 	gpsdBlendVector.push_back(&gpsdBlendFrontCull);
 	gpsdBlendVector.push_back(&gpsdBlendBackCull);
-	
-	/*---------------------------------- TRANSPARENT_TEXTURE_RENDERTASK -------------------------------------*/
-	RenderTask* transparentRenderTask = new TransparentRenderTask(
-		L"TransparentTextureVertex.hlsl",
-		L"TransparentTexturePixel.hlsl",
-		&gpsdBlendVector,
-		L"BlendPSOTexture",
-		F_THREAD_FLAGS::RENDER);
 
-	transparentRenderTask->AddGraphicsBuffer("cbPerFrame", m_pCbPerFrame);
-	transparentRenderTask->AddGraphicsBuffer("cbPerScene", m_pCbPerScene);
-	transparentRenderTask->AddGraphicsBuffer("rawBufferLights", Light::m_pLightsRawBuffer);
-	transparentRenderTask->AddGraphicsTexture("mainDepthStencilBuffer", m_pMainDepthStencil);
-	transparentRenderTask->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
+	/*---------------------------------- TRANSPARENT_TEXTURE_RENDERTASK -------------------------------------*/
+	GraphicsPass* transparentPass = new TransparentRenderTask();
+
+	transparentPass->AddGraphicsBuffer("cbPerFrame", m_pCbPerFrame);
+	transparentPass->AddGraphicsBuffer("cbPerScene", m_pCbPerScene);
+	transparentPass->AddGraphicsBuffer("rawBufferLights", Light::m_pLightsRawBuffer);
+	transparentPass->AddGraphicsTexture("mainDepthStencilBuffer", m_pMainDepthStencil);
+	transparentPass->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
 
 #pragma endregion Blend
 
@@ -1440,13 +1316,9 @@ void Renderer::initRenderTasks()
 	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*> gpsdWireFrameVector;
 	gpsdWireFrameVector.push_back(&gpsdWireFrame);
 
-	RenderTask* wireFrameRenderTask = new WireframeRenderTask(
-		L"WhiteVertex.hlsl", L"WhitePixel.hlsl",
-		&gpsdWireFrameVector,
-		L"WireFramePSO",
-		F_THREAD_FLAGS::RENDER);
+	GraphicsPass* wireFramePass = new WireframeRenderTask();
 
-	wireFrameRenderTask->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
+	wireFramePass->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
 #pragma endregion WireFrame
 
 #pragma region MergePass
@@ -1477,25 +1349,15 @@ void Renderer::initRenderTasks()
 	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*> gpsdMergePassVector;
 	gpsdMergePassVector.push_back(&gpsdMergePass);
 
-	RenderTask* mergeTask = new MergeRenderTask(
-		L"MergeVertex.hlsl", L"MergePixel.hlsl",
-		&gpsdMergePassVector,
-		L"MergePassPSO",
-		F_THREAD_FLAGS::RENDER);
+	GraphicsPass* mergePass = new MergeRenderTask(m_pFullScreenQuad);
 
-	static_cast<MergeRenderTask*>(mergeTask)->SetFullScreenQuad(m_pFullScreenQuad);
-	mergeTask->AddGraphicsTexture("bloomPingPong0", m_pBloomWrapperTemp->GetPingPongTexture(0));
-	mergeTask->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
-	mergeTask->AddGraphicsTexture("reflectionTexture", m_ReflectionTexture);
-	static_cast<MergeRenderTask*>(mergeTask)->CreateSlotInfo();
+	mergePass->AddGraphicsTexture("bloomPingPong0", m_pBloomWrapperTemp->GetPingPongTexture(0));
+	mergePass->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
+	mergePass->AddGraphicsTexture("reflectionTexture", m_ReflectionTexture);
 #pragma endregion MergePass
 
 #pragma region IMGUIRENDERTASK
-	RenderTask* imGuiRenderTask = new ImGuiRenderTask(
-		L"", L"",
-		nullptr,
-		L"ImGui",
-		F_THREAD_FLAGS::RENDER);
+	GraphicsPass* imGuiPass = new ImGuiRenderTask();
 #pragma endregion IMGUIRENDERTASK
 
 #pragma region ComputeAndCopyTasks
@@ -1503,16 +1365,11 @@ void Renderer::initRenderTasks()
 	std::vector<std::pair<std::wstring, std::wstring>> csNamePSOName;
 	csNamePSOName.push_back(std::make_pair(L"ComputeBlurHorizontal.hlsl", L"blurHorizontalPSO"));
 	csNamePSOName.push_back(std::make_pair(L"ComputeBlurVertical.hlsl", L"blurVerticalPSO"));
-	ComputeTask* blurComputeTask = new BlurComputeTask(
-		csNamePSOName,
-		E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE,
-		m_pBloomWrapperTemp,
-		m_pBloomWrapperTemp->GetBlurWidth(), m_pBloomWrapperTemp->GetBlurHeight(),
-		F_THREAD_FLAGS::RENDER);
+	GraphicsPass* blurPass = new BlurComputeTask(m_pBloomWrapperTemp, m_pBloomWrapperTemp->GetBlurWidth(), m_pBloomWrapperTemp->GetBlurHeight());
 
 	// CopyTasks
-	CopyTask* copyPerFrameMatricesTask  = new CopyPerFrameMatricesTask(E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE, F_THREAD_FLAGS::RENDER, L"copyPerFrameMatricesCL");
-	CopyTask* copyOnDemandTask			= new CopyOnDemandTask(E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE, F_THREAD_FLAGS::RENDER, L"copyOnDemandCL");
+	GraphicsPass* copyPerFrameMatricesTask = new CopyPerFrameMatricesTask();
+	GraphicsPass* copyOnDemandTask = new CopyOnDemandTask();
 
 #pragma endregion ComputeAndCopyTasks
 
@@ -1521,116 +1378,55 @@ void Renderer::initRenderTasks()
 
 
 	/* ------------------------- CopyQueue Tasks ------------------------ */
-	m_CopyTasks[E_COPY_TASK_TYPE::COPY_PER_FRAME_MATRICES] = copyPerFrameMatricesTask;
-	m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND] = copyOnDemandTask;
+	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_PER_FRAME_MATRICES] = copyPerFrameMatricesTask;
+	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_ON_DEMAND] = copyOnDemandTask;
 
 	/* ------------------------- ComputeQueue Tasks ------------------------ */
-	
-	m_ComputeTasks[E_COMPUTE_TASK_TYPE::BLUR] = blurComputeTask;
+
+	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::BLOOM] = blurPass;
 
 	/* ------------------------- DirectQueue Tasks ---------------------- */
-	m_RenderTasks[E_RENDER_TASK_TYPE::DEPTH_PRE_PASS] = DepthPrePassRenderTask;
-	m_RenderTasks[E_RENDER_TASK_TYPE::DEFERRED_GEOMETRY] = deferredGeometryRenderTask;
-	m_RenderTasks[E_RENDER_TASK_TYPE::DEFERRED_LIGHT] = deferredLightRenderTask;
-	m_RenderTasks[E_RENDER_TASK_TYPE::OPACITY] = transparentRenderTask;
-	m_RenderTasks[E_RENDER_TASK_TYPE::WIREFRAME] = wireFrameRenderTask;
-	m_RenderTasks[E_RENDER_TASK_TYPE::OUTLINE] = outliningRenderTask;
-	m_RenderTasks[E_RENDER_TASK_TYPE::MERGE] = mergeTask;
-	m_RenderTasks[E_RENDER_TASK_TYPE::IMGUI] = imGuiRenderTask;
-	m_RenderTasks[E_RENDER_TASK_TYPE::DOWNSAMPLE] = downSampleTask;
+	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DEPTH_PRE_PASS] = depthPrePass;
+	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DEFERRED_GEOMETRY] = deferredGeometryPass;
+	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DEFERRED_LIGHT] = deferredLightPass;
+	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::OPACITY] = transparentPass;
+	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::WIREFRAME] = wireFramePass;
+	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::OUTLINE] = outliningPass;
+	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::MERGE] = mergePass;
+	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::IMGUI] = imGuiPass;
+	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DOWNSAMPLE] = downSamplePass;
 
 	/* ------------------------- DX12 Tasks ------------------------ */
-	m_DX12Tasks[E_DX12_TASK_TYPE::BLAS] = blasTask;
-	m_DX12Tasks[E_DX12_TASK_TYPE::TLAS] = tlasTask;
+	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::BLAS] = blasTask;
+	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::TLAS] = tlasTask;
 
 	/* ------------------------- DXR Tasks ------------------------ */
-	m_DXRTasks[E_DXR_TASK_TYPE::REFLECTIONS] = reflectionTask;
+	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::REFLECTIONS] = reflectionPassDXR;
 
 	// Pushback in the order of execution
-	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
-	{
-		m_DirectCommandLists[i].push_back(copyOnDemandTask->GetCommandInterface()->GetCommandList(i));
-	}
-	
-	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
-	{
-		m_DirectCommandLists[i].push_back(copyPerFrameMatricesTask->GetCommandInterface()->GetCommandList(i));
-	}
-
-	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
-	{
-		// Update the BLAS:es if any (synced-version)
-		m_DirectCommandLists[i].push_back(blasTask->GetCommandInterface()->GetCommandList(i));
-	}
-
-	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
-	{
-		// Update the TLAS every frame
-		m_DirectCommandLists[i].push_back(tlasTask->GetCommandInterface()->GetCommandList(i));
-	}
-
-	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
-	{
-		m_DirectCommandLists[i].push_back(DepthPrePassRenderTask->GetCommandInterface()->GetCommandList(i));
-	}
-
-	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
-	{
-		m_DirectCommandLists[i].push_back(deferredGeometryRenderTask->GetCommandInterface()->GetCommandList(i));
-	}
-
-	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
-	{
-		m_DirectCommandLists[i].push_back(reflectionTask->GetCommandInterface()->GetCommandList(i));
-	}
-
-	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
-	{
-		m_DirectCommandLists[i].push_back(deferredLightRenderTask->GetCommandInterface()->GetCommandList(i));
-	}
-
-	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
-	{
-		m_DirectCommandLists[i].push_back(downSampleTask->GetCommandInterface()->GetCommandList(i));
-	}
-
-	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
-	{
-		m_DirectCommandLists[i].push_back(outliningRenderTask->GetCommandInterface()->GetCommandList(i));
-	}
+	m_MainGraphicsContexts.push_back(copyOnDemandTask->GetGraphicsContext());
+	m_MainGraphicsContexts.push_back(copyPerFrameMatricesTask->GetGraphicsContext());
+	m_MainGraphicsContexts.push_back(blasTask->GetGraphicsContext());
+	m_MainGraphicsContexts.push_back(tlasTask->GetGraphicsContext());
+	m_MainGraphicsContexts.push_back(depthPrePass->GetGraphicsContext());
+	m_MainGraphicsContexts.push_back(deferredGeometryPass->GetGraphicsContext());
+	m_MainGraphicsContexts.push_back(reflectionPassDXR->GetGraphicsContext());
+	m_MainGraphicsContexts.push_back(deferredLightPass->GetGraphicsContext());
+	m_MainGraphicsContexts.push_back(downSamplePass->GetGraphicsContext());
+	m_MainGraphicsContexts.push_back(outliningPass->GetGraphicsContext());
 
 	if (DEVELOPERMODE_DRAWBOUNDINGBOX == true)
 	{
-		for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
-		{
-			m_DirectCommandLists[i].push_back(wireFrameRenderTask->GetCommandInterface()->GetCommandList(i));
-		}
+		m_MainGraphicsContexts.push_back(wireFramePass->GetGraphicsContext());
 	}
-
-	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
-	{
-		m_DirectCommandLists[i].push_back(transparentRenderTask->GetCommandInterface()->GetCommandList(i));
-	}
-
-	// Compute shader to blur the RTV from forwardRenderTask
-	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
-	{
-		m_DirectCommandLists[i].push_back(blurComputeTask->GetCommandInterface()->GetCommandList(i));
-	}
-
-	// Final pass (this pass will merge different textures together and put result in the swapchain backBuffer)
-	// This will be used for pp-effects such as bloom.
-	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
-	{
-		m_DirectCommandLists[i].push_back(mergeTask->GetCommandInterface()->GetCommandList(i));
-	}
+	m_MainGraphicsContexts.push_back(transparentPass->GetGraphicsContext());
+	m_MainGraphicsContexts.push_back(blurPass->GetGraphicsContext());
+	m_MainGraphicsContexts.push_back(mergePass->GetGraphicsContext());
+	m_MainGraphicsContexts.push_back(copyOnDemandTask->GetGraphicsContext());
 
 	// -------------------------------------- GUI -------------------------------------------------
 	// Debug/ImGui
-	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
-	{
-		m_ImGuiCommandLists[i].push_back(imGuiRenderTask->GetCommandInterface()->GetCommandList(i));
-	}
+	m_ImGuiGraphicsContext.push_back(imGuiPass->GetGraphicsContext());
 }
 
 void Renderer::createRawBufferForLights()
@@ -1651,10 +1447,9 @@ void Renderer::createRawBufferForLights()
 
 void Renderer::setRenderTasksRenderComponents()
 {
-	m_RenderTasks[E_RENDER_TASK_TYPE::DEPTH_PRE_PASS]->SetRenderComponents(&m_RenderComponents[F_DRAW_FLAGS::NO_DEPTH]);
-	m_RenderTasks[E_RENDER_TASK_TYPE::DEFERRED_GEOMETRY]->SetRenderComponents(&m_RenderComponents[F_DRAW_FLAGS::DRAW_OPAQUE]);
-	m_RenderTasks[E_RENDER_TASK_TYPE::DEFERRED_LIGHT]->SetRenderComponents(&m_RenderComponents[F_DRAW_FLAGS::DRAW_OPAQUE]);	// TEMP
-	m_RenderTasks[E_RENDER_TASK_TYPE::OPACITY]->SetRenderComponents(&m_RenderComponents[F_DRAW_FLAGS::DRAW_TRANSPARENT]);
+	static_cast<DepthRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DEPTH_PRE_PASS])->SetRenderComponents(m_RenderComponents[F_DRAW_FLAGS::NO_DEPTH]);
+	static_cast<DeferredGeometryRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DEFERRED_GEOMETRY])->SetRenderComponents(m_RenderComponents[F_DRAW_FLAGS::DRAW_OPAQUE]);
+	static_cast<TransparentRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::OPACITY])->SetRenderComponents(m_RenderComponents[F_DRAW_FLAGS::DRAW_TRANSPARENT]);
 }
 
 void Renderer::prepareScene(Scene* activeScene)
@@ -1669,20 +1464,15 @@ void Renderer::prepareScene(Scene* activeScene)
 	//BaseCamera* tempCam = std::get<0>(tuple)->GetCamera();
 	//m_pScenePrimaryCamera = tempCam;
 
-	if (m_pScenePrimaryCamera == nullptr)
-	{
-		BL_LOG_CRITICAL("No primary camera was set in scenes\n");
-
-		// Todo: Set default m_pCamera
-	}
+	BL_ASSERT_MESSAGE(!m_pScenePrimaryCamera, "No primary camera was set in scene!\n");
 
 	m_pMousePicker->SetPrimaryCamera(m_pScenePrimaryCamera);
 
 	setRenderTasksRenderComponents();
-	setRenderTasksPrimaryCamera();
+	setGraphicsPassesPrimaryCamera();
 
 	// DXR, create buffers and create for the first time
-	TopLevelAccelerationStructure* pTLAS = static_cast<TopLevelRenderTask*>(m_DX12Tasks[E_DX12_TASK_TYPE::TLAS])->GetTLAS();
+	TopLevelAccelerationStructure* pTLAS = static_cast<TopLevelRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::TLAS])->GetTLAS();
 
 	unsigned int i = 0;
 	for (RenderComponent rc : m_RayTracedRenderComponents)
@@ -1693,9 +1483,9 @@ void Renderer::prepareScene(Scene* activeScene)
 	pTLAS->GenerateBuffers();
 	pTLAS->SetupAccelerationStructureForBuilding(false);
 
-	static_cast<DXRReflectionTask*>(m_DXRTasks[E_DXR_TASK_TYPE::REFLECTIONS])->CreateShaderBindingTable(m_RayTracedRenderComponents);
+	static_cast<DXRReflectionTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::REFLECTIONS])->CreateShaderBindingTable(m_RayTracedRenderComponents);
 	// Currently unused
-	//static_cast<DeferredLightRenderTask*>(m_RenderTasks[E_RENDER_TASK_TYPE::DEFERRED_GEOMETRY])->SetSceneBVHSRV(pTLAS->GetSRV());
+	//static_cast<DeferredLightRenderTask*>(m_GraphicsPasses[E_RENDER_TASK_TYPE::DEFERRED_GEOMETRY])->SetSceneBVHSRV(pTLAS->GetSRV());
 
 	// PerSceneData 
 	m_pCbPerSceneData->rayTracingBVH			 = pTLAS->GetRayTracingResultBuffer()->GetShaderResourceHeapIndex();
@@ -1711,7 +1501,7 @@ void Renderer::prepareScene(Scene* activeScene)
 void Renderer::submitUploadPerSceneData()
 {
 	// Submit CB_PER_SCENE to be uploaded to VRAM
-	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]);
+	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_ON_DEMAND]);
 	BL_ASSERT(codt);
 	
 	BL_ASSERT(m_pCbPerScene && m_pCbPerSceneData);
@@ -1721,7 +1511,7 @@ void Renderer::submitUploadPerSceneData()
 void Renderer::submitUploadPerFrameData()
 {
 	// Submit dynamic-light-data to be uploaded to VRAM
-	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_CopyTasks[E_COPY_TASK_TYPE::COPY_ON_DEMAND]);
+	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_ON_DEMAND]);
 	BL_ASSERT(codt);
 
 	// CB_PER_FRAME_STRUCT
@@ -1733,88 +1523,3 @@ void Renderer::submitUploadPerFrameData()
 	BL_ASSERT(Light::m_pLightsRawBuffer && Light::m_pRawData);
 	codt->SubmitBuffer(Light::m_pLightsRawBuffer, Light::m_pRawData);
 }
-
-//void Renderer::toggleFullscreen(WindowChange* event)
-//{
-//	ID3D12Device5* m_pDevice5 = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pDevice5;
-//	DescriptorHeap* mainHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
-//	DescriptorHeap* rtvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetRTVDescriptorHeap();
-//	DescriptorHeap* dsvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetDSVDescriptorHeap();
-//	ID3D12CommandQueue* pDirectQueue = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pGraphicsCommandQueue;
-//
-//	m_FenceFrameValue++;
-//	pDirectQueue->Signal(m_pFenceFrame, m_FenceFrameValue);
-//
-//	// Wait for all frames
-//	waitForFrame(0);
-//
-//	// Wait for the threads which records the commandlists to complete
-//	m_pThreadPool->WaitForThreads(F_THREAD_FLAGS::RENDER);
-//
-//	for (auto task : m_RenderTasks)
-//	{
-//		for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
-//		{
-//			task->GetCommandInterface()->Reset(i);
-//		}
-//	}
-//	for (auto task : m_CopyTasks)
-//	{
-//		for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
-//		{
-//			task->GetCommandInterface()->Reset(i);
-//		}
-//	}
-//	for (auto task : m_ComputeTasks)
-//	{
-//		for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
-//		{
-//			task->GetCommandInterface()->Reset(i);
-//		}
-//	}
-//
-//	m_pSwapChain->ToggleWindowMode(m_pDevice5,
-//		m_pWindow->GetHwnd(),
-//		pDirectQueue,
-//		rtvHeap,
-//		mainHeap);
-//
-//	// Change the member variables of the window class to match the swapchain
-//	UINT width = 0, height = 0;
-//	if (m_pSwapChain->IsFullscreen())
-//	{
-//		m_pSwapChain->GetDX12SwapChain()->GetSourceSize(&width, &height);
-//	}
-//	else
-//	{
-//		// Earlier it read from options. now just set to 800/600
-//		width = 800;
-//		height = 600;
-//	}
-//
-//	Window* window = const_cast<Window*>(m_pWindow);
-//	window->SetScreenWidth(width);
-//	window->SetScreenHeight(height);
-//
-//	for (auto task : m_RenderTasks)
-//	{
-//		for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
-//		{
-//			task->GetCommandInterface()->GetCommandList(i)->Close();
-//		}
-//	}
-//	for (auto task : m_CopyTasks)
-//	{
-//		for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
-//		{
-//			task->GetCommandInterface()->GetCommandList(i)->Close();
-//		}
-//	}
-//	for (auto task : m_ComputeTasks)
-//	{
-//		for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
-//		{
-//			task->GetCommandInterface()->GetCommandList(i)->Close();
-//		}
-//	}
-//}

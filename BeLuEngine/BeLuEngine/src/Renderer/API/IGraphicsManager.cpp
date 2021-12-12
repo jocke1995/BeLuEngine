@@ -1,9 +1,6 @@
 #include "stdafx.h"
 #include "IGraphicsManager.h"
 
-TODO("This should be inside stdafx.h");
-#include "../Misc/Log.h"
-
 #include "D3D12/D3D12GraphicsManager.h"
 TODO("Include future Vulkan Manager");
 

@@ -1,8 +1,6 @@
 #include "stdafx.h"
 #include "BoundingBoxComponent.h"
 
-#include "../Misc/Log.h"
-
 #include "../Entity.h"
 
 // Creating the BB out of the model

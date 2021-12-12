@@ -1,10 +1,6 @@
 #include "stdafx.h"
 #include "AssetLoader.h"
 
-#include "Log.h"
-
-#include "../Misc/Log.h"
-
 #include "../ECS/Scene.h"
 #include "../ECS/Entity.h"
 

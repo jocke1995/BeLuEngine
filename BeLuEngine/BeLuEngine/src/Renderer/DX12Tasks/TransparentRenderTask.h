@@ -1,21 +1,23 @@
 #ifndef TRANSPARENTRENDERTASK_H
 #define TRANSPARENTRENDERTASK_H
 
-#include "RenderTask.h"
+#include "GraphicsPass.h"
 
-class TransparentRenderTask : public RenderTask
+class BaseCamera;
+
+class TransparentRenderTask : public GraphicsPass
 {
 public:
-	TransparentRenderTask(
-		const std::wstring& VSName, const std::wstring& PSName,
-		std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*>* gpsds,
-		const std::wstring& psoName,
-		unsigned int FLAG_THREAD);
+	TransparentRenderTask();
 	~TransparentRenderTask();
 
 	void Execute() override final;
 
+	void SetRenderComponents(const std::vector<RenderComponent>& renderComponents);
+	void SetCamera(BaseCamera* baseCamera) { m_pCamera = baseCamera; }
 private:
+	std::vector<RenderComponent> m_RenderComponents;
+	BaseCamera* m_pCamera = nullptr;
 };
 
 #endif

@@ -12,6 +12,10 @@
 #include "../Geometry/Transform.h"
 #include "../Geometry/Material.h"
 
+// ECS
+#include "../ECS/Components/ModelComponent.h"
+#include "../ECS/Components/TransformComponent.h"
+
 TODO(To be replaced by a D3D12Manager some point in the future(needed to access RootSig));
 #include "../Renderer.h"
 
@@ -20,12 +24,8 @@ TODO(To be replaced by a D3D12Manager some point in the future(needed to access 
 #include "../API/D3D12/D3D12GraphicsBuffer.h"
 #include "../API/D3D12/D3D12GraphicsTexture.h"
 
-DeferredGeometryRenderTask::DeferredGeometryRenderTask(
-	const std::wstring& VSName, const std::wstring& PSName,
-	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*>* gpsds, 
-	const std::wstring& psoName,
-	unsigned int FLAG_THREAD)
-	: RenderTask(VSName, PSName, gpsds, psoName, FLAG_THREAD)
+DeferredGeometryRenderTask::DeferredGeometryRenderTask()
+	: GraphicsPass(L"GeometryPass")
 {
 }
 
@@ -143,6 +143,11 @@ void DeferredGeometryRenderTask::Execute()
 		TransferResourceState(m_GraphicTextures["gBufferEmissive"], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	}
 	commandList->Close();
+}
+
+void DeferredGeometryRenderTask::SetRenderComponents(const std::vector<RenderComponent>& renderComponents)
+{
+	m_RenderComponents = renderComponents;
 }
 
 void DeferredGeometryRenderTask::drawRenderComponent(component::ModelComponent* mc, component::TransformComponent* tc, const DirectX::XMMATRIX* viewProjTransposed, ID3D12GraphicsCommandList5* cl)

@@ -21,26 +21,14 @@ TODO(To be replaced by a D3D12Manager some point in the future(needed to access 
 #include "../API/D3D12/D3D12GraphicsTexture.h"
 
 
-DeferredLightRenderTask::DeferredLightRenderTask(
-	const std::wstring& VSName, const std::wstring& PSName,
-	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*>* gpsds,
-	const std::wstring& psoName,
-	unsigned int FLAG_THREAD)
-	:RenderTask(VSName, PSName, gpsds, psoName, FLAG_THREAD)
+DeferredLightRenderTask::DeferredLightRenderTask(Mesh* fullscreenQuad)
+	:GraphicsPass(L"LightPass")
 {
-	
+	m_pFullScreenQuadMesh = fullscreenQuad;
 }
 
 DeferredLightRenderTask::~DeferredLightRenderTask()
 {
-}
-
-void DeferredLightRenderTask::SetFullScreenQuad(Mesh* mesh)
-{
-	m_pFullScreenQuadMesh = mesh;
-
-	//m_NumIndices = m_pFullScreenQuadMesh->GetNumIndices();
-	m_Info.vertexDataIndex = static_cast<D3D12GraphicsBuffer*>(m_pFullScreenQuadMesh->GetVertexBuffer())->GetShaderResourceHeapIndex();
 }
 
 void DeferredLightRenderTask::Execute()
@@ -139,7 +127,9 @@ void DeferredLightRenderTask::Execute()
 		//commandList->OMSetStencilRef(1);
 
 		// Draw a fullscreen quad 
-		commandList->SetGraphicsRoot32BitConstants(Constants_SlotInfo_B0, sizeof(SlotInfo) / sizeof(UINT), &m_Info, 0);
+		SlotInfo slotInfo = {};
+		slotInfo.vertexDataIndex = static_cast<D3D12GraphicsBuffer*>(m_pFullScreenQuadMesh->GetVertexBuffer())->GetShaderResourceHeapIndex();
+		commandList->SetGraphicsRoot32BitConstants(Constants_SlotInfo_B0, sizeof(SlotInfo) / sizeof(UINT), &slotInfo, 0);
 
 		D3D12_INDEX_BUFFER_VIEW indexBufferView = {};
 		indexBufferView.BufferLocation = static_cast<D3D12GraphicsBuffer*>(m_pFullScreenQuadMesh->GetIndexBuffer())->GetTempResource()->GetGPUVirtualAddress();
@@ -160,7 +150,7 @@ void DeferredLightRenderTask::Execute()
 		transition = CD3DX12_RESOURCE_BARRIER::Transition(
 			mainDSV->GetTempResource(),
 			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,	// StateBefore
-			D3D12_RESOURCE_STATE_DEPTH_WRITE);				// StateAfter
+			D3D12_RESOURCE_STATE_DEPTH_WRITE);			// StateAfter
 		commandList->ResourceBarrier(1, &transition);
 
 	}

@@ -1,6 +1,5 @@
+#include "stdafx.h"
 #include "TextureFunctions.h"
-
-#include "../Misc/Log.h"
 
 // For loading textures
 #include <wincodec.h>

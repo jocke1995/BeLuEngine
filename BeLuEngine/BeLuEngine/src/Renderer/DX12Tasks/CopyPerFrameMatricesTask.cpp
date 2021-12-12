@@ -12,13 +12,9 @@ TODO("Abstraction");
 #include "../Renderer/API/D3D12/D3D12GraphicsManager.h"
 #include "../Renderer/API/D3D12/D3D12GraphicsBuffer.h"
 
-CopyPerFrameMatricesTask::CopyPerFrameMatricesTask(
-	E_COMMAND_INTERFACE_TYPE interfaceType,
-	unsigned int FLAG_THREAD,
-	const std::wstring& clName)
-	:CopyTask(interfaceType, FLAG_THREAD, clName)
+CopyPerFrameMatricesTask::CopyPerFrameMatricesTask()
+	:GraphicsPass(L"CopyPerFrameMatricesPass")
 {
-
 }
 
 CopyPerFrameMatricesTask::~CopyPerFrameMatricesTask()
@@ -29,11 +25,6 @@ CopyPerFrameMatricesTask::~CopyPerFrameMatricesTask()
 void CopyPerFrameMatricesTask::SubmitTransform(Transform* transform)
 {
 	m_TransformsToUpdate.push_back(transform);
-}
-
-void CopyPerFrameMatricesTask::SetCamera(BaseCamera* cam)
-{
-	m_pCameraRef = cam;
 }
 
 void CopyPerFrameMatricesTask::Execute()
@@ -67,7 +58,7 @@ void CopyPerFrameMatricesTask::Execute()
 			// World
 			w_wvp[0] = *transform->GetWorldMatrixTransposed();
 			// WVP
-			w_wvp[1] = *m_pCameraRef->GetViewProjectionTranposed() * w_wvp[0];
+			w_wvp[1] = *m_pCamera->GetViewProjectionTranposed() * w_wvp[0];
 	
 			IGraphicsBuffer* graphicsBuffer = transform->GetConstantBuffer();
 			ID3D12Resource* defaultHeap = static_cast<D3D12GraphicsBuffer*>(graphicsBuffer)->GetTempResource();

@@ -1,23 +1,15 @@
 #include "stdafx.h"
 #include "CopyOnDemandTask.h"
 
-#include "../Misc/Log.h"
-
 // DX12 Specifics
 #include "../CommandInterface.h"
-
-// Stuff to copy
-#include "../Renderer/Geometry/Mesh.h"
 
 #include "../Renderer/API/D3D12/D3D12GraphicsManager.h"
 #include "../Renderer/API/D3D12/D3D12GraphicsTexture.h"
 #include "../Renderer/API/D3D12/D3D12GraphicsBuffer.h"
 
-CopyOnDemandTask::CopyOnDemandTask(
-	E_COMMAND_INTERFACE_TYPE interfaceType,
-	unsigned int FLAG_THREAD,
-	const std::wstring& clName)
-	:CopyTask(interfaceType, FLAG_THREAD, clName)
+CopyOnDemandTask::CopyOnDemandTask()
+	:GraphicsPass(L"CopyOnDemandPass")
 {
 
 }

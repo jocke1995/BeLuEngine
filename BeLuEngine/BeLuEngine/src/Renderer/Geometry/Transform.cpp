@@ -1,8 +1,6 @@
 #include "stdafx.h"
 #include "Transform.h"
 
-#include "../Misc/Log.h"
-
 Transform::Transform(bool invertDirection)
 {
 	m_Position = DirectX::XMFLOAT3(0.0, 0.0, 0.0);

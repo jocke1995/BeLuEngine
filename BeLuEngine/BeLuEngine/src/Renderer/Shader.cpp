@@ -1,8 +1,7 @@
 #include "stdafx.h"
 #include "Shader.h"
-#include "DXILShaderCompiler.h"
 
-#include "../Misc/Log.h"
+#include "DXILShaderCompiler.h"
 
 Shader::Shader(LPCTSTR path, E_SHADER_TYPE type)
 {

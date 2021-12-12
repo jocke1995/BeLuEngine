@@ -1,9 +1,7 @@
 #include "stdafx.h"
-#include "GPU_Structs.h"
 #include "Model.h"
 
-#include "../Misc/Log.h"
-
+// Geometry
 #include "Mesh.h"
 #include "Material.h"
 

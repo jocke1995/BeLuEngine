@@ -1,16 +1,14 @@
 #ifndef BOTTOMLEVELRENDERTASK_H
 #define BOTTOMLEVELRENDERTASK_H
 
-#include "DX12Task.h"
+#include "GraphicsPass.h"
 
 class BottomLevelAccelerationStructure;
 
-class BottomLevelRenderTask : public DX12Task
+class BottomLevelRenderTask : public GraphicsPass
 {
 public:
-	BottomLevelRenderTask(
-		unsigned int FLAG_THREAD,
-		const std::wstring& clName = L"DXRDefaultCommandListName");
+	BottomLevelRenderTask();
 	virtual ~BottomLevelRenderTask();
 	
 	void SubmitBLAS(BottomLevelAccelerationStructure* pBLAS);

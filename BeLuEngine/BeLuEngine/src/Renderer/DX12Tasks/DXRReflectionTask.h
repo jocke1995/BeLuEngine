@@ -1,7 +1,7 @@
 #ifndef DXREFLECTIONTASK_H
 #define DXREFLECTIONTASK_H
 
-#include "DXRTask.h"
+#include "GraphicsPass.h"
 
 class Shader;
 class ShaderBindingTableGenerator;
@@ -17,12 +17,10 @@ enum E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION
 	NUM_LOCAL_PARAMS
 };
 
-struct Resource_UAV_SRV;
-
-class DXRReflectionTask : public DXRTask
+class DXRReflectionTask : public GraphicsPass
 {
 public:
-	DXRReflectionTask(IGraphicsTexture* reflectionTexture, unsigned int width, unsigned int height, unsigned int FLAG_THREAD);
+	DXRReflectionTask(IGraphicsTexture* reflectionTexture, unsigned int dispatchWidth, unsigned int dispatchHeight);
 	~DXRReflectionTask();
 
 	// Call this whenever new instances has been added/or removed from the rayTraced-scene

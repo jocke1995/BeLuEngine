@@ -1,8 +1,6 @@
 #include "stdafx.h"
 #include "ComputeState.h"
 
-#include "../Misc/Log.h"
-
 #include "../Shader.h"
 
 #include "../API/D3D12/D3D12GraphicsManager.h"

@@ -1,9 +1,6 @@
 #include "stdafx.h"
 #include "IGraphicsBuffer.h"
 
-TODO("This should be inside stdafx.h");
-#include "../Misc/Log.h"
-
 #include "IGraphicsManager.h"
 
 #include "../API/D3D12/D3D12GraphicsBuffer.h"

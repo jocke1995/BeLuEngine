@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "BaseCamera.h"
+
 #include "../Events/EventBus.h"
-#include "../Misc/Log.h"
 
 BaseCamera::BaseCamera(DirectX::XMVECTOR position, DirectX::XMVECTOR direction, bool isPrimary)
 {

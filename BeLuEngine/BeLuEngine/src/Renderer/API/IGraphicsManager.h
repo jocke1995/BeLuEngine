@@ -50,6 +50,7 @@ public:
 	virtual void Init(HWND hwnd, unsigned int width, unsigned int height, DXGI_FORMAT dxgiFormat) = 0;
 
 	virtual void Begin() = 0;
+	virtual void Execute(const std::vector<IGraphicsContext*>& graphicsContexts, unsigned int numGraphicsContexts) = 0;
 	virtual void SyncAndPresent() = 0;
 	virtual void End() = 0;
 

@@ -1,16 +1,14 @@
 #ifndef TOPLEVELRENDERTASK_H
 #define TOPLEVELRENDERTASK_H
 
-#include "DX12Task.h"
+#include "GraphicsPass.h"
 
 class TopLevelAccelerationStructure;
 
-class TopLevelRenderTask : public DX12Task
+class TopLevelRenderTask : public GraphicsPass
 {
 public:
-	TopLevelRenderTask(
-		unsigned int FLAG_THREAD,
-		const std::wstring& clName = L"DXRDefaultCommandListName");
+	TopLevelRenderTask();
 	virtual ~TopLevelRenderTask();
 
 	void Execute() override final;

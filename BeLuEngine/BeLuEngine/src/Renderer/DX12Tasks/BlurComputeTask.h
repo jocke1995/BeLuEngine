@@ -1,20 +1,14 @@
 #ifndef BRIGHTBLURTASK_H
 #define BRIGHTBLURTASK_H
 
-#include "ComputeTask.h"
+#include "GraphicsPass.h"
 
 class Bloom;
 
-class BlurComputeTask : public ComputeTask
+class BlurComputeTask : public GraphicsPass
 {
 public:
-	BlurComputeTask(
-		std::vector<std::pair<std::wstring, std::wstring>> csNamePSOName,
-		E_COMMAND_INTERFACE_TYPE interfaceType,
-		Bloom* bloom,
-		unsigned int screenWidth, unsigned int screenHeight,
-		unsigned int FLAG_THREAD
-		);
+	BlurComputeTask(Bloom* bloom, unsigned int screenWidth, unsigned int screenHeight);
 	virtual ~BlurComputeTask();
 
 	void Execute() override final;

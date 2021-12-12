@@ -1,8 +1,6 @@
 #include "stdafx.h"
 #include "AccelerationStructure.h"
 
-#include "../Misc/Log.h"
-
 #include "../API/D3D12/D3D12GraphicsBuffer.h"
 AccelerationStructure::AccelerationStructure()
 {

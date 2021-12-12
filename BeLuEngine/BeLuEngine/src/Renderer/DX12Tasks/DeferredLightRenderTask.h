@@ -1,26 +1,19 @@
 #ifndef DEFERREDLIGHTASK_H
 #define DEFERREDLIGHTASK_H
 
-#include "RenderTask.h"
+#include "GraphicsPass.h"
 
-class mesh;
+class Mesh;
 
-class DeferredLightRenderTask : public RenderTask
+class DeferredLightRenderTask : public GraphicsPass
 {
 public:
-	DeferredLightRenderTask(
-		const std::wstring& VSName, const std::wstring& PSName,
-		std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*>* gpsds, 
-		const std::wstring& psoName,
-		unsigned int FLAG_THREAD);
+	DeferredLightRenderTask(Mesh* fullscreenQuad);
 	~DeferredLightRenderTask();
-
-	void SetFullScreenQuad(Mesh* mesh);
 
 	void Execute() override final;
 
 private:
-	SlotInfo m_Info;
 	Mesh* m_pFullScreenQuadMesh = nullptr;
 
 };

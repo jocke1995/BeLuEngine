@@ -8,8 +8,8 @@
 
 #include "../DXR/TopLevelAccelerationStructure.h"
 
-TopLevelRenderTask::TopLevelRenderTask(unsigned int FLAG_THREAD, const std::wstring& clName)
-	:DX12Task(E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE, FLAG_THREAD,  clName)
+TopLevelRenderTask::TopLevelRenderTask()
+	:GraphicsPass(L"DXR_TopLevelASPass")
 {
 	m_pTLAS = new TopLevelAccelerationStructure();
 }
@@ -26,19 +26,13 @@ void TopLevelRenderTask::Execute()
 
 	m_pCommandInterface->Reset(m_CommandInterfaceIndex);
 	{
-		ScopedPixEvent(Build_TLAS, commandList);
+		ScopedPixEvent(DXR_TLAS, commandList);
 
-		static bool a = false;
+		m_pTLAS->BuildAccelerationStructure(commandList);
 
-		//if(!a)
-			m_pTLAS->BuildAccelerationStructure(commandList);
-
-		a = true;
 		m_pTLAS->m_IsBuilt = true;
 	}
 	commandList->Close();
-
-	
 }
 
 TopLevelAccelerationStructure* TopLevelRenderTask::GetTLAS() const

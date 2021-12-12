@@ -1,9 +1,6 @@
 #include "stdafx.h"
 #include "D3D12GraphicsTexture.h"
 
-TODO("This should be inside stdafx.h");
-#include "../Misc/Log.h"
-
 #include "External/TextureFunctions.h"
 
 #include "D3D12GraphicsManager.h"

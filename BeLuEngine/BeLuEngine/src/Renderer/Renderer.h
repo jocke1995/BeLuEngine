@@ -10,6 +10,7 @@ class DescriptorHeap;
 class Mesh;
 class Texture;
 class Model;
+class BaseCamera;
 
 // techniques
 class MousePicker;
@@ -20,17 +21,7 @@ class Scene;
 class Light;
 
 // Graphics
-#include "DX12Tasks/RenderTask.h"
-class BaseCamera;
-
-// Copy
-class CopyTask;
-
-// Compute
-class ComputeTask;
-
-// DXR
-class DXRTask;
+class GraphicsPass;
 
 // ECS
 class Entity;
@@ -38,9 +29,7 @@ class Entity;
 // API
 class IGraphicsBuffer;
 class IGraphicsTexture;
-
-TODO("Replace with GraphicsContext");
-struct ID3D12CommandList;
+class IGraphicsContext;
 
 namespace component
 {
@@ -67,6 +56,7 @@ public:
 
 	// PickedEntity
 	Entity* const GetPickedEntity() const;
+
 	// Scene
 	Scene* const GetActiveScene() const;
 
@@ -137,17 +127,12 @@ private:
 	// Bloom
 	Bloom* m_pBloomWrapperTemp = nullptr;
 
-	// -------------- RenderTargets -------------- 
 	// Picking
 	MousePicker* m_pMousePicker = nullptr;
 	Entity* m_pPickedEntity = nullptr;
 
 	// Tasks
-	std::vector<ComputeTask*> m_ComputeTasks;
-	std::vector<CopyTask*>    m_CopyTasks;
-	std::vector<RenderTask*>  m_RenderTasks;
-	std::vector<DX12Task*>	  m_DX12Tasks;
-	std::vector<DXRTask*>	  m_DXRTasks;
+	std::vector<GraphicsPass*> m_GraphicsPasses;
 
 	Mesh* m_pFullScreenQuad = nullptr;
 
@@ -165,10 +150,10 @@ private:
 	CB_PER_FRAME_STRUCT* m_pCbPerFrameData = nullptr;
 	IGraphicsBuffer* m_pCbPerFrame = nullptr;
 
-	void setRenderTasksPrimaryCamera();
+	void setGraphicsPassesPrimaryCamera();
 	void createFullScreenQuad();
 	void updateMousePicker();
-	void initRenderTasks();
+	void initGraphicsPasses();
 	void createRawBufferForLights();
 	void setRenderTasksRenderComponents();
 
@@ -180,11 +165,9 @@ private:
 	// Submit cbPerFrameData to the copyQueue that updates each frame
 	void submitUploadPerFrameData();
 
-	//void toggleFullscreen(WindowChange* event);
-
-	// CommandInterface
-	std::vector<ID3D12CommandList*> m_DirectCommandLists[NUM_SWAP_BUFFERS];
-	std::vector<ID3D12CommandList*> m_ImGuiCommandLists[NUM_SWAP_BUFFERS];
+	// Contexts
+	std::vector<IGraphicsContext*> m_MainGraphicsContexts;
+	std::vector<IGraphicsContext*> m_ImGuiGraphicsContext;
 
 	unsigned int m_CurrentRenderingWidth = 0;
 	unsigned int m_CurrentRenderingHeight = 0;

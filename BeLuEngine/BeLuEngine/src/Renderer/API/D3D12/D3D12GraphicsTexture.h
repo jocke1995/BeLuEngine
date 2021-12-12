@@ -20,8 +20,9 @@ public:
 	virtual unsigned __int64 GetSize() const override;
 
 	std::vector<D3D12_SUBRESOURCE_DATA>* GetTempSubresources() { return &m_Subresources; }
-	ID3D12Resource1* GetTempResource() { return m_pResource; }
 private:
+	friend class D3D12GraphicsContext;
+
 	ID3D12Resource1* m_pResource = nullptr;
 	unsigned int m_ShaderResourceDescriptorHeapIndex	= -1;
 	unsigned int m_RenderTargetDescriptorHeapIndex		= -1;

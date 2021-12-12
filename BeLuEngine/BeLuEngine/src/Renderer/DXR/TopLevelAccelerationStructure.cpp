@@ -1,8 +1,6 @@
 #include "stdafx.h"
 #include "TopLevelAccelerationStructure.h"
 
-#include "../Misc/Log.h"
-
 #include "BottomLevelAccelerationStructure.h"
 
 // TODO ABSTRACTION

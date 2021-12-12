@@ -10,7 +10,6 @@
 #include "../Renderer/Renderer.h"
 #include "../Misc/Window.h"
 
-#include "../Misc/Log.h"
 
 MousePicker::MousePicker()
 {

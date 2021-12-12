@@ -1,8 +1,6 @@
 #include "stdafx.h"
 #include "PipelineState.h"
 
-#include "../Misc/Log.h"
-
 #include "../Shader.h"
 #include "../Misc/AssetLoader.h"
 
@@ -10,7 +8,7 @@
 
 PipelineState::PipelineState(const std::wstring& psoName)
 {
-	m_PsoName = psoName;
+	m_PsoName = psoName + L"_PSO";
 }
 
 PipelineState::~PipelineState()
@@ -28,17 +26,16 @@ ID3D12PipelineState* PipelineState::GetPSO() const
 
 Shader* PipelineState::createShader(const std::wstring& fileName, E_SHADER_TYPE type)
 {
-	if (type == E_SHADER_TYPE::VS)
+	if (type == E_SHADER_TYPE::VS ||
+		type == E_SHADER_TYPE::PS ||
+		type == E_SHADER_TYPE::CS)
 	{
 		return AssetLoader::Get()->loadShader(fileName, type);
 	}
-	else if (type == E_SHADER_TYPE::PS)
+	else
 	{
-		return AssetLoader::Get()->loadShader(fileName, type);
+		BL_ASSERT_MESSAGE(false, "Invalid E_SHADER_TYPE when creating pipeline state");
 	}
-	else if (type == E_SHADER_TYPE::CS)
-	{
-		return AssetLoader::Get()->loadShader(fileName, type);
-	}
+
 	return nullptr;
 }

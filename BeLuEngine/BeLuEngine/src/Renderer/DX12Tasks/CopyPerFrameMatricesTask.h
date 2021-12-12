@@ -1,28 +1,24 @@
 #ifndef COPYPERFRAMEMATRICESTASK_H
 #define COPYPERFRAMEMATRICESTASK_H
 
-#include "CopyTask.h"
+#include "GraphicsPass.h"
 
 class BaseCamera;
 class Transform;
 
-class CopyPerFrameMatricesTask : public CopyTask
+class CopyPerFrameMatricesTask : public GraphicsPass
 {
 public:
-	CopyPerFrameMatricesTask(
-		E_COMMAND_INTERFACE_TYPE interfaceType,
-		unsigned int FLAG_THREAD,
-		const std::wstring& clName);
+	CopyPerFrameMatricesTask();
 	virtual ~CopyPerFrameMatricesTask();
-
 
 	void Execute();
 
 	void SubmitTransform(Transform* transform);
-	void SetCamera(BaseCamera* cam);
+	void SetCamera(BaseCamera* baseCamera) { m_pCamera = baseCamera; }
 
 private:
-	BaseCamera* m_pCameraRef = nullptr;
+	BaseCamera* m_pCamera = nullptr;
 	std::vector<Transform*> m_TransformsToUpdate;
 };
 

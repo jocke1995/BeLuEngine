@@ -8,10 +8,8 @@
 
 #include "../DXR/BottomLevelAccelerationStructure.h"
 
-BottomLevelRenderTask::BottomLevelRenderTask(
-	unsigned int FLAG_THREAD,
-	const std::wstring& clName)
-	:DX12Task(E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE, FLAG_THREAD, clName)
+BottomLevelRenderTask::BottomLevelRenderTask()
+	:GraphicsPass(L"DXR_BottomlevelASPass")
 {
 }
 

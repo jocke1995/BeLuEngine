@@ -59,15 +59,6 @@ enum class E_WINDOW_MODE
 	FULLSCREEN
 };
 
-enum class E_TEXTURE_TYPE
-{
-	UNKNOWN,
-	TEXTURE2D,
-	TEXTURE2DGUI,
-	TEXTURECUBEMAP,
-	NUM_TYPES
-};
-
 enum class E_TEXTURE2D_TYPE
 {
 	ALBEDO,
@@ -167,7 +158,7 @@ enum F_DRAW_FLAGS
 
 enum F_THREAD_FLAGS
 {
-	RENDER = BIT(1),
+	GRAPHICS = BIT(1),
 	TEST = BIT(2),
 	ASYNC_BLAS = BIT(3),	// TODO
 	// CopyTextures
@@ -175,8 +166,4 @@ enum F_THREAD_FLAGS
 	// etc
 	ALL = BIT(4)
 };
-
-
-// TODO: Make a renderCore.h with renderstuff, and keep Core.h for commonStuff
-
 #endif

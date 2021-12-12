@@ -17,38 +17,16 @@ TODO(To be replaced by a D3D12Manager some point in the future(needed to access 
 #include "../API/D3D12/D3D12GraphicsBuffer.h"
 #include "../API/D3D12/D3D12GraphicsTexture.h"
 
-DownSampleRenderTask::DownSampleRenderTask(
-	const std::wstring& VSName, const std::wstring& PSName,
-	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*>* gpsds,
-	const std::wstring& psoName,
-	IGraphicsTexture* sourceTexture,
-	IGraphicsTexture* destinationTexture,
-	unsigned int FLAG_THREAD)
-	:RenderTask(VSName, PSName, gpsds, psoName, FLAG_THREAD)
+DownSampleRenderTask::DownSampleRenderTask(IGraphicsTexture* sourceTexture, IGraphicsTexture* destinationTexture, Mesh* fullscreenQuad)
+	:GraphicsPass(L"TempDownSampleRenderPass")
 {
 	m_pSourceTexture = sourceTexture;
 	m_pDestinationTexture = destinationTexture;
-	m_NumIndices = 0;
-	m_Info = {};
+	m_pFullScreenQuadMesh = fullscreenQuad;
 }
 
 DownSampleRenderTask::~DownSampleRenderTask()
 {
-}
-
-void DownSampleRenderTask::SetFullScreenQuad(Mesh* mesh)
-{
-	m_pFullScreenQuadMesh = mesh;
-}
-
-void DownSampleRenderTask::SetFullScreenQuadInSlotInfo()
-{
-	// Mesh
-	m_NumIndices = m_pFullScreenQuadMesh->GetNumIndices();
-	m_Info.vertexDataIndex = static_cast<D3D12GraphicsBuffer*>(m_pFullScreenQuadMesh->GetVertexBuffer())->GetShaderResourceHeapIndex();
-
-	// The descriptorHeapIndices for the source&dest are currently put inside the textureSlots inside SlotInfo
-	m_dhIndices.index0 = static_cast<D3D12GraphicsTexture*>(m_pSourceTexture)->GetShaderResourceHeapIndex();
 }
 
 void DownSampleRenderTask::Execute()
@@ -98,8 +76,14 @@ void DownSampleRenderTask::Execute()
 
 		commandList->SetPipelineState(m_PipelineStates[0]->GetPSO());
 
-		commandList->SetGraphicsRoot32BitConstants(Constants_SlotInfo_B0, sizeof(SlotInfo) / sizeof(UINT), &m_Info, 0);
-		commandList->SetGraphicsRoot32BitConstants(Constants_DH_Indices_B1, sizeof(DescriptorHeapIndices) / sizeof(UINT), &m_dhIndices, 0);
+		SlotInfo slotInfo = {};
+		slotInfo.vertexDataIndex = static_cast<D3D12GraphicsBuffer*>(m_pFullScreenQuadMesh->GetVertexBuffer())->GetShaderResourceHeapIndex();
+
+		DescriptorHeapIndices dhIndices = {};
+		dhIndices.index0 = static_cast<D3D12GraphicsTexture*>(m_pSourceTexture)->GetShaderResourceHeapIndex();
+
+		commandList->SetGraphicsRoot32BitConstants(Constants_SlotInfo_B0, sizeof(SlotInfo) / sizeof(UINT), &slotInfo, 0);
+		commandList->SetGraphicsRoot32BitConstants(Constants_DH_Indices_B1, sizeof(DescriptorHeapIndices) / sizeof(UINT), &dhIndices, 0);
 
 		D3D12_INDEX_BUFFER_VIEW indexBufferView = {};
 		indexBufferView.BufferLocation = static_cast<D3D12GraphicsBuffer*>(m_pFullScreenQuadMesh->GetIndexBuffer())->GetTempResource()->GetGPUVirtualAddress();
@@ -116,7 +100,7 @@ void DownSampleRenderTask::Execute()
 		commandList->ResourceBarrier(1, &transition);
 
 		// Draw a fullscreen quad
-		commandList->DrawIndexedInstanced(m_NumIndices, 1, 0, 0, 0);
+		commandList->DrawIndexedInstanced(m_pFullScreenQuadMesh->GetNumIndices(), 1, 0, 0, 0);
 
 		transition = CD3DX12_RESOURCE_BARRIER::Transition(
 			sourceResource,

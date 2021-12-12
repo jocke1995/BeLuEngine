@@ -19,43 +19,14 @@ TODO(To be replaced by a D3D12Manager some point in the future(needed to access 
 #include "../API/D3D12/D3D12GraphicsBuffer.h"
 #include "../API/D3D12/D3D12GraphicsTexture.h"
 
-WireframeRenderTask::WireframeRenderTask(
-	const std::wstring& VSName, const std::wstring& PSName,
-	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*>* gpsds,
-	const std::wstring& psoName,
-	unsigned int FLAG_THREAD)
-	:RenderTask(VSName, PSName, gpsds, psoName, FLAG_THREAD)
+WireframeRenderTask::WireframeRenderTask()
+	:GraphicsPass(L"BoundingBoxPass")
 {
-	
 }
 
 WireframeRenderTask::~WireframeRenderTask()
 {
 
-}
-
-void WireframeRenderTask::AddObjectToDraw(component::BoundingBoxComponent* bbc)
-{
-	m_ObjectsToDraw.push_back(bbc);
-}
-
-void WireframeRenderTask::Clear()
-{
-	m_ObjectsToDraw.clear();
-}
-
-void WireframeRenderTask::ClearSpecific(component::BoundingBoxComponent* bbc)
-{
-	unsigned int i = 0;
-	for (auto& bbcInTask : m_ObjectsToDraw)
-	{
-		if (bbcInTask == bbc)
-		{
-			m_ObjectsToDraw.erase(m_ObjectsToDraw.begin() + i);
-			break;
-		}
-		i++;
-	}
 }
 
 void WireframeRenderTask::Execute()
@@ -133,4 +104,28 @@ void WireframeRenderTask::Execute()
 		}
 	}
 	commandList->Close();
+}
+
+void WireframeRenderTask::AddObjectToDraw(component::BoundingBoxComponent* bbc)
+{
+	m_ObjectsToDraw.push_back(bbc);
+}
+
+void WireframeRenderTask::Clear()
+{
+	m_ObjectsToDraw.clear();
+}
+
+void WireframeRenderTask::ClearSpecific(component::BoundingBoxComponent* bbc)
+{
+	unsigned int i = 0;
+	for (auto& bbcInTask : m_ObjectsToDraw)
+	{
+		if (bbcInTask == bbc)
+		{
+			m_ObjectsToDraw.erase(m_ObjectsToDraw.begin() + i);
+			break;
+		}
+		i++;
+	}
 }

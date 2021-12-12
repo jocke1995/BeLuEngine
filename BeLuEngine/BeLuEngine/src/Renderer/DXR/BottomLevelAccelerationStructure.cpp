@@ -1,8 +1,6 @@
 #include "stdafx.h"
 #include "BottomLevelAccelerationStructure.h"
 
-#include "../Misc/Log.h"
-
 // For the sizeof(Vertex)
 #include "../Geometry/Mesh.h"
 

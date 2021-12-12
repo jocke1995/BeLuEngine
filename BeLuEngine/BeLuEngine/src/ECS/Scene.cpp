@@ -2,8 +2,6 @@
 #include "Scene.h"
 #include "Entity.h"
 
-#include "../Misc/Log.h"
-
 #include "../Renderer/Camera/BaseCamera.h"
 
 void DefaultUpdateScene(SceneManager* sm, double dt)
