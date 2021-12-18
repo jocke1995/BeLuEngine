@@ -2,18 +2,18 @@
 #include "GraphicsPass.h"
 
 // DX12 Specifics
-#include "../DescriptorHeap.h"
+#include "../Renderer/DescriptorHeap.h"
 
-#include "../PipelineState/GraphicsState.h"
-#include "../PipelineState/ComputeState.h"
+#include "../Renderer/PipelineState/GraphicsState.h"
+#include "../Renderer/PipelineState/ComputeState.h"
 
 // API Generic
-#include "../API/IGraphicsManager.h"
-#include "../API/IGraphicsBuffer.h"
-#include "../API/IGraphicsTexture.h"
+#include "../Renderer/API/IGraphicsManager.h"
+#include "../Renderer/API/IGraphicsBuffer.h"
+#include "../Renderer/API/IGraphicsTexture.h"
 
 // API Specific
-#include "../API/D3D12/D3D12GraphicsContext.h"
+#include "../Renderer/API/D3D12/D3D12GraphicsContext.h"
 
 GraphicsPass::GraphicsPass(const std::wstring& passName)
 	:MultiThreadedTask(F_THREAD_FLAGS::GRAPHICS)

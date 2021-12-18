@@ -1,9 +1,9 @@
 #include "stdafx.h"
 #include "BottomLevelRenderTask.h"
 
-#include "../DXR/BottomLevelAccelerationStructure.h"
+#include "../../DXR/BottomLevelAccelerationStructure.h"
 
-#include "../API/IGraphicsContext.h"
+#include "../../API/IGraphicsContext.h"
 
 BottomLevelRenderTask::BottomLevelRenderTask()
 	:GraphicsPass(L"DXR_BottomlevelASPass")

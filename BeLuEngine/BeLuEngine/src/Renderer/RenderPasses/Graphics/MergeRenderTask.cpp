@@ -2,19 +2,19 @@
 #include "MergeRenderTask.h"
 
 TODO("Remove this");
-#include "../DescriptorHeap.h"
+#include "../Renderer/DescriptorHeap.h"
 
 // Model info
-#include "../Geometry/Mesh.h"
+#include "../Renderer/Geometry/Mesh.h"
 
 TODO("Abstract this")
-#include "../PipelineState/GraphicsState.h"
+#include "../Renderer/PipelineState/GraphicsState.h"
 
 // Generic API
-#include "../API/D3D12/D3D12GraphicsManager.h"
-#include "../API/D3D12/D3D12GraphicsBuffer.h"
-#include "../API/D3D12/D3D12GraphicsTexture.h"
-#include "../API/D3D12/D3D12GraphicsContext.h"
+#include "../Renderer/API/D3D12/D3D12GraphicsManager.h"
+#include "../Renderer/API/D3D12/D3D12GraphicsBuffer.h"
+#include "../Renderer/API/D3D12/D3D12GraphicsTexture.h"
+#include "../Renderer/API/D3D12/D3D12GraphicsContext.h"
 
 MergeRenderTask::MergeRenderTask(Mesh* fullscreenQuad)
 	:GraphicsPass(L"MergeRenderPass")

@@ -49,7 +49,6 @@ namespace component
     private:
         // The boundingBox will update the "m_IsPickedThisFrame"
         friend class BoundingBoxComponent;
-        friend class BeLuEngine;
         friend class Renderer;
 
         bool m_IsPickedThisFrame = false;

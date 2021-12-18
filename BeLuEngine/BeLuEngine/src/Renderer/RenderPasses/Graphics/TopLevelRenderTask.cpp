@@ -1,10 +1,10 @@
 #include "stdafx.h"
 #include "TopLevelRenderTask.h"
 
-#include "../DXR/TopLevelAccelerationStructure.h"
+#include "../Renderer/DXR/TopLevelAccelerationStructure.h"
 
 // Generic API
-#include "../API/IGraphicsContext.h"
+#include "../Renderer/API/IGraphicsContext.h"
 
 TopLevelRenderTask::TopLevelRenderTask()
 	:GraphicsPass(L"DXR_TopLevelASPass")

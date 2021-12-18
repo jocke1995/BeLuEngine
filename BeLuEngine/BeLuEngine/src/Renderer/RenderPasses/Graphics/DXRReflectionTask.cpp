@@ -2,25 +2,25 @@
 #include "DXRReflectionTask.h"
 
 // DX12 Specifics
-#include "../Shader.h"
+#include "../Renderer/Shader.h"
 #include "../Misc/AssetLoader.h"
 
 // Model info
-#include "../Geometry/Transform.h"
+#include "../../Geometry/Transform.h"
 
 // DXR stuff
-#include "../DXR/ShaderBindingTableGenerator.h"
-#include "../DXR/RaytracingPipelineGenerator.h"
+#include "../../DXR/ShaderBindingTableGenerator.h"
+#include "../../DXR/RaytracingPipelineGenerator.h"
 
 // ECS
 #include "../ECS/Components/ModelComponent.h"
 #include "../ECS/Components/TransformComponent.h"
 
 TODO("Abstract this class")
-#include "../API/D3D12/D3D12GraphicsManager.h"
-#include "../API/D3D12/D3D12GraphicsBuffer.h"
-#include "../API/IGraphicsTexture.h"
-#include "../API/IGraphicsContext.h"
+#include "../../API/D3D12/D3D12GraphicsManager.h"
+#include "../../API/D3D12/D3D12GraphicsBuffer.h"
+#include "../../API/IGraphicsTexture.h"
+#include "../../API/IGraphicsContext.h"
 
 DXRReflectionTask::DXRReflectionTask(IGraphicsTexture* reflectionTexture, unsigned int dispatchWidth, unsigned int dispatchHeight)
 	:GraphicsPass(L"DXR_ReflectionPass")
@@ -249,6 +249,7 @@ void DXRReflectionTask::CreateShaderBindingTable(const std::vector<RenderCompone
 	// mapping to write the SBT contents. After the SBT compilation it could be
 	// copied to the default heap for performance.
 
+	BL_SAFE_DELETE(m_pShaderTableBuffer);
 	m_pShaderTableBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::CPUBuffer, sbtSize, 1, DXGI_FORMAT_UNKNOWN, L"ShaderBindingTable_CPUBUFFER");
 
 	// Compile the SBT from the shader and parameters info

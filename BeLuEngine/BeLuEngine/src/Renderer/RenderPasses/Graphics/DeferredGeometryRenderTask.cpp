@@ -2,21 +2,21 @@
 #include "DeferredGeometryRenderTask.h"
 
 // Model info
-#include "../Geometry/Mesh.h"
-#include "../Geometry/Transform.h"
+#include "../../Geometry/Mesh.h"
+#include "../../Geometry/Transform.h"
 
 // ECS
 #include "../ECS/Components/ModelComponent.h"
 #include "../ECS/Components/TransformComponent.h"
 
 TODO("Abstract this")
-#include "../PipelineState/GraphicsState.h"
+#include "../../PipelineState/GraphicsState.h"
 
 // Generic API
-#include "../API/IGraphicsManager.h"
-#include "../API/IGraphicsBuffer.h"
-#include "../API/IGraphicsTexture.h"
-#include "../API/IGraphicsContext.h"
+#include "../../API/IGraphicsManager.h"
+#include "../../API/IGraphicsBuffer.h"
+#include "../../API/IGraphicsTexture.h"
+#include "../../API/IGraphicsContext.h"
 
 DeferredGeometryRenderTask::DeferredGeometryRenderTask()
 	: GraphicsPass(L"GeometryPass")

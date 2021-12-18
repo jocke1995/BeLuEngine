@@ -10,10 +10,9 @@
 #include "../Renderer/Geometry/Mesh.h"
 
 // CopyTasks
-#include "../Renderer/DX12Tasks/CopyOnDemandTask.h"
-
+#include "../Renderer/RenderPasses/Graphics/CopyOnDemandTask.h"
 // GraphicPasses
-#include "../Renderer/DX12Tasks/WireframeRenderTask.h"
+#include "../Renderer/RenderPasses/Graphics/WireframeRenderTask.h"
 
 // Techniques
 #include "../Renderer/Techniques/BoundingBoxPool.h"
@@ -165,7 +164,7 @@ void SceneManager::SetScene(Scene* scene)
 	m_pActiveScene = scene;
 
 	Renderer* renderer = &Renderer::GetInstance();
-	renderer->prepareScene(m_pActiveScene);
+	renderer->setupNewScene(m_pActiveScene);
 
 	if (m_pActiveScene->GetMainCamera() == nullptr)
 	{

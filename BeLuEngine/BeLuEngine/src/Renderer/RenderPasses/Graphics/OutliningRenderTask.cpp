@@ -2,9 +2,9 @@
 #include "OutliningRenderTask.h"
 
 // DX12 Specifics
-#include "../PipelineState/GraphicsState.h"
+#include "../Renderer/PipelineState/GraphicsState.h"
 
-#include "../Camera/PerspectiveCamera.h"
+#include "../Renderer/Camera/PerspectiveCamera.h"
 #include "../Renderer/Geometry/Mesh.h"
 
 // Componennt
@@ -12,10 +12,10 @@
 #include "../ECS/Components/TransformComponent.h"
 
 // Generic API
-#include "../API/IGraphicsManager.h"
-#include "../API/IGraphicsBuffer.h"
-#include "../API/IGraphicsTexture.h"
-#include "../API/IGraphicsContext.h"
+#include "../Renderer/API/IGraphicsManager.h"
+#include "../Renderer/API/IGraphicsBuffer.h"
+#include "../Renderer/API/IGraphicsTexture.h"
+#include "../Renderer/API/IGraphicsContext.h"
 
 
 OutliningRenderTask::OutliningRenderTask()

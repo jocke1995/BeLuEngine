@@ -2,14 +2,14 @@
 #include "BlurComputeTask.h"
 
 TODO("Remove this and put inside this class and rename class to BloomGraphicsPass");
-#include "../Techniques/Bloom.h"
+#include "../Renderer/Techniques/Bloom.h"
 
 TODO("Abstract this");
-#include "../PipelineState/ComputeState.h"
+#include "../Renderer/PipelineState/ComputeState.h"
 
-#include "../API/IGraphicsManager.h"
-#include "../API/IGraphicsContext.h"
-#include "../API/IGraphicsTexture.h"
+#include "../Renderer/API/IGraphicsManager.h"
+#include "../Renderer/API/IGraphicsContext.h"
+#include "../Renderer/API/IGraphicsTexture.h"
 
 BlurComputeTask::BlurComputeTask(Bloom* bloom, unsigned int screenWidth, unsigned int screenHeight)
 	:GraphicsPass(L"BloomPass")

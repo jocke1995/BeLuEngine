@@ -14,7 +14,7 @@
 #include "../ImGUI/imgui_impl_dx12.h"
 #include "../ImGui/ImGuiHandler.h"
 #include "Statistics/EngineStatistics.h"
-#include "DX12Tasks/ImGuiRenderTask.h"
+#include "RenderPasses/Graphics/ImGuiRenderTask.h"
 
 // ECS
 #include "../ECS/Scene.h"
@@ -41,19 +41,19 @@
 #include "Techniques/BoundingBoxPool.h"
 
 // Graphics
-#include "DX12Tasks/DepthRenderTask.h"
-#include "DX12Tasks/WireframeRenderTask.h"
-#include "DX12Tasks/OutliningRenderTask.h"
-#include "DX12Tasks/DeferredGeometryRenderTask.h"
-#include "DX12Tasks/DeferredLightRenderTask.h"
-#include "DX12Tasks/TransparentRenderTask.h"
-#include "DX12Tasks/DownSampleRenderTask.h"
-#include "DX12Tasks/MergeRenderTask.h"
-#include "DX12Tasks/CopyOnDemandTask.h"
-#include "DX12Tasks/BlurComputeTask.h"
-#include "DX12Tasks/BottomLevelRenderTask.h"
-#include "DX12Tasks/TopLevelRenderTask.h"
-#include "DX12Tasks/DXRReflectionTask.h"
+#include "RenderPasses/Graphics/DepthRenderTask.h"
+#include "RenderPasses/Graphics/WireframeRenderTask.h"
+#include "RenderPasses/Graphics/OutliningRenderTask.h"
+#include "RenderPasses/Graphics/DeferredGeometryRenderTask.h"
+#include "RenderPasses/Graphics/DeferredLightRenderTask.h"
+#include "RenderPasses/Graphics/TransparentRenderTask.h"
+#include "RenderPasses/Graphics/DownSampleRenderTask.h"
+#include "RenderPasses/Graphics/MergeRenderTask.h"
+#include "RenderPasses/Graphics/CopyOnDemandTask.h"
+#include "RenderPasses/Graphics/BlurComputeTask.h"
+#include "RenderPasses/Graphics/BottomLevelRenderTask.h"
+#include "RenderPasses/Graphics/TopLevelRenderTask.h"
+#include "RenderPasses/Graphics/DXRReflectionTask.h"
 #include "DXR/BottomLevelAccelerationStructure.h"
 #include "DXR/TopLevelAccelerationStructure.h"
 
@@ -297,6 +297,7 @@ void Renderer::Update(double dt)
 	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_ON_DEMAND]);
 	BL_ASSERT(codt);
 	
+	TODO("Using this vector only because all objects are stored here.. Figure out a better solution in the future")
 	// Submit Transforms (Currently using the rayTracingVector cause all objects are in that one.
 	for (const RenderComponent& rc : m_RayTracedRenderComponents)
 	{
@@ -965,23 +966,22 @@ void Renderer::updateMousePicker()
 
 void Renderer::initGraphicsPasses()
 {
-	TODO(Create all PSOs in corresponding classes like reflectionTask is done, instead of out here);
-
-#pragma region DXRTasks
+	// Acceleration Structures
 	GraphicsPass* blasTask = new BottomLevelRenderTask();
 	GraphicsPass* tlasTask = new TopLevelRenderTask();
 
+	// DXR
 	GraphicsPass* reflectionPassDXR = new DXRReflectionTask(m_ReflectionTexture, m_CurrentRenderingWidth, m_CurrentRenderingHeight);
 	reflectionPassDXR->AddGraphicsBuffer("cbPerFrame", m_pCbPerFrame);
 	reflectionPassDXR->AddGraphicsBuffer("cbPerScene", m_pCbPerScene);
 	reflectionPassDXR->AddGraphicsBuffer("rawBufferLights", Light::m_pLightsRawBuffer);
 	reflectionPassDXR->AddGraphicsTexture("mainDSV", m_pMainDepthStencil);	// To transition from depthWrite to depthRead
 
-#pragma endregion
+	// depthprePass
 	GraphicsPass* depthPrePass = new DepthRenderTask();
 	depthPrePass->AddGraphicsTexture("mainDepthStencilBuffer", m_pMainDepthStencil);
 
-#pragma region DeferredRenderingGeometry
+	// Deferred Geometry Pass
 	GraphicsPass* deferredGeometryPass = new DeferredGeometryRenderTask();
 	deferredGeometryPass->AddGraphicsBuffer("cbPerScene", m_pCbPerScene);
 	deferredGeometryPass->AddGraphicsTexture("gBufferAlbedo", m_GBufferAlbedo);
@@ -990,9 +990,6 @@ void Renderer::initGraphicsPasses()
 	deferredGeometryPass->AddGraphicsTexture("gBufferEmissive", m_GBufferEmissive);
 	deferredGeometryPass->AddGraphicsTexture("mainDepthStencilBuffer", m_pMainDepthStencil);
 
-#pragma endregion DeferredRenderingGeometry
-
-#pragma region DeferredRenderingLight
 	/* Forward rendering with stencil testing */
 	//D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsdForwardRenderStencilTest = gpsdDeferredLightRender;
 	//
@@ -1016,6 +1013,7 @@ void Renderer::initGraphicsPasses()
 	//
 	//gpsdForwardRenderStencilTest.DepthStencilState = dsd;
 
+	// Deferred Light Pass
 	GraphicsPass* deferredLightPass = new DeferredLightRenderTask(m_pFullScreenQuad);
 	deferredLightPass->AddGraphicsBuffer("cbPerFrame", m_pCbPerFrame);
 	deferredLightPass->AddGraphicsBuffer("cbPerScene", m_pCbPerScene);
@@ -1023,24 +1021,16 @@ void Renderer::initGraphicsPasses()
 	deferredLightPass->AddGraphicsTexture("mainDepthStencilBuffer", m_pMainDepthStencil);
 	deferredLightPass->AddGraphicsTexture("brightTarget", m_pBloomWrapperTemp->GetBrightTexture());
 	deferredLightPass->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
-#pragma endregion DeferredRenderingLight
 
-#pragma region DownSampleTextureTask
 	GraphicsPass* downSamplePass = new DownSampleRenderTask(
 		m_pBloomWrapperTemp->GetBrightTexture(),		// Read from this in actual resolution
 		m_pBloomWrapperTemp->GetPingPongTexture(0),		// Write to this in 1280x720
 		m_pFullScreenQuad);
 
-#pragma endregion DownSampleTextureTask
-
-#pragma region ModelOutlining
 	GraphicsPass* outliningPass = new OutliningRenderTask();
 	outliningPass->AddGraphicsTexture("mainDepthStencilBuffer", m_pMainDepthStencil);
 	outliningPass->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
 
-#pragma endregion ModelOutlining
-
-#pragma region Blend
 	GraphicsPass* transparentPass = new TransparentRenderTask();
 	transparentPass->AddGraphicsBuffer("cbPerFrame", m_pCbPerFrame);
 	transparentPass->AddGraphicsBuffer("cbPerScene", m_pCbPerScene);
@@ -1048,63 +1038,42 @@ void Renderer::initGraphicsPasses()
 	transparentPass->AddGraphicsTexture("mainDepthStencilBuffer", m_pMainDepthStencil);
 	transparentPass->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
 
-#pragma endregion Blend
-
-#pragma region WireFrame
 	GraphicsPass* wireFramePass = new WireframeRenderTask();
 	wireFramePass->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
 
-#pragma endregion WireFrame
 
-#pragma region MergePass
 	GraphicsPass* mergePass = new MergeRenderTask(m_pFullScreenQuad);
 	mergePass->AddGraphicsTexture("bloomPingPong0", m_pBloomWrapperTemp->GetPingPongTexture(0));
 	mergePass->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
 	mergePass->AddGraphicsTexture("reflectionTexture", m_ReflectionTexture);
 
-#pragma endregion MergePass
-
-#pragma region IMGUIRENDERTASK
+	// ImGuiTask
 	GraphicsPass* imGuiPass = new ImGuiRenderTask();
-#pragma endregion IMGUIRENDERTASK
 
-#pragma region ComputeAndCopyTasks
 	// ComputeTasks
 	GraphicsPass* blurPass = new BlurComputeTask(m_pBloomWrapperTemp, m_pBloomWrapperTemp->GetBlurWidth(), m_pBloomWrapperTemp->GetBlurHeight());
 
 	// CopyTasks
 	GraphicsPass* copyOnDemandTask = new CopyOnDemandTask();
 
-#pragma endregion ComputeAndCopyTasks
-
 	// Add the tasks to desired vectors so they can be used in m_pRenderer
 	/* -------------------------------------------------------------- */
 
 
-	/* ------------------------- CopyQueue Tasks ------------------------ */
 	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_ON_DEMAND] = copyOnDemandTask;
-
-	/* ------------------------- ComputeQueue Tasks ------------------------ */
-
-	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::BLOOM] = blurPass;
-
-	/* ------------------------- DirectQueue Tasks ---------------------- */
-	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DEPTH_PRE_PASS] = depthPrePass;
-	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DEFERRED_GEOMETRY] = deferredGeometryPass;
-	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DEFERRED_LIGHT] = deferredLightPass;
-	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::OPACITY] = transparentPass;
-	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::WIREFRAME] = wireFramePass;
-	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::OUTLINE] = outliningPass;
-	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::MERGE] = mergePass;
-	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::IMGUI] = imGuiPass;
-	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DOWNSAMPLE] = downSamplePass;
-
-	/* ------------------------- DX12 Tasks ------------------------ */
 	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::BLAS] = blasTask;
 	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::TLAS] = tlasTask;
-
-	/* ------------------------- DXR Tasks ------------------------ */
+	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DEPTH_PRE_PASS] = depthPrePass;
+	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DEFERRED_GEOMETRY] = deferredGeometryPass;
 	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::REFLECTIONS] = reflectionPassDXR;
+	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DEFERRED_LIGHT] = deferredLightPass;
+	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DOWNSAMPLE] = downSamplePass;
+	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::OUTLINE] = outliningPass;
+	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::WIREFRAME] = wireFramePass;
+	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::OPACITY] = transparentPass;
+	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::BLOOM] = blurPass;
+	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::MERGE] = mergePass;
+	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::IMGUI] = imGuiPass;
 
 	// Pushback in the order of execution
 	m_MainGraphicsContexts.push_back(copyOnDemandTask->GetGraphicsContext());
@@ -1153,11 +1122,17 @@ void Renderer::setRenderTasksRenderComponents()
 	static_cast<TransparentRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::OPACITY])->SetRenderComponents(m_RenderComponents[F_DRAW_FLAGS::DRAW_TRANSPARENT]);
 }
 
-void Renderer::prepareScene(Scene* activeScene)
+void Renderer::setupNewScene(Scene* activeScene)
 {
 	m_pCurrActiveScene = activeScene;
+
+	// Submit CB_PER_SCENE_STRUCT
+	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_ON_DEMAND]);
+	BL_ASSERT(codt);
+	BL_ASSERT(m_pCbPerScene && m_pCbPerSceneData);
+	codt->SubmitBuffer(m_pCbPerScene, m_pCbPerSceneData);
+
 	submitUploadPerFrameData();
-	submitUploadPerSceneData();
 
 	// -------------------- DEBUG STUFF --------------------
 	// Test to change m_pCamera to the shadow casting m_lights cameras
@@ -1184,8 +1159,6 @@ void Renderer::prepareScene(Scene* activeScene)
 	pTLAS->SetupAccelerationStructureForBuilding(false);
 
 	static_cast<DXRReflectionTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::REFLECTIONS])->CreateShaderBindingTable(m_RayTracedRenderComponents);
-	// Currently unused
-	//static_cast<DeferredLightRenderTask*>(m_GraphicsPasses[E_RENDER_TASK_TYPE::DEFERRED_GEOMETRY])->SetSceneBVHSRV(pTLAS->GetSRV());
 
 	// PerSceneData 
 	m_pCbPerSceneData->rayTracingBVH			 = pTLAS->GetRayTracingResultBuffer()->GetShaderResourceHeapIndex();
@@ -1198,11 +1171,6 @@ void Renderer::prepareScene(Scene* activeScene)
 	m_pCbPerSceneData->reflectionSRV			 = m_ReflectionTexture->GetShaderResourceHeapIndex();
 }
 
-void Renderer::submitUploadPerSceneData()
-{
-	
-}
-
 void Renderer::submitUploadPerFrameData()
 {
 	// Submit dynamic-light-data to be uploaded to VRAM
@@ -1212,10 +1180,6 @@ void Renderer::submitUploadPerFrameData()
 	// CB_PER_FRAME_STRUCT
 	BL_ASSERT(m_pCbPerFrame && m_pCbPerFrameData);
 	codt->SubmitBuffer(m_pCbPerFrame, m_pCbPerFrameData);
-
-	// CB_PER_SCENE_STRUCT
-	BL_ASSERT(m_pCbPerScene && m_pCbPerSceneData);
-	codt->SubmitBuffer(m_pCbPerScene, m_pCbPerSceneData);
 
 	// All lights (data and header with information)
 	// Sending entire buffer (4kb as of writing this code), every frame for simplicity. Even if some lights might be static.

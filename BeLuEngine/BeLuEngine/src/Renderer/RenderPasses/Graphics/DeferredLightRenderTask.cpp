@@ -5,13 +5,13 @@
 #include "../Renderer/Geometry/Mesh.h"
 
 TODO("Abstract this")
-#include "../PipelineState/GraphicsState.h"
+#include "../Renderer/PipelineState/GraphicsState.h"
 
 // Generic API
-#include "../API/IGraphicsManager.h"
-#include "../API/IGraphicsBuffer.h"
-#include "../API/IGraphicsTexture.h"
-#include "../API/IGraphicsContext.h"
+#include "../Renderer/API/IGraphicsManager.h"
+#include "../Renderer/API/IGraphicsBuffer.h"
+#include "../Renderer/API/IGraphicsTexture.h"
+#include "../Renderer/API/IGraphicsContext.h"
 
 DeferredLightRenderTask::DeferredLightRenderTask(Mesh* fullscreenQuad)
 	:GraphicsPass(L"LightPass")

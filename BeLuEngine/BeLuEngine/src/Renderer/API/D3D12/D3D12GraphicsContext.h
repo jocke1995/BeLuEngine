@@ -75,7 +75,6 @@ private:
     // TEMP
     friend class ImGuiRenderTask;
     friend class MergeRenderTask;
-    friend class CopyPerFrameMatricesTask;
 
 	ID3D12GraphicsCommandList5* m_pCommandList{ nullptr };
 	ID3D12CommandAllocator* m_pCommandAllocators[NUM_SWAP_BUFFERS]{ nullptr };

@@ -157,11 +157,9 @@ private:
 	void setRenderTasksRenderComponents();
 
 	// Setup the whole scene
-	void prepareScene(Scene* activeScene);
+	void setupNewScene(Scene* activeScene);
 
-	// Submit cbPerSceneData to the copyQueue that updates once
-	void submitUploadPerSceneData();
-	// Submit cbPerFrameData to the copyQueue that updates each frame
+	// Submit data for lazy copy
 	void submitUploadPerFrameData();
 
 	// Contexts

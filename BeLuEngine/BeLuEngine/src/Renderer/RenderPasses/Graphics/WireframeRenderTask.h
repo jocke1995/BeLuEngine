@@ -5,8 +5,7 @@
 
 class GraphicsState;
 
-#include "../../ECS/Components/BoundingBoxComponent.h"
-
+#include "../ECS/Components/BoundingBoxComponent.h"
 class WireframeRenderTask : public GraphicsPass
 {
 public:

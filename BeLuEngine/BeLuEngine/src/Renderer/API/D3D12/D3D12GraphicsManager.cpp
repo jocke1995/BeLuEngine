@@ -4,7 +4,7 @@
 #include "../Renderer/Statistics/EngineStatistics.h"
 #include "../Renderer/DescriptorHeap.h"
 
-#include "../Renderer/DX12Tasks/GraphicsPass.h"
+#include "../Renderer/RenderPasses/Graphics/GraphicsPass.h"
 
 #include "D3D12GraphicsContext.h"
 

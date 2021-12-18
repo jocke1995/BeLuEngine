@@ -2,19 +2,19 @@
 #include "DepthRenderTask.h"
 
 // Model info
-#include "../Geometry/Mesh.h"
-#include "../Geometry/Transform.h"
+#include "../Renderer/Geometry/Mesh.h"
+#include "../Renderer/Geometry/Transform.h"
 
 // ECS
 #include "../ECS/Components/ModelComponent.h"
 #include "../ECS/Components/TransformComponent.h"
 
 TODO("Abstract this")
-#include "../PipelineState/GraphicsState.h"
+#include "../Renderer/PipelineState/GraphicsState.h"
 
 // Generic API
-#include "../API/IGraphicsManager.h"
-#include "../API/IGraphicsContext.h"
+#include "../Renderer/API/IGraphicsManager.h"
+#include "../Renderer/API/IGraphicsContext.h"
 
 DepthRenderTask::DepthRenderTask()
 	: GraphicsPass(L"DepthPrePass")
