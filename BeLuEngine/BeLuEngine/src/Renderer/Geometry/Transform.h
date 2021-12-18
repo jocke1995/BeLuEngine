@@ -21,7 +21,11 @@ public:
 	void SetScale(float x, float y, float z);
 	void IncreaseScaleByPercent(float scale);
 
+	// Called from transformComponent
 	void UpdateWorldMatrix();
+
+	// Called from Renderer
+	void UpdateWorldWVP(const DirectX::XMMATRIX& viewProjMatTransposed);
 
 	DirectX::XMMATRIX* GetWorldMatrix();
 	DirectX::XMMATRIX* GetWorldMatrixTransposed();
@@ -46,6 +50,7 @@ public:
 	float3 GetUpFloat3() const;
 
 	IGraphicsBuffer* GetConstantBuffer();
+	const MATRICES_PER_OBJECT_STRUCT* GetMatricesPerObjectData() const;
 private:
 	friend class Renderer;
 	friend class OutliningRenderTask;
@@ -65,6 +70,9 @@ private:
 	DirectX::XMFLOAT3 m_Scale;
 
 	DirectX::XMFLOAT4 m_RotQuat;
+
+	// The data that is copied from CPU -> GPU
+	MATRICES_PER_OBJECT_STRUCT matricesPerObject = {};
 };
 
 #endif

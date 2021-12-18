@@ -739,8 +739,7 @@ void D3D12GraphicsManager::Init(HWND hwnd, unsigned int width, unsigned int heig
 
 void D3D12GraphicsManager::Begin()
 {
-	GraphicsPass::SetBackBufferIndex(mCommandInterfaceIndex);
-	GraphicsPass::SetCommandInterfaceIndex(mCommandInterfaceIndex);
+
 }
 
 void D3D12GraphicsManager::End()
@@ -749,7 +748,7 @@ void D3D12GraphicsManager::End()
 	deleteDefferedDeletionObjects(false);
 
 	mFrameIndex++;
-	mCommandInterfaceIndex = (mCommandInterfaceIndex + 1) % NUM_SWAP_BUFFERS;
+	m_CommandInterfaceIndex = (m_CommandInterfaceIndex + 1) % NUM_SWAP_BUFFERS;
 
 	// Reset the offset of the dynamic upload heap for next frame
 	m_pIntermediateUploadHeapAtomicCurrentOffset = 0;
@@ -757,7 +756,8 @@ void D3D12GraphicsManager::End()
 
 void D3D12GraphicsManager::Execute(const std::vector<IGraphicsContext*>& graphicsContexts, unsigned int numGraphicsContexts)
 {
-	std::vector<ID3D12CommandList*> cList(numGraphicsContexts);
+	std::vector<ID3D12CommandList*> cList;
+	cList.reserve(numGraphicsContexts);
 	
 	for (IGraphicsContext* graphicsContext : graphicsContexts)
 	{
@@ -769,7 +769,8 @@ void D3D12GraphicsManager::Execute(const std::vector<IGraphicsContext*>& graphic
 
 void D3D12GraphicsManager::SyncAndPresent()
 {
-	waitForFrame(NUM_SWAP_BUFFERS - 1);
+	//waitForFrame(NUM_SWAP_BUFFERS - 1);
+	waitForFrame(0);
 
 	HRESULT hr = m_pSwapChain4->Present(0, 0);
 
@@ -833,13 +834,13 @@ DynamicDataParams D3D12GraphicsManager::SetDynamicData(unsigned int size, const 
 	long currentOffset = offset - size;
 
 	// Copy to CPU address
-	void* cpuAddress = (char*)m_pIntermediateUploadHeapBegin[mCommandInterfaceIndex] + currentOffset;
+	void* cpuAddress = (char*)m_pIntermediateUploadHeapBegin[m_CommandInterfaceIndex] + currentOffset;
 	memcpy(cpuAddress, data, size);
 
 	DynamicDataParams returnVal = {};
 	returnVal.offsetFromStart = currentOffset;
-	returnVal.uploadResource = m_pIntermediateUploadHeap[mCommandInterfaceIndex];
-	returnVal.vAddr = m_pIntermediateUploadHeap[mCommandInterfaceIndex]->GetGPUVirtualAddress() + currentOffset;
+	returnVal.uploadResource = m_pIntermediateUploadHeap[m_CommandInterfaceIndex];
+	returnVal.vAddr = m_pIntermediateUploadHeap[m_CommandInterfaceIndex]->GetGPUVirtualAddress() + currentOffset;
 	return returnVal;
 }
 

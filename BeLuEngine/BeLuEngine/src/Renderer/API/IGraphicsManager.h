@@ -1,6 +1,8 @@
 #ifndef IGRAPHICSMANAGER_H
 #define IGRAPHICSMANAGER_H
 
+class IGraphicsContext;
+
 enum E_GLOBAL_ROOTSIGNATURE
 {
 	dtSRV,

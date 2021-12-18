@@ -7,13 +7,12 @@
 
 // Renderer
 #include "../Renderer/Renderer.h"
-#include "../Renderer/CommandInterface.h"
 #include "../Renderer/Geometry/Mesh.h"
 
 // CopyTasks
 #include "../Renderer/DX12Tasks/CopyOnDemandTask.h"
 
-// RenderTasks
+// GraphicPasses
 #include "../Renderer/DX12Tasks/WireframeRenderTask.h"
 
 // Techniques

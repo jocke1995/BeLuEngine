@@ -1,12 +1,10 @@
 #include "stdafx.h"
 #include "TopLevelRenderTask.h"
 
-// DX12 Specifics
-#include "../CommandInterface.h"
-#include "../DescriptorHeap.h"
-#include "../Renderer/Geometry/Mesh.h"
-
 #include "../DXR/TopLevelAccelerationStructure.h"
+
+// Generic API
+#include "../API/IGraphicsContext.h"
 
 TopLevelRenderTask::TopLevelRenderTask()
 	:GraphicsPass(L"DXR_TopLevelASPass")
@@ -21,18 +19,16 @@ TopLevelRenderTask::~TopLevelRenderTask()
 
 void TopLevelRenderTask::Execute()
 {
-	ID3D12CommandAllocator* commandAllocator = m_pCommandInterface->GetCommandAllocator(m_CommandInterfaceIndex);
-	ID3D12GraphicsCommandList5* commandList = m_pCommandInterface->GetCommandList(m_CommandInterfaceIndex);
-
-	m_pCommandInterface->Reset(m_CommandInterfaceIndex);
+	m_pGraphicsContext->Begin();
 	{
-		ScopedPixEvent(DXR_TLAS, commandList);
+		ScopedPixEvent(DXR_TLAS, m_pGraphicsContext);
 
-		m_pTLAS->BuildAccelerationStructure(commandList);
+		m_pGraphicsContext->BuildAccelerationStructure(m_pTLAS->GetBuildDesc());
+		m_pGraphicsContext->UAVBarrier(m_pTLAS->GetRayTracingResultBuffer());
 
 		m_pTLAS->m_IsBuilt = true;
 	}
-	commandList->Close();
+	m_pGraphicsContext->End();
 }
 
 TopLevelAccelerationStructure* TopLevelRenderTask::GetTLAS() const

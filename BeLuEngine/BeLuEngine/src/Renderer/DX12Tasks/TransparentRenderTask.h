@@ -3,8 +3,6 @@
 
 #include "GraphicsPass.h"
 
-class BaseCamera;
-
 class TransparentRenderTask : public GraphicsPass
 {
 public:
@@ -14,10 +12,8 @@ public:
 	void Execute() override final;
 
 	void SetRenderComponents(const std::vector<RenderComponent>& renderComponents);
-	void SetCamera(BaseCamera* baseCamera) { m_pCamera = baseCamera; }
 private:
 	std::vector<RenderComponent> m_RenderComponents;
-	BaseCamera* m_pCamera = nullptr;
 };
 
 #endif

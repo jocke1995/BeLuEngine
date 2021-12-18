@@ -49,7 +49,6 @@
 #include "DX12Tasks/TransparentRenderTask.h"
 #include "DX12Tasks/DownSampleRenderTask.h"
 #include "DX12Tasks/MergeRenderTask.h"
-#include "DX12Tasks/CopyPerFrameMatricesTask.h"
 #include "DX12Tasks/CopyOnDemandTask.h"
 #include "DX12Tasks/BlurComputeTask.h"
 #include "DX12Tasks/BottomLevelRenderTask.h"
@@ -295,13 +294,22 @@ void Renderer::Update(double dt)
 
 	submitUploadPerFrameData();
 
-	// Submit Transforms
+	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_ON_DEMAND]);
+	BL_ASSERT(codt);
 	
+	// Submit Transforms (Currently using the rayTracingVector cause all objects are in that one.
+	for (const RenderComponent& rc : m_RayTracedRenderComponents)
+	{
+		Transform* t = rc.tc->GetTransform();
+		BL_ASSERT(t);
 
+		t->UpdateWorldWVP(*m_pScenePrimaryCamera->GetViewProjectionTranposed());
+
+		IGraphicsBuffer* matricesBuffer = t->GetConstantBuffer();
+		codt->SubmitBuffer(matricesBuffer, t->GetMatricesPerObjectData());
+	}
 	// Picking
 	updateMousePicker();
-
-	
 
 	// ImGui
 #ifdef DEBUG
@@ -321,6 +329,8 @@ void Renderer::Update(double dt)
 	}
 
 	pTLAS->SetupAccelerationStructureForBuilding(true);
+
+	TODO("Update ShaderTable");
 }
 
 void Renderer::SortObjects()
@@ -398,10 +408,6 @@ void Renderer::ExecuteMT()
 	// Copy on demand
 	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_ON_DEMAND];
 	m_pThreadPool->AddTask(graphicsPass);
-	
-	// Copy per frame (matrices, world and wvp)
-	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_PER_FRAME_MATRICES];
-	m_pThreadPool->AddTask(graphicsPass);
 
 	// Update BLASes if any...
 	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::BLAS];
@@ -417,11 +423,11 @@ void Renderer::ExecuteMT()
 
 	// Geometry pass
 	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DEFERRED_GEOMETRY];
-	graphicsPass->Execute();
+	m_pThreadPool->AddTask(graphicsPass);
 
 	// Light pass
 	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DEFERRED_LIGHT];
-	graphicsPass->Execute();
+	m_pThreadPool->AddTask(graphicsPass);
 
 	// DXR Reflections
 	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::REFLECTIONS];
@@ -441,6 +447,7 @@ void Renderer::ExecuteMT()
 
 	// Outlining, if an object is picked
 	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::OUTLINE];
+	static_cast<OutliningRenderTask*>(graphicsPass)->SetCamera(m_pScenePrimaryCamera);
 	m_pThreadPool->AddTask(graphicsPass);
 
 	// Merge 
@@ -495,10 +502,6 @@ void Renderer::ExecuteST()
 	// Copy on demand
 	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_ON_DEMAND];
 	graphicsPass->Execute();
-	
-	// Copy per frame (matrices, world and wvp)
-	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_PER_FRAME_MATRICES];
-	graphicsPass->Execute();
 
 	// Update BLASes if any...
 	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::BLAS];
@@ -538,6 +541,7 @@ void Renderer::ExecuteST()
 
 	// Outlining, if an object is picked
 	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::OUTLINE];
+	static_cast<OutliningRenderTask*>(graphicsPass)->SetCamera(m_pScenePrimaryCamera);
 	graphicsPass->Execute();
 
 	// Merge 
@@ -592,11 +596,7 @@ void Renderer::InitModelComponent(component::ModelComponent* mc)
 	if (tc != nullptr)
 	{
 		Transform* t = tc->GetTransform();
-		TODO("Possible problem");
 		t->m_pConstantBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::ConstantBuffer, sizeof(DirectX::XMMATRIX), 2, DXGI_FORMAT_UNKNOWN, L"Transform");
-
-		t->UpdateWorldMatrix();
-		static_cast<CopyPerFrameMatricesTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_PER_FRAME_MATRICES])->SubmitTransform(t);
 
 		// Finally store the object in the corresponding renderComponent vectors so it will be drawn
 		if (F_DRAW_FLAGS::DRAW_TRANSPARENT & mc->GetDrawFlag())
@@ -744,10 +744,6 @@ void Renderer::UnInitModelComponent(component::ModelComponent* mc)
 
 	component::TransformComponent* tc = mc->GetParent()->GetComponent<component::TransformComponent>();
 
-	// Unsubmit from updating to GPU every frame
-	TODO("Possible memory leak");
-	//m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_PER_FRAME_MATRICES]->ClearSpecific(tc->GetTransform()->m_pCB->GetUploadResource());
-
 	// Delete constantBuffer for matrices
 	if (tc->GetTransform()->m_pConstantBuffer != nullptr)
 	{
@@ -882,16 +878,6 @@ Scene* const Renderer::GetActiveScene() const
 	return m_pCurrActiveScene;
 }
 
-void Renderer::setGraphicsPassesPrimaryCamera()
-{
-	static_cast<DepthRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DEPTH_PRE_PASS])->SetCamera(m_pScenePrimaryCamera);
-	static_cast<DeferredGeometryRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DEFERRED_GEOMETRY])->SetCamera(m_pScenePrimaryCamera);
-	static_cast<TransparentRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::OPACITY])->SetCamera(m_pScenePrimaryCamera);
-	static_cast<OutliningRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::OUTLINE])->SetCamera(m_pScenePrimaryCamera);
-	static_cast<CopyPerFrameMatricesTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_PER_FRAME_MATRICES])->SetCamera(m_pScenePrimaryCamera);
-	static_cast<WireframeRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::WIREFRAME])->SetCamera(m_pScenePrimaryCamera);
-}
-
 void Renderer::createFullScreenQuad()
 {
 	std::vector<Vertex> vertexVector;
@@ -981,311 +967,81 @@ void Renderer::initGraphicsPasses()
 {
 	TODO(Create all PSOs in corresponding classes like reflectionTask is done, instead of out here);
 
-#pragma region DXR
+#pragma region DXRTasks
 	GraphicsPass* blasTask = new BottomLevelRenderTask();
 	GraphicsPass* tlasTask = new TopLevelRenderTask();
 
-	// Everything is created inside here
 	GraphicsPass* reflectionPassDXR = new DXRReflectionTask(m_ReflectionTexture, m_CurrentRenderingWidth, m_CurrentRenderingHeight);
-
 	reflectionPassDXR->AddGraphicsBuffer("cbPerFrame", m_pCbPerFrame);
 	reflectionPassDXR->AddGraphicsBuffer("cbPerScene", m_pCbPerScene);
 	reflectionPassDXR->AddGraphicsBuffer("rawBufferLights", Light::m_pLightsRawBuffer);
 	reflectionPassDXR->AddGraphicsTexture("mainDSV", m_pMainDepthStencil);	// To transition from depthWrite to depthRead
 
-#pragma endregion DXRTasks
-
-#pragma region DepthPrePass
-
+#pragma endregion
 	GraphicsPass* depthPrePass = new DepthRenderTask();
-
 	depthPrePass->AddGraphicsTexture("mainDepthStencilBuffer", m_pMainDepthStencil);
 
-#pragma endregion DepthPrePass
-
 #pragma region DeferredRenderingGeometry
-	/* Depth Pre-Pass rendering without stencil testing */
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsdDeferredGeometryPass = {};
-	gpsdDeferredGeometryPass.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-	// RenderTarget (TODO: Formats are way to big atm)
-	gpsdDeferredGeometryPass.NumRenderTargets = 4;
-	gpsdDeferredGeometryPass.RTVFormats[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
-	gpsdDeferredGeometryPass.RTVFormats[1] = DXGI_FORMAT_R16G16B16A16_FLOAT;
-	gpsdDeferredGeometryPass.RTVFormats[2] = DXGI_FORMAT_R16G16B16A16_FLOAT;
-	gpsdDeferredGeometryPass.RTVFormats[3] = DXGI_FORMAT_R16G16B16A16_FLOAT;
-	// Depthstencil usage
-	gpsdDeferredGeometryPass.SampleDesc.Count = 1;
-	gpsdDeferredGeometryPass.SampleMask = UINT_MAX;
-	// Rasterizer behaviour
-	gpsdDeferredGeometryPass.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
-	gpsdDeferredGeometryPass.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
-	gpsdDeferredGeometryPass.RasterizerState.DepthBias = 0;
-	gpsdDeferredGeometryPass.RasterizerState.DepthBiasClamp = 0.0f;
-	gpsdDeferredGeometryPass.RasterizerState.SlopeScaledDepthBias = 0.0f;
-	gpsdDeferredGeometryPass.RasterizerState.FrontCounterClockwise = false;
-
-	// Specify Blend descriptions
-	// copy of defaultRTdesc
-	D3D12_RENDER_TARGET_BLEND_DESC deferredGeometryRTdesc = {
-		false, false,
-		D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
-		D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
-		D3D12_LOGIC_OP_NOOP, D3D12_COLOR_WRITE_ENABLE_ALL };
-	for (unsigned int i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; i++)
-		gpsdDeferredGeometryPass.BlendState.RenderTarget[i] = deferredGeometryRTdesc;
-
-	// Depth descriptor
-	D3D12_DEPTH_STENCIL_DESC deferredGeometryDsd = {};
-	deferredGeometryDsd.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
-	deferredGeometryDsd.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
-	deferredGeometryDsd.DepthEnable = true;
-
-	// DepthStencil
-	deferredGeometryDsd.StencilEnable = false;
-	gpsdDeferredGeometryPass.DepthStencilState = deferredGeometryDsd;
-	gpsdDeferredGeometryPass.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
-
-	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*> gpsdDeferredGeometryPassVector;
-	gpsdDeferredGeometryPassVector.push_back(&gpsdDeferredGeometryPass);
-
 	GraphicsPass* deferredGeometryPass = new DeferredGeometryRenderTask();
-
 	deferredGeometryPass->AddGraphicsBuffer("cbPerScene", m_pCbPerScene);
 	deferredGeometryPass->AddGraphicsTexture("gBufferAlbedo", m_GBufferAlbedo);
 	deferredGeometryPass->AddGraphicsTexture("gBufferNormal", m_GBufferNormal);
 	deferredGeometryPass->AddGraphicsTexture("gBufferMaterialProperties", m_GBufferMaterialProperties);
 	deferredGeometryPass->AddGraphicsTexture("gBufferEmissive", m_GBufferEmissive);
 	deferredGeometryPass->AddGraphicsTexture("mainDepthStencilBuffer", m_pMainDepthStencil);
+
 #pragma endregion DeferredRenderingGeometry
 
 #pragma region DeferredRenderingLight
-	/* Deferred rendering without stencil testing */
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsdDeferredLightRender = {};
-	gpsdDeferredLightRender.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-
-	// RenderTarget
-	gpsdDeferredLightRender.NumRenderTargets = 2;
-	gpsdDeferredLightRender.RTVFormats[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
-	gpsdDeferredLightRender.RTVFormats[1] = DXGI_FORMAT_R16G16B16A16_FLOAT;
-	// Depthstencil usage
-	gpsdDeferredLightRender.SampleDesc.Count = 1;
-	gpsdDeferredLightRender.SampleMask = UINT_MAX;
-	// Rasterizer behaviour
-	gpsdDeferredLightRender.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
-	gpsdDeferredLightRender.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
-	gpsdDeferredLightRender.RasterizerState.FrontCounterClockwise = false;
-
-	// Specify Blend descriptions
-	D3D12_RENDER_TARGET_BLEND_DESC defaultRTdesc = {
-		false, false,
-		D3D12_BLEND_ZERO, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
-		D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
-		D3D12_LOGIC_OP_NOOP, D3D12_COLOR_WRITE_ENABLE_ALL };
-	for (unsigned int i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; i++)
-		gpsdDeferredLightRender.BlendState.RenderTarget[i] = defaultRTdesc;
-
-	// Depth descriptor
-	D3D12_DEPTH_STENCIL_DESC dsd = {};
-	dsd.DepthEnable = false;
-	dsd.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
-	dsd.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
-
-	// DepthStencil
-	dsd.StencilEnable = false;
-	gpsdDeferredLightRender.DepthStencilState = dsd;
-	gpsdDeferredLightRender.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
-
 	/* Forward rendering with stencil testing */
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsdForwardRenderStencilTest = gpsdDeferredLightRender;
-
-	// Only change stencil testing
-	dsd = {};
-	dsd.DepthEnable = true;
-	dsd.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
-	dsd.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
-
-	// DepthStencil
-	dsd.StencilEnable = true;
-	dsd.StencilReadMask = 0x00;
-	dsd.StencilWriteMask = 0xff;
-	const D3D12_DEPTH_STENCILOP_DESC stencilWriteAllways =
-	{
-		D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_REPLACE,
-		D3D12_COMPARISON_FUNC_ALWAYS
-	};
-	dsd.FrontFace = stencilWriteAllways;
-	dsd.BackFace = stencilWriteAllways;
-
-	gpsdForwardRenderStencilTest.DepthStencilState = dsd;
-
-	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*> gpsdDeferredLightRenderVector;
-	gpsdDeferredLightRenderVector.push_back(&gpsdDeferredLightRender);
-	gpsdDeferredLightRenderVector.push_back(&gpsdForwardRenderStencilTest);
+	//D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsdForwardRenderStencilTest = gpsdDeferredLightRender;
+	//
+	//// Only change stencil testing
+	//dsd = {};
+	//dsd.DepthEnable = true;
+	//dsd.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
+	//dsd.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+	//
+	//// DepthStencil
+	//dsd.StencilEnable = true;
+	//dsd.StencilReadMask = 0x00;
+	//dsd.StencilWriteMask = 0xff;
+	//const D3D12_DEPTH_STENCILOP_DESC stencilWriteAllways =
+	//{
+	//	D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_REPLACE,
+	//	D3D12_COMPARISON_FUNC_ALWAYS
+	//};
+	//dsd.FrontFace = stencilWriteAllways;
+	//dsd.BackFace = stencilWriteAllways;
+	//
+	//gpsdForwardRenderStencilTest.DepthStencilState = dsd;
 
 	GraphicsPass* deferredLightPass = new DeferredLightRenderTask(m_pFullScreenQuad);
-
 	deferredLightPass->AddGraphicsBuffer("cbPerFrame", m_pCbPerFrame);
 	deferredLightPass->AddGraphicsBuffer("cbPerScene", m_pCbPerScene);
 	deferredLightPass->AddGraphicsBuffer("rawBufferLights", Light::m_pLightsRawBuffer);
 	deferredLightPass->AddGraphicsTexture("mainDepthStencilBuffer", m_pMainDepthStencil);
-
 	deferredLightPass->AddGraphicsTexture("brightTarget", m_pBloomWrapperTemp->GetBrightTexture());
 	deferredLightPass->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
 #pragma endregion DeferredRenderingLight
 
 #pragma region DownSampleTextureTask
-	/* Forward rendering without stencil testing */
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsdDownSampleTexture = {};
-	gpsdDownSampleTexture.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-
-	// RenderTarget
-	gpsdDownSampleTexture.NumRenderTargets = 1;
-	gpsdDownSampleTexture.RTVFormats[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
-
-	// Depthstencil usage
-	gpsdDownSampleTexture.SampleDesc.Count = 1;
-	gpsdDownSampleTexture.SampleMask = UINT_MAX;
-	// Rasterizer behaviour
-	gpsdDownSampleTexture.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
-	gpsdDownSampleTexture.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
-	gpsdDownSampleTexture.RasterizerState.FrontCounterClockwise = false;
-
-	for (unsigned int i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; i++)
-		gpsdDownSampleTexture.BlendState.RenderTarget[i] = defaultRTdesc;
-
-	// Depth descriptor
-	dsd = {};
-	dsd.DepthEnable = false;
-	dsd.StencilEnable = false;
-	gpsdDownSampleTexture.DepthStencilState = dsd;
-
-	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*> gpsdDownSampleTextureVector;
-	gpsdDownSampleTextureVector.push_back(&gpsdDownSampleTexture);
-
 	GraphicsPass* downSamplePass = new DownSampleRenderTask(
 		m_pBloomWrapperTemp->GetBrightTexture(),		// Read from this in actual resolution
 		m_pBloomWrapperTemp->GetPingPongTexture(0),		// Write to this in 1280x720
 		m_pFullScreenQuad);
+
 #pragma endregion DownSampleTextureTask
 
 #pragma region ModelOutlining
-	/* Forward rendering without stencil testing */
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsdModelOutlining = gpsdForwardRenderStencilTest;
-	gpsdModelOutlining.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-
-	dsd = {};
-	dsd.DepthEnable = true;	// Maybe enable if we dont want the object to "highlight" through other objects
-	dsd.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
-	dsd.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
-
-	// DepthStencil
-	dsd.StencilEnable = true;
-	dsd.StencilReadMask = 0xff;
-	dsd.StencilWriteMask = 0x00;
-	const D3D12_DEPTH_STENCILOP_DESC stencilNotEqual =
-	{
-		D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_REPLACE,
-		D3D12_COMPARISON_FUNC_NOT_EQUAL
-	};
-	dsd.FrontFace = stencilNotEqual;
-	dsd.BackFace = stencilNotEqual;
-
-	gpsdModelOutlining.DepthStencilState = dsd;
-	gpsdModelOutlining.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
-
-	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*> gpsdOutliningVector;
-	gpsdOutliningVector.push_back(&gpsdModelOutlining);
-
 	GraphicsPass* outliningPass = new OutliningRenderTask();
-
 	outliningPass->AddGraphicsTexture("mainDepthStencilBuffer", m_pMainDepthStencil);
 	outliningPass->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
 
 #pragma endregion ModelOutlining
 
 #pragma region Blend
-	// ------------------------ BLEND ---------------------------- FRONTCULL
-
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsdBlendFrontCull = {};
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsdBlendBackCull = {};
-	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*> gpsdBlendVector;
-
-	gpsdBlendFrontCull.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-
-	// RenderTarget
-	gpsdBlendFrontCull.RTVFormats[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
-	gpsdBlendFrontCull.NumRenderTargets = 1;
-	// Depthstencil usage
-	gpsdBlendFrontCull.SampleDesc.Count = 1;
-	gpsdBlendFrontCull.SampleMask = UINT_MAX;
-	// Rasterizer behaviour
-	gpsdBlendFrontCull.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
-	gpsdBlendFrontCull.RasterizerState.CullMode = D3D12_CULL_MODE_FRONT;
-
-	// Specify Blend descriptions
-	D3D12_RENDER_TARGET_BLEND_DESC blendRTdesc{};
-	blendRTdesc.BlendEnable = true;
-	blendRTdesc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
-	blendRTdesc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
-	blendRTdesc.BlendOp = D3D12_BLEND_OP_ADD;
-	blendRTdesc.SrcBlendAlpha = D3D12_BLEND_ONE;
-	blendRTdesc.DestBlendAlpha = D3D12_BLEND_ZERO;
-	blendRTdesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
-	blendRTdesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-
-	for (unsigned int i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; i++)
-	{
-		gpsdBlendFrontCull.BlendState.RenderTarget[i] = blendRTdesc;
-	}
-
-	// Depth descriptor
-	D3D12_DEPTH_STENCIL_DESC dsdBlend = {};
-	dsdBlend.DepthEnable = true;
-	dsdBlend.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
-	dsdBlend.DepthFunc = D3D12_COMPARISON_FUNC_LESS;	// Om pixels depth är lägre än den gamla så ritas den nya ut
-
-	// DepthStencil
-	dsdBlend.StencilEnable = false;
-	dsdBlend.StencilReadMask = D3D12_DEFAULT_STENCIL_READ_MASK;
-	dsdBlend.StencilWriteMask = D3D12_DEFAULT_STENCIL_WRITE_MASK;
-	const D3D12_DEPTH_STENCILOP_DESC blendStencilOP{ D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_KEEP, D3D12_COMPARISON_FUNC_ALWAYS };
-	dsdBlend.FrontFace = blendStencilOP;
-	dsdBlend.BackFace = blendStencilOP;
-
-	gpsdBlendFrontCull.DepthStencilState = dsdBlend;
-	gpsdBlendFrontCull.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
-
-	// ------------------------ BLEND ---------------------------- BACKCULL
-
-	gpsdBlendBackCull.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-
-	// RenderTarget
-	gpsdBlendBackCull.RTVFormats[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
-	gpsdBlendBackCull.NumRenderTargets = 1;
-	// Depthstencil usage
-	gpsdBlendBackCull.SampleDesc.Count = 1;
-	gpsdBlendBackCull.SampleMask = UINT_MAX;
-	// Rasterizer behaviour
-	gpsdBlendBackCull.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
-	gpsdBlendBackCull.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
-
-	for (unsigned int i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; i++)
-		gpsdBlendBackCull.BlendState.RenderTarget[i] = blendRTdesc;
-
-	// DepthStencil
-	dsdBlend.StencilEnable = false;
-	dsdBlend.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
-
-	gpsdBlendBackCull.DepthStencilState = dsdBlend;
-	gpsdBlendBackCull.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
-
-	// Push back to vector
-	gpsdBlendVector.push_back(&gpsdBlendFrontCull);
-	gpsdBlendVector.push_back(&gpsdBlendBackCull);
-
-	/*---------------------------------- TRANSPARENT_TEXTURE_RENDERTASK -------------------------------------*/
 	GraphicsPass* transparentPass = new TransparentRenderTask();
-
 	transparentPass->AddGraphicsBuffer("cbPerFrame", m_pCbPerFrame);
 	transparentPass->AddGraphicsBuffer("cbPerScene", m_pCbPerScene);
 	transparentPass->AddGraphicsBuffer("rawBufferLights", Light::m_pLightsRawBuffer);
@@ -1295,65 +1051,17 @@ void Renderer::initGraphicsPasses()
 #pragma endregion Blend
 
 #pragma region WireFrame
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsdWireFrame = {};
-	gpsdWireFrame.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-
-	// RenderTarget
-	gpsdWireFrame.RTVFormats[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
-	gpsdWireFrame.NumRenderTargets = 1;
-	// Depthstencil usage
-	gpsdWireFrame.SampleDesc.Count = 1;
-	gpsdWireFrame.SampleMask = UINT_MAX;
-	// Rasterizer behaviour
-	gpsdWireFrame.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
-	gpsdWireFrame.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
-	gpsdWireFrame.RasterizerState.FrontCounterClockwise = false;
-
-	// Specify Blend descriptions
-	for (unsigned int i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; i++)
-		gpsdWireFrame.BlendState.RenderTarget[i] = defaultRTdesc;
-
-	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*> gpsdWireFrameVector;
-	gpsdWireFrameVector.push_back(&gpsdWireFrame);
-
 	GraphicsPass* wireFramePass = new WireframeRenderTask();
-
 	wireFramePass->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
+
 #pragma endregion WireFrame
 
 #pragma region MergePass
-	/* Forward rendering without stencil testing */
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsdMergePass = {};
-	gpsdMergePass.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-
-	// RenderTarget
-	gpsdMergePass.NumRenderTargets = 1;
-	gpsdMergePass.RTVFormats[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
-	// Depthstencil usage
-	gpsdMergePass.SampleDesc.Count = 1;
-	gpsdMergePass.SampleMask = UINT_MAX;
-	// Rasterizer behaviour
-	gpsdMergePass.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
-	gpsdMergePass.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
-	gpsdMergePass.RasterizerState.FrontCounterClockwise = false;
-
-	for (unsigned int i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; i++)
-		gpsdMergePass.BlendState.RenderTarget[i] = blendRTdesc;
-
-	// Depth descriptor
-	D3D12_DEPTH_STENCIL_DESC dsdMergePass = {};
-	dsdMergePass.DepthEnable = false;
-	dsdMergePass.StencilEnable = false;
-	gpsdMergePass.DepthStencilState = dsdMergePass;
-
-	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*> gpsdMergePassVector;
-	gpsdMergePassVector.push_back(&gpsdMergePass);
-
 	GraphicsPass* mergePass = new MergeRenderTask(m_pFullScreenQuad);
-
 	mergePass->AddGraphicsTexture("bloomPingPong0", m_pBloomWrapperTemp->GetPingPongTexture(0));
 	mergePass->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
 	mergePass->AddGraphicsTexture("reflectionTexture", m_ReflectionTexture);
+
 #pragma endregion MergePass
 
 #pragma region IMGUIRENDERTASK
@@ -1362,13 +1070,9 @@ void Renderer::initGraphicsPasses()
 
 #pragma region ComputeAndCopyTasks
 	// ComputeTasks
-	std::vector<std::pair<std::wstring, std::wstring>> csNamePSOName;
-	csNamePSOName.push_back(std::make_pair(L"ComputeBlurHorizontal.hlsl", L"blurHorizontalPSO"));
-	csNamePSOName.push_back(std::make_pair(L"ComputeBlurVertical.hlsl", L"blurVerticalPSO"));
 	GraphicsPass* blurPass = new BlurComputeTask(m_pBloomWrapperTemp, m_pBloomWrapperTemp->GetBlurWidth(), m_pBloomWrapperTemp->GetBlurHeight());
 
 	// CopyTasks
-	GraphicsPass* copyPerFrameMatricesTask = new CopyPerFrameMatricesTask();
 	GraphicsPass* copyOnDemandTask = new CopyOnDemandTask();
 
 #pragma endregion ComputeAndCopyTasks
@@ -1378,7 +1082,6 @@ void Renderer::initGraphicsPasses()
 
 
 	/* ------------------------- CopyQueue Tasks ------------------------ */
-	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_PER_FRAME_MATRICES] = copyPerFrameMatricesTask;
 	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_ON_DEMAND] = copyOnDemandTask;
 
 	/* ------------------------- ComputeQueue Tasks ------------------------ */
@@ -1405,7 +1108,6 @@ void Renderer::initGraphicsPasses()
 
 	// Pushback in the order of execution
 	m_MainGraphicsContexts.push_back(copyOnDemandTask->GetGraphicsContext());
-	m_MainGraphicsContexts.push_back(copyPerFrameMatricesTask->GetGraphicsContext());
 	m_MainGraphicsContexts.push_back(blasTask->GetGraphicsContext());
 	m_MainGraphicsContexts.push_back(tlasTask->GetGraphicsContext());
 	m_MainGraphicsContexts.push_back(depthPrePass->GetGraphicsContext());
@@ -1422,7 +1124,6 @@ void Renderer::initGraphicsPasses()
 	m_MainGraphicsContexts.push_back(transparentPass->GetGraphicsContext());
 	m_MainGraphicsContexts.push_back(blurPass->GetGraphicsContext());
 	m_MainGraphicsContexts.push_back(mergePass->GetGraphicsContext());
-	m_MainGraphicsContexts.push_back(copyOnDemandTask->GetGraphicsContext());
 
 	// -------------------------------------- GUI -------------------------------------------------
 	// Debug/ImGui
@@ -1464,12 +1165,11 @@ void Renderer::prepareScene(Scene* activeScene)
 	//BaseCamera* tempCam = std::get<0>(tuple)->GetCamera();
 	//m_pScenePrimaryCamera = tempCam;
 
-	BL_ASSERT_MESSAGE(!m_pScenePrimaryCamera, "No primary camera was set in scene!\n");
+	BL_ASSERT_MESSAGE(m_pScenePrimaryCamera, "No primary camera was set in scene!\n");
 
 	m_pMousePicker->SetPrimaryCamera(m_pScenePrimaryCamera);
 
 	setRenderTasksRenderComponents();
-	setGraphicsPassesPrimaryCamera();
 
 	// DXR, create buffers and create for the first time
 	TopLevelAccelerationStructure* pTLAS = static_cast<TopLevelRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::TLAS])->GetTLAS();
@@ -1500,12 +1200,7 @@ void Renderer::prepareScene(Scene* activeScene)
 
 void Renderer::submitUploadPerSceneData()
 {
-	// Submit CB_PER_SCENE to be uploaded to VRAM
-	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_ON_DEMAND]);
-	BL_ASSERT(codt);
 	
-	BL_ASSERT(m_pCbPerScene && m_pCbPerSceneData);
-	codt->SubmitBuffer(m_pCbPerScene, m_pCbPerSceneData);
 }
 
 void Renderer::submitUploadPerFrameData()
@@ -1518,8 +1213,14 @@ void Renderer::submitUploadPerFrameData()
 	BL_ASSERT(m_pCbPerFrame && m_pCbPerFrameData);
 	codt->SubmitBuffer(m_pCbPerFrame, m_pCbPerFrameData);
 
+	// CB_PER_SCENE_STRUCT
+	BL_ASSERT(m_pCbPerScene && m_pCbPerSceneData);
+	codt->SubmitBuffer(m_pCbPerScene, m_pCbPerSceneData);
+
 	// All lights (data and header with information)
 	// Sending entire buffer (4kb as of writing this code), every frame for simplicity. Even if some lights might be static.
 	BL_ASSERT(Light::m_pLightsRawBuffer && Light::m_pRawData);
 	codt->SubmitBuffer(Light::m_pLightsRawBuffer, Light::m_pRawData);
+
+
 }

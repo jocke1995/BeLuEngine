@@ -11,9 +11,9 @@ public:
 	BottomLevelRenderTask();
 	virtual ~BottomLevelRenderTask();
 	
-	void SubmitBLAS(BottomLevelAccelerationStructure* pBLAS);
-
 	void Execute() override final;
+
+	void SubmitBLAS(BottomLevelAccelerationStructure* pBLAS);
 
 private:
 	std::vector<BottomLevelAccelerationStructure*> m_BLASesToUpdate;

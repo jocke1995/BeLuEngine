@@ -16,6 +16,12 @@ public:
 private:
 	friend class D3D12GraphicsContext;
 
+	TODO("These are temporary until dxr is abstracted away");
+	friend class BottomLevelAccelerationStructure;
+	friend class TopLevelAccelerationStructure;
+	friend class DXRReflectionTask;
+	friend class CopyPerFrameMatricesTask;
+
 	ID3D12Resource1* m_pResource = nullptr;
 	unsigned int m_ConstantBufferDescriptorHeapIndex = -1;
 	unsigned int m_ShaderResourceDescriptorHeapIndex = -1;

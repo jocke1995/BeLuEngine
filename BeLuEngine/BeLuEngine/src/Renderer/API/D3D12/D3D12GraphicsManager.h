@@ -50,7 +50,7 @@ public:
 	DescriptorHeap* GetDSVDescriptorHeap()  const;
 	ID3D12Device5* GetDevice() const { return m_pDevice5; }
 	ID3D12RootSignature* GetGlobalRootSignature() const { return m_pGlobalRootSig; }
-	unsigned int GetCommandInterfaceIndex() const { return mCommandInterfaceIndex; }
+	unsigned int GetCommandInterfaceIndex() const { return m_CommandInterfaceIndex; }
 private:
 	// ABSTRACTION TEMP
 	friend class Renderer;
@@ -120,7 +120,7 @@ private:
 	// -------------------------- Native D3D12 -------------------------- 
 
 	// -------------------------- Misc -------------------------- 
-	unsigned int mCommandInterfaceIndex = 0;
+	unsigned int m_CommandInterfaceIndex = 0;
 	unsigned int mFrameIndex = 0;
 
 

@@ -4,7 +4,6 @@
 #include "GraphicsPass.h"
 
 class GraphicsState;
-class BaseCamera;
 
 #include "../../ECS/Components/BoundingBoxComponent.h"
 
@@ -21,11 +20,8 @@ public:
 	void Clear();
 	void ClearSpecific(component::BoundingBoxComponent* bbc);
 
-	void SetCamera(BaseCamera* baseCamera) { m_pCamera = baseCamera; }
-
 private:
 	std::vector<component::BoundingBoxComponent*> m_ObjectsToDraw;
-	BaseCamera* m_pCamera = nullptr;
 };
 
 #endif

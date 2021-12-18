@@ -2,25 +2,20 @@
 #include "OutliningRenderTask.h"
 
 // DX12 Specifics
-#include "../Camera/BaseCamera.h"
-#include "../CommandInterface.h"
-#include "../DescriptorHeap.h"
 #include "../PipelineState/GraphicsState.h"
 
-// Model info
+#include "../Camera/PerspectiveCamera.h"
 #include "../Renderer/Geometry/Mesh.h"
 
 // Componennt
 #include "../ECS/Components/ModelComponent.h"
 #include "../ECS/Components/TransformComponent.h"
 
-TODO(To be replaced by a D3D12Manager some point in the future(needed to access RootSig));
-#include "../Renderer.h"
-
-// TODO ABSTRACTION
-#include "../API/D3D12/D3D12GraphicsManager.h"
-#include "../API/D3D12/D3D12GraphicsBuffer.h"
-#include "../API/D3D12/D3D12GraphicsTexture.h"
+// Generic API
+#include "../API/IGraphicsManager.h"
+#include "../API/IGraphicsBuffer.h"
+#include "../API/IGraphicsTexture.h"
+#include "../API/IGraphicsContext.h"
 
 
 OutliningRenderTask::OutliningRenderTask()
@@ -28,6 +23,44 @@ OutliningRenderTask::OutliningRenderTask()
 {
 	// Init with nullptr
 	Clear();
+
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsdModelOutlining = {};
+	gpsdModelOutlining.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	// RenderTarget (TODO: Formats are way to big atm)
+	gpsdModelOutlining.NumRenderTargets = 1;
+	gpsdModelOutlining.RTVFormats[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
+	// Depthstencil usage
+	gpsdModelOutlining.SampleDesc.Count = 1;
+	gpsdModelOutlining.SampleMask = UINT_MAX;
+	// Rasterizer behaviour
+	gpsdModelOutlining.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
+	gpsdModelOutlining.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
+	gpsdModelOutlining.RasterizerState.DepthBias = 0;
+	gpsdModelOutlining.RasterizerState.DepthBiasClamp = 0.0f;
+	gpsdModelOutlining.RasterizerState.SlopeScaledDepthBias = 0.0f;
+	gpsdModelOutlining.RasterizerState.FrontCounterClockwise = false;
+
+	D3D12_DEPTH_STENCIL_DESC dsd = {};
+	dsd.DepthEnable = true;	// Maybe enable if we dont want the object to "highlight" through other objects
+	dsd.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+	dsd.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
+
+	// DepthStencil
+	dsd.StencilEnable = true;
+	dsd.StencilReadMask = 0xff;
+	dsd.StencilWriteMask = 0x00;
+	const D3D12_DEPTH_STENCILOP_DESC stencilNotEqual =
+	{
+		D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_REPLACE,
+		D3D12_COMPARISON_FUNC_NOT_EQUAL
+	};
+	dsd.FrontFace = stencilNotEqual;
+	dsd.BackFace = stencilNotEqual;
+
+	gpsdModelOutlining.DepthStencilState = dsd;
+	gpsdModelOutlining.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+
+	m_PipelineStates.push_back(new GraphicsState(L"OutlinedVertex.hlsl", L"OutlinedPixel.hlsl", &gpsdModelOutlining, L"OutlinedRenderPass"));
 }
 
 OutliningRenderTask::~OutliningRenderTask()
@@ -36,68 +69,31 @@ OutliningRenderTask::~OutliningRenderTask()
 
 void OutliningRenderTask::Execute()
 {
-	ID3D12CommandAllocator* commandAllocator = m_pCommandInterface->GetCommandAllocator(m_CommandInterfaceIndex);
-	ID3D12GraphicsCommandList5* commandList = m_pCommandInterface->GetCommandList(m_CommandInterfaceIndex);
-
-	DescriptorHeap* mainHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
-	DescriptorHeap* rtvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetRTVDescriptorHeap();
-	DescriptorHeap* dsvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetDSVDescriptorHeap();
-
-	ID3D12Resource1* gBufferAlbedoResource = static_cast<D3D12GraphicsTexture*>(m_GraphicTextures["finalColorBuffer"])->GetTempResource();
-
-	m_pCommandInterface->Reset(m_CommandInterfaceIndex);
+	m_pGraphicsContext->Begin();
 	{
-		ScopedPixEvent(OutliningPass, commandList);
+		ScopedPixEvent(OutliningPass, m_pGraphicsContext);
 
-		DescriptorHeap* descriptorHeap_CBV_UAV_SRV = mainHeap;
-		ID3D12DescriptorHeap* d3d12DescriptorHeap = descriptorHeap_CBV_UAV_SRV->GetID3D12DescriptorHeap();
-		commandList->SetDescriptorHeaps(1, &d3d12DescriptorHeap);
-
-		DescriptorHeap* renderTargetHeap = rtvHeap;
-		DescriptorHeap* depthBufferHeap = dsvHeap;
-
-		const unsigned int gBufferAlbedoIndex = static_cast<D3D12GraphicsTexture*>(m_GraphicTextures["finalColorBuffer"])->GetRenderTargetHeapIndex();
-		const unsigned int dsvIndex = static_cast<D3D12GraphicsTexture*>(m_GraphicTextures["mainDepthStencilBuffer"])->GetDepthStencilIndex();
-
-		D3D12_CPU_DESCRIPTOR_HANDLE cdh = renderTargetHeap->GetCPUHeapAt(gBufferAlbedoIndex);
-		D3D12_CPU_DESCRIPTOR_HANDLE dsh = depthBufferHeap->GetCPUHeapAt(dsvIndex);
+		m_pGraphicsContext->SetupBindings(false);
 
 		// Check if there is an object to outline
 		if (m_ObjectToOutline.first == nullptr)
 		{
-			commandList->ClearDepthStencilView(dsh, D3D12_CLEAR_FLAG_STENCIL, 0.0f, 0, 0, nullptr);
+			m_pGraphicsContext->ClearDepthTexture(m_GraphicTextures["mainDepthStencilBuffer"], false, 0.0f, true, 0); 
 			goto End;	// Hack
 		}
 		// else continue as usual
 
-		commandList->SetGraphicsRootSignature(static_cast<D3D12GraphicsManager*>(IGraphicsManager::GetBaseInstance())->m_pGlobalRootSig);
-		commandList->SetGraphicsRootDescriptorTable(dtSRV, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
+		m_pGraphicsContext->SetPipelineState(m_PipelineStates[0]->GetPSO());
+		m_pGraphicsContext->SetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-		commandList->OMSetRenderTargets(1, &cdh, true, &dsh);
+		TODO("Don't hardcode the sizes");
+		m_pGraphicsContext->SetViewPort(1280, 720);
+		m_pGraphicsContext->SetScizzorRect(1280, 720);
 
-		TODO("Fix the sizes");
-		D3D12_VIEWPORT viewPort = {};
-		viewPort.TopLeftX = 0.0f;
-		viewPort.TopLeftY = 0.0f;
-		viewPort.Width = 1280;
-		viewPort.Height = 720;
-		viewPort.MinDepth = 0.0f;
-		viewPort.MaxDepth = 1.0f;
-
-		D3D12_RECT rect = {};
-		rect.left = 0;
-		rect.right = 1280;
-		rect.top = 0;
-		rect.bottom = 720;
-
-		commandList->RSSetViewports(1, &viewPort);
-		commandList->RSSetScissorRects(1, &rect);
-		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-		commandList->SetPipelineState(m_PipelineStates[0]->GetPSO());
+		m_pGraphicsContext->SetRenderTargets(1, &m_GraphicTextures["finalColorBuffer"], m_GraphicTextures["mainDepthStencilBuffer"]);
 
 		const DirectX::XMMATRIX* viewProjMatTrans = m_pCamera->GetViewProjectionTranposed();
-		// Draw for every m_pMesh
+		// Draw for every mesh in the model
 		for (int i = 0; i < m_ObjectToOutline.first->GetNrOfMeshes(); i++)
 		{
 			Mesh* m = m_ObjectToOutline.first->GetMeshAt(i);
@@ -115,23 +111,17 @@ void OutliningRenderTask::Execute()
 			w_wvp[0] = *newScaledTransform.GetWorldMatrixTransposed();
 			w_wvp[1] = (*viewProjMatTrans) * w_wvp[0];
 
-			DynamicDataParams params = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->SetDynamicData(sizeof(DirectX::XMMATRIX) * 2, &w_wvp);
+			m_pGraphicsContext->Set32BitConstants(Constants_SlotInfo_B0, sizeof(SlotInfo) / 4, info, 0, false);
+			m_pGraphicsContext->SetConstantBufferDynamicData(RootParam_CBV_B2, sizeof(DirectX::XMMATRIX) * 2, &w_wvp, false);
 
-			commandList->SetGraphicsRoot32BitConstants(Constants_SlotInfo_B0, sizeof(SlotInfo) / sizeof(UINT), info, 0);
-			commandList->SetGraphicsRootConstantBufferView(RootParam_CBV_B2, params.vAddr);
+			m_pGraphicsContext->SetIndexBuffer(m->GetIndexBuffer(), m->GetSizeOfIndices());
 
-			D3D12_INDEX_BUFFER_VIEW indexBufferView = {};
-			indexBufferView.BufferLocation = static_cast<D3D12GraphicsBuffer*>(m->GetIndexBuffer())->GetTempResource()->GetGPUVirtualAddress();
-			indexBufferView.Format = DXGI_FORMAT_R32_UINT;
-			indexBufferView.SizeInBytes = m->GetSizeOfIndices();
-			commandList->IASetIndexBuffer(&indexBufferView);
-
-			commandList->OMSetStencilRef(1);
-			commandList->DrawIndexedInstanced(num_Indices, 1, 0, 0, 0);
+			m_pGraphicsContext->SetStencilRef(1);
+			m_pGraphicsContext->DrawIndexedInstanced(num_Indices, 1, 0, 0, 0);
 		}
 	}
 End:
-	commandList->Close();
+	m_pGraphicsContext->End();
 }
 
 void OutliningRenderTask::SetObjectToOutline(std::pair<component::ModelComponent*, component::TransformComponent*>* objectToOutline)

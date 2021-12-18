@@ -28,6 +28,10 @@ public:
 
 protected:
 	unsigned int m_Size = 0;
+
+#ifdef DEBUG
+	std::wstring m_DebugName = L"";
+#endif
 };
 
 #endif

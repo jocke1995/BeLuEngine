@@ -2,10 +2,8 @@
 #include "DXRReflectionTask.h"
 
 // DX12 Specifics
-#include "../DescriptorHeap.h"
 #include "../Shader.h"
 #include "../Misc/AssetLoader.h"
-#include "../CommandInterface.h"
 
 // Model info
 #include "../Geometry/Transform.h"
@@ -18,13 +16,11 @@
 #include "../ECS/Components/ModelComponent.h"
 #include "../ECS/Components/TransformComponent.h"
 
-TODO(To be replaced by a D3D12Manager some point in the future(needed to access RootSig));
-#include "../Renderer.h"
-
-// TODO ABSTRACTION
+TODO("Abstract this class")
 #include "../API/D3D12/D3D12GraphicsManager.h"
 #include "../API/D3D12/D3D12GraphicsBuffer.h"
-#include "../API/D3D12/D3D12GraphicsTexture.h"
+#include "../API/IGraphicsTexture.h"
+#include "../API/IGraphicsContext.h"
 
 DXRReflectionTask::DXRReflectionTask(IGraphicsTexture* reflectionTexture, unsigned int dispatchWidth, unsigned int dispatchHeight)
 	:GraphicsPass(L"DXR_ReflectionPass")
@@ -239,9 +235,9 @@ void DXRReflectionTask::CreateShaderBindingTable(const std::vector<RenderCompone
 	{
 		m_pSbtGenerator->AddHitGroup(L"HitGroup",
 		{
-			(void*)static_cast<D3D12GraphicsBuffer*>(rc.mc->GetSlotInfoByteAdressBufferDXR())->GetTempResource()->GetGPUVirtualAddress(),	// SlotInfoRawBuffer
-			(void*)static_cast<D3D12GraphicsBuffer*>(rc.mc->GetMaterialByteAdressBuffer())->GetTempResource()->GetGPUVirtualAddress(),		// MaterialData
-			(void*)static_cast<D3D12GraphicsBuffer*>(rc.tc->GetTransform()->m_pConstantBuffer)->GetTempResource()->GetGPUVirtualAddress()	// MATRICES_PER_OBJECT_STRUCT
+			(void*)static_cast<D3D12GraphicsBuffer*>(rc.mc->GetSlotInfoByteAdressBufferDXR())->m_pResource->GetGPUVirtualAddress(),	// SlotInfoRawBuffer
+			(void*)static_cast<D3D12GraphicsBuffer*>(rc.mc->GetMaterialByteAdressBuffer())->m_pResource->GetGPUVirtualAddress(),	// MaterialData
+			(void*)static_cast<D3D12GraphicsBuffer*>(rc.tc->GetTransform()->m_pConstantBuffer)->m_pResource->GetGPUVirtualAddress()	// MATRICES_PER_OBJECT_STRUCT
 		});
 	}
 
@@ -256,114 +252,67 @@ void DXRReflectionTask::CreateShaderBindingTable(const std::vector<RenderCompone
 	m_pShaderTableBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::CPUBuffer, sbtSize, 1, DXGI_FORMAT_UNKNOWN, L"ShaderBindingTable_CPUBUFFER");
 
 	// Compile the SBT from the shader and parameters info
-	m_pSbtGenerator->Generate(static_cast<D3D12GraphicsBuffer*>(m_pShaderTableBuffer)->GetTempResource(), m_pRTStateObjectProps);
+	m_pSbtGenerator->Generate(static_cast<D3D12GraphicsBuffer*>(m_pShaderTableBuffer)->m_pResource, m_pRTStateObjectProps);
 }
 
 void DXRReflectionTask::Execute()
 {
-	ID3D12CommandAllocator* commandAllocator = m_pCommandInterface->GetCommandAllocator(m_CommandInterfaceIndex);
-	ID3D12GraphicsCommandList5* commandList = m_pCommandInterface->GetCommandList(m_CommandInterfaceIndex);
-
-	DescriptorHeap* mainHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
-	DescriptorHeap* rtvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetRTVDescriptorHeap();
-	DescriptorHeap* dsvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetDSVDescriptorHeap();
-
-	m_pCommandInterface->Reset(m_CommandInterfaceIndex);
+	m_pGraphicsContext->Begin();
 	{
-		ScopedPixEvent(RaytracedReflections, commandList);
+		ScopedPixEvent(RaytracedReflections, m_pGraphicsContext);
 
-		commandList->SetComputeRootSignature(static_cast<D3D12GraphicsManager*>(IGraphicsManager::GetBaseInstance())->m_pGlobalRootSig);
+		m_pGraphicsContext->SetupBindings(true);
 
-		DescriptorHeap* dhSRVUAVCBV = mainHeap;
-		ID3D12DescriptorHeap* dhHeap = dhSRVUAVCBV->GetID3D12DescriptorHeap();
-		commandList->SetDescriptorHeaps(1, &dhHeap);
+		m_pGraphicsContext->SetConstantBuffer(RootParam_CBV_B3, m_GraphicBuffers["cbPerFrame"], true);
+		m_pGraphicsContext->SetConstantBuffer(RootParam_CBV_B4, m_GraphicBuffers["cbPerScene"], true);
+		m_pGraphicsContext->SetShaderResourceView(RootParam_SRV_T0, m_GraphicBuffers["rawBufferLights"], true);
 
-		commandList->SetComputeRootDescriptorTable(dtCBV, dhSRVUAVCBV->GetGPUHeapAt(0));
-		commandList->SetComputeRootDescriptorTable(dtSRV, dhSRVUAVCBV->GetGPUHeapAt(0));
-		commandList->SetComputeRootDescriptorTable(dtUAV, dhSRVUAVCBV->GetGPUHeapAt(0));
-		commandList->SetComputeRootConstantBufferView(RootParam_CBV_B3, static_cast<D3D12GraphicsBuffer*>(m_GraphicBuffers["cbPerFrame"])->GetTempResource()->GetGPUVirtualAddress());
-		commandList->SetComputeRootConstantBufferView(RootParam_CBV_B4, static_cast<D3D12GraphicsBuffer*>(m_GraphicBuffers["cbPerScene"])->GetTempResource()->GetGPUVirtualAddress());
-		commandList->SetComputeRootShaderResourceView(RootParam_SRV_T0, static_cast<D3D12GraphicsBuffer*>(m_GraphicBuffers["rawBufferLights"])->GetTempResource()->GetGPUVirtualAddress());
-
-		// transition depth Buffer
-		CD3DX12_RESOURCE_BARRIER transition = CD3DX12_RESOURCE_BARRIER::Transition(
-			static_cast<D3D12GraphicsTexture*>(m_GraphicTextures["mainDSV"])->GetTempResource(),
-			D3D12_RESOURCE_STATE_DEPTH_WRITE,				// StateBefore
-			D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);// StateAfter
-		commandList->ResourceBarrier(1, &transition);
-		
-		// On the last frame, the raytracing output was used as a copy source, to
-		// copy its contents into the render target. Now we need to transition it to
-		// a UAV so that the shaders can write in it.
-		transition = CD3DX12_RESOURCE_BARRIER::Transition(
-			static_cast<D3D12GraphicsTexture*>(m_pReflectionTexture)->GetTempResource(),
-			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,	// StateBefore
-			D3D12_RESOURCE_STATE_UNORDERED_ACCESS);		// StateAfter
-		commandList->ResourceBarrier(1, &transition);
+		// Transitions
+		m_pGraphicsContext->ResourceBarrier(m_GraphicTextures["mainDSV"], D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+		m_pGraphicsContext->ResourceBarrier(m_pReflectionTexture, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
 		// Setup the raytracing task
 		D3D12_DISPATCH_RAYS_DESC desc = {};
+
 		// The layout of the SBT is as follows: ray generation shader, miss
-		// shaders, hit groups. As described in the CreateShaderBindingTable method,
+		// shader, hit groups. As seen in the CreateShaderBindingTable method,
 		// all SBT entries of a given type have the same size to allow a fixed stride.
 
-		// The ray generation shaders are always at the beginning of the SBT. 
+		// Ray generation section
 		uint32_t rayGenerationSectionSizeInBytes = m_pSbtGenerator->GetRayGenSectionSize();
-		desc.RayGenerationShaderRecord.StartAddress = static_cast<D3D12GraphicsBuffer*>(m_pShaderTableBuffer)->GetTempResource()->GetGPUVirtualAddress();
+		desc.RayGenerationShaderRecord.StartAddress = static_cast<D3D12GraphicsBuffer*>(m_pShaderTableBuffer)->m_pResource->GetGPUVirtualAddress();
 		desc.RayGenerationShaderRecord.SizeInBytes = rayGenerationSectionSizeInBytes;
 
-		// The miss shaders are in the second SBT section, right after the ray
-		// generation shader. We have one miss shader for the camera rays and one
-		// for the shadow rays, so this section has a size of 2*m_sbtEntrySize. We
-		// also indicate the stride between the two miss shaders, which is the size
-		// of a SBT entry
+		// Miss section
 		uint32_t missSectionSizeInBytes = m_pSbtGenerator->GetMissSectionSize();
-		desc.MissShaderTable.StartAddress = static_cast<D3D12GraphicsBuffer*>(m_pShaderTableBuffer)->GetTempResource()->GetGPUVirtualAddress() + rayGenerationSectionSizeInBytes;
+		desc.MissShaderTable.StartAddress = static_cast<D3D12GraphicsBuffer*>(m_pShaderTableBuffer)->m_pResource->GetGPUVirtualAddress() + rayGenerationSectionSizeInBytes;
 		desc.MissShaderTable.SizeInBytes = missSectionSizeInBytes;
 		desc.MissShaderTable.StrideInBytes = m_pSbtGenerator->GetMissEntrySize();
 
-		// The hit groups section start after the miss shaders.
+		// Hit group section
 		uint32_t hitGroupsSectionSize = m_pSbtGenerator->GetHitGroupSectionSize();
-		desc.HitGroupTable.StartAddress = static_cast<D3D12GraphicsBuffer*>(m_pShaderTableBuffer)->GetTempResource()->GetGPUVirtualAddress() +
+		desc.HitGroupTable.StartAddress = static_cast<D3D12GraphicsBuffer*>(m_pShaderTableBuffer)->m_pResource->GetGPUVirtualAddress() +
 			rayGenerationSectionSizeInBytes +
 			missSectionSizeInBytes;
 		desc.HitGroupTable.SizeInBytes = hitGroupsSectionSize;
 		desc.HitGroupTable.StrideInBytes = m_pSbtGenerator->GetHitGroupEntrySize();
 
-		// Dimensions of the image to render, identical to a kernel launch dimension
+		// Dimensions of the image to render
 		desc.Width = m_DispatchWidth;
 		desc.Height = m_DispatchHeight;
 		desc.Depth = 1;
 
 		// Bind the raytracing pipeline
-		commandList->SetPipelineState1(m_pStateObject);
+		m_pGraphicsContext->SetPipelineState(m_pStateObject);
 
 		// Dispatch the rays and write to the raytracing output
-		commandList->DispatchRays(&desc);
+		m_pGraphicsContext->DispatchRays(desc);
 
-		D3D12_RESOURCE_BARRIER b = {};
-		b.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
-		b.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-		b.UAV.pResource = static_cast<D3D12GraphicsTexture*>(m_pReflectionTexture)->GetTempResource();
-		commandList->ResourceBarrier(1, &b);
+		m_pGraphicsContext->UAVBarrier(m_pReflectionTexture);
 
-		// Transition DepthBuffer
-		transition = CD3DX12_RESOURCE_BARRIER::Transition(
-			static_cast<D3D12GraphicsTexture*>(m_GraphicTextures["mainDSV"])->GetTempResource(),
-			D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,	// StateBefore
-			D3D12_RESOURCE_STATE_DEPTH_WRITE);				// StateAfter
-		commandList->ResourceBarrier(1, &transition);
-
-		// The raytracing output needs to be copied to the actual render target used
-		// for display. For this, we need to transition the raytracing output from a
-		// UAV to a copy source, and the render target buffer to a copy destination.
-		// We can then do the actual copy, before transitioning the render target
-		// buffer into a render target, that will be then used to display the image
-		transition = CD3DX12_RESOURCE_BARRIER::Transition(
-			static_cast<D3D12GraphicsTexture*>(m_pReflectionTexture)->GetTempResource(),
-			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,				// StateBefore
-			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);	// StateAfter
-		commandList->ResourceBarrier(1, &transition);
+		// Transitions
+		m_pGraphicsContext->ResourceBarrier(m_GraphicTextures["mainDSV"], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+		m_pGraphicsContext->ResourceBarrier(m_pReflectionTexture, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	}
-	commandList->Close();
+	m_pGraphicsContext->End();
 }

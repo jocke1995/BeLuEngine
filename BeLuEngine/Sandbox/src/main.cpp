@@ -185,7 +185,7 @@ Scene* TestScene(SceneManager* sm)
     tc->GetTransform()->SetScale(50, 1, 50);
     tc->GetTransform()->SetPosition(0.0f, 0.0f, 0.0f);
     /* ---------------------- Floor ---------------------- */
-
+#if 0
      /* ---------------------- Sphere ---------------------- */
     entity = scene->AddEntity("sphere");
     mc = entity->AddComponent<component::ModelComponent>();
@@ -265,6 +265,8 @@ Scene* TestScene(SceneManager* sm)
     bbc->Init();
     mc->Update(0);
     /* ---------------------- Sphere ---------------------- */
+
+#endif
     entity = scene->AddEntity("dirLight1");
 
     dlc = entity->AddComponent<component::DirectionalLightComponent>();

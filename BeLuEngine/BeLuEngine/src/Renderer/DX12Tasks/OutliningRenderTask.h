@@ -17,6 +17,7 @@ public:
 
 	void SetObjectToOutline(std::pair<component::ModelComponent*, component::TransformComponent*>* objectToOutline);
 	void Clear();
+
 	void SetCamera(BaseCamera* baseCamera) { m_pCamera = baseCamera; }
 private:
 	std::pair<component::ModelComponent*, component::TransformComponent*> m_ObjectToOutline;

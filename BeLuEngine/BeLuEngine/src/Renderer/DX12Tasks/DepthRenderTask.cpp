@@ -1,9 +1,6 @@
 #include "stdafx.h"
 #include "DepthRenderTask.h"
 
-
-#include "../Camera/BaseCamera.h"
-
 // Model info
 #include "../Geometry/Mesh.h"
 #include "../Geometry/Transform.h"
@@ -15,6 +12,7 @@
 TODO("Abstract this")
 #include "../PipelineState/GraphicsState.h"
 
+// Generic API
 #include "../API/IGraphicsManager.h"
 #include "../API/IGraphicsContext.h"
 
@@ -60,13 +58,7 @@ DepthRenderTask::DepthRenderTask()
 	gpsdDepthPrePass.DepthStencilState = depthPrePassDsd;
 	gpsdDepthPrePass.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 
-	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*> gpsdDepthPrePassVector;
-	gpsdDepthPrePassVector.push_back(&gpsdDepthPrePass);
-
-	for (D3D12_GRAPHICS_PIPELINE_STATE_DESC* gpsd : gpsdDepthPrePassVector)
-	{
-		m_PipelineStates.push_back(new GraphicsState(L"DepthVertex.hlsl", L"DepthPixel.hlsl", gpsd, L"DepthPrePass"));
-	}
+	m_PipelineStates.push_back(new GraphicsState(L"DepthVertex.hlsl", L"DepthPixel.hlsl", &gpsdDepthPrePass, L"DepthPrePass"));
 }
 
 DepthRenderTask::~DepthRenderTask()
@@ -88,7 +80,7 @@ void DepthRenderTask::Execute()
 		m_pGraphicsContext->SetViewPort(1280, 720);
 		m_pGraphicsContext->SetScizzorRect(1280, 720);
 
-		m_pGraphicsContext->ClearDepthTexture(m_GraphicTextures["mainDepthStencilBuffer"], 1.0f, true, 0);
+		m_pGraphicsContext->ClearDepthTexture(m_GraphicTextures["mainDepthStencilBuffer"], true, 1.0f, true, 0);
 		m_pGraphicsContext->SetRenderTargets(0, nullptr, m_GraphicTextures["mainDepthStencilBuffer"]);
 
 		// Draw for every Rendercomponent

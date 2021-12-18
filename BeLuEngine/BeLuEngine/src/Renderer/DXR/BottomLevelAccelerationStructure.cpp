@@ -28,13 +28,13 @@ void BottomLevelAccelerationStructure::AddVertexBuffer(
 	rtGeometryDesc.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
 
 	// Vertex Buffer
-	rtGeometryDesc.Triangles.VertexBuffer.StartAddress = static_cast<D3D12GraphicsBuffer*>(vertexBuffer)->GetTempResource()->GetGPUVirtualAddress();
+	rtGeometryDesc.Triangles.VertexBuffer.StartAddress = static_cast<D3D12GraphicsBuffer*>(vertexBuffer)->m_pResource->GetGPUVirtualAddress();
 	rtGeometryDesc.Triangles.VertexBuffer.StrideInBytes = sizeof(Vertex);
 	rtGeometryDesc.Triangles.VertexCount = vertexCount;
 	rtGeometryDesc.Triangles.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT;
 
 	// Index Buffer
-	rtGeometryDesc.Triangles.IndexBuffer = static_cast<D3D12GraphicsBuffer*>(indexBuffer)->GetTempResource()->GetGPUVirtualAddress();
+	rtGeometryDesc.Triangles.IndexBuffer = static_cast<D3D12GraphicsBuffer*>(indexBuffer)->m_pResource->GetGPUVirtualAddress();
 	rtGeometryDesc.Triangles.IndexCount = indexCount;
 	rtGeometryDesc.Triangles.IndexFormat = DXGI_FORMAT_R32_UINT;
 
@@ -73,8 +73,8 @@ void BottomLevelAccelerationStructure::GenerateBuffers()
 	unsigned int resultSizeInBytes  = (info.ResultDataMaxSizeInBytes + 255) & ~255;
 
 	static unsigned int idCounter = 0;
-	m_pScratchBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::UnorderedAccessBuffer, scratchSizeInBytes, 1, DXGI_FORMAT_UNKNOWN, L"SCRATCHBUFFER_TLAS");
-	m_pResultBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::RayTracingBuffer, resultSizeInBytes, 1, DXGI_FORMAT_UNKNOWN, L"RESULTBUFFER_TLAS");
+	m_pScratchBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::UnorderedAccessBuffer, scratchSizeInBytes, 1, DXGI_FORMAT_UNKNOWN, L"SCRATCHBUFFER_BLAS");
+	m_pResultBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::RayTracingBuffer, resultSizeInBytes, 1, DXGI_FORMAT_UNKNOWN, L"RESULTBUFFER_BLAS");
 
 	idCounter++;
 }
@@ -89,8 +89,8 @@ void BottomLevelAccelerationStructure::SetupAccelerationStructureForBuilding(boo
 	m_BuildDesc.Inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
 	m_BuildDesc.Inputs.NumDescs = static_cast<UINT>(m_vertexBuffers.size());
 	m_BuildDesc.Inputs.pGeometryDescs = m_vertexBuffers.data();
-	m_BuildDesc.DestAccelerationStructureData = { static_cast<D3D12GraphicsBuffer*>(m_pResultBuffer)->GetTempResource()->GetGPUVirtualAddress() };
-	m_BuildDesc.ScratchAccelerationStructureData = { static_cast<D3D12GraphicsBuffer*>(m_pScratchBuffer)->GetTempResource()->GetGPUVirtualAddress() };
+	m_BuildDesc.DestAccelerationStructureData = static_cast<D3D12GraphicsBuffer*>(m_pResultBuffer)->m_pResource->GetGPUVirtualAddress();
+	m_BuildDesc.ScratchAccelerationStructureData = static_cast<D3D12GraphicsBuffer*>(m_pScratchBuffer)->m_pResource->GetGPUVirtualAddress();
 	m_BuildDesc.SourceAccelerationStructureData = 0;
 
 	m_BuildDesc.Inputs.Flags = flags;

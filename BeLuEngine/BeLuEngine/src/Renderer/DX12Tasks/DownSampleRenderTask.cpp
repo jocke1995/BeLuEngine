@@ -1,21 +1,17 @@
 #include "stdafx.h"
 #include "DownSampleRenderTask.h"
 
-// DX12 Specifics
-#include "../CommandInterface.h"
-#include "../DescriptorHeap.h"
-#include "../PipelineState/PipelineState.h"
-
 // Model info
 #include "../Geometry/Mesh.h"
 
-TODO(To be replaced by a D3D12Manager some point in the future(needed to access RootSig));
-#include "../Renderer.h"
+TODO("Abstract this")
+#include "../PipelineState/GraphicsState.h"
 
-// TODO ABSTRACTION
-#include "../API/D3D12/D3D12GraphicsManager.h"
-#include "../API/D3D12/D3D12GraphicsBuffer.h"
-#include "../API/D3D12/D3D12GraphicsTexture.h"
+// Generic API
+#include "../API/IGraphicsManager.h"
+#include "../API/IGraphicsBuffer.h"
+#include "../API/IGraphicsTexture.h"
+#include "../API/IGraphicsContext.h"
 
 DownSampleRenderTask::DownSampleRenderTask(IGraphicsTexture* sourceTexture, IGraphicsTexture* destinationTexture, Mesh* fullscreenQuad)
 	:GraphicsPass(L"TempDownSampleRenderPass")
@@ -23,6 +19,38 @@ DownSampleRenderTask::DownSampleRenderTask(IGraphicsTexture* sourceTexture, IGra
 	m_pSourceTexture = sourceTexture;
 	m_pDestinationTexture = destinationTexture;
 	m_pFullScreenQuadMesh = fullscreenQuad;
+
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsdDownSampleTexture = {};
+	gpsdDownSampleTexture.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+
+	// RenderTarget
+	gpsdDownSampleTexture.NumRenderTargets = 1;
+	gpsdDownSampleTexture.RTVFormats[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
+
+	// Depthstencil usage
+	gpsdDownSampleTexture.SampleDesc.Count = 1;
+	gpsdDownSampleTexture.SampleMask = UINT_MAX;
+	// Rasterizer behaviour
+	gpsdDownSampleTexture.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
+	gpsdDownSampleTexture.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
+	gpsdDownSampleTexture.RasterizerState.FrontCounterClockwise = false;
+
+	// Specify Blend descriptions
+	D3D12_RENDER_TARGET_BLEND_DESC defaultRTdesc = {
+		false, false,
+		D3D12_BLEND_ZERO, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
+		D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
+		D3D12_LOGIC_OP_NOOP, D3D12_COLOR_WRITE_ENABLE_ALL };
+	for (unsigned int i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; i++)
+		gpsdDownSampleTexture.BlendState.RenderTarget[i] = defaultRTdesc;
+
+	// Depth descriptor
+	D3D12_DEPTH_STENCIL_DESC dsd = {};
+	dsd.DepthEnable = false;
+	dsd.StencilEnable = false;
+	gpsdDownSampleTexture.DepthStencilState = dsd;
+
+	m_PipelineStates.push_back(new GraphicsState(L"DownSampleVertex.hlsl", L"DownSamplePixel.hlsl", &gpsdDownSampleTexture, L"DeferredLightPass"));
 }
 
 DownSampleRenderTask::~DownSampleRenderTask()
@@ -31,83 +59,37 @@ DownSampleRenderTask::~DownSampleRenderTask()
 
 void DownSampleRenderTask::Execute()
 {
-	ID3D12CommandAllocator* commandAllocator = m_pCommandInterface->GetCommandAllocator(m_CommandInterfaceIndex);
-	ID3D12GraphicsCommandList5* commandList = m_pCommandInterface->GetCommandList(m_CommandInterfaceIndex);
-
-	DescriptorHeap* mainHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
-	DescriptorHeap* rtvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetRTVDescriptorHeap();
-	DescriptorHeap* dsvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetDSVDescriptorHeap();
-
-	m_pCommandInterface->Reset(m_CommandInterfaceIndex);
+	m_pGraphicsContext->Begin();
 	{
-		ScopedPixEvent(DownSamplePass, commandList);
+		ScopedPixEvent(DownSamplePass, m_pGraphicsContext);
 
-		commandList->SetGraphicsRootSignature(static_cast<D3D12GraphicsManager*>(IGraphicsManager::GetBaseInstance())->m_pGlobalRootSig);
+		m_pGraphicsContext->SetupBindings(false);
 
-		DescriptorHeap* descriptorHeap_RTV = rtvHeap;
-		DescriptorHeap* descriptorHeap_CBV_UAV_SRV = mainHeap;
-		ID3D12DescriptorHeap* d3d12DescriptorHeap = descriptorHeap_CBV_UAV_SRV->GetID3D12DescriptorHeap();
-		commandList->SetDescriptorHeaps(1, &d3d12DescriptorHeap);
+		m_pGraphicsContext->SetPipelineState(m_PipelineStates[0]->GetPSO());
+		m_pGraphicsContext->SetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-		commandList->SetGraphicsRootDescriptorTable(dtSRV, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
+		TODO("Don't hardcode the sizes");
+		m_pGraphicsContext->SetViewPort(1280, 720);
+		m_pGraphicsContext->SetScizzorRect(1280, 720);
 
-		TODO("Fix the sizes");
-		D3D12_VIEWPORT viewPort = {};
-		viewPort.TopLeftX = 0.0f;
-		viewPort.TopLeftY = 0.0f;
-		viewPort.Width = 1280;
-		viewPort.Height = 720;
-		viewPort.MinDepth = 0.0f;
-		viewPort.MaxDepth = 1.0f;
-
-		D3D12_RECT rect = {};
-		rect.left = 0;
-		rect.right = 1280;
-		rect.top = 0;
-		rect.bottom = 720;
-
-		commandList->RSSetViewports(1, &viewPort);
-		commandList->RSSetScissorRects(1, &rect);
-		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-		unsigned int rtvIndex = static_cast<D3D12GraphicsTexture*>(m_pDestinationTexture)->GetRenderTargetHeapIndex();
-		D3D12_CPU_DESCRIPTOR_HANDLE cdh = descriptorHeap_RTV->GetCPUHeapAt(rtvIndex);
-		commandList->OMSetRenderTargets(1, &cdh, false, nullptr);
-
-		commandList->SetPipelineState(m_PipelineStates[0]->GetPSO());
+		m_pGraphicsContext->SetRenderTargets(1, &m_pDestinationTexture, nullptr);
 
 		SlotInfo slotInfo = {};
-		slotInfo.vertexDataIndex = static_cast<D3D12GraphicsBuffer*>(m_pFullScreenQuadMesh->GetVertexBuffer())->GetShaderResourceHeapIndex();
+		slotInfo.vertexDataIndex = m_pFullScreenQuadMesh->GetVertexBuffer()->GetShaderResourceHeapIndex();
 
 		DescriptorHeapIndices dhIndices = {};
-		dhIndices.index0 = static_cast<D3D12GraphicsTexture*>(m_pSourceTexture)->GetShaderResourceHeapIndex();
+		dhIndices.index0 = m_pSourceTexture->GetShaderResourceHeapIndex();
 
-		commandList->SetGraphicsRoot32BitConstants(Constants_SlotInfo_B0, sizeof(SlotInfo) / sizeof(UINT), &slotInfo, 0);
-		commandList->SetGraphicsRoot32BitConstants(Constants_DH_Indices_B1, sizeof(DescriptorHeapIndices) / sizeof(UINT), &dhIndices, 0);
+		m_pGraphicsContext->Set32BitConstants(Constants_SlotInfo_B0, sizeof(SlotInfo) / 4, &slotInfo, 0, false);
+		m_pGraphicsContext->Set32BitConstants(Constants_DH_Indices_B1, sizeof(DescriptorHeapIndices) / 4, &dhIndices, 0, false);
 
-		D3D12_INDEX_BUFFER_VIEW indexBufferView = {};
-		indexBufferView.BufferLocation = static_cast<D3D12GraphicsBuffer*>(m_pFullScreenQuadMesh->GetIndexBuffer())->GetTempResource()->GetGPUVirtualAddress();
-		indexBufferView.Format = DXGI_FORMAT_R32_UINT;
-		indexBufferView.SizeInBytes = m_pFullScreenQuadMesh->GetSizeOfIndices();
-		commandList->IASetIndexBuffer(&indexBufferView);
-
-		ID3D12Resource1* sourceResource = static_cast<D3D12GraphicsTexture*>(m_pSourceTexture)->GetTempResource();
-		
-		CD3DX12_RESOURCE_BARRIER transition = CD3DX12_RESOURCE_BARRIER::Transition(
-			sourceResource,
-			D3D12_RESOURCE_STATE_RENDER_TARGET,				// StateBefore
-			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);	// StateAfter
-		commandList->ResourceBarrier(1, &transition);
+		m_pGraphicsContext->ResourceBarrier(m_pSourceTexture, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 		// Draw a fullscreen quad
-		commandList->DrawIndexedInstanced(m_pFullScreenQuadMesh->GetNumIndices(), 1, 0, 0, 0);
+		m_pGraphicsContext->SetIndexBuffer(m_pFullScreenQuadMesh->GetIndexBuffer(), m_pFullScreenQuadMesh->GetSizeOfIndices());
+		m_pGraphicsContext->DrawIndexedInstanced(m_pFullScreenQuadMesh->GetNumIndices(), 1, 0, 0, 0);
 
-		transition = CD3DX12_RESOURCE_BARRIER::Transition(
-			sourceResource,
-			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,	// StateBefore
-			D3D12_RESOURCE_STATE_RENDER_TARGET);		// StateAfter
-		commandList->ResourceBarrier(1, &transition);
-
+		m_pGraphicsContext->ResourceBarrier(m_pSourceTexture, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	}
-	commandList->Close();
+	m_pGraphicsContext->End();
 }

@@ -4,6 +4,9 @@
 // DX12 Specifics
 #include "../DescriptorHeap.h"
 
+#include "../PipelineState/GraphicsState.h"
+#include "../PipelineState/ComputeState.h"
+
 // API Generic
 #include "../API/IGraphicsManager.h"
 #include "../API/IGraphicsBuffer.h"
@@ -40,18 +43,6 @@ GraphicsPass::~GraphicsPass()
     {
         BL_SAFE_DELETE(pState);
     }
-}
-
-void GraphicsPass::SetBackBufferIndex(int backBufferIndex)
-{
-	m_BackBufferIndex = backBufferIndex;
-}
-
-void GraphicsPass::SetCommandInterfaceIndex(int index)
-{
-	BL_ASSERT(index >= 0 && index < NUM_SWAP_BUFFERS);
-
-	m_CommandInterfaceIndex = index;
 }
 
 void GraphicsPass::AddGraphicsBuffer(std::string id, IGraphicsBuffer* graphicBuffer)

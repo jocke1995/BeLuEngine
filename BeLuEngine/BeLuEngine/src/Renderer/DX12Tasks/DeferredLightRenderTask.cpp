@@ -1,30 +1,59 @@
 #include "stdafx.h"
 #include "DeferredLightRenderTask.h"
 
-// DX12 Specifics
-#include "../Camera/BaseCamera.h"
-#include "../CommandInterface.h"
-#include "../DescriptorHeap.h"
-#include "../PipelineState/PipelineState.h"
-
 // Model info
-#include "../Renderer/Geometry/Transform.h"
 #include "../Renderer/Geometry/Mesh.h"
-#include "../Renderer/Geometry/Material.h"
 
-TODO(To be replaced by a D3D12Manager some point in the future(needed to access RootSig));
-#include "../Renderer.h"
+TODO("Abstract this")
+#include "../PipelineState/GraphicsState.h"
 
-// TODO ABSTRACTION
-#include "../API/D3D12/D3D12GraphicsManager.h"
-#include "../API/D3D12/D3D12GraphicsBuffer.h"
-#include "../API/D3D12/D3D12GraphicsTexture.h"
-
+// Generic API
+#include "../API/IGraphicsManager.h"
+#include "../API/IGraphicsBuffer.h"
+#include "../API/IGraphicsTexture.h"
+#include "../API/IGraphicsContext.h"
 
 DeferredLightRenderTask::DeferredLightRenderTask(Mesh* fullscreenQuad)
 	:GraphicsPass(L"LightPass")
 {
 	m_pFullScreenQuadMesh = fullscreenQuad;
+
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsdDeferredLightRender = {};
+	gpsdDeferredLightRender.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+
+	// RenderTarget
+	gpsdDeferredLightRender.NumRenderTargets = 2;
+	gpsdDeferredLightRender.RTVFormats[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
+	gpsdDeferredLightRender.RTVFormats[1] = DXGI_FORMAT_R16G16B16A16_FLOAT;
+	// Depthstencil usage
+	gpsdDeferredLightRender.SampleDesc.Count = 1;
+	gpsdDeferredLightRender.SampleMask = UINT_MAX;
+	// Rasterizer behaviour
+	gpsdDeferredLightRender.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
+	gpsdDeferredLightRender.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
+	gpsdDeferredLightRender.RasterizerState.FrontCounterClockwise = false;
+
+	// Specify Blend descriptions
+	D3D12_RENDER_TARGET_BLEND_DESC defaultRTdesc = {
+		false, false,
+		D3D12_BLEND_ZERO, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
+		D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
+		D3D12_LOGIC_OP_NOOP, D3D12_COLOR_WRITE_ENABLE_ALL };
+	for (unsigned int i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; i++)
+		gpsdDeferredLightRender.BlendState.RenderTarget[i] = defaultRTdesc;
+
+	// Depth descriptor
+	D3D12_DEPTH_STENCIL_DESC dsd = {};
+	dsd.DepthEnable = false;
+	dsd.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
+	dsd.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+
+	// DepthStencil
+	dsd.StencilEnable = false;
+	gpsdDeferredLightRender.DepthStencilState = dsd;
+	gpsdDeferredLightRender.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+
+	m_PipelineStates.push_back(new GraphicsState(L"DeferredLightVertex.hlsl", L"DeferredLightPixel.hlsl", &gpsdDeferredLightRender, L"DeferredLightPass"));
 }
 
 DeferredLightRenderTask::~DeferredLightRenderTask()
@@ -33,126 +62,50 @@ DeferredLightRenderTask::~DeferredLightRenderTask()
 
 void DeferredLightRenderTask::Execute()
 {
-	ID3D12CommandAllocator* commandAllocator = m_pCommandInterface->GetCommandAllocator(m_CommandInterfaceIndex);
-	ID3D12GraphicsCommandList5* commandList = m_pCommandInterface->GetCommandList(m_CommandInterfaceIndex);
+	BL_ASSERT(m_GraphicTextures["finalColorBuffer"] && m_GraphicTextures["brightTarget"]);
 
-	DescriptorHeap* mainHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
-	DescriptorHeap* rtvHeap = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetRTVDescriptorHeap();
-
-	D3D12GraphicsTexture* finalColorTexture = static_cast<D3D12GraphicsTexture*>(m_GraphicTextures["finalColorBuffer"]);
-	D3D12GraphicsTexture* brightColorTexture = static_cast<D3D12GraphicsTexture*>(m_GraphicTextures["brightTarget"]);
-
-	m_pCommandInterface->Reset(m_CommandInterfaceIndex);
+	IGraphicsTexture* renderTargets[2] =
 	{
-		ScopedPixEvent(LightPass, commandList);
+		m_GraphicTextures["finalColorBuffer"],
+		m_GraphicTextures["brightTarget"]
+	};
 
-		commandList->SetGraphicsRootSignature(static_cast<D3D12GraphicsManager*>(IGraphicsManager::GetBaseInstance())->m_pGlobalRootSig);
+	m_pGraphicsContext->Begin();
+	{
+		ScopedPixEvent(LightPass, m_pGraphicsContext);
 
-		DescriptorHeap* descriptorHeap_CBV_UAV_SRV = mainHeap;
-		ID3D12DescriptorHeap* d3d12DescriptorHeap = descriptorHeap_CBV_UAV_SRV->GetID3D12DescriptorHeap();
-		commandList->SetDescriptorHeaps(1, &d3d12DescriptorHeap);
+		m_pGraphicsContext->SetupBindings(false);	
 
-		commandList->SetGraphicsRootDescriptorTable(dtCBV, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
-		commandList->SetGraphicsRootDescriptorTable(dtSRV, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
+		m_pGraphicsContext->SetPipelineState(m_PipelineStates[0]->GetPSO());
+		m_pGraphicsContext->SetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-		DescriptorHeap* renderTargetHeap = rtvHeap;
-
-		// RenderTargets
-		const unsigned int finalColorTargetIndex = finalColorTexture->GetRenderTargetHeapIndex();
-		const unsigned int brightTargetIndex = brightColorTexture->GetRenderTargetHeapIndex();
-		D3D12_CPU_DESCRIPTOR_HANDLE cdhgFinalColorTarget = renderTargetHeap->GetCPUHeapAt(finalColorTargetIndex);
-		D3D12_CPU_DESCRIPTOR_HANDLE cdhBrightTarget = renderTargetHeap->GetCPUHeapAt(brightTargetIndex);
-		D3D12_CPU_DESCRIPTOR_HANDLE cdhs[] = { cdhgFinalColorTarget, cdhBrightTarget };
-
-		// Depth
-		//D3D12_CPU_DESCRIPTOR_HANDLE dsh = depthBufferHeap->GetCPUHeapAt(m_pDepthStencil->GetDSV()->GetDescriptorHeapIndex());
-
-		commandList->OMSetRenderTargets(2, cdhs, false, nullptr);
+		TODO("Don't hardcode the sizes");
+		m_pGraphicsContext->SetViewPort(1280, 720);
+		m_pGraphicsContext->SetScizzorRect(1280, 720);
 
 		float clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-		commandList->ClearRenderTargetView(cdhBrightTarget, clearColor, 0, nullptr);
-		commandList->ClearRenderTargetView(cdhgFinalColorTarget, clearColor, 0, nullptr);
+		m_pGraphicsContext->ClearRenderTarget(renderTargets[0], clearColor);
+		m_pGraphicsContext->ClearRenderTarget(renderTargets[1], clearColor);
 
-		TODO("Fix the sizes");
-		D3D12_VIEWPORT viewPort = {};
-		viewPort.TopLeftX = 0.0f;
-		viewPort.TopLeftY = 0.0f;
-		viewPort.Width = 1280;
-		viewPort.Height = 720;
-		viewPort.MinDepth = 0.0f;
-		viewPort.MaxDepth = 1.0f;
-
-		D3D12_RECT rect = {};
-		rect.left = 0;
-		rect.right = 1280;
-		rect.top = 0;
-		rect.bottom = 720;
-
-
-		const D3D12_VIEWPORT viewPorts[2] = { viewPort, viewPort };
-		const D3D12_RECT rects[2] = { rect, rect };
-
-		commandList->RSSetViewports(2, viewPorts);
-		commandList->RSSetScissorRects(2, rects);
-		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		m_pGraphicsContext->SetRenderTargets(2, renderTargets, nullptr);
 
 		// Set cbvs
-		commandList->SetGraphicsRootConstantBufferView(RootParam_CBV_B3, static_cast<D3D12GraphicsBuffer*>(m_GraphicBuffers["cbPerFrame"])->GetTempResource()->GetGPUVirtualAddress());
-		commandList->SetGraphicsRootConstantBufferView(RootParam_CBV_B4, static_cast<D3D12GraphicsBuffer*>(m_GraphicBuffers["cbPerScene"])->GetTempResource()->GetGPUVirtualAddress());
-		commandList->SetGraphicsRootShaderResourceView(RootParam_SRV_T0, static_cast<D3D12GraphicsBuffer*>(m_GraphicBuffers["rawBufferLights"])->GetTempResource()->GetGPUVirtualAddress());
+		m_pGraphicsContext->SetConstantBuffer(RootParam_CBV_B3, m_GraphicBuffers["cbPerFrame"], false);
+		m_pGraphicsContext->SetConstantBuffer(RootParam_CBV_B4, m_GraphicBuffers["cbPerScene"], false);
+		m_pGraphicsContext->SetShaderResourceView(RootParam_SRV_T0, m_GraphicBuffers["rawBufferLights"], false);
 
-		D3D12GraphicsTexture* mainDSV = static_cast<D3D12GraphicsTexture*>(m_GraphicTextures["mainDepthStencilBuffer"]);
-		CD3DX12_RESOURCE_BARRIER transition = CD3DX12_RESOURCE_BARRIER::Transition(
-			mainDSV->GetTempResource(),
-			D3D12_RESOURCE_STATE_DEPTH_WRITE,				// StateBefore
-			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);	// StateAfter
-		commandList->ResourceBarrier(1, &transition);
-
-		// This pair for m_RenderComponents will be used for model-outlining in case any model is picked.
-		//RenderComponent outlinedModel = {nullptr, nullptr};
-
-		// Draw for every Rendercomponent with stencil testing disabled
-
-		commandList->SetPipelineState(m_PipelineStates[0]->GetPSO());
-		//component::ModelComponent* mc = m_RenderComponents.at(i).mc;
-		//component::TransformComponent* tc = m_RenderComponents.at(i).tc;
-		//
-		//// If the model is picked, we dont draw it with default stencil buffer.
-		//// Instead we store it and draw it later with a different pso to allow for model-outlining
-		//if (mc->IsPickedThisFrame() == true)
-		//{
-		//	outlinedModel = m_RenderComponents.at(i);
-		//	continue;
-		//}
-		//commandList->OMSetStencilRef(1);
+		m_pGraphicsContext->ResourceBarrier(m_GraphicTextures["mainDepthStencilBuffer"], D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 		// Draw a fullscreen quad 
 		SlotInfo slotInfo = {};
-		slotInfo.vertexDataIndex = static_cast<D3D12GraphicsBuffer*>(m_pFullScreenQuadMesh->GetVertexBuffer())->GetShaderResourceHeapIndex();
-		commandList->SetGraphicsRoot32BitConstants(Constants_SlotInfo_B0, sizeof(SlotInfo) / sizeof(UINT), &slotInfo, 0);
+		slotInfo.vertexDataIndex = m_pFullScreenQuadMesh->GetVertexBuffer()->GetShaderResourceHeapIndex();
+		m_pGraphicsContext->Set32BitConstants(Constants_SlotInfo_B0, sizeof(SlotInfo) / 4, &slotInfo, 0, false);
 
-		D3D12_INDEX_BUFFER_VIEW indexBufferView = {};
-		indexBufferView.BufferLocation = static_cast<D3D12GraphicsBuffer*>(m_pFullScreenQuadMesh->GetIndexBuffer())->GetTempResource()->GetGPUVirtualAddress();
-		indexBufferView.Format = DXGI_FORMAT_R32_UINT;
-		indexBufferView.SizeInBytes = m_pFullScreenQuadMesh->GetSizeOfIndices();
-		commandList->IASetIndexBuffer(&indexBufferView);
+		m_pGraphicsContext->SetIndexBuffer(m_pFullScreenQuadMesh->GetIndexBuffer(), m_pFullScreenQuadMesh->GetSizeOfIndices());
 
-		commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
+		m_pGraphicsContext->DrawIndexedInstanced(m_pFullScreenQuadMesh->GetNumIndices(), 1, 0, 0, 0);
 
-		// Draw Rendercomponent with stencil testing enabled
-		//if (outlinedModel.mc != nullptr)
-		//{
-		//	commandList->SetPipelineState(m_PipelineStates[1]->GetPSO());
-		//	commandList->OMSetStencilRef(1);
-		//	drawRenderComponent(outlinedModel.mc, outlinedModel.tc, viewProjMatTrans, commandList);
-		//}
-
-		transition = CD3DX12_RESOURCE_BARRIER::Transition(
-			mainDSV->GetTempResource(),
-			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,	// StateBefore
-			D3D12_RESOURCE_STATE_DEPTH_WRITE);			// StateAfter
-		commandList->ResourceBarrier(1, &transition);
-
+		m_pGraphicsContext->ResourceBarrier(m_GraphicTextures["mainDepthStencilBuffer"], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 	}
-	commandList->Close();
+	m_pGraphicsContext->End();
 }

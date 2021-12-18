@@ -12,7 +12,6 @@ class IGraphicsContext;
 // These passes will execute on the graphics commandQueue
 enum E_GRAPHICS_PASS_TYPE
 {
-	COPY_PER_FRAME_MATRICES,
 	COPY_ON_DEMAND,
 	BLAS,
 	TLAS,
@@ -55,9 +54,6 @@ public:
 	GraphicsPass(const std::wstring& passName);
 	virtual ~GraphicsPass();
 
-	static void SetBackBufferIndex(int backBufferIndex);
-	static void SetCommandInterfaceIndex(int index);
-
 	void AddGraphicsBuffer(std::string id, IGraphicsBuffer* graphicsBuffer);
 	void AddGraphicsTexture(std::string id, IGraphicsTexture* graphicsTexture);
 
@@ -67,9 +63,6 @@ protected:
 	std::map<std::string, IGraphicsTexture*> m_GraphicTextures;
 
 	IGraphicsContext* m_pGraphicsContext = nullptr;
-
-	inline static int m_BackBufferIndex = -1;
-	inline static int m_CommandInterfaceIndex = -1;
 
 	std::vector<PipelineState*> m_PipelineStates;
 };

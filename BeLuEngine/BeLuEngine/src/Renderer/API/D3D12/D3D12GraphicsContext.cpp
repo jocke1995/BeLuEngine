@@ -8,6 +8,11 @@ TODO("Remove");
 #include "D3D12GraphicsTexture.h"
 #include "D3D12GraphicsBuffer.h"
 
+//ImGui
+#include "../ImGUI/imgui.h"
+#include "../ImGUI/imgui_impl_win32.h"
+#include "../ImGUI/imgui_impl_dx12.h"
+
 D3D12GraphicsContext::D3D12GraphicsContext(const std::wstring& name)
 {
 	D3D12GraphicsManager* graphicsManager = D3D12GraphicsManager::GetInstance();
@@ -112,6 +117,37 @@ void D3D12GraphicsContext::End()
 	D3D12GraphicsManager::SucceededHRESULT(m_pCommandList->Close());
 }
 
+void D3D12GraphicsContext::UploadTexture(IGraphicsTexture* graphicsTexture)
+{
+	IGraphicsBuffer* tempUploadBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::CPUBuffer, graphicsTexture->GetSize(), 1, DXGI_FORMAT_UNKNOWN, L"TempUploadResource");
+
+	ID3D12Resource* uploadHeap = static_cast<D3D12GraphicsBuffer*>(tempUploadBuffer)->m_pResource;
+	ID3D12Resource* defaultHeap = static_cast<D3D12GraphicsTexture*>(graphicsTexture)->m_pResource;
+
+	// Transfer the data
+	UpdateSubresources(m_pCommandList,
+		defaultHeap, uploadHeap,
+		0, 0, static_cast<D3D12GraphicsTexture*>(graphicsTexture)->GetTempSubresources()->size(),
+		static_cast<D3D12GraphicsTexture*>(graphicsTexture)->GetTempSubresources()->data());
+
+	// Deferred deletion of the buffer, it stays alive up until NUM_SWAP_BUFFERS-frames ahead so the copy will be guaranteed to be completed by then.
+	BL_SAFE_DELETE(tempUploadBuffer);
+}
+
+void D3D12GraphicsContext::UploadBuffer(IGraphicsBuffer* graphicsBuffer, const void* data)
+{
+	BL_ASSERT(data);
+
+	unsigned __int64 sizeInBytes = graphicsBuffer->GetSize();
+	D3D12GraphicsBuffer* d3d12Buffer = static_cast<D3D12GraphicsBuffer*>(graphicsBuffer);
+	ID3D12Resource* defaultHeap = d3d12Buffer->m_pResource;
+
+	// Set the data in the perFrameImmediate buffer
+	DynamicDataParams dynamicDataParams = D3D12GraphicsManager::GetInstance()->SetDynamicData(sizeInBytes, data);
+
+	m_pCommandList->CopyBufferRegion(defaultHeap, 0, dynamicDataParams.uploadResource, dynamicDataParams.offsetFromStart, sizeInBytes);
+}
+
 void D3D12GraphicsContext::SetPipelineState(ID3D12PipelineState* pso)
 {
 	BL_ASSERT(pso);
@@ -124,6 +160,58 @@ void D3D12GraphicsContext::SetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY primTop)
 	BL_ASSERT(primTop != D3D_PRIMITIVE_TOPOLOGY_UNDEFINED);
 
 	m_pCommandList->IASetPrimitiveTopology(primTop);
+}
+
+void D3D12GraphicsContext::ResourceBarrier(IGraphicsTexture* graphicsTexture, D3D12_RESOURCE_STATES stateBefore, D3D12_RESOURCE_STATES stateAfter)
+{
+	BL_ASSERT(graphicsTexture);
+
+	D3D12_RESOURCE_BARRIER barrier{};
+	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+	barrier.Transition.pResource = static_cast<D3D12GraphicsTexture*>(graphicsTexture)->m_pResource;
+	barrier.Transition.StateBefore = stateBefore;
+	barrier.Transition.StateAfter = stateAfter;
+
+	m_pCommandList->ResourceBarrier(1, &barrier);
+}
+
+void D3D12GraphicsContext::ResourceBarrier(IGraphicsBuffer* graphicsBuffer, D3D12_RESOURCE_STATES stateBefore, D3D12_RESOURCE_STATES stateAfter)
+{
+	BL_ASSERT(graphicsBuffer);
+
+	D3D12_RESOURCE_BARRIER barrier{};
+	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+	barrier.Transition.pResource = static_cast<D3D12GraphicsBuffer*>(graphicsBuffer)->m_pResource;
+	barrier.Transition.StateBefore = stateBefore;
+	barrier.Transition.StateAfter = stateAfter;
+
+	m_pCommandList->ResourceBarrier(1, &barrier);
+}
+
+void D3D12GraphicsContext::UAVBarrier(IGraphicsTexture* graphicsTexture)
+{
+	BL_ASSERT(graphicsTexture);
+
+	D3D12_RESOURCE_BARRIER barrier{};
+	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	barrier.UAV.pResource = static_cast<D3D12GraphicsTexture*>(graphicsTexture)->m_pResource;
+	m_pCommandList->ResourceBarrier(1, &barrier);
+}
+
+void D3D12GraphicsContext::UAVBarrier(IGraphicsBuffer* graphicsBuffer)
+{
+	BL_ASSERT(graphicsBuffer);
+
+	D3D12_RESOURCE_BARRIER barrier{};
+	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	barrier.UAV.pResource = static_cast<D3D12GraphicsBuffer*>(graphicsBuffer)->m_pResource;
+	m_pCommandList->ResourceBarrier(1, &barrier);
 }
 
 void D3D12GraphicsContext::SetViewPort(unsigned int width, unsigned int height, float topLeftX, float topLeftY, float minDepth, float maxDepth)
@@ -150,7 +238,7 @@ void D3D12GraphicsContext::SetScizzorRect(unsigned int right, unsigned int botto
 	m_pCommandList->RSSetScissorRects(1, &rect);
 }
 
-void D3D12GraphicsContext::ClearDepthTexture(IGraphicsTexture* depthTexture, float depthValue, bool clearStencil, unsigned int stencilValue)
+void D3D12GraphicsContext::ClearDepthTexture(IGraphicsTexture* depthTexture, bool clearDepth, float depthValue, bool clearStencil, unsigned int stencilValue)
 {
 	BL_ASSERT(depthTexture);
 
@@ -159,7 +247,8 @@ void D3D12GraphicsContext::ClearDepthTexture(IGraphicsTexture* depthTexture, flo
 
 	D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = graphicsManager->GetDSVDescriptorHeap()->GetCPUHeapAt(d3d12DepthTexture->GetDepthStencilIndex());
 
-	D3D12_CLEAR_FLAGS clearFlags = D3D12_CLEAR_FLAG_DEPTH;
+	D3D12_CLEAR_FLAGS clearFlags = (D3D12_CLEAR_FLAGS)0;
+	clearFlags |= clearDepth ? D3D12_CLEAR_FLAG_DEPTH : (D3D12_CLEAR_FLAGS)0;
 	clearFlags |= clearStencil ? D3D12_CLEAR_FLAG_STENCIL : (D3D12_CLEAR_FLAGS)0;
 
 	m_pCommandList->ClearDepthStencilView(cpuHandle, clearFlags, depthValue, stencilValue, 0, nullptr);
@@ -217,6 +306,18 @@ void D3D12GraphicsContext::SetShaderResourceView(unsigned int rootParamSlot, IGr
 
 void D3D12GraphicsContext::SetShaderResourceView(unsigned int rootParamSlot, IGraphicsBuffer* graphicsBuffer, bool isComputePipeline)
 {
+	BL_ASSERT(graphicsBuffer);
+
+	D3D12GraphicsBuffer* d3d12GraphicsBuffer = static_cast<D3D12GraphicsBuffer*>(graphicsBuffer);
+
+	if (isComputePipeline)
+	{
+		m_pCommandList->SetComputeRootShaderResourceView(rootParamSlot, d3d12GraphicsBuffer->m_pResource->GetGPUVirtualAddress());
+	}
+	else
+	{
+		m_pCommandList->SetGraphicsRootShaderResourceView(rootParamSlot, d3d12GraphicsBuffer->m_pResource->GetGPUVirtualAddress());
+	}
 }
 
 void D3D12GraphicsContext::SetConstantBuffer(unsigned int rootParamSlot, IGraphicsBuffer* graphicsBuffer, bool isComputePipeline)
@@ -235,6 +336,23 @@ void D3D12GraphicsContext::SetConstantBuffer(unsigned int rootParamSlot, IGraphi
 	}
 }
 
+void D3D12GraphicsContext::SetConstantBufferDynamicData(unsigned int rootParamSlot, unsigned int size, const void* data, bool isComputePipeline)
+{
+	BL_ASSERT(size);
+	BL_ASSERT(data);
+
+	DynamicDataParams params = D3D12GraphicsManager::GetInstance()->SetDynamicData(size, data);
+
+	if (isComputePipeline)
+	{
+		m_pCommandList->SetComputeRootConstantBufferView(rootParamSlot, params.vAddr);
+	}
+	else
+	{
+		m_pCommandList->SetGraphicsRootConstantBufferView(rootParamSlot, params.vAddr);
+	}
+}
+
 void D3D12GraphicsContext::Set32BitConstants(unsigned int rootParamSlot, unsigned int num32BitValuesToSet, const void* pSrcData, unsigned int offsetIn32BitValues, bool isComputePipeline)
 {
 	BL_ASSERT(pSrcData);
@@ -247,6 +365,11 @@ void D3D12GraphicsContext::Set32BitConstants(unsigned int rootParamSlot, unsigne
 	{
 		m_pCommandList->SetGraphicsRoot32BitConstants(rootParamSlot, num32BitValuesToSet, pSrcData, offsetIn32BitValues);
 	}
+}
+
+void D3D12GraphicsContext::SetStencilRef(unsigned int stencilRef)
+{
+	m_pCommandList->OMSetStencilRef(stencilRef);
 }
 
 void D3D12GraphicsContext::SetIndexBuffer(IGraphicsBuffer* indexBuffer, unsigned int sizeInBytes)
@@ -270,4 +393,39 @@ void D3D12GraphicsContext::DrawIndexedInstanced(unsigned int indexCountPerInstan
 	BL_ASSERT(instanceCount);
 
 	m_pCommandList->DrawIndexedInstanced(indexCountPerInstance, instanceCount, startIndexLocation, baseVertexLocation, startInstanceLocation);
+}
+
+void D3D12GraphicsContext::Dispatch(unsigned int threadGroupsX, unsigned int threadGroupsY, unsigned int threadGroupsZ)
+{
+	BL_ASSERT(threadGroupsX != 0 || threadGroupsY != 0 || threadGroupsZ != 0);
+
+	m_pCommandList->Dispatch(threadGroupsX, threadGroupsY, threadGroupsZ);
+}
+
+void D3D12GraphicsContext::DrawImGui()
+{
+	// Good to have
+	// bool a = true;
+	// ImGui::ShowDemoWindow(&a);
+
+	ImGui::Render();
+	ImDrawData* drawData = ImGui::GetDrawData();
+	BL_ASSERT(drawData);
+
+	ImGui_ImplDX12_RenderDrawData(drawData, m_pCommandList);
+}
+
+void D3D12GraphicsContext::BuildAccelerationStructure(const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC& buildDesc)
+{
+	m_pCommandList->BuildRaytracingAccelerationStructure(&buildDesc, 0, nullptr);
+}
+
+void D3D12GraphicsContext::DispatchRays(const D3D12_DISPATCH_RAYS_DESC& dispatchRaysDesc)
+{
+	m_pCommandList->DispatchRays(&dispatchRaysDesc);
+}
+
+void D3D12GraphicsContext::SetPipelineState(ID3D12StateObject* pso)
+{
+	m_pCommandList->SetPipelineState1(pso);
 }

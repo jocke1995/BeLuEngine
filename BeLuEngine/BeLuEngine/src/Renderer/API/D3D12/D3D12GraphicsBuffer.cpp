@@ -11,6 +11,10 @@ D3D12GraphicsBuffer::D3D12GraphicsBuffer(E_GRAPHICSBUFFER_TYPE type, unsigned in
 	BL_ASSERT_MESSAGE(sizeOfSingleItem, "Trying to create a buffer with a size of 0 bytes!\n");
 	BL_ASSERT_MESSAGE(numItems, "Trying to create a buffer with a size of 0 bytes!\n");
 
+#ifdef DEBUG
+	m_DebugName = name;
+#endif
+
 	D3D12GraphicsManager* graphicsManager = D3D12GraphicsManager::GetInstance();
 	ID3D12Device5* device5 = graphicsManager->GetDevice();
 	DescriptorHeap* mainDHeap = graphicsManager->GetMainDescriptorHeap();
@@ -179,10 +183,4 @@ unsigned int D3D12GraphicsBuffer::GetShaderResourceHeapIndex() const
 				m_BufferType == E_GRAPHICSBUFFER_TYPE::IndexBuffer ||
 				m_BufferType == E_GRAPHICSBUFFER_TYPE::RayTracingBuffer);
 	return m_ShaderResourceDescriptorHeapIndex;
-}
-
-ID3D12Resource1* D3D12GraphicsBuffer::GetTempResource()
-{
-	BL_ASSERT(m_pResource);
-	return m_pResource;;
 }

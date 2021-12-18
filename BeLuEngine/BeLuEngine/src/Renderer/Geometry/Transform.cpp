@@ -84,6 +84,12 @@ void Transform::UpdateWorldMatrix()
 	m_WorldMatTransposed = DirectX::XMMatrixTranspose(m_WorldMat);
 }
 
+void Transform::UpdateWorldWVP(const DirectX::XMMATRIX& viewProjMatTransposed)
+{
+	matricesPerObject.worldMatrix = m_WorldMatTransposed;
+	matricesPerObject.WVP = viewProjMatTransposed * m_WorldMatTransposed;
+}
+
 DirectX::XMMATRIX* Transform::GetWorldMatrix()
 {
 	return &m_WorldMat;
@@ -192,4 +198,9 @@ IGraphicsBuffer* Transform::GetConstantBuffer()
 {
 	BL_ASSERT(m_pConstantBuffer);
 	return m_pConstantBuffer;
+}
+
+const MATRICES_PER_OBJECT_STRUCT* Transform::GetMatricesPerObjectData() const
+{
+	return &matricesPerObject;
 }

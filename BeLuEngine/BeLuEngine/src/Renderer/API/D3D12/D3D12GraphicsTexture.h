@@ -23,6 +23,8 @@ public:
 private:
 	friend class D3D12GraphicsContext;
 
+	friend class MergeRenderTask;	// Temporary
+
 	ID3D12Resource1* m_pResource = nullptr;
 	unsigned int m_ShaderResourceDescriptorHeapIndex	= -1;
 	unsigned int m_RenderTargetDescriptorHeapIndex		= -1;

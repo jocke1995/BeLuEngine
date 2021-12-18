@@ -5,7 +5,7 @@
 
 #include "../API/D3D12/D3D12GraphicsManager.h"
 
-ComputeState::ComputeState(std::wstring& CSName, std::wstring& psoName)
+ComputeState::ComputeState(std::wstring CSName, std::wstring psoName)
 	:PipelineState(psoName)
 {
 	m_Cpsd.pRootSignature = static_cast<D3D12GraphicsManager*>(IGraphicsManager::GetBaseInstance())->m_pGlobalRootSig;

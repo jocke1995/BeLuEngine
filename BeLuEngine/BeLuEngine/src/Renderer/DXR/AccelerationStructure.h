@@ -18,9 +18,8 @@ public:
     // Setup the buildDesc after each element is added in the AS
     virtual void SetupAccelerationStructureForBuilding(bool update) = 0;
 
-    void BuildAccelerationStructure(ID3D12GraphicsCommandList4* commandList) const;
-
     IGraphicsBuffer* GetRayTracingResultBuffer() const;
+    const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC& GetBuildDesc() const;
 
 protected:
     IGraphicsBuffer* m_pScratchBuffer = nullptr;

@@ -150,7 +150,6 @@ private:
 	CB_PER_FRAME_STRUCT* m_pCbPerFrameData = nullptr;
 	IGraphicsBuffer* m_pCbPerFrame = nullptr;
 
-	void setGraphicsPassesPrimaryCamera();
 	void createFullScreenQuad();
 	void updateMousePicker();
 	void initGraphicsPasses();

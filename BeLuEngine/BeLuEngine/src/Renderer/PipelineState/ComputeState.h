@@ -8,7 +8,7 @@ class Shader;
 class ComputeState : public PipelineState
 {
 public:
-	ComputeState(std::wstring& CSName, std::wstring& psoName);
+	ComputeState(std::wstring CSName, std::wstring psoName);
 
 	virtual ~ComputeState();
 
