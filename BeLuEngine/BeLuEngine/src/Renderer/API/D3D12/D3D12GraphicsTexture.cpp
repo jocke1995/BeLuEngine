@@ -40,7 +40,7 @@ bool D3D12GraphicsTexture::LoadTextureDDS(const std::wstring& filePath)
 	// Loads the texture and creates a default resource;
 	hr = DirectX::LoadDDSTextureFromFile(device5, m_Path.c_str(), reinterpret_cast<ID3D12Resource**>(&m_pResource), m_DdsData, m_Subresources);
 
-	if (!D3D12GraphicsManager::SucceededHRESULT(hr))
+	if (!D3D12GraphicsManager::CHECK_HRESULT(hr))
 	{
 		BL_LOG_CRITICAL("Failed to create texture: \'%s\'.\n", to_string(filePath).c_str());
 		BL_SAFE_RELEASE(&m_pResource);
@@ -48,7 +48,7 @@ bool D3D12GraphicsTexture::LoadTextureDDS(const std::wstring& filePath)
 	}
 
 	std::wstring resourceName = m_Path + L"_DEFAULT_RESOURCE";
-	graphicsManager->SucceededHRESULT(m_pResource->SetName(resourceName.c_str()));
+	graphicsManager->CHECK_HRESULT(m_pResource->SetName(resourceName.c_str()));
 
 	// Set resource desc created in LoadDDSTextureFromFile
 	D3D12_RESOURCE_DESC resourceDesc = m_pResource->GetDesc();
@@ -161,11 +161,11 @@ bool D3D12GraphicsTexture::CreateTexture2D(unsigned int width, unsigned int heig
 		IID_PPV_ARGS(&m_pResource)
 	);
 
-	BL_ASSERT_MESSAGE(graphicsManager->SucceededHRESULT(hr), "Failed to create Resource with name: \'%s\'\n", name.c_str());
+	BL_ASSERT_MESSAGE(graphicsManager->CHECK_HRESULT(hr), "Failed to create Resource with name: \'%s\'\n", name.c_str());
 
 
 	hr = m_pResource->SetName(name.c_str());
-	graphicsManager->SucceededHRESULT(hr);
+	graphicsManager->CHECK_HRESULT(hr);
 
 #pragma endregion
 

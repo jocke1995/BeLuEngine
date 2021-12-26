@@ -4,13 +4,11 @@
 // DX12 Specifics
 #include "../Renderer/DescriptorHeap.h"
 
-#include "../Renderer/PipelineState/GraphicsState.h"
-#include "../Renderer/PipelineState/ComputeState.h"
-
 // API Generic
 #include "../Renderer/API/IGraphicsManager.h"
 #include "../Renderer/API/IGraphicsBuffer.h"
 #include "../Renderer/API/IGraphicsTexture.h"
+#include "../Renderer/API/IGraphicsPipelineState.h"
 
 // API Specific
 #include "../Renderer/API/D3D12/D3D12GraphicsContext.h"
@@ -39,7 +37,7 @@ GraphicsPass::~GraphicsPass()
 {
 	BL_SAFE_DELETE(m_pGraphicsContext);
 
-    for (PipelineState* pState : m_PipelineStates)
+    for (IGraphicsPipelineState* pState : m_PipelineStates)
     {
         BL_SAFE_DELETE(pState);
     }

@@ -6,7 +6,7 @@
 #include "../ImGUI/imgui_impl_win32.h"
 #include "../ImGUI/imgui_impl_dx12.h"
 
-#include "../Renderer/Statistics/EngineStatistics.h"
+#include "../Misc/EngineStatistics.h"
 #include <psapi.h>
 
 #include "../Renderer/Renderer.h"
@@ -112,7 +112,7 @@ void ImGuiHandler::UpdateFrame()
 				}
 			}
 
-			ImGui::Text("CPU threads: %d", threadsUsedThisFrame);
+			ImGui::Text("Threads used this frame: %d", threadsUsedThisFrame);
 			for (IM_ThreadStats* threadStat : tStats)
 			{
 				// Only show the threads who completed a task this frame

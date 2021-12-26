@@ -46,12 +46,22 @@ PSODesc::PSODesc()
 
         m_RenderTargetBlendDescs[i].enableBlend = false;
         m_RenderTargetBlendDescs[i].enableLogicOP = false;
+
+        m_RenderTargetBlendDescs[i].srcBlend = BL_BLEND::BL_BLEND_ZERO;
+        m_RenderTargetBlendDescs[i].destBlend = BL_BLEND::BL_BLEND_ZERO;
+        m_RenderTargetBlendDescs[i].blendOp = BL_BLEND_OP::BL_BLEND_OP_ADD;
+        m_RenderTargetBlendDescs[i].srcBlendAlpha = BL_BLEND::BL_BLEND_ZERO;
+        m_RenderTargetBlendDescs[i].destBlendAlpha = BL_BLEND::BL_BLEND_ZERO;
+        m_RenderTargetBlendDescs[i].blendOpAlpha = BL_BLEND_OP::BL_BLEND_OP_ADD;
+
+        m_RenderTargetBlendDescs[i].logicOp = BL_LOGIC_OP::BL_LOGIC_OP_NOOP;
+        m_RenderTargetBlendDescs[i].renderTargetWriteMask = BL_COLOR_WRITE_ENABLE_ALL;
     }
 
     // Depth (Enable writing by default)
-    m_DepthStencilDesc.enableDepth = true;
+    m_DepthStencilDesc.enableDepth = false;
     m_DepthStencilDesc.depthWriteMask = BL_DEPTH_WRITE_MASK::BL_DEPTH_WRITE_MASK_ALL;
-    m_DepthStencilDesc.depthComparisonFunc = BL_ComparisonFunc_LESS_EQUAL;
+    m_DepthStencilDesc.depthComparisonFunc = BL_COMPARISON_FUNC_LESS_EQUAL;
 
     // Disable stencil
     m_DepthStencilDesc.enableStencil = false;
@@ -151,12 +161,12 @@ void PSODesc::SetCullMode(BL_CULL_MODE cullMode)
     m_CullMode = cullMode;
 }
 
-void PSODesc::SetFillMode(BL_FILL_MODE fillMode)
+void PSODesc::SetWireframe()
 {
-    m_FillMode = fillMode;
+    m_FillMode = BL_FILL_MODE_WIREFRAME;
 }
 
-void PSODesc::AddBlendRenderTarget(BL_BLEND srcBlend, BL_BLEND destBlend, BL_BLEND_OP blendOP, BL_BLEND srcBlendAlpha, BL_BLEND destBlendAlpha, BL_BLEND_OP blendOPAlpha, char renderTargetWriteMask)
+void PSODesc::AddRenderTargetBlendDesc(BL_BLEND srcBlend, BL_BLEND destBlend, BL_BLEND_OP blendOP, BL_BLEND srcBlendAlpha, BL_BLEND destBlendAlpha, BL_BLEND_OP blendOPAlpha, char renderTargetWriteMask)
 {
     BL_ASSERT(m_NumBlendRenderTargets < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT);
 

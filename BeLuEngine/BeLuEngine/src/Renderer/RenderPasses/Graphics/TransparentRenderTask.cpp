@@ -10,93 +10,38 @@
 #include "../ECS/Components/ModelComponent.h"
 #include "../ECS/Components/TransformComponent.h"
 
-TODO("Abstract this")
-#include "../Renderer/PipelineState/GraphicsState.h"
-
 // Generic API
 #include "../Renderer/API/IGraphicsManager.h"
 #include "../Renderer/API/IGraphicsBuffer.h"
 #include "../Renderer/API/IGraphicsTexture.h"
 #include "../Renderer/API/IGraphicsContext.h"
+#include "../Renderer/API/IGraphicsPipelineState.h"
 
 TransparentRenderTask::TransparentRenderTask()
 	:GraphicsPass(L"TransparentPass")
 {
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsdBlendFrontCull = {};
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsdBlendBackCull = {};
-	std::vector<D3D12_GRAPHICS_PIPELINE_STATE_DESC*> gpsdBlendVector;
-
-	gpsdBlendFrontCull.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-
-	// RenderTarget
-	gpsdBlendFrontCull.RTVFormats[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
-	gpsdBlendFrontCull.NumRenderTargets = 1;
-	// Depthstencil usage
-	gpsdBlendFrontCull.SampleDesc.Count = 1;
-	gpsdBlendFrontCull.SampleMask = UINT_MAX;
-	// Rasterizer behaviour
-	gpsdBlendFrontCull.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
-	gpsdBlendFrontCull.RasterizerState.CullMode = D3D12_CULL_MODE_FRONT;
-
-	// Specify Blend descriptions
-	D3D12_RENDER_TARGET_BLEND_DESC blendRTdesc{};
-	blendRTdesc.BlendEnable = true;
-	blendRTdesc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
-	blendRTdesc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
-	blendRTdesc.BlendOp = D3D12_BLEND_OP_ADD;
-	blendRTdesc.SrcBlendAlpha = D3D12_BLEND_ONE;
-	blendRTdesc.DestBlendAlpha = D3D12_BLEND_ZERO;
-	blendRTdesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
-	blendRTdesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-
-	for (unsigned int i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; i++)
+	// Create Front-and Back-culling states
 	{
-		gpsdBlendFrontCull.BlendState.RenderTarget[i] = blendRTdesc;
+		PSODesc psoDesc = {};
+		// RenderTarget (TODO: Formats are way to big atm)
+		psoDesc.AddRenderTargetFormat(BL_FORMAT_R16G16B16A16_FLOAT);
+
+		psoDesc.SetCullMode(BL_CULL_MODE_FRONT);
+
+		psoDesc.AddRenderTargetBlendDesc(	BL_BLEND_SRC_ALPHA, BL_BLEND_INV_SRC_ALPHA, BL_BLEND_OP_ADD,	// src, dest, OP
+											BL_BLEND_ONE, BL_BLEND_ZERO, BL_BLEND_OP_ADD,					// srcAlpha, destAlpha, OPAlpha
+											BL_COLOR_WRITE_ENABLE_ALL);										// writeMask
+
+		psoDesc.AddShader(L"TransparentTextureVertex.hlsl", E_SHADER_TYPE::VS);
+		psoDesc.AddShader(L"TransparentTexturePixel.hlsl", E_SHADER_TYPE::PS);
+
+		IGraphicsPipelineState* iGraphicsPSO = IGraphicsPipelineState::Create(psoDesc, L"BlendFrontCull");
+		m_PipelineStates.push_back(iGraphicsPSO);
+
+		psoDesc.SetCullMode(BL_CULL_MODE_BACK);
+		iGraphicsPSO = IGraphicsPipelineState::Create(psoDesc, L"BlendBackCull");
+		m_PipelineStates.push_back(iGraphicsPSO);
 	}
-
-	// Depth descriptor
-	D3D12_DEPTH_STENCIL_DESC dsdBlend = {};
-	dsdBlend.DepthEnable = true;
-	dsdBlend.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
-	dsdBlend.DepthFunc = D3D12_COMPARISON_FUNC_LESS;	// Om pixels depth är lägre än den gamla så ritas den nya ut
-
-	// DepthStencil
-	dsdBlend.StencilEnable = false;
-	dsdBlend.StencilReadMask = D3D12_DEFAULT_STENCIL_READ_MASK;
-	dsdBlend.StencilWriteMask = D3D12_DEFAULT_STENCIL_WRITE_MASK;
-	const D3D12_DEPTH_STENCILOP_DESC blendStencilOP{ D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_KEEP, D3D12_COMPARISON_FUNC_ALWAYS };
-	dsdBlend.FrontFace = blendStencilOP;
-	dsdBlend.BackFace = blendStencilOP;
-
-	gpsdBlendFrontCull.DepthStencilState = dsdBlend;
-	gpsdBlendFrontCull.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
-
-	// ------------------------ BLEND ---------------------------- BACKCULL
-
-	gpsdBlendBackCull.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-
-	// RenderTarget
-	gpsdBlendBackCull.RTVFormats[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
-	gpsdBlendBackCull.NumRenderTargets = 1;
-	// Depthstencil usage
-	gpsdBlendBackCull.SampleDesc.Count = 1;
-	gpsdBlendBackCull.SampleMask = UINT_MAX;
-	// Rasterizer behaviour
-	gpsdBlendBackCull.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
-	gpsdBlendBackCull.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
-
-	for (unsigned int i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; i++)
-		gpsdBlendBackCull.BlendState.RenderTarget[i] = blendRTdesc;
-
-	// DepthStencil
-	dsdBlend.StencilEnable = false;
-	dsdBlend.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
-
-	gpsdBlendBackCull.DepthStencilState = dsdBlend;
-	gpsdBlendBackCull.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
-
-	m_PipelineStates.push_back(new GraphicsState(L"TransparentTextureVertex.hlsl", L"TransparentTexturePixel.hlsl", &gpsdBlendFrontCull, L"BlendFrontCull"));
-	m_PipelineStates.push_back(new GraphicsState(L"TransparentTextureVertex.hlsl", L"TransparentTexturePixel.hlsl", &gpsdBlendBackCull, L"BlendBackCull"));
 }
 
 TransparentRenderTask::~TransparentRenderTask()
@@ -149,7 +94,7 @@ void TransparentRenderTask::Execute()
 				// Draw each object twice with different PSO 
 				for (int k = 0; k < 2; k++)
 				{
-					m_pGraphicsContext->SetPipelineState(m_PipelineStates[k]->GetPSO());
+					m_pGraphicsContext->SetPipelineState(m_PipelineStates[k]);
 					m_pGraphicsContext->DrawIndexedInstanced(num_Indices, 1, 0, 0, 0);
 				}
 			}

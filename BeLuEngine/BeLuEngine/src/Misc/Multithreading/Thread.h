@@ -7,7 +7,7 @@ class MultiThreadedTask;
 #include <condition_variable>
 #include <mutex>
 
-#include "../Renderer/Statistics/EngineStatistics.h"
+#include "../Misc/EngineStatistics.h"
 
 class Thread
 {

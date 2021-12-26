@@ -16,16 +16,16 @@ public:
     void SetDepthDesc(char depthWriteMask, BL_COMPARISON_FUNC depthComparisonFunc); // use BL_DEPTH_WRITE_MASK for the depthWriteMask
     void SetStencilDesc(char stencilReadMask, char stencilWriteMask, BL_DEPTH_STENCILOP_DESC frontFace, BL_DEPTH_STENCILOP_DESC backFace);
 
-    void AddBlendRenderTarget(  BL_BLEND srcBlend, BL_BLEND destBlend,
+    void AddRenderTargetBlendDesc(  BL_BLEND srcBlend, BL_BLEND destBlend,
                                 BL_BLEND_OP blendOP,
                                 BL_BLEND srcBlendAlpha, BL_BLEND destBlendAlpha,
                                 BL_BLEND_OP blendOPAlpha,
-                                char renderTargetWriteMask = F_RENDER_TARGET_WRITE_MASK::BL_COLOR_WRITE_ENABLE_ALL); // F_RENDER_TARGET_WRITE_MASK
+                                char renderTargetWriteMask = F_BL_RENDER_TARGET_WRITE_MASK::BL_COLOR_WRITE_ENABLE_ALL); // F_BL_RENDER_TARGET_WRITE_MASK
     void AddLogicOPRenderTarget(BL_LOGIC_OP logicOP);
 
     void SetPrimitiveTopology(BL_PRIMITIVE_TOPOLOGY primTop);
     void SetCullMode(BL_CULL_MODE cullMode);
-    void SetFillMode(BL_FILL_MODE fillMode);
+    void SetWireframe();
 private:
     friend class D3D12GraphicsPipelineState;
 
@@ -42,10 +42,8 @@ private:
 
     BL_PRIMITIVE_TOPOLOGY m_PrimTop = BL_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
-    BL_CULL_MODE m_CullMode = BL_CullMode_BACK;
-    BL_FILL_MODE m_FillMode = BL_FillMode_SOLID;
-
-    //DepthStencilStateDesc DepthStencilState;
+    BL_CULL_MODE m_CullMode = BL_CULL_MODE_BACK;
+    BL_FILL_MODE m_FillMode = BL_FILL_MODE_SOLID;
 };
 
 class IGraphicsPipelineState

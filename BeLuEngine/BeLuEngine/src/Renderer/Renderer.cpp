@@ -6,14 +6,14 @@
 #include "../Misc/MultiThreading/ThreadPool.h"
 #include "../Misc/MultiThreading/Thread.h"
 #include "../Misc/Window.h"
+#include "../Misc/EngineStatistics.h"
 #include "DXILShaderCompiler.h"
 
-// Debug
+// ImGui
 #include "../ImGUI/imgui.h"
 #include "../ImGUI/imgui_impl_win32.h"
 #include "../ImGUI/imgui_impl_dx12.h"
 #include "../ImGui/ImGuiHandler.h"
-#include "Statistics/EngineStatistics.h"
 #include "RenderPasses/Graphics/ImGuiRenderTask.h"
 
 // ECS
@@ -1040,7 +1040,6 @@ void Renderer::initGraphicsPasses()
 
 	GraphicsPass* wireFramePass = new WireframeRenderTask();
 	wireFramePass->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
-
 
 	GraphicsPass* mergePass = new MergeRenderTask(m_pFullScreenQuad);
 	mergePass->AddGraphicsTexture("bloomPingPong0", m_pBloomWrapperTemp->GetPingPongTexture(0));

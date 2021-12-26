@@ -3,6 +3,7 @@
 
 class IGraphicsTexture;
 class IGraphicsBuffer;
+class IGraphicsPipelineState;
 
 class IGraphicsContext
 {
@@ -20,6 +21,7 @@ public:
 
     TODO("Abstract State");
     virtual void SetPipelineState(ID3D12PipelineState* pso) = 0;
+    virtual void SetPipelineState(IGraphicsPipelineState* pso) = 0;
 
     TODO("Fix Interfaces for the parameters");
     virtual void SetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY primTop) = 0;

@@ -9,60 +9,33 @@
 #include "../ECS/Components/ModelComponent.h"
 #include "../ECS/Components/TransformComponent.h"
 
-TODO("Abstract this")
-#include "../../PipelineState/GraphicsState.h"
-
 // Generic API
 #include "../../API/IGraphicsManager.h"
 #include "../../API/IGraphicsBuffer.h"
 #include "../../API/IGraphicsTexture.h"
 #include "../../API/IGraphicsContext.h"
+#include "../../API/IGraphicsPipelineState.h"
 
 DeferredGeometryRenderTask::DeferredGeometryRenderTask()
 	: GraphicsPass(L"GeometryPass")
 {
-	/* Depth Pre-Pass rendering without stencil testing */
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsdDeferredGeometryPass = {};
-	gpsdDeferredGeometryPass.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	PSODesc psoDesc = {};
 	// RenderTarget (TODO: Formats are way to big atm)
-	gpsdDeferredGeometryPass.NumRenderTargets = 4;
-	gpsdDeferredGeometryPass.RTVFormats[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
-	gpsdDeferredGeometryPass.RTVFormats[1] = DXGI_FORMAT_R16G16B16A16_FLOAT;
-	gpsdDeferredGeometryPass.RTVFormats[2] = DXGI_FORMAT_R16G16B16A16_FLOAT;
-	gpsdDeferredGeometryPass.RTVFormats[3] = DXGI_FORMAT_R16G16B16A16_FLOAT;
-	// Depthstencil usage
-	gpsdDeferredGeometryPass.SampleDesc.Count = 1;
-	gpsdDeferredGeometryPass.SampleMask = UINT_MAX;
-	// Rasterizer behaviour
-	gpsdDeferredGeometryPass.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
-	gpsdDeferredGeometryPass.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
-	gpsdDeferredGeometryPass.RasterizerState.DepthBias = 0;
-	gpsdDeferredGeometryPass.RasterizerState.DepthBiasClamp = 0.0f;
-	gpsdDeferredGeometryPass.RasterizerState.SlopeScaledDepthBias = 0.0f;
-	gpsdDeferredGeometryPass.RasterizerState.FrontCounterClockwise = false;
+	psoDesc.AddRenderTargetFormat(BL_FORMAT_R16G16B16A16_FLOAT);
+	psoDesc.AddRenderTargetFormat(BL_FORMAT_R16G16B16A16_FLOAT);
+	psoDesc.AddRenderTargetFormat(BL_FORMAT_R16G16B16A16_FLOAT);
+	psoDesc.AddRenderTargetFormat(BL_FORMAT_R16G16B16A16_FLOAT);
 
-	// Specify Blend descriptions
-	// copy of defaultRTdesc
-	D3D12_RENDER_TARGET_BLEND_DESC deferredGeometryRTdesc = {
-		false, false,
-		D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
-		D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
-		D3D12_LOGIC_OP_NOOP, D3D12_COLOR_WRITE_ENABLE_ALL };
-	for (unsigned int i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; i++)
-		gpsdDeferredGeometryPass.BlendState.RenderTarget[i] = deferredGeometryRTdesc;
+	psoDesc.SetDepthStencilFormat(BL_FORMAT_D24_UNORM_S8_UINT);
+	psoDesc.SetDepthDesc(BL_DEPTH_WRITE_MASK_ZERO, BL_COMPARISON_FUNC_LESS_EQUAL);
 
-	// Depth descriptor
-	D3D12_DEPTH_STENCIL_DESC deferredGeometryDsd = {};
-	deferredGeometryDsd.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
-	deferredGeometryDsd.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
-	deferredGeometryDsd.DepthEnable = true;
+	//psoDesc.SetWireframe();
 
-	// DepthStencil
-	deferredGeometryDsd.StencilEnable = false;
-	gpsdDeferredGeometryPass.DepthStencilState = deferredGeometryDsd;
-	gpsdDeferredGeometryPass.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
-
-	m_PipelineStates.push_back(new GraphicsState(L"DeferredGeometryVertex.hlsl", L"DeferredGeometryPixel.hlsl", &gpsdDeferredGeometryPass, L"DeferredGeometryPass"));
+	psoDesc.AddShader(L"DeferredGeometryVertex.hlsl", E_SHADER_TYPE::VS);
+	psoDesc.AddShader(L"DeferredGeometryPixel.hlsl", E_SHADER_TYPE::PS);
+	
+	IGraphicsPipelineState* iGraphicsPSO = IGraphicsPipelineState::Create(psoDesc, L"GeometryPass");
+	m_PipelineStates.push_back(iGraphicsPSO);
 }
 
 DeferredGeometryRenderTask::~DeferredGeometryRenderTask()
@@ -90,7 +63,7 @@ void DeferredGeometryRenderTask::Execute()
 
 		m_pGraphicsContext->SetupBindings(false);
 
-		m_pGraphicsContext->SetPipelineState(m_PipelineStates[0]->GetPSO());
+		m_pGraphicsContext->SetPipelineState(m_PipelineStates[0]);
 		m_pGraphicsContext->SetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		TODO("Don't hardcode the sizes");

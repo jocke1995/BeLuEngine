@@ -3,8 +3,6 @@
 
 #include "GraphicsPass.h"
 
-class GraphicsState;
-
 #include "../ECS/Components/BoundingBoxComponent.h"
 class WireframeRenderTask : public GraphicsPass
 {

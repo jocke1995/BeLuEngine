@@ -39,7 +39,7 @@ public:
 	void SyncAndPresent() override final;
 	void End() override final;
 
-	static bool SucceededHRESULT(HRESULT hrParam);
+	static bool CHECK_HRESULT(HRESULT hrParam);
 
 	void AddD3D12ObjectToDefferedDeletion(ID3D12Object* object);
 	DynamicDataParams SetDynamicData(unsigned int size, const void* data);
@@ -58,8 +58,6 @@ private:
 	friend class ImGuiHandler;
 	friend class ImGuiRenderTask;
 	friend class MergeRenderTask;
-	friend class GraphicsState;
-	friend class ComputeState;
 	friend class RayTracingPipelineGenerator;
 	// -------------------------- Native D3D12 -------------------------- 
 	// D3D12 DLL

@@ -4,9 +4,9 @@
 #include "Core.h"
 #include "RenderCore.h"
 #include "../Misc/Multithreading/MultiThreadedTask.h"
-class PipelineState;
 
 class IGraphicsContext;
+class IGraphicsPipelineState;
 
 // These passes will execute on the graphics commandQueue
 enum E_GRAPHICS_PASS_TYPE
@@ -63,7 +63,7 @@ protected:
 
 	IGraphicsContext* m_pGraphicsContext = nullptr;
 
-	std::vector<PipelineState*> m_PipelineStates;
+	std::vector<IGraphicsPipelineState*> m_PipelineStates;
 };
 
 #endif

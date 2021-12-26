@@ -7,55 +7,27 @@ TODO("Remove this");
 // Model info
 #include "../Renderer/Geometry/Mesh.h"
 
-TODO("Abstract this")
-#include "../Renderer/PipelineState/GraphicsState.h"
-
 // Generic API
 #include "../Renderer/API/D3D12/D3D12GraphicsManager.h"
 #include "../Renderer/API/D3D12/D3D12GraphicsBuffer.h"
 #include "../Renderer/API/D3D12/D3D12GraphicsTexture.h"
 #include "../Renderer/API/D3D12/D3D12GraphicsContext.h"
+#include "../Renderer/API/D3D12/D3D12GraphicsPipelineState.h"
 
 MergeRenderTask::MergeRenderTask(Mesh* fullscreenQuad)
 	:GraphicsPass(L"MergeRenderPass")
 {
+	PSODesc psoDesc = {};
+	// RenderTarget (TODO: Formats are way to big atm)
+	psoDesc.AddRenderTargetFormat(BL_FORMAT_R16G16B16A16_FLOAT);
+
+	psoDesc.AddShader(L"MergeVertex.hlsl", E_SHADER_TYPE::VS);
+	psoDesc.AddShader(L"MergePixel.hlsl", E_SHADER_TYPE::PS);
+
+	IGraphicsPipelineState* iGraphicsPSO = IGraphicsPipelineState::Create(psoDesc, L"MergeRenderPass");
+	m_PipelineStates.push_back(iGraphicsPSO);
+
 	m_pFullScreenQuadMesh = fullscreenQuad;
-
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsdMergePass = {};
-	gpsdMergePass.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-
-	// RenderTarget
-	gpsdMergePass.NumRenderTargets = 1;
-	gpsdMergePass.RTVFormats[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
-	// Depthstencil usage
-	gpsdMergePass.SampleDesc.Count = 1;
-	gpsdMergePass.SampleMask = UINT_MAX;
-	// Rasterizer behaviour
-	gpsdMergePass.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
-	gpsdMergePass.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
-	gpsdMergePass.RasterizerState.FrontCounterClockwise = false;
-
-	// Specify Blend descriptions
-	D3D12_RENDER_TARGET_BLEND_DESC blendRTdesc{};
-	blendRTdesc.BlendEnable = false;
-	blendRTdesc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
-	blendRTdesc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
-	blendRTdesc.BlendOp = D3D12_BLEND_OP_ADD;
-	blendRTdesc.SrcBlendAlpha = D3D12_BLEND_ONE;
-	blendRTdesc.DestBlendAlpha = D3D12_BLEND_ZERO;
-	blendRTdesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
-	blendRTdesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-
-	for (unsigned int i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; i++)
-		gpsdMergePass.BlendState.RenderTarget[i] = blendRTdesc;
-
-	// Depth descriptor
-	D3D12_DEPTH_STENCIL_DESC dsdMergePass = {};
-	dsdMergePass.DepthEnable = false;
-	dsdMergePass.StencilEnable = false;
-	gpsdMergePass.DepthStencilState = dsdMergePass;
-
-	m_PipelineStates.push_back(new GraphicsState(L"MergeVertex.hlsl", L"MergePixel.hlsl", &gpsdMergePass, L"MergeRenderPass"));
 }
 
 MergeRenderTask::~MergeRenderTask()
@@ -100,7 +72,7 @@ void MergeRenderTask::Execute()
 
 		static_cast<D3D12GraphicsContext*>(m_pGraphicsContext)->m_pCommandList->OMSetRenderTargets(1, &cdh, true, nullptr);
 
-		m_pGraphicsContext->SetPipelineState(m_PipelineStates[0]->GetPSO());
+		m_pGraphicsContext->SetPipelineState(m_PipelineStates[0]);
 		m_pGraphicsContext->SetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		TODO("Don't hardcode the sizes");

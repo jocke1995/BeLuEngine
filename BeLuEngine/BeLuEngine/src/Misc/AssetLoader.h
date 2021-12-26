@@ -49,8 +49,6 @@ public:
     bool IsTextureLoadedOnGpu(const IGraphicsTexture* texture) const;
 
 private:
-    // PipelineState loads all shaders
-    friend class PipelineState;
     friend class D3D12GraphicsPipelineState;;
     friend class DXRReflectionTask;
 

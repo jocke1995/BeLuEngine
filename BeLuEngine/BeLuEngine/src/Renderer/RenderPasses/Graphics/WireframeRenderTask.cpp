@@ -5,48 +5,28 @@
 #include "../Renderer/Geometry/Transform.h"
 #include "../Renderer/Geometry/Mesh.h"
 
-TODO("Abstract this")
-#include "../Renderer/PipelineState/GraphicsState.h"
-
 // Generic API
 #include "../Renderer/API/IGraphicsManager.h"
 #include "../Renderer/API/IGraphicsBuffer.h"
 #include "../Renderer/API/IGraphicsTexture.h"
 #include "../Renderer/API/IGraphicsContext.h"
+#include "../Renderer/API/IGraphicsPipelineState.h"
 
 WireframeRenderTask::WireframeRenderTask()
 	:GraphicsPass(L"BoundingBoxPass")
 {
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsdWireFrame = {};
-	gpsdWireFrame.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	PSODesc psoDesc = {};
+	// RenderTarget (TODO: Formats are way to big atm)
+	psoDesc.AddRenderTargetFormat(BL_FORMAT_R16G16B16A16_FLOAT);
 
-	// RenderTarget
-	gpsdWireFrame.RTVFormats[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
-	gpsdWireFrame.NumRenderTargets = 1;
-	// Depthstencil usage
-	gpsdWireFrame.SampleDesc.Count = 1;
-	gpsdWireFrame.SampleMask = UINT_MAX;
-	// Rasterizer behaviour
-	gpsdWireFrame.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
-	gpsdWireFrame.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
-	gpsdWireFrame.RasterizerState.FrontCounterClockwise = false;
+	psoDesc.SetWireframe();
+	psoDesc.SetCullMode(BL_CULL_MODE_NONE);
 
-	// Specify Blend descriptions
-	D3D12_RENDER_TARGET_BLEND_DESC blendRTdesc{};
-	blendRTdesc.BlendEnable = false;
-	blendRTdesc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
-	blendRTdesc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
-	blendRTdesc.BlendOp = D3D12_BLEND_OP_ADD;
-	blendRTdesc.SrcBlendAlpha = D3D12_BLEND_ONE;
-	blendRTdesc.DestBlendAlpha = D3D12_BLEND_ZERO;
-	blendRTdesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
-	blendRTdesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+	psoDesc.AddShader(L"WhiteVertex.hlsl", E_SHADER_TYPE::VS);
+	psoDesc.AddShader(L"WhitePixel.hlsl", E_SHADER_TYPE::PS);
 
-	// Specify Blend descriptions
-	for (unsigned int i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; i++)
-		gpsdWireFrame.BlendState.RenderTarget[i] = blendRTdesc;
-
-	m_PipelineStates.push_back(new GraphicsState(L"WhiteVertex.hlsl", L"WhitePixel.hlsl", &gpsdWireFrame, L"BoundingBoxRenderPass"));
+	IGraphicsPipelineState* iGraphicsPSO = IGraphicsPipelineState::Create(psoDesc, L"BoundingBoxRenderPass");
+	m_PipelineStates.push_back(iGraphicsPSO);
 }
 
 WireframeRenderTask::~WireframeRenderTask()
@@ -65,7 +45,7 @@ void WireframeRenderTask::Execute()
 		m_pGraphicsContext->SetRenderTargets(1, &m_GraphicTextures["finalColorBuffer"], nullptr);
 
 		m_pGraphicsContext->SetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		m_pGraphicsContext->SetPipelineState(m_PipelineStates[0]->GetPSO());
+		m_pGraphicsContext->SetPipelineState(m_PipelineStates[0]);
 
 		TODO("Don't hardcode the sizes");
 		m_pGraphicsContext->SetViewPort(1280, 720);

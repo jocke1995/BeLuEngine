@@ -29,6 +29,7 @@ public:
 
     TODO("Abstract State");
     virtual void SetPipelineState(ID3D12PipelineState* pso) override final;
+    virtual void SetPipelineState(IGraphicsPipelineState* pso) override final;
 
     TODO("Fix Interfaces for the parameters");
     virtual void SetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY primTop) override final;

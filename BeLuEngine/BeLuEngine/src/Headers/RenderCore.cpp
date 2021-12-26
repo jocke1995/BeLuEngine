@@ -179,23 +179,23 @@ D3D12_BLEND ConvertBLBlendToD3D12Blend(BL_BLEND blend)
 {
     switch (blend)
     {
-        case BL_Blend_ZERO: return D3D12_BLEND_ZERO;
-        case BL_Blend_ONE: return D3D12_BLEND_ONE;
-        case BL_Blend_SRC_COLOR: return D3D12_BLEND_SRC_COLOR;
-        case BL_Blend_INV_SRC_COLOR: return D3D12_BLEND_INV_SRC_COLOR;
-        case BL_Blend_SRC_ALPHA: return D3D12_BLEND_SRC_ALPHA;
-        case BL_Blend_INV_SRC_ALPHA: return D3D12_BLEND_INV_SRC_ALPHA;
-        case BL_Blend_DEST_ALPHA: return D3D12_BLEND_DEST_ALPHA;
-        case BL_Blend_INV_DEST_ALPHA: return D3D12_BLEND_INV_DEST_ALPHA;
-        case BL_Blend_DEST_COLOR: return D3D12_BLEND_DEST_COLOR;
-        case BL_Blend_INV_DEST_COLOR: return D3D12_BLEND_INV_DEST_COLOR;
-        case BL_Blend_SRC_ALPHA_SAT: return D3D12_BLEND_SRC_ALPHA_SAT;
-        case BL_Blend_BLEND_FACTOR: return D3D12_BLEND_BLEND_FACTOR;
-        case BL_Blend_INV_BLEND_FACTOR: return D3D12_BLEND_INV_BLEND_FACTOR;
-        case BL_Blend_SRC1_COLOR: return D3D12_BLEND_SRC1_COLOR;
-        case BL_Blend_INV_SRC1_COLOR: return D3D12_BLEND_INV_SRC1_COLOR;
-        case BL_Blend_SRC1_ALPHA: return D3D12_BLEND_SRC1_ALPHA;
-        case BL_Blend_INV_SRC1_ALPHA: return D3D12_BLEND_INV_SRC1_ALPHA;
+        case BL_BLEND_ZERO: return D3D12_BLEND_ZERO;
+        case BL_BLEND_ONE: return D3D12_BLEND_ONE;
+        case BL_BLEND_SRC_COLOR: return D3D12_BLEND_SRC_COLOR;
+        case BL_BLEND_INV_SRC_COLOR: return D3D12_BLEND_INV_SRC_COLOR;
+        case BL_BLEND_SRC_ALPHA: return D3D12_BLEND_SRC_ALPHA;
+        case BL_BLEND_INV_SRC_ALPHA: return D3D12_BLEND_INV_SRC_ALPHA;
+        case BL_BLEND_DEST_ALPHA: return D3D12_BLEND_DEST_ALPHA;
+        case BL_BLEND_INV_DEST_ALPHA: return D3D12_BLEND_INV_DEST_ALPHA;
+        case BL_BLEND_DEST_COLOR: return D3D12_BLEND_DEST_COLOR;
+        case BL_BLEND_INV_DEST_COLOR: return D3D12_BLEND_INV_DEST_COLOR;
+        case BL_BLEND_SRC_ALPHA_SAT: return D3D12_BLEND_SRC_ALPHA_SAT;
+        case BL_BLEND_BLEND_FACTOR: return D3D12_BLEND_BLEND_FACTOR;
+        case BL_BLEND_INV_BLEND_FACTOR: return D3D12_BLEND_INV_BLEND_FACTOR;
+        case BL_BLEND_SRC1_COLOR: return D3D12_BLEND_SRC1_COLOR;
+        case BL_BLEND_INV_SRC1_COLOR: return D3D12_BLEND_INV_SRC1_COLOR;
+        case BL_BLEND_SRC1_ALPHA: return D3D12_BLEND_SRC1_ALPHA;
+        case BL_BLEND_INV_SRC1_ALPHA: return D3D12_BLEND_INV_SRC1_ALPHA;
     }
 
     BL_ASSERT(false);
@@ -206,11 +206,11 @@ D3D12_BLEND_OP ConvertBLBlendOPToD3D12BlendOP(BL_BLEND_OP blendOP)
 {
     switch (blendOP)
     {
-        case BL_BlendOp_ADD: return D3D12_BLEND_OP_ADD;
-        case BL_BlendOp_SUBTRACT: return D3D12_BLEND_OP_SUBTRACT;
-        case BL_BlendOp_REV_SUBTRACT: return D3D12_BLEND_OP_REV_SUBTRACT;
-        case BL_BlendOp_MIN: return D3D12_BLEND_OP_MIN;
-        case BL_BlendOp_MAX: return D3D12_BLEND_OP_MAX;
+        case BL_BLEND_OP_ADD: return D3D12_BLEND_OP_ADD;
+        case BL_BLEND_OP_SUBTRACT: return D3D12_BLEND_OP_SUBTRACT;
+        case BL_BLEND_OP_REV_SUBTRACT: return D3D12_BLEND_OP_REV_SUBTRACT;
+        case BL_BLEND_OP_MIN: return D3D12_BLEND_OP_MIN;
+        case BL_BLEND_OP_MAX: return D3D12_BLEND_OP_MAX;
     }
 
     BL_ASSERT(false);
@@ -221,22 +221,22 @@ D3D12_LOGIC_OP ConvertBLLogicOPToD3D12LogicOP(BL_LOGIC_OP logicOP)
 {
     switch (logicOP)
     {
-        case BL_LogicOp_CLEAR: return D3D12_LOGIC_OP_CLEAR;
-        case BL_LogicOp_SET: return D3D12_LOGIC_OP_SET;
-        case BL_LogicOp_COPY: return D3D12_LOGIC_OP_COPY;
-        case BL_LogicOp_COPY_INVERTED: return D3D12_LOGIC_OP_COPY_INVERTED;
-        case BL_LogicOp_NOOP: return D3D12_LOGIC_OP_NOOP;
-        case BL_LogicOp_INVERT: return D3D12_LOGIC_OP_INVERT;
-        case BL_LogicOp_AND: return D3D12_LOGIC_OP_AND;
-        case BL_LogicOp_NAND: return D3D12_LOGIC_OP_NAND;
-        case BL_LogicOp_OR: return D3D12_LOGIC_OP_OR;
-        case BL_LogicOp_NOR: return D3D12_LOGIC_OP_NOR;
-        case BL_LogicOp_XOR: return D3D12_LOGIC_OP_XOR;
-        case BL_LogicOp_EQUIV: return D3D12_LOGIC_OP_EQUIV;
-        case BL_LogicOp_AND_REVERSE: return D3D12_LOGIC_OP_AND_REVERSE;
-        case BL_LogicOp_AND_INVERTED: return D3D12_LOGIC_OP_AND_INVERTED;
-        case BL_LogicOp_OR_REVERSE: return D3D12_LOGIC_OP_OR_REVERSE;
-        case BL_LOGICOp_OR_INVERTED: return D3D12_LOGIC_OP_OR_INVERTED;
+        case BL_LOGIC_OP_CLEAR: return D3D12_LOGIC_OP_CLEAR;
+        case BL_LOGIC_OP_SET: return D3D12_LOGIC_OP_SET;
+        case BL_LOGIC_OP_COPY: return D3D12_LOGIC_OP_COPY;
+        case BL_LOGIC_OP_COPY_INVERTED: return D3D12_LOGIC_OP_COPY_INVERTED;
+        case BL_LOGIC_OP_NOOP: return D3D12_LOGIC_OP_NOOP;
+        case BL_LOGIC_OP_INVERT: return D3D12_LOGIC_OP_INVERT;
+        case BL_LOGIC_OP_AND: return D3D12_LOGIC_OP_AND;
+        case BL_LOGIC_OP_NAND: return D3D12_LOGIC_OP_NAND;
+        case BL_LOGIC_OP_OR: return D3D12_LOGIC_OP_OR;
+        case BL_LOGIC_OP_NOR: return D3D12_LOGIC_OP_NOR;
+        case BL_LOGIC_OP_XOR: return D3D12_LOGIC_OP_XOR;
+        case BL_LOGIC_OP_EQUIV: return D3D12_LOGIC_OP_EQUIV;
+        case BL_LOGIC_OP_AND_REVERSE: return D3D12_LOGIC_OP_AND_REVERSE;
+        case BL_LOGIC_OP_AND_INVERTED: return D3D12_LOGIC_OP_AND_INVERTED;
+        case BL_LOGIC_OP_OR_REVERSE: return D3D12_LOGIC_OP_OR_REVERSE;
+        case BL_LOGIC_OP_OR_INVERTED: return D3D12_LOGIC_OP_OR_INVERTED;
     }
 
     BL_ASSERT(false);
@@ -247,14 +247,14 @@ D3D12_STENCIL_OP ConvertBLStencilOPToD3D12StencilOP(BL_STENCIL_OP stencilOP)
 {
     switch (stencilOP)
     {
-        case BL_StencilOp_KEEP: return D3D12_STENCIL_OP_KEEP;
-        case BL_StencilOp_ZERO: return D3D12_STENCIL_OP_ZERO;
-        case BL_StencilOp_REPLACE: return D3D12_STENCIL_OP_REPLACE;
-        case BL_StencilOp_INCR_SAT: return D3D12_STENCIL_OP_INCR_SAT;
-        case BL_StencilOp_DECR_SAT: return D3D12_STENCIL_OP_DECR_SAT;
-        case BL_StencilOp_INVERT: return D3D12_STENCIL_OP_INVERT;
-        case BL_StencilOp_INCR: return D3D12_STENCIL_OP_INCR;
-        case BL_StencilOp_DECR: return D3D12_STENCIL_OP_DECR;
+        case BL_STENCIL_OP_KEEP: return D3D12_STENCIL_OP_KEEP;
+        case BL_STENCIL_OP_ZERO: return D3D12_STENCIL_OP_ZERO;
+        case BL_STENCIL_OP_REPLACE: return D3D12_STENCIL_OP_REPLACE;
+        case BL_STENCIL_OP_INCR_SAT: return D3D12_STENCIL_OP_INCR_SAT;
+        case BL_STENCIL_OP_DECR_SAT: return D3D12_STENCIL_OP_DECR_SAT;
+        case BL_STENCIL_OP_INVERT: return D3D12_STENCIL_OP_INVERT;
+        case BL_STENCIL_OP_INCR: return D3D12_STENCIL_OP_INCR;
+        case BL_STENCIL_OP_DECR: return D3D12_STENCIL_OP_DECR;
     }
 
     BL_ASSERT(false);
@@ -265,14 +265,14 @@ D3D12_COMPARISON_FUNC ConvertBLComparisonFuncToD3D12ComparisonFunc(BL_COMPARISON
 {
     switch (comparisonFunc)
     {
-        case BL_ComparisonFunc_NEVER: return D3D12_COMPARISON_FUNC_NEVER;
-        case BL_ComparisonFunc_LESS: return D3D12_COMPARISON_FUNC_LESS;
-        case BL_ComparisonFunc_EQUAL: return D3D12_COMPARISON_FUNC_EQUAL;
-        case BL_ComparisonFunc_LESS_EQUAL: return D3D12_COMPARISON_FUNC_LESS_EQUAL;
-        case BL_ComparisonFunc_GREATER: return D3D12_COMPARISON_FUNC_GREATER;
-        case BL_ComparisonFunc_NOT_EQUAL: return D3D12_COMPARISON_FUNC_NOT_EQUAL;
-        case BL_ComparisonFunc_GREATER_EQUAL: return D3D12_COMPARISON_FUNC_GREATER_EQUAL;
-        case BL_ComparisonFunc_ALWAYS: return D3D12_COMPARISON_FUNC_ALWAYS;
+        case BL_COMPARISON_FUNC_NEVER: return D3D12_COMPARISON_FUNC_NEVER;
+        case BL_COMPARISON_FUNC_LESS: return D3D12_COMPARISON_FUNC_LESS;
+        case BL_COMPARISON_FUNC_EQUAL: return D3D12_COMPARISON_FUNC_EQUAL;
+        case BL_COMPARISON_FUNC_LESS_EQUAL: return D3D12_COMPARISON_FUNC_LESS_EQUAL;
+        case BL_COMPARISON_FUNC_GREATER: return D3D12_COMPARISON_FUNC_GREATER;
+        case BL_COMPARISON_FUNC_NOT_EQUAL: return D3D12_COMPARISON_FUNC_NOT_EQUAL;
+        case BL_COMPARISON_FUNC_GREATER_EQUAL: return D3D12_COMPARISON_FUNC_GREATER_EQUAL;
+        case BL_COMPARISON_FUNC_ALWAYS: return D3D12_COMPARISON_FUNC_ALWAYS;
     }
 
     BL_ASSERT(false);
@@ -283,9 +283,9 @@ D3D12_CULL_MODE ConvertBLCullModeToD3D12CullMode(BL_CULL_MODE cullMode)
 {
     switch (cullMode)
     {
-        case BL_CullMode_NONE: return D3D12_CULL_MODE_NONE;
-        case BL_CullMode_FRONT: return D3D12_CULL_MODE_FRONT;
-        case BL_CullMode_BACK: return D3D12_CULL_MODE_BACK;
+        case BL_CULL_MODE_NONE: return D3D12_CULL_MODE_NONE;
+        case BL_CULL_MODE_FRONT: return D3D12_CULL_MODE_FRONT;
+        case BL_CULL_MODE_BACK: return D3D12_CULL_MODE_BACK;
     }
 
     BL_ASSERT(false);
@@ -296,8 +296,8 @@ D3D12_FILL_MODE ConvertBLFillModeToD3D12FillMode(BL_FILL_MODE fillMode)
 {
     switch (fillMode)
     {
-        case BL_FillMode_WIREFRAME: return D3D12_FILL_MODE_WIREFRAME;
-        case BL_FillMode_SOLID: return D3D12_FILL_MODE_SOLID;
+        case BL_FILL_MODE_WIREFRAME: return D3D12_FILL_MODE_WIREFRAME;
+        case BL_FILL_MODE_SOLID: return D3D12_FILL_MODE_SOLID;
     }
 
     BL_ASSERT(false);
@@ -354,4 +354,30 @@ D3D_PRIMITIVE_TOPOLOGY ConvertBLPrimTopToD3D12PrimTop(BL_PRIMITIVE_TOPOLOGY prim
 
     BL_ASSERT(false);
     return D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
+}
+
+D3D12_PRIMITIVE_TOPOLOGY_TYPE ConvertBLPrimTopPipelineStateToD3D12PrimTopPipelineState(BL_PRIMITIVE_TOPOLOGY primTop)
+{
+    if (primTop == BL_PRIMITIVE_TOPOLOGY_UNDEFINED)
+    {
+        return D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
+    }
+    else if (primTop == BL_PRIMITIVE_TOPOLOGY_POINTLIST)
+    {
+        return D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
+    }
+    else if (   primTop == BL_PRIMITIVE_TOPOLOGY_LINELIST       || primTop == BL_PRIMITIVE_TOPOLOGY_LINESTRIP ||
+                primTop == BL_PRIMITIVE_TOPOLOGY_LINELIST_ADJ   || primTop == BL_PRIMITIVE_TOPOLOGY_LINESTRIP_ADJ)
+    {
+        return D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
+    }
+    else if (   primTop == BL_PRIMITIVE_TOPOLOGY_TRIANGLELIST       || primTop == BL_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP ||
+                primTop == BL_PRIMITIVE_TOPOLOGY_TRIANGLELIST_ADJ   || primTop == BL_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP_ADJ)
+    {
+        return D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+    }
+    else if (primTop >= BL_PRIMITIVE_TOPOLOGY_1_CONTROL_POINT_PATCHLIST && primTop <= BL_PRIMITIVE_TOPOLOGY_32_CONTROL_POINT_PATCHLIST)
+    {
+        return D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH;
+    }
 }

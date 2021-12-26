@@ -4,56 +4,27 @@
 // Model info
 #include "../Renderer/Geometry/Mesh.h"
 
-TODO("Abstract this")
-#include "../Renderer/PipelineState/GraphicsState.h"
-
 // Generic API
 #include "../Renderer/API/IGraphicsManager.h"
 #include "../Renderer/API/IGraphicsBuffer.h"
 #include "../Renderer/API/IGraphicsTexture.h"
 #include "../Renderer/API/IGraphicsContext.h"
+#include "../Renderer/API/IGraphicsPipelineState.h"
 
 DeferredLightRenderTask::DeferredLightRenderTask(Mesh* fullscreenQuad)
 	:GraphicsPass(L"LightPass")
 {
 	m_pFullScreenQuadMesh = fullscreenQuad;
 
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsdDeferredLightRender = {};
-	gpsdDeferredLightRender.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	PSODesc psoDesc = {};
+	psoDesc.AddRenderTargetFormat(BL_FORMAT_R16G16B16A16_FLOAT);
+	psoDesc.AddRenderTargetFormat(BL_FORMAT_R16G16B16A16_FLOAT);
 
-	// RenderTarget
-	gpsdDeferredLightRender.NumRenderTargets = 2;
-	gpsdDeferredLightRender.RTVFormats[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
-	gpsdDeferredLightRender.RTVFormats[1] = DXGI_FORMAT_R16G16B16A16_FLOAT;
-	// Depthstencil usage
-	gpsdDeferredLightRender.SampleDesc.Count = 1;
-	gpsdDeferredLightRender.SampleMask = UINT_MAX;
-	// Rasterizer behaviour
-	gpsdDeferredLightRender.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
-	gpsdDeferredLightRender.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
-	gpsdDeferredLightRender.RasterizerState.FrontCounterClockwise = false;
+	psoDesc.AddShader(L"DeferredLightVertex.hlsl", E_SHADER_TYPE::VS);
+	psoDesc.AddShader(L"DeferredLightPixel.hlsl", E_SHADER_TYPE::PS);
 
-	// Specify Blend descriptions
-	D3D12_RENDER_TARGET_BLEND_DESC defaultRTdesc = {
-		false, false,
-		D3D12_BLEND_ZERO, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
-		D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
-		D3D12_LOGIC_OP_NOOP, D3D12_COLOR_WRITE_ENABLE_ALL };
-	for (unsigned int i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; i++)
-		gpsdDeferredLightRender.BlendState.RenderTarget[i] = defaultRTdesc;
-
-	// Depth descriptor
-	D3D12_DEPTH_STENCIL_DESC dsd = {};
-	dsd.DepthEnable = false;
-	dsd.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
-	dsd.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
-
-	// DepthStencil
-	dsd.StencilEnable = false;
-	gpsdDeferredLightRender.DepthStencilState = dsd;
-	gpsdDeferredLightRender.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
-
-	m_PipelineStates.push_back(new GraphicsState(L"DeferredLightVertex.hlsl", L"DeferredLightPixel.hlsl", &gpsdDeferredLightRender, L"DeferredLightPass"));
+	IGraphicsPipelineState* iGraphicsPSO = IGraphicsPipelineState::Create(psoDesc, L"LightPass");
+	m_PipelineStates.push_back(iGraphicsPSO);
 }
 
 DeferredLightRenderTask::~DeferredLightRenderTask()
@@ -76,7 +47,7 @@ void DeferredLightRenderTask::Execute()
 
 		m_pGraphicsContext->SetupBindings(false);	
 
-		m_pGraphicsContext->SetPipelineState(m_PipelineStates[0]->GetPSO());
+		m_pGraphicsContext->SetPipelineState(m_PipelineStates[0]);
 		m_pGraphicsContext->SetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		TODO("Don't hardcode the sizes");

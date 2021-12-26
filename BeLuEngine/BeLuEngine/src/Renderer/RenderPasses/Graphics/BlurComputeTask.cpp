@@ -4,19 +4,27 @@
 TODO("Remove this and put inside this class and rename class to BloomGraphicsPass");
 #include "../Renderer/Techniques/Bloom.h"
 
-TODO("Abstract this");
-#include "../Renderer/PipelineState/ComputeState.h"
-
 #include "../Renderer/API/IGraphicsManager.h"
 #include "../Renderer/API/IGraphicsContext.h"
 #include "../Renderer/API/IGraphicsTexture.h"
+#include "../Renderer/API/IGraphicsPipelineState.h"
 
 BlurComputeTask::BlurComputeTask(Bloom* bloom, unsigned int screenWidth, unsigned int screenHeight)
 	:GraphicsPass(L"BloomPass")
 {
-	// CSO
-	m_PipelineStates.push_back(new ComputeState(L"ComputeBlurHorizontal.hlsl", L"blurHorizontalPSO"));
-	m_PipelineStates.push_back(new ComputeState(L"ComputeBlurVertical.hlsl", L"blurVerticalPSO"));
+	{
+		PSODesc psoDesc = {};
+		psoDesc.AddShader(L"ComputeBlurHorizontal.hlsl", E_SHADER_TYPE::CS);
+		IGraphicsPipelineState* iGraphicsPSO = IGraphicsPipelineState::Create(psoDesc, L"blurHorizontalPSO");
+		m_PipelineStates.push_back(iGraphicsPSO);
+	}
+
+	{
+		PSODesc psoDesc = {};
+		psoDesc.AddShader(L"ComputeBlurVertical.hlsl", E_SHADER_TYPE::CS);
+		IGraphicsPipelineState* iGraphicsPSO = IGraphicsPipelineState::Create(psoDesc, L"blurVerticalPSO");
+		m_PipelineStates.push_back(iGraphicsPSO);
+	}
 
 	m_pTempBloom = bloom;
 
@@ -58,7 +66,7 @@ void BlurComputeTask::Execute()
 		m_pGraphicsContext->ResourceBarrier(m_pTempBloom->GetPingPongTexture(1), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
 		// Blur horizontal
-		m_pGraphicsContext->SetPipelineState(m_PipelineStates[0]->GetPSO());
+		m_pGraphicsContext->SetPipelineState(m_PipelineStates[0]);
 		m_pGraphicsContext->Dispatch(m_HorizontalThreadGroupsX, m_HorizontalThreadGroupsY, 1);
 
 		// The resource to write to (Resource Barrier)
@@ -67,7 +75,7 @@ void BlurComputeTask::Execute()
 		m_pGraphicsContext->ResourceBarrier(m_pTempBloom->GetPingPongTexture(0), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
 		// Blur vertical
-		m_pGraphicsContext->SetPipelineState(m_PipelineStates[1]->GetPSO());
+		m_pGraphicsContext->SetPipelineState(m_PipelineStates[0]);
 		m_pGraphicsContext->Dispatch(m_VerticalThreadGroupsX, m_VerticalThreadGroupsY, 1);
 
 		// Resource barrier back to original states

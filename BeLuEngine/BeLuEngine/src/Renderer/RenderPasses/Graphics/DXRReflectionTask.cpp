@@ -209,7 +209,8 @@ DXRReflectionTask::~DXRReflectionTask()
 	BL_SAFE_RELEASE(&m_pHitSignature);
 	BL_SAFE_RELEASE(&m_pMissSignature);
 
-	TODO("Deffered deletion");
+	TODO("Deferred Deletion");
+	Sleep(50);	// Hack
 	// StateObject
 	BL_SAFE_RELEASE(&m_pStateObject);
 	BL_SAFE_RELEASE(&m_pRTStateObjectProps);

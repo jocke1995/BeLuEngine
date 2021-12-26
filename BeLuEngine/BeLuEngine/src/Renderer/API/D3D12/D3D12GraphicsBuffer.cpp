@@ -78,7 +78,7 @@ D3D12GraphicsBuffer::D3D12GraphicsBuffer(E_GRAPHICSBUFFER_TYPE type, unsigned in
 		IID_PPV_ARGS(&m_pResource)
 	);
 
-	if (!graphicsManager->SucceededHRESULT(hr))
+	if (!graphicsManager->CHECK_HRESULT(hr))
 	{
 		BL_LOG_CRITICAL("Failed to create D3D12GraphicsBuffer with name: \'%S\'\n", name.c_str());
 	}

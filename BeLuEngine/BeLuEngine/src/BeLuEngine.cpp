@@ -2,7 +2,7 @@
 #include "BeLuEngine.h"
 #include "Misc/MultiThreading/Thread.h"
 
-#include "Renderer/Statistics/EngineStatistics.h"
+#include "../Misc/EngineStatistics.h"
 
 #include "Renderer/API/IGraphicsManager.h"
 

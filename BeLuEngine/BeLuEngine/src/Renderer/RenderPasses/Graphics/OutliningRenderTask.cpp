@@ -1,13 +1,10 @@
 #include "stdafx.h"
 #include "OutliningRenderTask.h"
 
-// DX12 Specifics
-#include "../Renderer/PipelineState/GraphicsState.h"
-
 #include "../Renderer/Camera/PerspectiveCamera.h"
 #include "../Renderer/Geometry/Mesh.h"
 
-// Componennt
+// Components
 #include "../ECS/Components/ModelComponent.h"
 #include "../ECS/Components/TransformComponent.h"
 
@@ -16,6 +13,7 @@
 #include "../Renderer/API/IGraphicsBuffer.h"
 #include "../Renderer/API/IGraphicsTexture.h"
 #include "../Renderer/API/IGraphicsContext.h"
+#include "../Renderer/API/IGraphicsPipelineState.h"
 
 
 OutliningRenderTask::OutliningRenderTask()
@@ -24,43 +22,25 @@ OutliningRenderTask::OutliningRenderTask()
 	// Init with nullptr
 	Clear();
 
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsdModelOutlining = {};
-	gpsdModelOutlining.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	PSODesc psoDesc = {};
 	// RenderTarget (TODO: Formats are way to big atm)
-	gpsdModelOutlining.NumRenderTargets = 1;
-	gpsdModelOutlining.RTVFormats[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
-	// Depthstencil usage
-	gpsdModelOutlining.SampleDesc.Count = 1;
-	gpsdModelOutlining.SampleMask = UINT_MAX;
-	// Rasterizer behaviour
-	gpsdModelOutlining.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
-	gpsdModelOutlining.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
-	gpsdModelOutlining.RasterizerState.DepthBias = 0;
-	gpsdModelOutlining.RasterizerState.DepthBiasClamp = 0.0f;
-	gpsdModelOutlining.RasterizerState.SlopeScaledDepthBias = 0.0f;
-	gpsdModelOutlining.RasterizerState.FrontCounterClockwise = false;
+	psoDesc.AddRenderTargetFormat(BL_FORMAT_R16G16B16A16_FLOAT);
 
-	D3D12_DEPTH_STENCIL_DESC dsd = {};
-	dsd.DepthEnable = true;	// Maybe enable if we dont want the object to "highlight" through other objects
-	dsd.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
-	dsd.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
+	psoDesc.SetDepthStencilFormat(BL_FORMAT_D24_UNORM_S8_UINT);
+	psoDesc.SetDepthDesc(BL_DEPTH_WRITE_MASK_ALL, BL_COMPARISON_FUNC_LESS);
 
-	// DepthStencil
-	dsd.StencilEnable = true;
-	dsd.StencilReadMask = 0xff;
-	dsd.StencilWriteMask = 0x00;
-	const D3D12_DEPTH_STENCILOP_DESC stencilNotEqual =
+	const BL_DEPTH_STENCILOP_DESC stencilNotEqual =
 	{
-		D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_REPLACE,
-		D3D12_COMPARISON_FUNC_NOT_EQUAL
+		BL_STENCIL_OP_KEEP, BL_STENCIL_OP_KEEP, BL_STENCIL_OP_REPLACE,
+		BL_COMPARISON_FUNC_NOT_EQUAL
 	};
-	dsd.FrontFace = stencilNotEqual;
-	dsd.BackFace = stencilNotEqual;
+	psoDesc.SetStencilDesc(0xff, 0x00, stencilNotEqual, stencilNotEqual);
 
-	gpsdModelOutlining.DepthStencilState = dsd;
-	gpsdModelOutlining.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	psoDesc.AddShader(L"OutlinedVertex.hlsl", E_SHADER_TYPE::VS);
+	psoDesc.AddShader(L"OutlinedPixel.hlsl", E_SHADER_TYPE::PS);
 
-	m_PipelineStates.push_back(new GraphicsState(L"OutlinedVertex.hlsl", L"OutlinedPixel.hlsl", &gpsdModelOutlining, L"OutlinedRenderPass"));
+	IGraphicsPipelineState* iGraphicsPSO = IGraphicsPipelineState::Create(psoDesc, L"OutlinedRenderPass");
+	m_PipelineStates.push_back(iGraphicsPSO);
 }
 
 OutliningRenderTask::~OutliningRenderTask()
@@ -83,7 +63,7 @@ void OutliningRenderTask::Execute()
 		}
 		// else continue as usual
 
-		m_pGraphicsContext->SetPipelineState(m_PipelineStates[0]->GetPSO());
+		m_pGraphicsContext->SetPipelineState(m_PipelineStates[0]);
 		m_pGraphicsContext->SetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		TODO("Don't hardcode the sizes");

@@ -1,7 +1,7 @@
 ﻿#include "stdafx.h"
 #include "D3D12GraphicsManager.h"
 
-#include "../Renderer/Statistics/EngineStatistics.h"
+#include "../Misc/EngineStatistics.h"
 #include "../Renderer/DescriptorHeap.h"
 
 #include "../Renderer/RenderPasses/Graphics/GraphicsPass.h"
@@ -341,14 +341,14 @@ void D3D12GraphicsManager::Init(HWND hwnd, unsigned int width, unsigned int heig
 	for (unsigned int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
 		HRESULT hr = m_pSwapChain4->GetBuffer(i, IID_PPV_ARGS(&m_SwapchainResources[i]));
-		if (!SucceededHRESULT(hr))
+		if (!CHECK_HRESULT(hr))
 		{
 			BL_LOG_CRITICAL("Failed to GetBuffer from RenderTarget to Swapchain\n");
 		}
 
 		std::wstring swapchainName = L"SwapchainResource_" + std::to_wstring(i);
 		hr = m_SwapchainResources[i]->SetName(swapchainName.c_str());
-		if (!SucceededHRESULT(hr))
+		if (!CHECK_HRESULT(hr))
 		{
 			BL_LOG_CRITICAL("Failed to Setname on Swapchain\n");
 		}
@@ -723,7 +723,7 @@ void D3D12GraphicsManager::Init(HWND hwnd, unsigned int width, unsigned int heig
 			nullptr,    // ClearValue, nullptr for buffers
 			IID_PPV_ARGS(&m_pIntermediateUploadHeap[i])
 		);
-		if (!SucceededHRESULT(hr))
+		if (!CHECK_HRESULT(hr))
 		{
 			BL_LOG_CRITICAL("Could not create D3D12IntermediateUploadHeap\n");
 		}
@@ -769,18 +769,18 @@ void D3D12GraphicsManager::Execute(const std::vector<IGraphicsContext*>& graphic
 
 void D3D12GraphicsManager::SyncAndPresent()
 {
+	HRESULT hr = m_pSwapChain4->Present(0, 0);
+
 	waitForFrame(NUM_SWAP_BUFFERS - 1);
 	//waitForFrame(0);
 
-	HRESULT hr = m_pSwapChain4->Present(0, 0);
-
-	if(!SucceededHRESULT(hr))
+	if(!CHECK_HRESULT(hr))
 	{
 		BL_LOG_CRITICAL("Swapchain Failed to present\n");
 	}
 }
 
-bool D3D12GraphicsManager::SucceededHRESULT(HRESULT hrParam)
+bool D3D12GraphicsManager::CHECK_HRESULT(HRESULT hrParam)
 {
 	if (SUCCEEDED(hrParam))
 		return true;

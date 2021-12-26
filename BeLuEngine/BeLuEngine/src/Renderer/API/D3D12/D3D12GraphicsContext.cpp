@@ -7,6 +7,7 @@ TODO("Remove");
 #include "D3D12GraphicsManager.h"
 #include "D3D12GraphicsTexture.h"
 #include "D3D12GraphicsBuffer.h"
+#include "D3D12GraphicsPipelineState.h"
 
 //ImGui
 #include "../ImGUI/imgui.h"
@@ -28,7 +29,7 @@ D3D12GraphicsContext::D3D12GraphicsContext(const std::wstring& name)
 	{
 		hr = device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_pCommandAllocators[i]));
 
-		if (!D3D12GraphicsManager::SucceededHRESULT(hr))
+		if (!D3D12GraphicsManager::CHECK_HRESULT(hr))
 		{
 			BL_LOG_CRITICAL("Failed to Create CommandAllocator: %S\n", name);
 		}
@@ -36,7 +37,7 @@ D3D12GraphicsContext::D3D12GraphicsContext(const std::wstring& name)
 		std::wstring counter = std::to_wstring(i);
 		hr = m_pCommandAllocators[i]->SetName((name + L"_CmdAlloc_" + counter).c_str());
 		
-		if (!D3D12GraphicsManager::SucceededHRESULT(hr))
+		if (!D3D12GraphicsManager::CHECK_HRESULT(hr))
 		{
 			BL_LOG_CRITICAL("Failed to SetName on commandAllocator: %S\n", name);
 		}
@@ -49,13 +50,13 @@ D3D12GraphicsContext::D3D12GraphicsContext(const std::wstring& name)
 		IID_PPV_ARGS(&m_pCommandList));
 
 	hr = m_pCommandList->SetName((name + L"_CmdList").c_str());
-	if (!D3D12GraphicsManager::SucceededHRESULT(hr))
+	if (!D3D12GraphicsManager::CHECK_HRESULT(hr))
 	{
 		BL_LOG_CRITICAL("Failed to Create CommandList: %S\n", name);
 	}
 
 	hr = m_pCommandList->Close();
-	if (!D3D12GraphicsManager::SucceededHRESULT(hr))
+	if (!D3D12GraphicsManager::CHECK_HRESULT(hr))
 	{
 		BL_LOG_CRITICAL("Failed to SetName on CommandList: %S\n", name);
 	}
@@ -79,8 +80,8 @@ void D3D12GraphicsContext::Begin()
 	unsigned int index = graphicsManager->GetCommandInterfaceIndex();
 
 	// Reset commandinterface
-	D3D12GraphicsManager::SucceededHRESULT(m_pCommandAllocators[index]->Reset());
-	D3D12GraphicsManager::SucceededHRESULT(m_pCommandList->Reset(m_pCommandAllocators[index], NULL));
+	D3D12GraphicsManager::CHECK_HRESULT(m_pCommandAllocators[index]->Reset());
+	D3D12GraphicsManager::CHECK_HRESULT(m_pCommandList->Reset(m_pCommandAllocators[index], NULL));
 }
 
 void D3D12GraphicsContext::SetupBindings(bool isComputePipeline)
@@ -114,7 +115,7 @@ void D3D12GraphicsContext::End()
 {
 	D3D12GraphicsManager* graphicsManager = D3D12GraphicsManager::GetInstance();
 
-	D3D12GraphicsManager::SucceededHRESULT(m_pCommandList->Close());
+	D3D12GraphicsManager::CHECK_HRESULT(m_pCommandList->Close());
 }
 
 void D3D12GraphicsContext::UploadTexture(IGraphicsTexture* graphicsTexture)
@@ -153,6 +154,15 @@ void D3D12GraphicsContext::SetPipelineState(ID3D12PipelineState* pso)
 	BL_ASSERT(pso);
 
 	m_pCommandList->SetPipelineState(pso);
+}
+
+void D3D12GraphicsContext::SetPipelineState(IGraphicsPipelineState* pso)
+{
+	BL_ASSERT(pso);
+
+	D3D12GraphicsPipelineState* d3d12Pso = static_cast<D3D12GraphicsPipelineState*>(pso);
+
+	m_pCommandList->SetPipelineState(d3d12Pso->m_pPSO);
 }
 
 void D3D12GraphicsContext::SetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY primTop)
