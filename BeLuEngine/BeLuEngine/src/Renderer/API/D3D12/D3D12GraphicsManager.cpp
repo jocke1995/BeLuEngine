@@ -769,8 +769,8 @@ void D3D12GraphicsManager::Execute(const std::vector<IGraphicsContext*>& graphic
 
 void D3D12GraphicsManager::SyncAndPresent()
 {
-	//waitForFrame(NUM_SWAP_BUFFERS - 1);
-	waitForFrame(0);
+	waitForFrame(NUM_SWAP_BUFFERS - 1);
+	//waitForFrame(0);
 
 	HRESULT hr = m_pSwapChain4->Present(0, 0);
 
@@ -815,7 +815,6 @@ bool D3D12GraphicsManager::SucceededHRESULT(HRESULT hrParam)
 
 void D3D12GraphicsManager::AddD3D12ObjectToDefferedDeletion(ID3D12Object* object)
 {
-	TODO("Possible memory leak");
 	m_ObjectsToBeDeleted.push_back(std::make_pair(mFrameIndex, object));
 }
 

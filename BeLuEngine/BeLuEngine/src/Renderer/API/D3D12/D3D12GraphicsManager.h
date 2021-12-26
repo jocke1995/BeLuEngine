@@ -34,10 +34,10 @@ public:
 	void Init(HWND hwnd, unsigned int width, unsigned int height, DXGI_FORMAT dxgiFormat) override;
 
 	// Call everyframe
-	void Begin() override;
-	void Execute(const std::vector<IGraphicsContext*>& graphicsContexts, unsigned int numGraphicsContexts) override;
-	void SyncAndPresent() override;
-	void End() override;
+	void Begin() override final;
+	void Execute(const std::vector<IGraphicsContext*>& graphicsContexts, unsigned int numGraphicsContexts) override final;
+	void SyncAndPresent() override final;
+	void End() override final;
 
 	static bool SucceededHRESULT(HRESULT hrParam);
 
@@ -58,18 +58,9 @@ private:
 	friend class ImGuiHandler;
 	friend class ImGuiRenderTask;
 	friend class MergeRenderTask;
-	friend class DXRReflectionTask;
-	friend class RayTracingPipelineGenerator;
 	friend class GraphicsState;
 	friend class ComputeState;
-	friend class OutliningRenderTask;
-	friend class WireframeRenderTask;
-	friend class DownSampleRenderTask;
-	friend class DepthRenderTask;
-	friend class DeferredGeometryRenderTask;
-	friend class DeferredLightRenderTask;
-	friend class BlurComputeTask;
-	friend class TransparentRenderTask;
+	friend class RayTracingPipelineGenerator;
 	// -------------------------- Native D3D12 -------------------------- 
 	// D3D12 DLL
 	HINSTANCE m_D3D12Handle;

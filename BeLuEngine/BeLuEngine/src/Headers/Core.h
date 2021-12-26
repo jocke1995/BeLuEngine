@@ -20,6 +20,7 @@ inline std::wstring to_wstring(std::string str)
 }
 
 
+// todo, this doesn't handle float numbers with almost equal numbers
 template <typename T>
 inline T Min(T a, T b)
 {
@@ -78,7 +79,7 @@ enum E_LIGHT_TYPE
 	NUM_LIGHT_TYPES
 };
 
-enum E_SHADOW_RESOLUTION
+enum class E_SHADOW_RESOLUTION
 {
 	LOW,
 	MEDIUM,
@@ -87,13 +88,19 @@ enum E_SHADOW_RESOLUTION
 	UNDEFINED
 };
 
-enum class E_SHADER_TYPE
+enum E_SHADER_TYPE
 {
-	VS = 0,
-	PS = 1,
-	CS = 2,
-	DXR = 3,
-	UNSPECIFIED = 4
+	VS,
+	PS,
+	DS,
+	HS,
+	GS,
+	CS,
+	AS,
+	MS,
+	DXR,
+	NUM_SHADER_TYPES,
+	UNDEFINED
 };
 
 enum class E_CAMERA_TYPE
@@ -135,7 +142,7 @@ enum class E_CAMERA_TYPE
 #define TODO() //DebugBreak();
 
 // Debug
-#define SINGLE_THREADED_RENDERER true
+#define SINGLE_THREADED_RENDERER false
 #define ENABLE_DEBUGLAYER true
 #define ENABLE_VALIDATIONGLAYER false
 #define DEVELOPERMODE_DRAWBOUNDINGBOX false

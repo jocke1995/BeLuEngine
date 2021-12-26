@@ -55,6 +55,10 @@ void Shader::compileShader()
 		entryPoint = L"";
 		shaderModelTarget = L"lib_6_5";
 	}
+	else
+	{
+		BL_ASSERT_MESSAGE(false, "Shadertype not supported yet... Fix!\n");
+	}
 
 	shaderCompilerDesc.entryPoint = entryPoint.c_str();
 	shaderCompilerDesc.targetProfile = shaderModelTarget.c_str();

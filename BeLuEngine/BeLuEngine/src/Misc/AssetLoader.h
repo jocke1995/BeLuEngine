@@ -51,6 +51,7 @@ public:
 private:
     // PipelineState loads all shaders
     friend class PipelineState;
+    friend class D3D12GraphicsPipelineState;;
     friend class DXRReflectionTask;
 
     // Renderer needs access to m_LoadedModels & m_LoadedTextures so it can check if they are uploaded to GPU.

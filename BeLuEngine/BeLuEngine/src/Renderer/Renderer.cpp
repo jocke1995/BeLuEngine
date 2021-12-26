@@ -1185,6 +1185,4 @@ void Renderer::submitUploadPerFrameData()
 	// Sending entire buffer (4kb as of writing this code), every frame for simplicity. Even if some lights might be static.
 	BL_ASSERT(Light::m_pLightsRawBuffer && Light::m_pRawData);
 	codt->SubmitBuffer(Light::m_pLightsRawBuffer, Light::m_pRawData);
-
-
 }
