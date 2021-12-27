@@ -33,13 +33,7 @@ DeferredLightRenderTask::~DeferredLightRenderTask()
 
 void DeferredLightRenderTask::Execute()
 {
-	BL_ASSERT(m_GraphicTextures["finalColorBuffer"] && m_GraphicTextures["brightTarget"]);
-
-	IGraphicsTexture* renderTargets[2] =
-	{
-		m_GraphicTextures["finalColorBuffer"],
-		m_GraphicTextures["brightTarget"]
-	};
+	BL_ASSERT(m_GraphicTextures["finalColorBuffer"]);
 
 	m_pGraphicsContext->Begin();
 	{
@@ -55,10 +49,9 @@ void DeferredLightRenderTask::Execute()
 		m_pGraphicsContext->SetScizzorRect(1280, 720);
 
 		float clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-		m_pGraphicsContext->ClearRenderTarget(renderTargets[0], clearColor);
-		m_pGraphicsContext->ClearRenderTarget(renderTargets[1], clearColor);
+		m_pGraphicsContext->ClearRenderTarget(m_GraphicTextures["finalColorBuffer"], clearColor);
 
-		m_pGraphicsContext->SetRenderTargets(2, renderTargets, nullptr);
+		m_pGraphicsContext->SetRenderTargets(1, &m_GraphicTextures["finalColorBuffer"], nullptr);
 
 		// Set cbvs
 		m_pGraphicsContext->SetConstantBuffer(RootParam_CBV_B3, m_GraphicBuffers["cbPerFrame"], false);

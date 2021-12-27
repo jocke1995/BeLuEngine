@@ -3,17 +3,19 @@
 
 #include "GraphicsPass.h"
 
-class Bloom;
+class IGraphicsTexture;
 
-class BlurComputeTask : public GraphicsPass
+class BloomComputePass : public GraphicsPass
 {
 public:
-	BlurComputeTask(Bloom* bloom, unsigned int screenWidth, unsigned int screenHeight);
-	virtual ~BlurComputeTask();
+	BloomComputePass(unsigned int screenWidth, unsigned int screenHeight);
+	virtual ~BloomComputePass();
 
 	void Execute() override final;
 private:
-	Bloom* m_pTempBloom = nullptr;
+	// The compute shader will read and write in a "Ping-Pong"-order to these objects.
+	std::array<IGraphicsTexture*, 2> m_PingPongTextures = {nullptr, nullptr};
+	IGraphicsTexture* m_PreFilterTexture = nullptr;
 
 	unsigned int m_HorizontalThreadGroupsX;
 	unsigned int m_HorizontalThreadGroupsY;

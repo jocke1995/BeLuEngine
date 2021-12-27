@@ -9,7 +9,6 @@ struct VS_OUT
 struct PS_OUTPUT
 {
 	float4 sceneColor: SV_TARGET0;
-	float4 brightColor: SV_TARGET1;
 };
 
 PS_OUTPUT PS_main(VS_OUT input)
@@ -19,7 +18,6 @@ PS_OUTPUT PS_main(VS_OUT input)
 	float4 albedo   = textures[cbPerScene.gBufferAlbedo].Sample(Anisotropic16_Wrap, uvScaled);
 	float roughness = textures[cbPerScene.gBufferMaterialProperties].Sample(Anisotropic16_Wrap, uvScaled).r;
 	float metallic  = textures[cbPerScene.gBufferMaterialProperties].Sample(Anisotropic16_Wrap, uvScaled).g;
-	float glow		= textures[cbPerScene.gBufferMaterialProperties].Sample(Anisotropic16_Wrap, uvScaled).b;
 	float4 normal	= textures[cbPerScene.gBufferNormal].Sample(Anisotropic16_Wrap, uvScaled);
 	float4 emissive = textures[cbPerScene.gBufferEmissive].Sample(Anisotropic16_Wrap, uvScaled);
 
@@ -94,16 +92,7 @@ PS_OUTPUT PS_main(VS_OUT input)
 
 	PS_OUTPUT output = (PS_OUTPUT)0;
 
-	output.sceneColor = float4(finalColor.rgb, 1.0f);
-
-	if (glow == 1.0f)
-	{
-		output.brightColor = emissive;
-	}
-	else
-	{
-		output.brightColor = float4(0.0f, 0.0f, 0.0f, 1.0f);
-	}
+	output.sceneColor = float4(finalColor.rgb, 1.0f) + emissive;
 
 	return output;
 }

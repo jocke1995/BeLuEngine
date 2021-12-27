@@ -35,7 +35,6 @@
 #include "Geometry/Material.h"
 
 // Techniques
-#include "Techniques/Bloom.h"
 #include "Techniques/ShadowInfo.h"
 #include "Techniques/MousePicker.h"
 #include "Techniques/BoundingBoxPool.h"
@@ -47,7 +46,6 @@
 #include "RenderPasses/Graphics/DeferredGeometryRenderTask.h"
 #include "RenderPasses/Graphics/DeferredLightRenderTask.h"
 #include "RenderPasses/Graphics/TransparentRenderTask.h"
-#include "RenderPasses/Graphics/DownSampleRenderTask.h"
 #include "RenderPasses/Graphics/MergeRenderTask.h"
 #include "RenderPasses/Graphics/CopyOnDemandTask.h"
 #include "RenderPasses/Graphics/BlurComputeTask.h"
@@ -150,7 +148,7 @@ void Renderer::InitD3D12(HWND hwnd, unsigned int width, unsigned int height, HIN
 	m_FinalColorBuffer->CreateTexture2D(
 		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
 		DXGI_FORMAT_R16G16B16A16_FLOAT,
-		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget,
+		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget | F_TEXTURE_USAGE::UnorderedAccess,
 		L"FinalColorbuffer",
 		D3D12_RESOURCE_STATE_RENDER_TARGET);
 
@@ -208,10 +206,6 @@ void Renderer::InitD3D12(HWND hwnd, unsigned int width, unsigned int height, HIN
 		L"MainDepthStencilBuffer",
 		D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
-	// Bloom
-	m_pBloomWrapperTemp = new Bloom();
-
-	
 #pragma endregion RenderTargets
 
 	// Picking
@@ -434,10 +428,6 @@ void Renderer::ExecuteMT()
 	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::REFLECTIONS];
 	m_pThreadPool->AddTask(graphicsPass);
 
-	// DownSample the texture used for bloom
-	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DOWNSAMPLE];
-	m_pThreadPool->AddTask(graphicsPass);
-
 	// Blend
 	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::OPACITY];
 	m_pThreadPool->AddTask(graphicsPass);
@@ -526,10 +516,6 @@ void Renderer::ExecuteST()
 
 	// DXR Reflections
 	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::REFLECTIONS];
-	graphicsPass->Execute();
-
-	// DownSample the texture used for bloom
-	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DOWNSAMPLE];
 	graphicsPass->Execute();
 
 	// Blend
@@ -990,42 +976,13 @@ void Renderer::initGraphicsPasses()
 	deferredGeometryPass->AddGraphicsTexture("gBufferEmissive", m_GBufferEmissive);
 	deferredGeometryPass->AddGraphicsTexture("mainDepthStencilBuffer", m_pMainDepthStencil);
 
-	/* Forward rendering with stencil testing */
-	//D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsdForwardRenderStencilTest = gpsdDeferredLightRender;
-	//
-	//// Only change stencil testing
-	//dsd = {};
-	//dsd.DepthEnable = true;
-	//dsd.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
-	//dsd.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
-	//
-	//// DepthStencil
-	//dsd.StencilEnable = true;
-	//dsd.StencilReadMask = 0x00;
-	//dsd.StencilWriteMask = 0xff;
-	//const D3D12_DEPTH_STENCILOP_DESC stencilWriteAllways =
-	//{
-	//	D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_REPLACE,
-	//	D3D12_COMPARISON_FUNC_ALWAYS
-	//};
-	//dsd.FrontFace = stencilWriteAllways;
-	//dsd.BackFace = stencilWriteAllways;
-	//
-	//gpsdForwardRenderStencilTest.DepthStencilState = dsd;
-
 	// Deferred Light Pass
 	GraphicsPass* deferredLightPass = new DeferredLightRenderTask(m_pFullScreenQuad);
 	deferredLightPass->AddGraphicsBuffer("cbPerFrame", m_pCbPerFrame);
 	deferredLightPass->AddGraphicsBuffer("cbPerScene", m_pCbPerScene);
 	deferredLightPass->AddGraphicsBuffer("rawBufferLights", Light::m_pLightsRawBuffer);
 	deferredLightPass->AddGraphicsTexture("mainDepthStencilBuffer", m_pMainDepthStencil);
-	deferredLightPass->AddGraphicsTexture("brightTarget", m_pBloomWrapperTemp->GetBrightTexture());
 	deferredLightPass->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
-
-	GraphicsPass* downSamplePass = new DownSampleRenderTask(
-		m_pBloomWrapperTemp->GetBrightTexture(),		// Read from this in actual resolution
-		m_pBloomWrapperTemp->GetPingPongTexture(0),		// Write to this in 1280x720
-		m_pFullScreenQuad);
 
 	GraphicsPass* outliningPass = new OutliningRenderTask();
 	outliningPass->AddGraphicsTexture("mainDepthStencilBuffer", m_pMainDepthStencil);
@@ -1042,7 +999,6 @@ void Renderer::initGraphicsPasses()
 	wireFramePass->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
 
 	GraphicsPass* mergePass = new MergeRenderTask(m_pFullScreenQuad);
-	mergePass->AddGraphicsTexture("bloomPingPong0", m_pBloomWrapperTemp->GetPingPongTexture(0));
 	mergePass->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
 	mergePass->AddGraphicsTexture("reflectionTexture", m_ReflectionTexture);
 
@@ -1050,7 +1006,8 @@ void Renderer::initGraphicsPasses()
 	GraphicsPass* imGuiPass = new ImGuiRenderTask();
 
 	// ComputeTasks
-	GraphicsPass* blurPass = new BlurComputeTask(m_pBloomWrapperTemp, m_pBloomWrapperTemp->GetBlurWidth(), m_pBloomWrapperTemp->GetBlurHeight());
+	GraphicsPass* bloomPass = new BloomComputePass(m_CurrentRenderingWidth, m_CurrentRenderingHeight);
+	bloomPass->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
 
 	// CopyTasks
 	GraphicsPass* copyOnDemandTask = new CopyOnDemandTask();
@@ -1066,11 +1023,10 @@ void Renderer::initGraphicsPasses()
 	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DEFERRED_GEOMETRY] = deferredGeometryPass;
 	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::REFLECTIONS] = reflectionPassDXR;
 	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DEFERRED_LIGHT] = deferredLightPass;
-	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DOWNSAMPLE] = downSamplePass;
 	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::OUTLINE] = outliningPass;
 	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::WIREFRAME] = wireFramePass;
 	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::OPACITY] = transparentPass;
-	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::BLOOM] = blurPass;
+	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::BLOOM] = bloomPass;
 	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::MERGE] = mergePass;
 	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::IMGUI] = imGuiPass;
 
@@ -1082,7 +1038,6 @@ void Renderer::initGraphicsPasses()
 	m_MainGraphicsContexts.push_back(deferredGeometryPass->GetGraphicsContext());
 	m_MainGraphicsContexts.push_back(reflectionPassDXR->GetGraphicsContext());
 	m_MainGraphicsContexts.push_back(deferredLightPass->GetGraphicsContext());
-	m_MainGraphicsContexts.push_back(downSamplePass->GetGraphicsContext());
 	m_MainGraphicsContexts.push_back(outliningPass->GetGraphicsContext());
 
 	if (DEVELOPERMODE_DRAWBOUNDINGBOX == true)
@@ -1090,7 +1045,7 @@ void Renderer::initGraphicsPasses()
 		m_MainGraphicsContexts.push_back(wireFramePass->GetGraphicsContext());
 	}
 	m_MainGraphicsContexts.push_back(transparentPass->GetGraphicsContext());
-	m_MainGraphicsContexts.push_back(blurPass->GetGraphicsContext());
+	m_MainGraphicsContexts.push_back(bloomPass->GetGraphicsContext());
 	m_MainGraphicsContexts.push_back(mergePass->GetGraphicsContext());
 
 	// -------------------------------------- GUI -------------------------------------------------

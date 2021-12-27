@@ -84,7 +84,6 @@ void MergeRenderTask::Execute()
 
 		// Textures to merge
 		DescriptorHeapIndices dhIndices = {};
-		dhIndices.index0 = m_GraphicTextures["bloomPingPong0"]->GetShaderResourceHeapIndex();		// Blurred srv
 		dhIndices.index1 = m_GraphicTextures["finalColorBuffer"]->GetShaderResourceHeapIndex();		// Main color buffer
 		dhIndices.index2 = m_GraphicTextures["reflectionTexture"]->GetShaderResourceHeapIndex();	// Reflection Data
 
@@ -95,10 +94,6 @@ void MergeRenderTask::Execute()
 		m_pGraphicsContext->SetIndexBuffer(m_pFullScreenQuadMesh->GetIndexBuffer(), m_pFullScreenQuadMesh->GetSizeOfIndices());
 
 		m_pGraphicsContext->DrawIndexedInstanced(m_pFullScreenQuadMesh->GetNumIndices(), 1, 0, 0, 0);
-
-		// Change state on bloomBuffer for next frame
-		ID3D12Resource* bloomPingPong0Texture = static_cast<D3D12GraphicsTexture*>(m_GraphicTextures["bloomPingPong0"])->m_pResource;
-		TransferResourceState(bloomPingPong0Texture, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
 		// Change state on mainColorBuffer
 		TransferResourceState(mainColorBufferResource, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);

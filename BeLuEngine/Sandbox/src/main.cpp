@@ -44,8 +44,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
     /*------ AssetLoader to load models / textures ------*/
    AssetLoader* al = AssetLoader::Get();
    
-   Scene* scene = SponzaScene(sceneManager);
-   //Scene* scene = TestScene(sceneManager);
+   //Scene* scene = SponzaScene(sceneManager);
+   Scene* scene = TestScene(sceneManager);
 
    // Set scene
    sceneManager->SetScene(scene);
@@ -185,20 +185,6 @@ Scene* TestScene(SceneManager* sm)
     tc->GetTransform()->SetScale(50, 1, 50);
     tc->GetTransform()->SetPosition(0.0f, 0.0f, 0.0f);
     /* ---------------------- Floor ---------------------- */
-#if 0
-     /* ---------------------- Sphere ---------------------- */
-    entity = scene->AddEntity("sphere");
-    mc = entity->AddComponent<component::ModelComponent>();
-    tc = entity->AddComponent<component::TransformComponent>();
-    bbc = entity->AddComponent <component::BoundingBoxComponent>();
-
-    mc->SetModel(sphereModel);
-    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
-    tc->GetTransform()->SetScale(1.0f);
-    tc->GetTransform()->SetPosition(0, 4, 0);
-
-    bbc->Init();
-    /* ---------------------- Sphere ---------------------- */
 
     /* ---------------------- Sphere ---------------------- */
     entity = scene->AddEntity("sphere1");
@@ -213,15 +199,18 @@ Scene* TestScene(SceneManager* sm)
     sharedMatData->hasMetallicTexture = false;
     sharedMatData->hasRoughnessTexture = false;
     sharedMatData->hasNormalTexture = false;
-    sharedMatData->metallicValue = 0.99f;
+    sharedMatData->metallicValue = 0.8f;
     sharedMatData->roughnessValue = 0.10f;
+    sharedMatData->glow = true;
+    sharedMatData->emissiveValue = { 10.0f, 10.0f, 10.0f, 1.0f };
+    sharedMatData->hasEmissiveTexture = false;
     tc->GetTransform()->SetScale(2.0f);
-    tc->GetTransform()->SetPosition(-5.0f, 11, 30);
+    tc->GetTransform()->SetPosition(0.0f, 11, 10);
 
     mc->UpdateMaterialRawBufferFromMaterial();
     bbc->Init();
     mc->Update(0);
-
+#if 0
     entity = scene->AddEntity("sphere2");
     mc = entity->AddComponent<component::ModelComponent>();
     tc = entity->AddComponent<component::TransformComponent>();
@@ -264,15 +253,15 @@ Scene* TestScene(SceneManager* sm)
     mc->UpdateMaterialRawBufferFromMaterial();
     bbc->Init();
     mc->Update(0);
+#endif
     /* ---------------------- Sphere ---------------------- */
 
-#endif
     entity = scene->AddEntity("dirLight1");
 
     dlc = entity->AddComponent<component::DirectionalLightComponent>();
-    dlc->SetColor({ 0.1f, 0.25f, 0.3f });
+    dlc->SetColor({ 1.0f, 1.0f, 1.0f });
     dlc->SetDirection({ -1.0f, -2.0f, 0.03f });
-    dlc->SetIntensity(5.0f);
+    dlc->SetIntensity(50.0f);
 
     dlc->Update(0);
     /* ---------------------- Update Function ---------------------- */
