@@ -15,10 +15,10 @@ void RayGen()
     // UV:s (0->1)
 	float2 uv = launchIndex.xy / dims.xy;
 
-	float depth   = textures[cbPerScene.depth].SampleLevel(MIN_MAG_MIP_LINEAR_Wrap, uv, 0).r;
-    float4 normal = textures[cbPerScene.gBufferNormal].SampleLevel(MIN_MAG_MIP_LINEAR_Wrap, uv, 0);
-    float roughness = textures[cbPerScene.gBufferMaterialProperties].SampleLevel(MIN_MAG_MIP_LINEAR_Wrap, uv, 0).r;
-    float metallic = textures[cbPerScene.gBufferMaterialProperties].SampleLevel(MIN_MAG_MIP_LINEAR_Wrap, uv, 0).g;
+	float depth   = textures[cbPerScene.depth].SampleLevel(BilinearWrap, uv, 0).r;
+    float4 normal = textures[cbPerScene.gBufferNormal].SampleLevel(BilinearWrap, uv, 0);
+    float roughness = textures[cbPerScene.gBufferMaterialProperties].SampleLevel(BilinearWrap, uv, 0).r;
+    float metallic = textures[cbPerScene.gBufferMaterialProperties].SampleLevel(BilinearWrap, uv, 0).g;
 
 	float3 worldPos = WorldPosFromDepth(depth, uv, cbPerFrame.projectionI, cbPerFrame.viewI);
     

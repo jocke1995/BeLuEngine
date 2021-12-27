@@ -48,7 +48,7 @@
 #include "RenderPasses/Graphics/TransparentRenderTask.h"
 #include "RenderPasses/Graphics/MergeRenderTask.h"
 #include "RenderPasses/Graphics/CopyOnDemandTask.h"
-#include "RenderPasses/Graphics/BlurComputeTask.h"
+#include "RenderPasses/Graphics/PostProcess/BloomComputeTask.h"
 #include "RenderPasses/Graphics/BottomLevelRenderTask.h"
 #include "RenderPasses/Graphics/TopLevelRenderTask.h"
 #include "RenderPasses/Graphics/DXRReflectionTask.h"

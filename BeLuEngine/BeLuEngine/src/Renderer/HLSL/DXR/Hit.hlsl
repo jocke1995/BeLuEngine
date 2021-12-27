@@ -31,9 +31,9 @@ void ClosestHit(inout ReflectionPayload reflectionPayload, in BuiltInTriangleInt
 	
     float2 uv = v1.uv * bary.x + v2.uv * bary.y + v3.uv * bary.z; 
     
-    float4 albedo	= textures[matData.textureAlbedo].SampleLevel(MIN_MAG_MIP_LINEAR_Wrap, uv, 2);
-	float roughness	= matData.hasRoughnessTexture ? textures[matData.textureRoughness].SampleLevel(MIN_MAG_MIP_LINEAR_Wrap, uv, 2).r : matData.roughnessValue;
-	float metallic	= matData.hasMetallicTexture  ? textures[matData.textureMetallic].SampleLevel(MIN_MAG_MIP_LINEAR_Wrap, uv, 2).g  : matData.metallicValue;
+    float4 albedo	= textures[matData.textureAlbedo].SampleLevel(BilinearWrap, uv, 2);
+	float roughness	= matData.hasRoughnessTexture ? textures[matData.textureRoughness].SampleLevel(BilinearWrap, uv, 2).r : matData.roughnessValue;
+	float metallic	= matData.hasMetallicTexture  ? textures[matData.textureMetallic].SampleLevel(BilinearWrap, uv, 2).g  : matData.metallicValue;
 	// TODO: Add normal mapping from normalTexture
 	
 	float3 worldPos = WorldRayOrigin() + RayTCurrent() * WorldRayDirection();

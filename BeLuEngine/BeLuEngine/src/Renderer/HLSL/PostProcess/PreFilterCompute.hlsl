@@ -1,4 +1,4 @@
-#include "DescriptorBindings.hlsl"
+#include "../DescriptorBindings.hlsl"
 
 static const int g_NumThreads = 256;
 

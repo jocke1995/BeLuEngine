@@ -202,7 +202,7 @@ Scene* TestScene(SceneManager* sm)
     sharedMatData->metallicValue = 0.8f;
     sharedMatData->roughnessValue = 0.10f;
     sharedMatData->glow = true;
-    sharedMatData->emissiveValue = { 10.0f, 10.0f, 10.0f, 1.0f };
+    sharedMatData->emissiveValue = { 10.0f, 4.0f, 10.0f, 1.0f };
     sharedMatData->hasEmissiveTexture = false;
     tc->GetTransform()->SetScale(2.0f);
     tc->GetTransform()->SetPosition(0.0f, 11, 10);

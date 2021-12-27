@@ -8,8 +8,8 @@ struct VS_OUT
 
 float4 PS_main(VS_OUT input) : SV_TARGET0
 {
-	float4 sceneColor = textures[dhIndices.index1].Sample(MIN_MAG_MIP_LINEAR_Wrap, input.uv);
-	float4 reflData = textures[dhIndices.index2].Sample(MIN_MAG_MIP_LINEAR_Wrap, input.uv);
+	float4 sceneColor = textures[dhIndices.index1].Sample(BilinearWrap, input.uv);
+	float4 reflData = textures[dhIndices.index2].Sample(BilinearWrap, input.uv);
 
 	sceneColor += float4(reflData.rgb, 1.0f);
 

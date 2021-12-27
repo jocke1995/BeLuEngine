@@ -1,7 +1,7 @@
 #ifndef BRIGHTBLURTASK_H
 #define BRIGHTBLURTASK_H
 
-#include "GraphicsPass.h"
+#include "../GraphicsPass.h"
 
 class IGraphicsTexture;
 
@@ -15,7 +15,6 @@ public:
 private:
 	// The compute shader will read and write in a "Ping-Pong"-order to these objects.
 	std::array<IGraphicsTexture*, 2> m_PingPongTextures = {nullptr, nullptr};
-	IGraphicsTexture* m_PreFilterTexture = nullptr;
 
 	unsigned int m_HorizontalThreadGroupsX;
 	unsigned int m_HorizontalThreadGroupsY;
