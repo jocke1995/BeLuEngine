@@ -27,8 +27,6 @@ public:
     void UploadTexture(IGraphicsTexture* graphicsTexture) override final;
     void UploadBuffer(IGraphicsBuffer* graphicsBuffer, const void* data) override final;
 
-    TODO("Abstract State");
-    virtual void SetPipelineState(ID3D12PipelineState* pso) override final;
     virtual void SetPipelineState(IGraphicsPipelineState* pso) override final;
 
     TODO("Fix Interfaces for the parameters");

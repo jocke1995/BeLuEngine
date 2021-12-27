@@ -10,7 +10,8 @@ SamplerState Anisotropic8_Wrap			: register (s2);
 SamplerState Anisotropic16_Wrap			: register (s3);
 SamplerState MIN_MAG_MIP_POINT_Border	: register (s4);
 SamplerState BilinearWrap				: register (s5);
-SamplerState TrilinearWrap				: register (s6);
+SamplerState BilinearClamp				: register (s6);
+SamplerState TrilinearWrap				: register (s7);
 
 // SRV table with 4 ranges, all starting at 0 in the dHeap
 Texture2D						textures[]	: register(t0, space1);

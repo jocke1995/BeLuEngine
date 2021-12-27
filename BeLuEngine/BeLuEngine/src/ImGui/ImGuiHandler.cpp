@@ -227,7 +227,7 @@ void ImGuiHandler::drawSceneHierarchy()
 									if (useEmissiveTexture == false)
 									{
 										ImGui::ColorEdit3("Emissive Color", &emissiveValue.r);
-										ImGui::DragFloat("Emissive Intensity", &emissiveValue.a, 0.1f, 0.0f, 10.0f);
+										ImGui::DragFloat("Emissive Intensity", &emissiveValue.a, 0.1f, 0.0f, 50.0f);
 										matData->emissiveValue = emissiveValue;
 									}
 

@@ -18,9 +18,6 @@ public:
     virtual void UploadTexture(IGraphicsTexture* graphicsTexture) = 0;
     virtual void UploadBuffer(IGraphicsBuffer* graphicsBuffer, const void* data) = 0;
 
-
-    TODO("Abstract State");
-    virtual void SetPipelineState(ID3D12PipelineState* pso) = 0;
     virtual void SetPipelineState(IGraphicsPipelineState* pso) = 0;
 
     TODO("Fix Interfaces for the parameters");

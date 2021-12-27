@@ -149,13 +149,6 @@ void D3D12GraphicsContext::UploadBuffer(IGraphicsBuffer* graphicsBuffer, const v
 	m_pCommandList->CopyBufferRegion(defaultHeap, 0, dynamicDataParams.uploadResource, dynamicDataParams.offsetFromStart, sizeInBytes);
 }
 
-void D3D12GraphicsContext::SetPipelineState(ID3D12PipelineState* pso)
-{
-	BL_ASSERT(pso);
-
-	m_pCommandList->SetPipelineState(pso);
-}
-
 void D3D12GraphicsContext::SetPipelineState(IGraphicsPipelineState* pso)
 {
 	BL_ASSERT(pso);

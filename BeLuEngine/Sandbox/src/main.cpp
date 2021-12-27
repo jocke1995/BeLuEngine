@@ -52,6 +52,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
    
    TestAsyncThread test1 = TestAsyncThread();
 
+   unsigned int width = 1280;
+   unsigned int height = 720;
+
+   float2 uv = { 0 / width, 0 / height };
+   float2 uv2 = { 1280 / width, 720 / height };
+   float2 uv3 = { (float)600 / width, (float)5 / height };
+
    Log::Print("Entering Game-Loop ...\n\n");
    while (!window->ExitWindow())
    {
@@ -191,6 +198,7 @@ Scene* TestScene(SceneManager* sm)
     mc = entity->AddComponent<component::ModelComponent>();
     tc = entity->AddComponent<component::TransformComponent>();
     bbc = entity->AddComponent<component::BoundingBoxComponent>();
+    plc = entity->AddComponent<component::PointLightComponent>();
 
     mc->SetModel(sphereModel);
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE);
@@ -202,10 +210,15 @@ Scene* TestScene(SceneManager* sm)
     sharedMatData->metallicValue = 0.8f;
     sharedMatData->roughnessValue = 0.10f;
     sharedMatData->glow = true;
-    sharedMatData->emissiveValue = { 10.0f, 4.0f, 10.0f, 1.0f };
+    sharedMatData->emissiveValue = { 0.2f, 1.0f, 0.5f, 10.0f };
     sharedMatData->hasEmissiveTexture = false;
-    tc->GetTransform()->SetScale(2.0f);
-    tc->GetTransform()->SetPosition(0.0f, 11, 10);
+
+    plc->SetColor({ 0.2f, 1.0f, 0.5f, });
+    plc->SetIntensity(10.0f);
+
+    //tc->GetTransform()->SetScale(2.0f);
+    tc->GetTransform()->SetScale(5.0f, 0.5f, 0.5f);
+    tc->GetTransform()->SetPosition(0.0f, 4, 10);
 
     mc->UpdateMaterialRawBufferFromMaterial();
     bbc->Init();

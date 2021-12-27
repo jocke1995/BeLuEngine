@@ -580,7 +580,7 @@ void D3D12GraphicsManager::Init(HWND hwnd, unsigned int width, unsigned int heig
 #pragma endregion
 
 #pragma region StaticSamplers
-	const unsigned int numStaticSamplers = 7;
+	const unsigned int numStaticSamplers = 8;
 	D3D12_STATIC_SAMPLER_DESC ssd[numStaticSamplers] = {};
 
 	// Anisotropic Wrap
@@ -623,17 +623,30 @@ void D3D12GraphicsManager::Init(HWND hwnd, unsigned int width, unsigned int heig
 	ssd[5].MaxLOD = D3D12_FLOAT32_MAX;
 	ssd[5].MipLODBias = 0.0f;
 
-	// TrilinearWrap
+	// BilinearWrap
 	ssd[6].ShaderRegister = 6;
-	ssd[6].Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-	ssd[6].AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	ssd[6].AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	ssd[6].AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	ssd[6].Filter = D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT;
+	ssd[6].AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	ssd[6].AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	ssd[6].AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
 	ssd[6].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+	ssd[6].BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
 	ssd[6].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 	ssd[6].MinLOD = 0;
 	ssd[6].MaxLOD = D3D12_FLOAT32_MAX;
 	ssd[6].MipLODBias = 0.0f;
+
+	// TrilinearWrap
+	ssd[7].ShaderRegister = 7;
+	ssd[7].Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+	ssd[7].AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	ssd[7].AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	ssd[7].AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	ssd[7].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+	ssd[7].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	ssd[7].MinLOD = 0;
+	ssd[7].MaxLOD = D3D12_FLOAT32_MAX;
+	ssd[7].MipLODBias = 0.0f;
 
 	
 

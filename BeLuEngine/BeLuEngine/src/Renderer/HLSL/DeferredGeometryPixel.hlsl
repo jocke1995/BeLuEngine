@@ -45,7 +45,7 @@ PS_OUTPUT PS_main(VS_OUT input)
 	output.AlbedoColor	 = albedo;
 	output.NormalColor	 = float4(normal, 1.0f);
 	output.MatColor		 = float4(roughness, metallic, matData.glow, 0.0f);
-	output.EmissiveColor = emissive;
+	output.EmissiveColor = float4(emissive.rgb * emissive.a, 1.0f);
 
 	return output;
 }

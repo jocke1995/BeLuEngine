@@ -78,8 +78,8 @@ bool D3D12GraphicsTexture::LoadTextureDDS(const std::wstring& filePath)
 	desc.Texture2D.MostDetailedMip = 0;
 	desc.Texture2D.ResourceMinLODClamp = 0.0f;
 
-	m_ShaderResourceDescriptorHeapIndex = mainDHeap->GetNextDescriptorHeapIndex(1);
-	device5->CreateShaderResourceView(m_pResource, &desc, mainDHeap->GetCPUHeapAt(m_ShaderResourceDescriptorHeapIndex));
+	m_ShaderResourceDescriptorHeapIndices[0] = mainDHeap->GetNextDescriptorHeapIndex(1);
+	device5->CreateShaderResourceView(m_pResource, &desc, mainDHeap->GetCPUHeapAt(m_ShaderResourceDescriptorHeapIndices[0]));
 #pragma endregion
 
 	CoInitialize(NULL);
@@ -87,7 +87,7 @@ bool D3D12GraphicsTexture::LoadTextureDDS(const std::wstring& filePath)
 	return true;
 }
 
-bool D3D12GraphicsTexture::CreateTexture2D(unsigned int width, unsigned int height, DXGI_FORMAT dxgiFormat, unsigned int textureUsage /* F_TEXTURE_USAGE */, const std::wstring name, D3D12_RESOURCE_STATES startStateTemp)
+bool D3D12GraphicsTexture::CreateTexture2D(unsigned int width, unsigned int height, DXGI_FORMAT dxgiFormat, unsigned int textureUsage /* F_TEXTURE_USAGE */, const std::wstring name, D3D12_RESOURCE_STATES startStateTemp, unsigned int mipLevels)
 {
 	D3D12GraphicsManager* graphicsManager = D3D12GraphicsManager::GetInstance();
 	ID3D12Device5* device5 = graphicsManager->GetDevice();
@@ -97,6 +97,8 @@ bool D3D12GraphicsTexture::CreateTexture2D(unsigned int width, unsigned int heig
 
 	HRESULT hr;
 
+	m_Path = name;
+	m_NumMipLevels = mipLevels;
 #pragma region CreateTextureBuffer
 	D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE;
 
@@ -114,7 +116,7 @@ bool D3D12GraphicsTexture::CreateTexture2D(unsigned int width, unsigned int heig
 	resourceDesc.Width = width;
 	resourceDesc.Height = height;
 	resourceDesc.DepthOrArraySize = 1;
-	resourceDesc.MipLevels = 1;
+	resourceDesc.MipLevels = m_NumMipLevels;
 	resourceDesc.SampleDesc.Count = 1;
 	resourceDesc.SampleDesc.Quality = 0;
 	resourceDesc.Flags = flags;
@@ -177,16 +179,20 @@ bool D3D12GraphicsTexture::CreateTexture2D(unsigned int width, unsigned int heig
 		if (dxgiFormat == DXGI_FORMAT_D24_UNORM_S8_UINT)
 			dxgiFormatTemp = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
 
-		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-		srvDesc.Format = dxgiFormatTemp;
-		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-		srvDesc.Texture2D.MipLevels = 1;
+		for (unsigned int i = 0; i < m_NumMipLevels; i++)
+		{
+			D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+			srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+			srvDesc.Format = dxgiFormatTemp;
+			srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+			srvDesc.Texture2D.MipLevels = 1;
+			srvDesc.Texture2D.MostDetailedMip = i;
 
-		m_ShaderResourceDescriptorHeapIndex = mainDHeap->GetNextDescriptorHeapIndex(1);
-		D3D12_CPU_DESCRIPTOR_HANDLE cdh = mainDHeap->GetCPUHeapAt(m_ShaderResourceDescriptorHeapIndex);
+			m_ShaderResourceDescriptorHeapIndices[i] = mainDHeap->GetNextDescriptorHeapIndex(1);
+			D3D12_CPU_DESCRIPTOR_HANDLE cdh = mainDHeap->GetCPUHeapAt(m_ShaderResourceDescriptorHeapIndices[i]);
 
-		device5->CreateShaderResourceView(m_pResource, &srvDesc, cdh);
+			device5->CreateShaderResourceView(m_pResource, &srvDesc, cdh);
+		}
 	}
 
 	if (textureUsage & F_TEXTURE_USAGE::RenderTarget)
@@ -205,16 +211,18 @@ bool D3D12GraphicsTexture::CreateTexture2D(unsigned int width, unsigned int heig
 
 	if (textureUsage & F_TEXTURE_USAGE::UnorderedAccess)
 	{
-		D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
-		uavDesc.Format = dxgiFormat;
-		uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-		uavDesc.Texture2D.MipSlice = 0;
-		uavDesc.Texture2D.PlaneSlice = 0;
+		for (unsigned int i = 0; i < m_NumMipLevels; i++)
+		{
+			D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+			uavDesc.Format = dxgiFormat;
+			uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+			uavDesc.Texture2D.MipSlice = i;
 
-		m_UnorderedAccessDescriptorHeapIndex = mainDHeap->GetNextDescriptorHeapIndex(1);
-		D3D12_CPU_DESCRIPTOR_HANDLE cdh = mainDHeap->GetCPUHeapAt(m_UnorderedAccessDescriptorHeapIndex);
+			m_UnorderedAccessDescriptorHeapIndices[i] = mainDHeap->GetNextDescriptorHeapIndex(1);
+			D3D12_CPU_DESCRIPTOR_HANDLE cdh = mainDHeap->GetCPUHeapAt(m_UnorderedAccessDescriptorHeapIndices[i]);
 
-		device5->CreateUnorderedAccessView(m_pResource, nullptr, &uavDesc, cdh);
+			device5->CreateUnorderedAccessView(m_pResource, nullptr, &uavDesc, cdh);
+		}
 	}
 
 	if (textureUsage & F_TEXTURE_USAGE::DepthStencil)
@@ -236,22 +244,24 @@ bool D3D12GraphicsTexture::CreateTexture2D(unsigned int width, unsigned int heig
 	return true;
 }
 
-unsigned int D3D12GraphicsTexture::GetShaderResourceHeapIndex() const
+unsigned int D3D12GraphicsTexture::GetShaderResourceHeapIndex(unsigned int mipLevel) const
 {
-	BL_ASSERT(m_ShaderResourceDescriptorHeapIndex != -1);
-	return m_ShaderResourceDescriptorHeapIndex;
+	BL_ASSERT(mipLevel >= 0 && mipLevel < g_MAX_TEXTURE_MIPS);
+	BL_ASSERT(m_ShaderResourceDescriptorHeapIndices[mipLevel] != -1);
+	return m_ShaderResourceDescriptorHeapIndices[mipLevel];
+}
+
+unsigned int D3D12GraphicsTexture::GetUnorderedAccessIndex(unsigned int mipLevel) const
+{
+	BL_ASSERT(mipLevel >= 0 && mipLevel < g_MAX_TEXTURE_MIPS);
+	BL_ASSERT(m_UnorderedAccessDescriptorHeapIndices[mipLevel] != -1);
+	return m_UnorderedAccessDescriptorHeapIndices[mipLevel];
 }
 
 unsigned int D3D12GraphicsTexture::GetRenderTargetHeapIndex() const
 {
 	BL_ASSERT(m_RenderTargetDescriptorHeapIndex != -1);
 	return m_RenderTargetDescriptorHeapIndex;
-}
-
-unsigned int D3D12GraphicsTexture::GetUnorderedAccessIndex() const
-{
-	BL_ASSERT(m_UnorderedAccessDescriptorHeapIndex != -1);
-	return m_UnorderedAccessDescriptorHeapIndex;
 }
 
 unsigned int D3D12GraphicsTexture::GetDepthStencilIndex() const

@@ -48,10 +48,44 @@ inline DirectX::XMFLOAT3 operator-(DirectX::XMFLOAT3 a, DirectX::XMFLOAT3 b)
 }
 #pragma endregion XMFLOAT3_OPERATOR_OVERLOADS
 #pragma region floatStructs
-typedef union
+typedef union float4
 {
 	struct { float x; float y; float z; float w; };
 	struct { float r; float g; float b; float a; };
+
+	void operator /= (float denom)
+	{
+		x /= denom;
+		y /= denom;
+		z /= denom;
+	};
+
+	void operator *= (float factor)
+	{
+		x *= factor;
+		y *= factor;
+		z *= factor;
+	};
+
+	float4 operator + (const float4& other) const
+	{
+		return { x + other.x, y + other.y, z + other.z, a };
+	};
+
+	float4 operator - (const float4& other) const
+	{
+		return { x - other.x, y - other.y, z - other.z, other.a };
+	};
+
+	float4 operator * (float factor)
+	{
+		return { x * factor, y * factor, z * factor, a };
+	};
+
+	bool operator == (float4 other)
+	{
+		return (x == other.x && y == other.y && z == other.z && a == other.a);
+	}
 } float4;
 
 typedef union float3

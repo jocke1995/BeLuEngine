@@ -10,11 +10,11 @@ public:
 	virtual ~D3D12GraphicsTexture();
 
 	bool LoadTextureDDS(const std::wstring& filePath) override;
-	bool CreateTexture2D(unsigned int width, unsigned int height, DXGI_FORMAT dxgiFormat, unsigned int textureUsage /* F_TEXTURE_USAGE */, const std::wstring name, D3D12_RESOURCE_STATES startStateTemp) override;
+	bool CreateTexture2D(unsigned int width, unsigned int height, DXGI_FORMAT dxgiFormat, unsigned int textureUsage /* F_TEXTURE_USAGE */, const std::wstring name, D3D12_RESOURCE_STATES startStateTemp, unsigned int mipLevels = 1) override;
 
-	virtual unsigned int GetShaderResourceHeapIndex() const override;
+	virtual unsigned int GetShaderResourceHeapIndex(unsigned int mipLevel = 0) const override;
+	virtual unsigned int GetUnorderedAccessIndex(unsigned int mipLevel = 0) const override;
 	virtual unsigned int GetRenderTargetHeapIndex() const override;
-	virtual unsigned int GetUnorderedAccessIndex() const override;
 	virtual unsigned int GetDepthStencilIndex() const override;
 
 	virtual unsigned __int64 GetSize() const override;
@@ -26,9 +26,9 @@ private:
 	friend class MergeRenderTask;	// Temporary
 
 	ID3D12Resource1* m_pResource = nullptr;
-	unsigned int m_ShaderResourceDescriptorHeapIndex	= -1;
+	unsigned int m_ShaderResourceDescriptorHeapIndices[g_MAX_TEXTURE_MIPS]	= { UINT32_MAX };
+	unsigned int m_UnorderedAccessDescriptorHeapIndices[g_MAX_TEXTURE_MIPS] = { UINT32_MAX };
 	unsigned int m_RenderTargetDescriptorHeapIndex		= -1;
-	unsigned int m_UnorderedAccessDescriptorHeapIndex	= -1;
 	unsigned int m_DepthStencilDescriptorHeapIndex		= -1;
 
 	unsigned __int64 m_Size = 0;
