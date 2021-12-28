@@ -260,9 +260,6 @@ void BloomComputePass::Execute()
 
 			m_pGraphicsContext->UAVBarrier(finalColorTexture);
 
-			// Transfer back to original state
-			m_pGraphicsContext->ResourceBarrier(finalColorTexture, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_RENDER_TARGET);
-
 			// Begin next frame as UAV, because the first thing that happens is that they get cleared
 			// m_PingPongTextures[0] is already in UAV state
 			m_pGraphicsContext->ResourceBarrier(m_PingPongTextures[1], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);

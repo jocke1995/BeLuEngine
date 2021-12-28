@@ -1,10 +1,6 @@
-#include "DescriptorBindings.hlsl"
+#include "../DescriptorBindings.hlsl"
 
-struct VS_OUT
-{
-	float4 pos  : SV_Position;
-	float2 uv   : UV;
-};
+static const int g_NumThreads = 64;
 
 float4 TonemapReinhard(float4 inputColor)
 {
@@ -47,13 +43,16 @@ float4 TonemapACES(float4 inputColor)
 	return float4(color.rgb, 1.0f);
 }
 
-float4 PS_main(VS_OUT input) : SV_TARGET0
+[numthreads(g_NumThreads, 1, 1)]
+void CS_main(uint3 dispatchThreadID : SV_DispatchThreadID, int3 groupThreadID : SV_GroupThreadID)
 {
-	float4 finalColor = textures[dhIndices.index1].Sample(BilinearClamp, input.uv);
+	unsigned int finalColorReadIndex = dhIndices.index0;
+	unsigned int finalColorWriteIndex = dhIndices.index1;
+	float4 finalColor = textures[finalColorReadIndex][dispatchThreadID.xy];
 
-	// HDR tone mapping
-	//finalColor = TonemapReinhard(finalColor);
+	// Tonemap
 	finalColor = TonemapACES(finalColor);
+	//finalColor = TonemapReinhard(finalColor);
 
-	return float4(finalColor.rgb, 1.0f);
+	texturesUAV[finalColorWriteIndex][dispatchThreadID.xy] = finalColor;
 }

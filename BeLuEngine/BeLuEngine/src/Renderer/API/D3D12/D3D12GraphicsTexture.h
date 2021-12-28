@@ -25,7 +25,7 @@ public:
 private:
 	friend class D3D12GraphicsContext;
 
-	friend class MergeRenderTask;	// Temporary
+	friend class TonemapComputeTask;	// Temporary
 
 	ID3D12Resource1* m_pResource = nullptr;
 	unsigned int m_ShaderResourceDescriptorHeapIndices[g_MAX_TEXTURE_MIPS]	= { UINT32_MAX };

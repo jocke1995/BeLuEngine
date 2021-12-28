@@ -48,7 +48,7 @@ public:
     IGraphicsBuffer* GetIndexBuffer() const;
 
 protected:
-    friend class MergeRenderTask;
+    friend class TonemapComputeTask;
     friend class DownSampleRenderTask;
     friend class DeferredLightRenderTask;
 

@@ -39,21 +39,25 @@
 #include "Techniques/MousePicker.h"
 #include "Techniques/BoundingBoxPool.h"
 
-// Graphics
+// RenderPasses
 #include "RenderPasses/Graphics/DepthRenderTask.h"
 #include "RenderPasses/Graphics/WireframeRenderTask.h"
 #include "RenderPasses/Graphics/OutliningRenderTask.h"
 #include "RenderPasses/Graphics/DeferredGeometryRenderTask.h"
 #include "RenderPasses/Graphics/DeferredLightRenderTask.h"
 #include "RenderPasses/Graphics/TransparentRenderTask.h"
-#include "RenderPasses/Graphics/MergeRenderTask.h"
 #include "RenderPasses/Graphics/CopyOnDemandTask.h"
-#include "RenderPasses/Graphics/PostProcess/BloomComputeTask.h"
+
+// Raytracing
+#include "DXR/BottomLevelAccelerationStructure.h"
+#include "DXR/TopLevelAccelerationStructure.h"
 #include "RenderPasses/Graphics/BottomLevelRenderTask.h"
 #include "RenderPasses/Graphics/TopLevelRenderTask.h"
 #include "RenderPasses/Graphics/DXRReflectionTask.h"
-#include "DXR/BottomLevelAccelerationStructure.h"
-#include "DXR/TopLevelAccelerationStructure.h"
+
+// PostProcess
+#include "RenderPasses/Graphics/PostProcess/BloomComputeTask.h"
+#include "RenderPasses/Graphics/PostProcess/TonemapComputeTask.h"
 
 // Event
 #include "../Events/EventBus.h"
@@ -423,7 +427,7 @@ void Renderer::ExecuteMT()
 	m_pThreadPool->AddTask(graphicsPass);
 
 	// Blurring for bloom
-	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::BLOOM];
+	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::POSTPROCESS_BLOOM];
 	m_pThreadPool->AddTask(graphicsPass);
 
 	// Outlining, if an object is picked
@@ -432,7 +436,7 @@ void Renderer::ExecuteMT()
 	m_pThreadPool->AddTask(graphicsPass);
 
 	// Merge 
-	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::MERGE];
+	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::POSTPROCESS_TONEMAP];
 	m_pThreadPool->AddTask(graphicsPass);
 	
 	/* ----------------------------- DEVELOPERMODE CommandLists ----------------------------- */
@@ -513,7 +517,7 @@ void Renderer::ExecuteST()
 	graphicsPass->Execute();
 
 	// Blurring for bloom
-	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::BLOOM];
+	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::POSTPROCESS_BLOOM];
 	graphicsPass->Execute();
 
 	// Outlining, if an object is picked
@@ -522,7 +526,7 @@ void Renderer::ExecuteST()
 	graphicsPass->Execute();
 
 	// Merge 
-	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::MERGE];
+	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::POSTPROCESS_TONEMAP];
 	graphicsPass->Execute();
 
 	/* ----------------------------- DEVELOPERMODE CommandLists ----------------------------- */
@@ -989,18 +993,18 @@ void Renderer::initGraphicsPasses()
 	GraphicsPass* wireFramePass = new WireframeRenderTask();
 	wireFramePass->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
 
-	GraphicsPass* mergePass = new MergeRenderTask(m_pFullScreenQuad);
-	mergePass->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
-
-	// ImGuiTask
-	GraphicsPass* imGuiPass = new ImGuiRenderTask();
-
 	// ComputeTasks
+	GraphicsPass* tonemapPass = new TonemapComputeTask(m_CurrentRenderingWidth, m_CurrentRenderingHeight);
+	tonemapPass->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
+
 	GraphicsPass* bloomPass = new BloomComputePass(m_CurrentRenderingWidth, m_CurrentRenderingHeight);
 	bloomPass->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
 
 	// CopyTasks
 	GraphicsPass* copyOnDemandTask = new CopyOnDemandTask();
+
+	// UI
+	GraphicsPass* imGuiPass = new ImGuiRenderTask();
 
 	// Add the tasks to desired vectors so they can be used in m_pRenderer
 	/* -------------------------------------------------------------- */
@@ -1016,8 +1020,8 @@ void Renderer::initGraphicsPasses()
 	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::OUTLINE] = outliningPass;
 	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::WIREFRAME] = wireFramePass;
 	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::OPACITY] = transparentPass;
-	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::BLOOM] = bloomPass;
-	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::MERGE] = mergePass;
+	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::POSTPROCESS_BLOOM] = bloomPass;
+	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::POSTPROCESS_TONEMAP] = tonemapPass;
 	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::IMGUI] = imGuiPass;
 
 	// Pushback in the order of execution
@@ -1035,8 +1039,10 @@ void Renderer::initGraphicsPasses()
 		m_MainGraphicsContexts.push_back(wireFramePass->GetGraphicsContext());
 	}
 	m_MainGraphicsContexts.push_back(transparentPass->GetGraphicsContext());
+
+	// PostProcess
 	m_MainGraphicsContexts.push_back(bloomPass->GetGraphicsContext());
-	m_MainGraphicsContexts.push_back(mergePass->GetGraphicsContext());
+	m_MainGraphicsContexts.push_back(tonemapPass->GetGraphicsContext());
 
 	// -------------------------------------- GUI -------------------------------------------------
 	// Debug/ImGui

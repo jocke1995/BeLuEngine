@@ -57,7 +57,7 @@ private:
 	friend class component::ModelComponent;
 	friend class ImGuiHandler;
 	friend class ImGuiRenderTask;
-	friend class MergeRenderTask;
+	friend class TonemapComputeTask;
 	friend class RayTracingPipelineGenerator;
 	// -------------------------- Native D3D12 -------------------------- 
 	// D3D12 DLL
