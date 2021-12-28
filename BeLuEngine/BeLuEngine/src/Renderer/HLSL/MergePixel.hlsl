@@ -49,19 +49,11 @@ float4 TonemapACES(float4 inputColor)
 
 float4 PS_main(VS_OUT input) : SV_TARGET0
 {
-	float4 sceneColor = textures[dhIndices.index1].Sample(BilinearClamp, input.uv);
-	//float4 reflData = textures[dhIndices.index2].Sample(BilinearClamp, input.uv);
-	//
-	//sceneColor += float4(reflData.rgb, 1.0f);
-
-	// Combine
-	float4 finalColor = sceneColor;
+	float4 finalColor = textures[dhIndices.index1].Sample(BilinearClamp, input.uv);
 
 	// HDR tone mapping
 	//finalColor = TonemapReinhard(finalColor);
 	finalColor = TonemapACES(finalColor);
 
-	//reinhard += float4(reflData.rgb, 1.0f);
-	//reinhard = saturate(reinhard);
 	return float4(finalColor.rgb, 1.0f);
 }
