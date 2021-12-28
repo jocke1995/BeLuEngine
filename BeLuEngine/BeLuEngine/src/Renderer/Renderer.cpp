@@ -102,7 +102,6 @@ void Renderer::deleteRenderer()
 	BL_SAFE_DELETE(m_GBufferNormal);
 	BL_SAFE_DELETE(m_GBufferMaterialProperties);
 	BL_SAFE_DELETE(m_GBufferEmissive);
-	BL_SAFE_DELETE(m_ReflectionTexture);
 
 	// Delete Depthbuffer
 	BL_SAFE_DELETE(m_pMainDepthStencil);
@@ -186,15 +185,6 @@ void Renderer::InitD3D12(HWND hwnd, unsigned int width, unsigned int height, HIN
 		DXGI_FORMAT_R16G16B16A16_FLOAT,
 		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget,
 		L"gBufferEmissive",
-		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-
-	// Resource
-	m_ReflectionTexture = IGraphicsTexture::Create();
-	m_ReflectionTexture->CreateTexture2D(
-		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
-		DXGI_FORMAT_R16G16B16A16_FLOAT,
-		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::UnorderedAccess,
-		L"ReflectionTexture",
 		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 	// DepthBuffer
@@ -957,11 +947,12 @@ void Renderer::initGraphicsPasses()
 	GraphicsPass* tlasTask = new TopLevelRenderTask();
 
 	// DXR
-	GraphicsPass* reflectionPassDXR = new DXRReflectionTask(m_ReflectionTexture, m_CurrentRenderingWidth, m_CurrentRenderingHeight);
+	GraphicsPass* reflectionPassDXR = new DXRReflectionTask(m_CurrentRenderingWidth, m_CurrentRenderingHeight);
 	reflectionPassDXR->AddGraphicsBuffer("cbPerFrame", m_pCbPerFrame);
 	reflectionPassDXR->AddGraphicsBuffer("cbPerScene", m_pCbPerScene);
 	reflectionPassDXR->AddGraphicsBuffer("rawBufferLights", Light::m_pLightsRawBuffer);
 	reflectionPassDXR->AddGraphicsTexture("mainDSV", m_pMainDepthStencil);	// To transition from depthWrite to depthRead
+	reflectionPassDXR->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);	// Adds reflectionColor to this texture
 
 	// depthprePass
 	GraphicsPass* depthPrePass = new DepthRenderTask();
@@ -1000,7 +991,6 @@ void Renderer::initGraphicsPasses()
 
 	GraphicsPass* mergePass = new MergeRenderTask(m_pFullScreenQuad);
 	mergePass->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
-	mergePass->AddGraphicsTexture("reflectionTexture", m_ReflectionTexture);
 
 	// ImGuiTask
 	GraphicsPass* imGuiPass = new ImGuiRenderTask();
@@ -1036,8 +1026,8 @@ void Renderer::initGraphicsPasses()
 	m_MainGraphicsContexts.push_back(tlasTask->GetGraphicsContext());
 	m_MainGraphicsContexts.push_back(depthPrePass->GetGraphicsContext());
 	m_MainGraphicsContexts.push_back(deferredGeometryPass->GetGraphicsContext());
-	m_MainGraphicsContexts.push_back(reflectionPassDXR->GetGraphicsContext());
 	m_MainGraphicsContexts.push_back(deferredLightPass->GetGraphicsContext());
+	m_MainGraphicsContexts.push_back(reflectionPassDXR->GetGraphicsContext());
 	m_MainGraphicsContexts.push_back(outliningPass->GetGraphicsContext());
 
 	if (DEVELOPERMODE_DRAWBOUNDINGBOX == true)
@@ -1121,8 +1111,6 @@ void Renderer::setupNewScene(Scene* activeScene)
 	m_pCbPerSceneData->gBufferMaterialProperties = m_GBufferMaterialProperties->GetShaderResourceHeapIndex();
 	m_pCbPerSceneData->gBufferEmissive			 = m_GBufferEmissive->GetShaderResourceHeapIndex();
 	m_pCbPerSceneData->depth					 = m_pMainDepthStencil->GetShaderResourceHeapIndex();
-	m_pCbPerSceneData->reflectionUAV			 = m_ReflectionTexture->GetUnorderedAccessIndex();
-	m_pCbPerSceneData->reflectionSRV			 = m_ReflectionTexture->GetShaderResourceHeapIndex();
 }
 
 void Renderer::submitUploadPerFrameData()

@@ -50,9 +50,9 @@ float4 TonemapACES(float4 inputColor)
 float4 PS_main(VS_OUT input) : SV_TARGET0
 {
 	float4 sceneColor = textures[dhIndices.index1].Sample(BilinearClamp, input.uv);
-	float4 reflData = textures[dhIndices.index2].Sample(BilinearClamp, input.uv);
-
-	sceneColor += float4(reflData.rgb, 1.0f);
+	//float4 reflData = textures[dhIndices.index2].Sample(BilinearClamp, input.uv);
+	//
+	//sceneColor += float4(reflData.rgb, 1.0f);
 
 	// Combine
 	float4 finalColor = sceneColor;

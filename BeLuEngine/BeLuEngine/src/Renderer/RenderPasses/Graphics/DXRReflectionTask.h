@@ -7,7 +7,6 @@ class Shader;
 class ShaderBindingTableGenerator;
 
 class IGraphicsBuffer;
-class IGraphicsTexture;
 
 enum E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION
 {
@@ -20,7 +19,7 @@ enum E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION
 class DXRReflectionTask : public GraphicsPass
 {
 public:
-	DXRReflectionTask(IGraphicsTexture* reflectionTexture, unsigned int dispatchWidth, unsigned int dispatchHeight);
+	DXRReflectionTask(unsigned int dispatchWidth, unsigned int dispatchHeight);
 	~DXRReflectionTask();
 
 	// Call this whenever new instances has been added/or removed from the rayTraced-scene
@@ -44,9 +43,6 @@ private:
 	IGraphicsBuffer* m_pShaderTableBuffer = nullptr;
 	ID3D12StateObject* m_pStateObject = nullptr;
 	ID3D12StateObjectProperties* m_pRTStateObjectProps = nullptr;
-
-	// Texture
-	IGraphicsTexture* m_pReflectionTexture;
 
 	unsigned int m_DispatchWidth = 0, m_DispatchHeight = 0;
 };

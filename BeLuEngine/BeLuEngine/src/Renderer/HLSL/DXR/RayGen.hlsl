@@ -6,6 +6,8 @@
 [shader("raygeneration")] 
 void RayGen()
 {
+    unsigned int writeIndex = dhIndices.index0;
+
 	// Get the location within the dispatched 2D grid of work items
 	// (often maps to pixels, so this could represent a pixel coordinate).
 	uint2 launchIndex = DispatchRaysIndex();
@@ -42,5 +44,5 @@ void RayGen()
         finalColor = TraceRadianceRay(ray, 0, sceneBVH[cbPerScene.rayTracingBVH]);
     }
     
-    texturesUAV[cbPerScene.reflectionUAV][launchIndex] = float4(finalColor, 1.0f);
+    texturesUAV[writeIndex][launchIndex] += float4(finalColor, 1.0f);
 }

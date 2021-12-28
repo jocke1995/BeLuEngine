@@ -34,8 +34,8 @@ void ClosestHit(inout ReflectionPayload reflectionPayload, in BuiltInTriangleInt
     float4 albedo	= textures[matData.textureAlbedo].SampleLevel(BilinearWrap, uv, 2);
 	float roughness	= matData.hasRoughnessTexture ? textures[matData.textureRoughness].SampleLevel(BilinearWrap, uv, 2).r : matData.roughnessValue;
 	float metallic	= matData.hasMetallicTexture  ? textures[matData.textureMetallic].SampleLevel(BilinearWrap, uv, 2).g  : matData.metallicValue;
-	// TODO: Add normal mapping from normalTexture
-	
+	float4 emissive = matData.hasEmissiveTexture ? textures[matData.textureEmissive].SampleLevel(BilinearWrap, uv, 2) : matData.emissiveValue;
+
 	float3 worldPos = WorldRayOrigin() + RayTCurrent() * WorldRayDirection();
 	float3 camPos = cbPerFrame.camPos;
 	float3 viewDir = normalize(camPos - worldPos.xyz);
@@ -96,5 +96,5 @@ void ClosestHit(inout ReflectionPayload reflectionPayload, in BuiltInTriangleInt
 	}
 
 	reflectionPayload.color += 0.001f * albedo.rgb;
-	//reflectionPayload.color = float3(roughness, metallic, 0.0f);
+	reflectionPayload.color += (emissive.rgb * emissive.a);
 } 

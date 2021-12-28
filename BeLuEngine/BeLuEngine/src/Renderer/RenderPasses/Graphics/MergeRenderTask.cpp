@@ -86,7 +86,6 @@ void MergeRenderTask::Execute()
 		// Textures to merge
 		DescriptorHeapIndices dhIndices = {};
 		dhIndices.index1 = m_GraphicTextures["finalColorBuffer"]->GetShaderResourceHeapIndex();		// Main color buffer
-		dhIndices.index2 = m_GraphicTextures["reflectionTexture"]->GetShaderResourceHeapIndex();	// Reflection Data
 
 		// Draw a fullscreen quad 
 		m_pGraphicsContext->Set32BitConstants(Constants_SlotInfo_B0, sizeof(SlotInfo) / 4, &slotInfo, 0, false);

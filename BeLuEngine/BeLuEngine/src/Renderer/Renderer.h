@@ -119,7 +119,6 @@ private:
 	IGraphicsTexture* m_GBufferNormal;
 	IGraphicsTexture* m_GBufferMaterialProperties;
 	IGraphicsTexture* m_GBufferEmissive;
-	IGraphicsTexture* m_ReflectionTexture;
 	
 	// Depthbuffer
 	IGraphicsTexture* m_pMainDepthStencil = nullptr;

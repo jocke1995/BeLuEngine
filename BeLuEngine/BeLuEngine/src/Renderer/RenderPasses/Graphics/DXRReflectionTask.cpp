@@ -22,7 +22,7 @@ TODO("Abstract this class")
 #include "../../API/IGraphicsTexture.h"
 #include "../../API/IGraphicsContext.h"
 
-DXRReflectionTask::DXRReflectionTask(IGraphicsTexture* reflectionTexture, unsigned int dispatchWidth, unsigned int dispatchHeight)
+DXRReflectionTask::DXRReflectionTask(unsigned int dispatchWidth, unsigned int dispatchHeight)
 	:GraphicsPass(L"DXR_ReflectionPass")
 {
 #pragma region PipelineState Object
@@ -193,7 +193,6 @@ DXRReflectionTask::DXRReflectionTask(IGraphicsTexture* reflectionTexture, unsign
 #pragma endregion
 
 	// Rest
-	m_pReflectionTexture = reflectionTexture;
 	m_DispatchWidth = dispatchWidth;
 	m_DispatchHeight = dispatchHeight;
 }
@@ -259,6 +258,8 @@ void DXRReflectionTask::CreateShaderBindingTable(const std::vector<RenderCompone
 
 void DXRReflectionTask::Execute()
 {
+	IGraphicsTexture* finalColorBuffer = m_GraphicTextures["finalColorBuffer"];
+	IGraphicsTexture* depthTexture = m_GraphicTextures["mainDSV"];
 	m_pGraphicsContext->Begin();
 	{
 		ScopedPixEvent(RaytracedReflections, m_pGraphicsContext);
@@ -270,8 +271,8 @@ void DXRReflectionTask::Execute()
 		m_pGraphicsContext->SetShaderResourceView(RootParam_SRV_T0, m_GraphicBuffers["rawBufferLights"], true);
 
 		// Transitions
-		m_pGraphicsContext->ResourceBarrier(m_GraphicTextures["mainDSV"], D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-		m_pGraphicsContext->ResourceBarrier(m_pReflectionTexture, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+		m_pGraphicsContext->ResourceBarrier(depthTexture, D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+		m_pGraphicsContext->ResourceBarrier(finalColorBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
 		// Setup the raytracing task
 		D3D12_DISPATCH_RAYS_DESC desc = {};
@@ -307,14 +308,18 @@ void DXRReflectionTask::Execute()
 		// Bind the raytracing pipeline
 		m_pGraphicsContext->SetPipelineState(m_pStateObject);
 
+		DescriptorHeapIndices dhIndices = {};
+		dhIndices.index0 = finalColorBuffer->GetUnorderedAccessIndex();	// Write to this texture with this index
+		m_pGraphicsContext->Set32BitConstants(Constants_DH_Indices_B1, sizeof(DescriptorHeapIndices) / 4, &dhIndices, 0, true);
+
 		// Dispatch the rays and write to the raytracing output
 		m_pGraphicsContext->DispatchRays(desc);
 
-		m_pGraphicsContext->UAVBarrier(m_pReflectionTexture);
+		m_pGraphicsContext->UAVBarrier(finalColorBuffer);
 
 		// Transitions
-		m_pGraphicsContext->ResourceBarrier(m_GraphicTextures["mainDSV"], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
-		m_pGraphicsContext->ResourceBarrier(m_pReflectionTexture, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		m_pGraphicsContext->ResourceBarrier(depthTexture, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+		m_pGraphicsContext->ResourceBarrier(finalColorBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	}
 	m_pGraphicsContext->End();
 }
