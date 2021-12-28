@@ -2,11 +2,11 @@
 #include "D3D12GraphicsManager.h"
 
 #include "../Misc/EngineStatistics.h"
-#include "../Renderer/DescriptorHeap.h"
 
 #include "../Renderer/RenderPasses/Graphics/GraphicsPass.h"
 
 #include "D3D12GraphicsContext.h"
+#include "D3D12DescriptorHeap.h"
 
 D3D12GraphicsManager::D3D12GraphicsManager()
 {
@@ -86,8 +86,6 @@ void D3D12GraphicsManager::Init(HWND hwnd, unsigned int width, unsigned int heig
 	hr = f(IID_PPV_ARGS(&debugController));
 	if (SUCCEEDED(hr))
 	{
-		
-
 		if (ENABLE_DEBUGLAYER || ENABLE_VALIDATIONGLAYER)
 		{
 			EngineStatistics::GetIM_CommonStats().m_DebugLayerActive = true;
@@ -276,9 +274,9 @@ void D3D12GraphicsManager::Init(HWND hwnd, unsigned int width, unsigned int heig
 #pragma endregion
 
 #pragma region DescriptorHeap
-	m_pMainDescriptorHeap	 = new DescriptorHeap(m_pDevice5, E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV);
-	m_pRTVDescriptorHeap	 = new DescriptorHeap(m_pDevice5, E_DESCRIPTOR_HEAP_TYPE::RTV);
-	m_pDSVDescriptorHeap	 = new DescriptorHeap(m_pDevice5, E_DESCRIPTOR_HEAP_TYPE::DSV);
+	m_pMainDescriptorHeap	 = new D3D12DescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 10000, L"Main_CBV_UAV_SRV_DescriptorHeap", true);
+	m_pRTVDescriptorHeap	 = new D3D12DescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 50, L"Main_RTV_DescriptorHeap", false);
+	m_pDSVDescriptorHeap	 = new D3D12DescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 5, L"Main_DSV_DescriptorHeap", false);
 #pragma endregion
 
 #pragma region Swapchain
@@ -871,17 +869,17 @@ DynamicDataParams D3D12GraphicsManager::SetDynamicData(unsigned int size, const 
 	return returnVal;
 }
 
-DescriptorHeap* D3D12GraphicsManager::GetMainDescriptorHeap() const
+D3D12DescriptorHeap* D3D12GraphicsManager::GetMainDescriptorHeap() const
 {
 	return m_pMainDescriptorHeap;
 }
 
-DescriptorHeap* D3D12GraphicsManager::GetRTVDescriptorHeap() const
+D3D12DescriptorHeap* D3D12GraphicsManager::GetRTVDescriptorHeap() const
 {
 	return m_pRTVDescriptorHeap;
 }
 
-DescriptorHeap* D3D12GraphicsManager::GetDSVDescriptorHeap() const
+D3D12DescriptorHeap* D3D12GraphicsManager::GetDSVDescriptorHeap() const
 {
 	return m_pDSVDescriptorHeap;
 }

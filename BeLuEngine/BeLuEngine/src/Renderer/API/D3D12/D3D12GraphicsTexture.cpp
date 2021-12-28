@@ -4,8 +4,7 @@
 #include "External/TextureFunctions.h"
 
 #include "D3D12GraphicsManager.h"
-
-#include "../Renderer/DescriptorHeap.h"
+#include "D3D12DescriptorHeap.h"
 
 TODO("Wrapper for DXGI_FORMAT");
 
@@ -20,6 +19,8 @@ D3D12GraphicsTexture::~D3D12GraphicsTexture()
 	D3D12GraphicsManager* graphicsManager = D3D12GraphicsManager::GetInstance();
 	graphicsManager->AddD3D12ObjectToDefferedDeletion(m_pResource);
 
+	BL_SAFE_DELETE(m_CPUDescriptorHeap);
+
 	TODO("Fix this properly");
 	BL_SAFE_DELETE(m_pTextureData);
 }
@@ -28,7 +29,7 @@ bool D3D12GraphicsTexture::LoadTextureDDS(const std::wstring& filePath)
 {
 	D3D12GraphicsManager* graphicsManager = D3D12GraphicsManager::GetInstance();
 	ID3D12Device5* device5 = graphicsManager->GetDevice();
-	DescriptorHeap* mainDHeap = graphicsManager->GetMainDescriptorHeap();
+	D3D12DescriptorHeap* mainDHeap = graphicsManager->GetMainDescriptorHeap();
 
 	HRESULT hr;
 
@@ -91,9 +92,9 @@ bool D3D12GraphicsTexture::CreateTexture2D(unsigned int width, unsigned int heig
 {
 	D3D12GraphicsManager* graphicsManager = D3D12GraphicsManager::GetInstance();
 	ID3D12Device5* device5 = graphicsManager->GetDevice();
-	DescriptorHeap* mainDHeap = graphicsManager->GetMainDescriptorHeap();
-	DescriptorHeap* rtvDHeap = graphicsManager->GetRTVDescriptorHeap();
-	DescriptorHeap* dsvDHeap = graphicsManager->GetDSVDescriptorHeap();
+	D3D12DescriptorHeap* mainDHeap = graphicsManager->GetMainDescriptorHeap();
+	D3D12DescriptorHeap* rtvDHeap = graphicsManager->GetRTVDescriptorHeap();
+	D3D12DescriptorHeap* dsvDHeap = graphicsManager->GetDSVDescriptorHeap();
 
 	HRESULT hr;
 
@@ -211,6 +212,18 @@ bool D3D12GraphicsTexture::CreateTexture2D(unsigned int width, unsigned int heig
 
 	if (textureUsage & F_TEXTURE_USAGE::UnorderedAccess)
 	{
+		// Create Non-CPUVisible DescriptorHeap and descriptor
+		std::wstring dHeapName = name + L"_CPU_DescriptorHeap";
+		m_CPUDescriptorHeap = new D3D12DescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, dHeapName, false);
+
+		D3D12_UNORDERED_ACCESS_VIEW_DESC uavDescCPU = {};
+		uavDescCPU.Format = dxgiFormat;
+		uavDescCPU.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+
+		D3D12_CPU_DESCRIPTOR_HANDLE cdhCPUHeap = m_CPUDescriptorHeap->GetCPUHeapAt(0);
+		device5->CreateUnorderedAccessView(m_pResource, nullptr, &uavDescCPU, cdhCPUHeap);
+
+		// Create CPU-Visible descriptors
 		for (unsigned int i = 0; i < m_NumMipLevels; i++)
 		{
 			D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
@@ -219,9 +232,9 @@ bool D3D12GraphicsTexture::CreateTexture2D(unsigned int width, unsigned int heig
 			uavDesc.Texture2D.MipSlice = i;
 
 			m_UnorderedAccessDescriptorHeapIndices[i] = mainDHeap->GetNextDescriptorHeapIndex(1);
-			D3D12_CPU_DESCRIPTOR_HANDLE cdh = mainDHeap->GetCPUHeapAt(m_UnorderedAccessDescriptorHeapIndices[i]);
+			D3D12_CPU_DESCRIPTOR_HANDLE cdhMainHeap = mainDHeap->GetCPUHeapAt(m_UnorderedAccessDescriptorHeapIndices[i]);
 
-			device5->CreateUnorderedAccessView(m_pResource, nullptr, &uavDesc, cdh);
+			device5->CreateUnorderedAccessView(m_pResource, nullptr, &uavDesc, cdhMainHeap);
 		}
 	}
 

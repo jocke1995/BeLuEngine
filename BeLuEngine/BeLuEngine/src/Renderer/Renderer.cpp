@@ -27,7 +27,7 @@
 #include "../ECS/Components/Lights/SpotLightComponent.h"
 
 // Renderer-Engine 
-#include "DescriptorHeap.h"
+#include "API/D3D12/D3D12DescriptorHeap.h"
 #include "Geometry/Transform.h"
 #include "Camera/BaseCamera.h"
 #include "Geometry/Model.h"
@@ -139,8 +139,8 @@ void Renderer::InitD3D12(HWND hwnd, unsigned int width, unsigned int height, HIN
 
 	// ABSTRACTION TEMP
 	ID3D12Device5* m_pDevice5 = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pDevice5;
-	DescriptorHeap* mainHeap= static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
-	DescriptorHeap* rtvHeap= static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetRTVDescriptorHeap();
+	D3D12DescriptorHeap* mainHeap= static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
+	D3D12DescriptorHeap* rtvHeap= static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetRTVDescriptorHeap();
 
 #pragma region RenderTargets
 	// Main color renderTarget (used until the swapchain RT is drawn to)

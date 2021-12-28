@@ -5,7 +5,6 @@
 #include "../ECS/Entity.h"
 
 #include "Window.h"
-#include "../Renderer/DescriptorHeap.h"
 #include "../Renderer/Geometry/Mesh.h"
 #include "../Renderer/Geometry/Model.h"
 #include "../Renderer/Shader.h"

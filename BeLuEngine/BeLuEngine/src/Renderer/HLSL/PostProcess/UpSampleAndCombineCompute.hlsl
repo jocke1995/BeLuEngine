@@ -2,7 +2,6 @@
 
 static const int g_NumThreads = 64;
 
-
 [numthreads(g_NumThreads, 1, 1)]
 void CS_main(uint3 dispatchThreadID : SV_DispatchThreadID, int3 groupThreadID : SV_GroupThreadID)
 {
@@ -15,7 +14,7 @@ void CS_main(uint3 dispatchThreadID : SV_DispatchThreadID, int3 groupThreadID : 
 	float2 uv = float2(dispatchThreadID.x / screenSize.x, dispatchThreadID.y / screenSize.y);
 
 	float4 downScaledColor = textures[downScaledTextureIndex].SampleLevel(BilinearClamp, uv, 0);
-	float4 currentSizeColor = textures[currentSizeTextureIndex].SampleLevel(BilinearClamp, dispatchThreadID.xy, 0);
+	float4 currentSizeColor = textures[currentSizeTextureIndex][dispatchThreadID.xy];
 
 	float4 finalColor = downScaledColor + currentSizeColor;
 

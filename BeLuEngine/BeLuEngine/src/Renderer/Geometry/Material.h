@@ -4,7 +4,7 @@
 #include "GPU_Structs.h"
 
 class IGraphicsTexture;
-class DescriptorHeap;
+class D3D12DescriptorHeap;
 
 class Material
 {

@@ -2,8 +2,7 @@
 #include "D3D12GraphicsBuffer.h"
 
 #include "D3D12GraphicsManager.h"
-
-#include "../Renderer/DescriptorHeap.h"
+#include "D3D12DescriptorHeap.h"
 
 D3D12GraphicsBuffer::D3D12GraphicsBuffer(E_GRAPHICSBUFFER_TYPE type, unsigned int sizeOfSingleItem, unsigned int numItems, DXGI_FORMAT format, std::wstring name)
 	:IGraphicsBuffer()
@@ -17,7 +16,7 @@ D3D12GraphicsBuffer::D3D12GraphicsBuffer(E_GRAPHICSBUFFER_TYPE type, unsigned in
 
 	D3D12GraphicsManager* graphicsManager = D3D12GraphicsManager::GetInstance();
 	ID3D12Device5* device5 = graphicsManager->GetDevice();
-	DescriptorHeap* mainDHeap = graphicsManager->GetMainDescriptorHeap();
+	D3D12DescriptorHeap* mainDHeap = graphicsManager->GetMainDescriptorHeap();
 
 	unsigned int totalSizeUnpadded = sizeOfSingleItem * numItems;
 	m_Size = totalSizeUnpadded;

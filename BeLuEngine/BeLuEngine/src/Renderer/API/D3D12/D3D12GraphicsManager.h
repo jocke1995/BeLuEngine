@@ -7,7 +7,7 @@
 struct ID3D12Device5;
 
 // D3D12 Wrappers
-class DescriptorHeap;
+class D3D12DescriptorHeap;
 
 class IGraphicsContext;
 
@@ -45,9 +45,9 @@ public:
 	DynamicDataParams SetDynamicData(unsigned int size, const void* data);
 
 	// Getters
-	DescriptorHeap* GetMainDescriptorHeap() const;
-	DescriptorHeap* GetRTVDescriptorHeap()  const;
-	DescriptorHeap* GetDSVDescriptorHeap()  const;
+	D3D12DescriptorHeap* GetMainDescriptorHeap() const;
+	D3D12DescriptorHeap* GetRTVDescriptorHeap()  const;
+	D3D12DescriptorHeap* GetDSVDescriptorHeap()  const;
 	ID3D12Device5* GetDevice() const { return m_pDevice5; }
 	ID3D12RootSignature* GetGlobalRootSignature() const { return m_pGlobalRootSig; }
 	unsigned int GetCommandInterfaceIndex() const { return m_CommandInterfaceIndex; }
@@ -85,9 +85,9 @@ private:
 	UINT64 m_HardSynceFenceValue = 0;
 
 	// DescriptorHeaps
-	DescriptorHeap* m_pMainDescriptorHeap = nullptr;
-	DescriptorHeap* m_pRTVDescriptorHeap  = nullptr;
-	DescriptorHeap* m_pDSVDescriptorHeap  = nullptr;
+	D3D12DescriptorHeap* m_pMainDescriptorHeap = nullptr;
+	D3D12DescriptorHeap* m_pRTVDescriptorHeap  = nullptr;
+	D3D12DescriptorHeap* m_pDSVDescriptorHeap  = nullptr;
 
 	// Swapchain
 	IDXGISwapChain4* m_pSwapChain4 = nullptr;

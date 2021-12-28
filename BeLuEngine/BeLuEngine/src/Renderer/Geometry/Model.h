@@ -3,7 +3,7 @@
 
 class Mesh;
 class Material;
-class DescriptorHeap;
+class D3D12DescriptorHeap;
 struct SlotInfo;
 
 // DX12 Forward Declarations

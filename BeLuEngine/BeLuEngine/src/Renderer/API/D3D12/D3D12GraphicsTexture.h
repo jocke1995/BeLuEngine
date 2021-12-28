@@ -3,6 +3,8 @@
 
 #include "../IGraphicsTexture.h"
 
+class D3D12DescriptorHeap;
+
 class D3D12GraphicsTexture : public IGraphicsTexture
 {
 public:
@@ -30,6 +32,8 @@ private:
 	unsigned int m_UnorderedAccessDescriptorHeapIndices[g_MAX_TEXTURE_MIPS] = { UINT32_MAX };
 	unsigned int m_RenderTargetDescriptorHeapIndex		= -1;
 	unsigned int m_DepthStencilDescriptorHeapIndex		= -1;
+
+	D3D12DescriptorHeap* m_CPUDescriptorHeap = nullptr;
 
 	unsigned __int64 m_Size = 0;
 	unsigned char* m_pTextureData = nullptr;

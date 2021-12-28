@@ -1,10 +1,10 @@
 #include "stdafx.h"
 #include "BoundingBoxPool.h"
 
-#include "../DescriptorHeap.h"
+#include "../API/D3D12/D3D12DescriptorHeap.h"
 #include "../Geometry/Mesh.h"
 
-BoundingBoxPool::BoundingBoxPool(ID3D12Device5* device, DescriptorHeap* descriptorHeap_CBV_UAV_SRV)
+BoundingBoxPool::BoundingBoxPool(ID3D12Device5* device, D3D12DescriptorHeap* descriptorHeap_CBV_UAV_SRV)
 {
 	m_pDevice = device;
 	m_pDescriptorHeap_CBV_UAV_SRV = descriptorHeap_CBV_UAV_SRV;
@@ -23,7 +23,7 @@ BoundingBoxPool::~BoundingBoxPool()
 	}
 }
 
-BoundingBoxPool* BoundingBoxPool::Get(ID3D12Device5* device, DescriptorHeap* descriptorHeap_CBV_UAV_SRV)
+BoundingBoxPool* BoundingBoxPool::Get(ID3D12Device5* device, D3D12DescriptorHeap* descriptorHeap_CBV_UAV_SRV)
 {
 	static BoundingBoxPool instance(device, descriptorHeap_CBV_UAV_SRV);
 

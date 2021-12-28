@@ -1,9 +1,6 @@
 #include "stdafx.h"
 #include "GraphicsPass.h"
 
-// DX12 Specifics
-#include "../Renderer/DescriptorHeap.h"
-
 // API Generic
 #include "../Renderer/API/IGraphicsManager.h"
 #include "../Renderer/API/IGraphicsBuffer.h"

@@ -44,8 +44,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
     /*------ AssetLoader to load models / textures ------*/
    AssetLoader* al = AssetLoader::Get();
    
-   //Scene* scene = SponzaScene(sceneManager);
-   Scene* scene = TestScene(sceneManager);
+   Scene* scene = SponzaScene(sceneManager);
+   //Scene* scene = TestScene(sceneManager);
 
    // Set scene
    sceneManager->SetScene(scene);
@@ -55,6 +55,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
    unsigned int width = 1280;
    unsigned int height = 720;
 
+   
    float2 uv = { 0 / width, 0 / height };
    float2 uv2 = { 1280 / width, 720 / height };
    float2 uv3 = { (float)600 / width, (float)5 / height };
@@ -372,18 +373,47 @@ Scene* SponzaScene(SceneManager* sm)
     tc->GetTransform()->SetScale(0.05f, 0.05f, 0.05f);
     /* ---------------------- Sponza ---------------------- */
 
-    
-
-
-    entity = scene->AddEntity("box");
+    /* ------------------------ EmissiveSphere --------------------------------- */
+    entity = scene->AddEntity("emissiveSphere");
     mc = entity->AddComponent<component::ModelComponent>();
     tc = entity->AddComponent<component::TransformComponent>();
     bbc = entity->AddComponent<component::BoundingBoxComponent>();
+    plc = entity->AddComponent<component::PointLightComponent>();
 
-    mc->SetModel(boxModel);
-    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
-    tc->GetTransform()->SetPosition(0, 4.0f, 1.0f);
+    mc->SetModel(sphereModel);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE);
+
+    sharedMatData = mc->GetMaterialAt(0)->GetSharedMaterialData();
+    sharedMatData->hasMetallicTexture = false;
+    sharedMatData->hasRoughnessTexture = false;
+    sharedMatData->hasNormalTexture = false;
+    sharedMatData->metallicValue = 0.8f;
+    sharedMatData->roughnessValue = 0.10f;
+    sharedMatData->glow = true;
+    sharedMatData->emissiveValue = { 0.2f, 1.0f, 0.5f, 10.0f };
+    sharedMatData->hasEmissiveTexture = false;
+
+    plc->SetColor({ 0.2f, 1.0f, 0.5f, });
+    plc->SetIntensity(10.0f);
+
+    //tc->GetTransform()->SetScale(2.0f);
+    tc->GetTransform()->SetScale(5.0f, 0.5f, 0.5f);
+    tc->GetTransform()->SetPosition(0.0f, 4, 10);
+
+    mc->UpdateMaterialRawBufferFromMaterial();
     bbc->Init();
+    mc->Update(0);
+    /* ------------------------ EmissiveSphere --------------------------------- */
+
+    //entity = scene->AddEntity("box");
+    //mc = entity->AddComponent<component::ModelComponent>();
+    //tc = entity->AddComponent<component::TransformComponent>();
+    //bbc = entity->AddComponent<component::BoundingBoxComponent>();
+    //
+    //mc->SetModel(boxModel);
+    //mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
+    //tc->GetTransform()->SetPosition(0, 4.0f, 1.0f);
+    //bbc->Init();
 
 
     /* ---------------------- Sphere ---------------------- */

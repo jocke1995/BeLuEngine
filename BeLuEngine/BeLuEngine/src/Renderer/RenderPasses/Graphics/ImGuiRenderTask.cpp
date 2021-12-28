@@ -1,10 +1,11 @@
 #include "stdafx.h"
 #include "ImGUIRenderTask.h"
 
-//TEMP
-#include "../Renderer/DescriptorHeap.h"
+TODO("Fix this class (remove descriptorHeap stuff)");
 
-TODO("Fix");
+//TEMP
+#include "../Renderer/API/D3D12/D3D12DescriptorHeap.h"
+
 // Generic API
 #include "../Renderer/API/D3D12/D3D12GraphicsManager.h"
 #include "../Renderer/API/D3D12/D3D12GraphicsTexture.h"
@@ -38,7 +39,7 @@ void ImGuiRenderTask::Execute()
 		bar.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
 		static_cast<D3D12GraphicsContext*>(m_pGraphicsContext)->m_pCommandList->ResourceBarrier(1, &bar);
 
-		DescriptorHeap* renderTargetHeap = manager->GetRTVDescriptorHeap();
+		D3D12DescriptorHeap* renderTargetHeap = manager->GetRTVDescriptorHeap();
 		const unsigned int swapChainRTVIndex = manager->m_SwapchainRTVIndices[manager->m_CommandInterfaceIndex];
 		D3D12_CPU_DESCRIPTOR_HANDLE cdh = renderTargetHeap->GetCPUHeapAt(swapChainRTVIndex);
 

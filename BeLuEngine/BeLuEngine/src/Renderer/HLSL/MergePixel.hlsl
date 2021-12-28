@@ -22,4 +22,5 @@ float4 PS_main(VS_OUT input) : SV_TARGET0
 	//reinhard += float4(reflData.rgb, 1.0f);
 	//reinhard = saturate(reinhard);
 	return float4(reinhard.rgb, 1.0f);
+	//return float4(finalColor.rgb, 1.0f);
 }

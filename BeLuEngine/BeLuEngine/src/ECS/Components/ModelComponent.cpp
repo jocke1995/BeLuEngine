@@ -7,7 +7,6 @@
 #include "../Renderer/Geometry/Mesh.h"
 #include "../Renderer/Geometry/Material.h"
 #include "../Renderer/Renderer.h"
-#include "../Renderer/DescriptorHeap.h"
 #include "../Entity.h"
 
 // TODO ABSTRACTION

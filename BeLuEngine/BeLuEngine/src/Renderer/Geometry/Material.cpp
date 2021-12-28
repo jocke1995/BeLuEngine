@@ -2,11 +2,9 @@
 #include "Material.h"
 
 #include "../Misc/AssetLoader.h"
+#include "../Renderer/Renderer.h"
 
 #include "../API/IGraphicsTexture.h"
-
-#include "../Renderer/Renderer.h"
-#include "../Renderer/DescriptorHeap.h"
 
 Material::Material(const std::wstring& name)
 {

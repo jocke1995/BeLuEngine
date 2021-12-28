@@ -1,8 +1,9 @@
 #include "stdafx.h"
 #include "MergeRenderTask.h"
 
-TODO("Remove this");
-#include "../Renderer/DescriptorHeap.h"
+TODO("Fix this class (remove descriptorHeap stuff)");
+
+#include "../Renderer/API/D3D12/D3D12DescriptorHeap.h"
 
 // Model info
 #include "../Renderer/Geometry/Mesh.h"
@@ -57,7 +58,7 @@ void MergeRenderTask::Execute()
 
 		m_pGraphicsContext->SetupBindings(false);
 
-		DescriptorHeap* renderTargetHeap = manager->GetRTVDescriptorHeap();
+		D3D12DescriptorHeap* renderTargetHeap = manager->GetRTVDescriptorHeap();
 
 		const unsigned int SwapChainRTVIndex = static_cast<D3D12GraphicsManager*>(IGraphicsManager::GetBaseInstance())->m_SwapchainRTVIndices[manager->m_CommandInterfaceIndex];
 		D3D12_CPU_DESCRIPTOR_HANDLE cdh = renderTargetHeap->GetCPUHeapAt(SwapChainRTVIndex);

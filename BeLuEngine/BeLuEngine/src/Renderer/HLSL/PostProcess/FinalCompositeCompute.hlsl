@@ -11,10 +11,10 @@ void CS_main(uint3 dispatchThreadID : SV_DispatchThreadID, int3 groupThreadID : 
 	unsigned int combinedUAVTextureIndex = dhIndices.index2;
 	unsigned int mipLevel = dhIndices.index3;
 
-	float2 screenSize = float2(1280.0f, 720.0f);
-	float2 uv = float2(dispatchThreadID.x / screenSize.x, dispatchThreadID.y / screenSize.y);
-	float4 bloomColor = textures[bloomTextureIndex].SampleLevel(BilinearClamp, uv, 0);
+	//float2 screenSize = float2(1280.0f, 720.0f);
+	//float2 uv = float2(dispatchThreadID.x / screenSize.x, dispatchThreadID.y / screenSize.y);
 
+	float4 bloomColor = textures[bloomTextureIndex][dispatchThreadID.xy];
 	float4 sceneColor = textures[sceneTextureIndex][dispatchThreadID.xy];
 
 	float4 finalColor = bloomColor + sceneColor;
