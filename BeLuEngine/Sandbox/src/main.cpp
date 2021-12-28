@@ -405,15 +405,15 @@ Scene* SponzaScene(SceneManager* sm)
 
     float4 emissiveColor = { 1.0f, 0.4f, 0.4f, 8.0f };
     float3 position = { 15.0f, 10.0f, -20.0f };
-    createEmissiveSphere("sphere1", emissiveColor, position);
+    createEmissiveSphere("RedSphere", emissiveColor, position);
 
     emissiveColor = { 0.4f, 1.0f, 0.4f, 8.0f };
     position = { 15.0f, 10.0f, 0.0f };
-    createEmissiveSphere("sphere2", emissiveColor, position);
+    createEmissiveSphere("GreenSphere", emissiveColor, position);
     
     emissiveColor = { 0.4f, 0.4f, 1.0f, 8.0f };
     position = { 15.0f, 10.0f, 22.0f };
-    createEmissiveSphere("sphere3", emissiveColor, position);
+    createEmissiveSphere("BlueSphere", emissiveColor, position);
 
 
    
