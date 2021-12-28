@@ -210,7 +210,6 @@ Scene* TestScene(SceneManager* sm)
     sharedMatData->hasNormalTexture = false;
     sharedMatData->metallicValue = 0.8f;
     sharedMatData->roughnessValue = 0.10f;
-    sharedMatData->glow = true;
     sharedMatData->emissiveValue = { 0.2f, 1.0f, 0.5f, 10.0f };
     sharedMatData->hasEmissiveTexture = false;
 
@@ -374,8 +373,16 @@ Scene* SponzaScene(SceneManager* sm)
     /* ---------------------- Sponza ---------------------- */
 
     /* ------------------------ EmissiveSphere --------------------------------- */
-    auto createEmissiveMaterial = [](component::ModelComponent* mc, float4 emissiveColor)
+    auto createEmissiveSphere = [&scene, sphereModel](std::string name, float4 emissiveColor, float3 position)
     {
+        Entity* entity = scene->AddEntity(name);
+        component::ModelComponent* mc = entity->AddComponent<component::ModelComponent>();
+        component::TransformComponent* tc = entity->AddComponent<component::TransformComponent>();
+        component::PointLightComponent* plc = entity->AddComponent<component::PointLightComponent>(F_LIGHT_FLAGS::USE_TRANSFORM_POSITION);
+
+        mc->SetModel(sphereModel);
+        mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
+
         static int index = 0;
         AssetLoader* al = AssetLoader::Get();
         std::wstring matName = L"dynamicMaterialMainLoop" + std::to_wstring(index);
@@ -384,112 +391,39 @@ Scene* SponzaScene(SceneManager* sm)
         newMat->GetSharedMaterialData()->emissiveValue = emissiveColor;
 
         mc->SetMaterialAt(0, newMat);
+
+        plc->SetColor({ emissiveColor.r, emissiveColor.g, emissiveColor.b });
+        plc->SetIntensity(emissiveColor.a / 4);
+
+        tc->GetTransform()->SetScale(0.5f, 0.5f, 0.5f);
+        tc->GetTransform()->SetPosition(position.x, position.y, position.z);
+
+        mc->UpdateMaterialRawBufferFromMaterial();
+        plc->Update(0);
     };
 
-    entity = scene->AddEntity("emissiveSphere");
-    mc = entity->AddComponent<component::ModelComponent>();
-    tc = entity->AddComponent<component::TransformComponent>();
-    bbc = entity->AddComponent<component::BoundingBoxComponent>();
-    plc = entity->AddComponent<component::PointLightComponent>();
 
-    mc->SetModel(sphereModel);
-    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE);
+    float4 emissiveColor = { 1.0f, 0.4f, 0.4f, 8.0f };
+    float3 position = { 15.0f, 10.0f, -20.0f };
+    createEmissiveSphere("sphere1", emissiveColor, position);
 
-    sharedMatData = mc->GetMaterialAt(0)->GetSharedMaterialData();
-    sharedMatData->hasMetallicTexture = false;
-    sharedMatData->hasRoughnessTexture = false;
-    sharedMatData->hasNormalTexture = false;
-    sharedMatData->metallicValue = 0.8f;
-    sharedMatData->roughnessValue = 0.10f;
-    sharedMatData->glow = true;
-    sharedMatData->emissiveValue = { 1.0f, 0.1f, 1.0f, 10.0f };
-    sharedMatData->hasEmissiveTexture = false;
-
-    plc->SetColor({ 0.2f, 1.0f, 0.5f, });
-    plc->SetIntensity(10.0f);
-
-    //tc->GetTransform()->SetScale(2.0f);
-    tc->GetTransform()->SetScale(5.0f, 0.5f, 0.5f);
-    tc->GetTransform()->SetPosition(0.0f, 4, 10);
-
-    mc->UpdateMaterialRawBufferFromMaterial();
-    bbc->Init();
-    mc->Update(0);
-    /* ------------------------ EmissiveSphere --------------------------------- */
-
-    //entity = scene->AddEntity("box");
-    //mc = entity->AddComponent<component::ModelComponent>();
-    //tc = entity->AddComponent<component::TransformComponent>();
-    //bbc = entity->AddComponent<component::BoundingBoxComponent>();
-    //
-    //mc->SetModel(boxModel);
-    //mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
-    //tc->GetTransform()->SetPosition(0, 4.0f, 1.0f);
-    //bbc->Init();
-
-
-    /* ---------------------- Sphere ---------------------- */
-    entity = scene->AddEntity("sphere1");
-    mc = entity->AddComponent<component::ModelComponent>();
-    tc = entity->AddComponent<component::TransformComponent>();
-    bbc = entity->AddComponent<component::BoundingBoxComponent>();
+    emissiveColor = { 0.4f, 1.0f, 0.4f, 8.0f };
+    position = { 15.0f, 10.0f, 0.0f };
+    createEmissiveSphere("sphere2", emissiveColor, position);
     
-    mc->SetModel(sphereModel);
-    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW );
-    float4 emissiveColor = { 1.0f, 0.1f, 0.1f, 10.0f };
-    createEmissiveMaterial(mc, emissiveColor);
-    tc->GetTransform()->SetScale(1.0f);
-    tc->GetTransform()->SetPosition(15, 1, 1);
-    bbc->Init();
+    emissiveColor = { 0.4f, 0.4f, 1.0f, 8.0f };
+    position = { 15.0f, 10.0f, 22.0f };
+    createEmissiveSphere("sphere3", emissiveColor, position);
 
-    entity = scene->AddEntity("sphere2");
-    mc = entity->AddComponent<component::ModelComponent>();
-    tc = entity->AddComponent<component::TransformComponent>();
-    bbc = entity->AddComponent<component::BoundingBoxComponent>();
 
-    mc->SetModel(sphereModel);
-    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
-    emissiveColor = {0.1f, 1.0f, 0.1f, 10.0f};
-    createEmissiveMaterial(mc, emissiveColor);
-    tc->GetTransform()->SetScale(1.0f);
-    tc->GetTransform()->SetPosition(15, 4, 4);
-    bbc->Init();
-
-    entity = scene->AddEntity("sphere3");
-    mc = entity->AddComponent<component::ModelComponent>();
-    tc = entity->AddComponent<component::TransformComponent>();
-    bbc = entity->AddComponent<component::BoundingBoxComponent>();
-
-    mc->SetModel(sphereModel);
-    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
-
-    emissiveColor = { 0.1f, 0.1f, 1.0f, 10.0f };
-    createEmissiveMaterial(mc, emissiveColor);
-
-    tc->GetTransform()->SetScale(1.0f);
-    tc->GetTransform()->SetPosition(15, 7, 7);
-    bbc->Init();
-    /* ---------------------- Sphere ---------------------- */
-
-    /* ---------------------- Lights ---------------------- */
-    entity = scene->AddEntity("pl1");
-    mc = entity->AddComponent<component::ModelComponent>();
-    tc = entity->AddComponent<component::TransformComponent>();
-    plc = entity->AddComponent<component::PointLightComponent>(F_LIGHT_FLAGS::USE_TRANSFORM_POSITION);
-
-    mc->SetModel(sphereModel);
-    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
-    tc->GetTransform()->SetScale(0.5f);
-    tc->GetTransform()->SetPosition({ 25.0f, 16.2f, 7.5f});
-    plc->SetColor({ 1.0f, 1.0f, 1.0f });
-    plc->SetIntensity(1.0f);
-    entity->Update(0);
-
-    entity = scene->AddEntity("dirLight");
-    dlc = entity->AddComponent<component::DirectionalLightComponent>(F_LIGHT_FLAGS::CAST_SHADOW);
-    dlc->SetColor({ 0.1f, 0.25f, 0.3f });
-    dlc->SetDirection({ -1.0f, -2.0f, 0.03f });
-    /* ---------------------- Lights ---------------------- */
+   
+    /* ---------------------- Sun ---------------------- */
+    //entity = scene->AddEntity("sun");
+    //dlc = entity->AddComponent<component::DirectionalLightComponent>(F_LIGHT_FLAGS::CAST_SHADOW);
+    //dlc->SetColor({ 0.1f, 0.25f, 0.3f });
+    //dlc->SetIntensity(10.0f);
+    //dlc->SetDirection({ -1.0f, -2.0f, 0.03f });
+    /* ---------------------- Sun ---------------------- */
 
     /* ---------------------- Update Function ---------------------- */
     scene->SetUpdateScene(&SponzaUpdateScene);

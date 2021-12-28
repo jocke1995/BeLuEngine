@@ -90,7 +90,7 @@ namespace component
 			material->GetSharedMaterialData()->hasMetallicTexture,
 			material->GetSharedMaterialData()->hasOpacityTexture,
 			material->GetSharedMaterialData()->hasNormalTexture,
-			material->GetSharedMaterialData()->glow,
+			material->GetSharedMaterialData()->pad1,
 
 			material->GetSharedMaterialData()->emissiveValue,
 
@@ -159,7 +159,7 @@ namespace component
 				m_Materials[i]->GetSharedMaterialData()->hasMetallicTexture,
 				m_Materials[i]->GetSharedMaterialData()->hasOpacityTexture,
 				m_Materials[i]->GetSharedMaterialData()->hasNormalTexture,
-				m_Materials[i]->GetSharedMaterialData()->glow,
+				m_Materials[i]->GetSharedMaterialData()->pad1,
 
 				m_Materials[i]->GetSharedMaterialData()->emissiveValue,
 

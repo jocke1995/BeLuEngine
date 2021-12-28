@@ -38,6 +38,8 @@ void Light::SetColor(float3 color)
 void Light::SetIntensity(float intensity)
 {
 	m_pBaseLight->intensity = intensity;
+
+	UpdateLightIntensity();
 }
 
 unsigned int Light::GetLightFlags() const

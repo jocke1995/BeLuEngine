@@ -44,15 +44,15 @@ protected:
 	unsigned int m_Id = 0;
 
 	virtual void UpdateLightColor() = 0;
+	virtual void UpdateLightIntensity() = 0;
 
 	// For usage in the lightRawBuffer (memory on GPU)
+	unsigned int m_LightOffsetInArray = 0;
+	static inline IGraphicsBuffer* m_pLightsRawBuffer = nullptr;
+	static inline unsigned char* m_pRawData = nullptr;
 private:
 	friend class Renderer;
 	friend class ImGuiHandler;
-
-	static inline IGraphicsBuffer* m_pLightsRawBuffer = nullptr;
-	static inline unsigned char* m_pRawData			 = nullptr;
-	unsigned int m_LightOffsetInArray = 0;
 };
 
 #endif

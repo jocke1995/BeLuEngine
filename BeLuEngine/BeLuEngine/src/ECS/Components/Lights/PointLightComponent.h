@@ -23,6 +23,7 @@ namespace component
 
 	protected:
 		void UpdateLightColor() override;
+		void UpdateLightIntensity() override;
 
 	private:
 		PointLight* m_pPointLight = nullptr;

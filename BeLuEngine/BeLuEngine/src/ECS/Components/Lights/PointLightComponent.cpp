@@ -34,6 +34,15 @@ namespace component
 			m_pPointLight->position.y = position.y;
 			m_pPointLight->position.z = position.z;
 		}
+
+		// Copy into buffer to be updated on GPU
+		// Pointlights are second in the buffer, first is dirlight, so we need to add the offset first.
+		unsigned int offset = sizeof(LightHeader) + DIR_LIGHT_MAXOFFSET;
+		
+		offset += m_LightOffsetInArray * sizeof(PointLight);
+
+		// Copy lightData
+		memcpy(Light::m_pRawData + offset * sizeof(unsigned char), m_pPointLight, sizeof(PointLight));
 	}
 
 	void PointLightComponent::OnInitScene()
@@ -66,5 +75,10 @@ namespace component
 	void PointLightComponent::UpdateLightColor()
 	{
 		m_pPointLight->baseLight.color = m_pBaseLight->color;
+	}
+
+	void PointLightComponent::UpdateLightIntensity()
+	{
+		m_pPointLight->baseLight.intensity = m_pBaseLight->intensity;
 	}
 }

@@ -51,12 +51,12 @@ Material::Material(const std::wstring* name, std::map<E_TEXTURE2D_TYPE, IGraphic
 			textures->at(E_TEXTURE2D_TYPE::NORMAL)->GetShaderResourceHeapIndex(),
 			textures->at(E_TEXTURE2D_TYPE::EMISSIVE)->GetShaderResourceHeapIndex(),
 			textures->at(E_TEXTURE2D_TYPE::OPACITY)->GetShaderResourceHeapIndex(),
-			1,	// useEmissiveTexture
+			0,	// useEmissiveTexture
 			1,	// useRoughnessTexture
 			1,	// useMetallicTexture
 			0,	// useOpacityTexture
 			1,	// useNormalTexture
-			0,  // Glow
+			0,  // padding
 			{0.0f, 0.0f, 0.0f, 1.0f}, // EmissiveColor + strength
 			0.01f, // roughnessValue
 			0.01f, // metallicValue

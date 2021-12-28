@@ -41,6 +41,15 @@ namespace component
             m_pSpotLight->position_cutOff.y = position.y;
             m_pSpotLight->position_cutOff.z = position.z;
         }
+
+        // Copy into buffer to be updated on GPU
+        // Spotlights are third in the buffer, first is Dirlight, second is Pointlight so we need to add the offset first.
+        unsigned int offset = sizeof(LightHeader) + DIR_LIGHT_MAXOFFSET + POINT_LIGHT_MAXOFFSET;
+
+        offset += m_LightOffsetInArray * sizeof(SpotLight);
+
+        // Copy lightData
+        memcpy(Light::m_pRawData + offset * sizeof(unsigned char), m_pSpotLight, sizeof(SpotLight));
     }
 
     void SpotLightComponent::OnInitScene()
@@ -121,5 +130,10 @@ namespace component
     void SpotLightComponent::UpdateLightColor()
     {
         m_pSpotLight->baseLight.color = m_pBaseLight->color;
+    }
+
+    void SpotLightComponent::UpdateLightIntensity()
+    {
+        m_pSpotLight->baseLight.intensity = m_pBaseLight->intensity;
     }
 }

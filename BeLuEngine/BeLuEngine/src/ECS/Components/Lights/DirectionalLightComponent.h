@@ -23,6 +23,7 @@ namespace component
 	
 	protected:
 		void UpdateLightColor() override;
+		void UpdateLightIntensity() override;
 
 	private:
 		float m_Distance = 30.0f;

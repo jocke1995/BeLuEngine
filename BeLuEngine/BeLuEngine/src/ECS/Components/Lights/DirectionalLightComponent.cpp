@@ -23,7 +23,13 @@ namespace component
 
 	void DirectionalLightComponent::Update(double dt)
 	{
+		// Copy into buffer to be updated on GPU
+		// Spotlights are first in the buffer, after the header
+		unsigned int offset = sizeof(LightHeader);
 
+		offset += m_LightOffsetInArray * sizeof(DirectionalLight);
+		// Copy lightData
+		memcpy(Light::m_pRawData + offset * sizeof(unsigned char), m_pDirectionalLight, sizeof(DirectionalLight));
 	}
 
 	void DirectionalLightComponent::OnInitScene()
@@ -50,6 +56,11 @@ namespace component
 	void DirectionalLightComponent::UpdateLightColor()
 	{
 		m_pDirectionalLight->baseLight.color = m_pBaseLight->color;
+	}
+
+	void DirectionalLightComponent::UpdateLightIntensity()
+	{
+		m_pDirectionalLight->baseLight.intensity = m_pBaseLight->intensity;
 	}
 
 	void DirectionalLightComponent::initFlagUsages()

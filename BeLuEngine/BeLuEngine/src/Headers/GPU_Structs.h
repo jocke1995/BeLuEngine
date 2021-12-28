@@ -39,7 +39,7 @@ struct MaterialData
 	unsigned int hasMetallicTexture;
 	unsigned int hasOpacityTexture;
 	unsigned int hasNormalTexture;
-	unsigned int glow;
+	unsigned int pad1;
 
 	float4 emissiveValue;
 

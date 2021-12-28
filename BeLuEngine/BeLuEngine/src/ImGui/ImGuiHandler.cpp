@@ -205,7 +205,6 @@ void ImGuiHandler::drawSceneHierarchy()
 									bool useOpacityTexture = matData->hasOpacityTexture;
 									bool useEmissiveTexture = matData->hasEmissiveTexture;
 									bool useNormalTexture = matData->hasNormalTexture;
-									bool glow = matData->glow;
 
 									float roughnessValue = matData->roughnessValue;
 									float metallicValue = matData->metallicValue;
@@ -218,7 +217,6 @@ void ImGuiHandler::drawSceneHierarchy()
 									ImGui::Checkbox("Use Opacity Texture", &useOpacityTexture);
 									ImGui::Checkbox("Use Emissive Texture", &useEmissiveTexture);
 									ImGui::Checkbox("Use Normal Texture", &useNormalTexture);
-									ImGui::Checkbox("Glow", &glow);
 
 									ImGui::DragFloat("Roughness", &roughnessValue, 0.005f, 0.1f, 1.0f);
 									ImGui::DragFloat("Metallic", &metallicValue, 0.005f, 0.1f, 1.0f);
@@ -247,7 +245,6 @@ void ImGuiHandler::drawSceneHierarchy()
 									matData->hasOpacityTexture = useOpacityTexture;
 									matData->hasEmissiveTexture = useEmissiveTexture;
 									matData->hasNormalTexture = useNormalTexture;
-									matData->glow = glow;
 
 									matData->roughnessValue = roughnessValue;
 									matData->metallicValue = metallicValue;

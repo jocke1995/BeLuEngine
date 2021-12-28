@@ -28,6 +28,7 @@ namespace component
 	
 	protected:
 		void UpdateLightColor() override;
+		void UpdateLightIntensity() override;
 
 	private:
 		SpotLight* m_pSpotLight = nullptr;
