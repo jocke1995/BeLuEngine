@@ -374,6 +374,18 @@ Scene* SponzaScene(SceneManager* sm)
     /* ---------------------- Sponza ---------------------- */
 
     /* ------------------------ EmissiveSphere --------------------------------- */
+    auto createEmissiveMaterial = [](component::ModelComponent* mc, float4 emissiveColor)
+    {
+        static int index = 0;
+        AssetLoader* al = AssetLoader::Get();
+        std::wstring matName = L"dynamicMaterialMainLoop" + std::to_wstring(index);
+        Material* newMat = al->CreateMaterial(matName, al->LoadMaterial(mc->GetMaterialAt(0)->GetName()));
+        index++;
+        newMat->GetSharedMaterialData()->emissiveValue = emissiveColor;
+
+        mc->SetMaterialAt(0, newMat);
+    };
+
     entity = scene->AddEntity("emissiveSphere");
     mc = entity->AddComponent<component::ModelComponent>();
     tc = entity->AddComponent<component::TransformComponent>();
@@ -390,7 +402,7 @@ Scene* SponzaScene(SceneManager* sm)
     sharedMatData->metallicValue = 0.8f;
     sharedMatData->roughnessValue = 0.10f;
     sharedMatData->glow = true;
-    sharedMatData->emissiveValue = { 0.2f, 1.0f, 0.5f, 10.0f };
+    sharedMatData->emissiveValue = { 1.0f, 0.1f, 1.0f, 10.0f };
     sharedMatData->hasEmissiveTexture = false;
 
     plc->SetColor({ 0.2f, 1.0f, 0.5f, });
@@ -423,7 +435,9 @@ Scene* SponzaScene(SceneManager* sm)
     bbc = entity->AddComponent<component::BoundingBoxComponent>();
     
     mc->SetModel(sphereModel);
-    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_TRANSPARENT | F_DRAW_FLAGS::NO_DEPTH );
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW );
+    float4 emissiveColor = { 1.0f, 0.1f, 0.1f, 10.0f };
+    createEmissiveMaterial(mc, emissiveColor);
     tc->GetTransform()->SetScale(1.0f);
     tc->GetTransform()->SetPosition(15, 1, 1);
     bbc->Init();
@@ -434,8 +448,9 @@ Scene* SponzaScene(SceneManager* sm)
     bbc = entity->AddComponent<component::BoundingBoxComponent>();
 
     mc->SetModel(sphereModel);
-    //mc->SetMaterialAt(0, ballMatCopy);
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
+    emissiveColor = {0.1f, 1.0f, 0.1f, 10.0f};
+    createEmissiveMaterial(mc, emissiveColor);
     tc->GetTransform()->SetScale(1.0f);
     tc->GetTransform()->SetPosition(15, 4, 4);
     bbc->Init();
@@ -447,6 +462,10 @@ Scene* SponzaScene(SceneManager* sm)
 
     mc->SetModel(sphereModel);
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
+
+    emissiveColor = { 0.1f, 0.1f, 1.0f, 10.0f };
+    createEmissiveMaterial(mc, emissiveColor);
+
     tc->GetTransform()->SetScale(1.0f);
     tc->GetTransform()->SetPosition(15, 7, 7);
     bbc->Init();

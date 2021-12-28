@@ -214,7 +214,6 @@ void BloomComputePass::Execute()
 
 		// UpSample and Combine
 		IGraphicsTexture* inputTexture = m_PingPongTextures[0];
-		IGraphicsTexture* outputTexture = m_PingPongTextures[1];
 		for (unsigned int mipLevel = g_NumMips - 1; mipLevel >= 1; mipLevel--)
 		{
 			ScopedPixEvent(UpSample_Combine, m_pGraphicsContext);
@@ -229,22 +228,16 @@ void BloomComputePass::Execute()
 
 			DescriptorHeapIndices dhIndices1 = {};
 			dhIndices1.index0 = inputTexture->GetShaderResourceHeapIndex(mipLevel);	// Read  (Downscaled)
-			dhIndices1.index1 = outputTexture->GetShaderResourceHeapIndex(mipToWriteTo);	// Read  (Current Size)
-			dhIndices1.index2 = outputTexture->GetUnorderedAccessIndex(mipToWriteTo);	// Write (Current Size)
+			dhIndices1.index1 = m_PingPongTextures[0]->GetShaderResourceHeapIndex(mipToWriteTo);	// Read  (Current Size)
+			dhIndices1.index2 = m_PingPongTextures[1]->GetUnorderedAccessIndex(mipToWriteTo);	// Write (Current Size)
 			dhIndices1.index3 = mipToWriteTo;
 
 			m_pGraphicsContext->SetPipelineState(m_PipelineStates[Bloom_UpSampleAndCombineState]);
 			m_pGraphicsContext->Set32BitConstants(Constants_DH_Indices_B1, sizeof(DescriptorHeapIndices) / 4, &dhIndices1, 0, true);
 			m_pGraphicsContext->Dispatch(threadGroupsX, threadGroupsY, 1);
-			m_pGraphicsContext->UAVBarrier(outputTexture);
+			m_pGraphicsContext->UAVBarrier(m_PingPongTextures[1]);
 
-			// Swap input and output textures
-			IGraphicsTexture* temp = inputTexture;
-			inputTexture = outputTexture;
-			outputTexture = temp;
-
-			m_pGraphicsContext->ResourceBarrier(inputTexture, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-			m_pGraphicsContext->ResourceBarrier(outputTexture, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+			inputTexture = m_PingPongTextures[1];
 		}
 
 		// Composite
@@ -253,11 +246,12 @@ void BloomComputePass::Execute()
 			ScopedPixEvent(Composite, m_pGraphicsContext);
 
 			DescriptorHeapIndices dhIndices2 = {};
-			dhIndices2.index0 = inputTexture->GetShaderResourceHeapIndex(0);		 // Read
-			dhIndices2.index1 = finalColorTexture->GetShaderResourceHeapIndex(0); // Read
-			dhIndices2.index2 = finalColorTexture->GetUnorderedAccessIndex(0);	 // Write
+			dhIndices2.index0 = m_PingPongTextures[1]->GetShaderResourceHeapIndex(0);	// Read
+			dhIndices2.index1 = finalColorTexture->GetShaderResourceHeapIndex(0);		// Read
+			dhIndices2.index2 = finalColorTexture->GetUnorderedAccessIndex(0);			// Write
 			dhIndices2.index3 = g_NumMips;		// MipTemp
 
+			m_pGraphicsContext->ResourceBarrier(m_PingPongTextures[1], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 			m_pGraphicsContext->ResourceBarrier(finalColorTexture, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
 			m_pGraphicsContext->SetPipelineState(m_PipelineStates[Bloom_CompositeState]);
