@@ -16,7 +16,7 @@ struct vertex
 
 // This struct can be used to send specific indices as a root constant to the GPU.
 // Example usage is when the indices for pp-effects are sent to gpu.
-struct DescriptorHeapIndices
+struct RootConstantUints
 {
 	unsigned int index0;
 	unsigned int index1;

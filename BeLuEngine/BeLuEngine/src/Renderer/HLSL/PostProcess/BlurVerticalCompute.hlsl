@@ -7,9 +7,9 @@ groupshared float4 g_SharedMem[g_NumThreads + 2 * g_BlurRadius];
 [numthreads(1, g_NumThreads, 1)]
 void CS_main(uint3 dispatchThreadID : SV_DispatchThreadID, int3 groupThreadID : SV_GroupThreadID)
 {
-	unsigned int readIndex = dhIndices.index0;
-	unsigned int writeIndex = dhIndices.index1;
-	unsigned int mipLevel = dhIndices.index3;
+	unsigned int readIndex	= rootConstantUints.index0;
+	unsigned int writeIndex = rootConstantUints.index1;
+	unsigned int mipLevel	= rootConstantUints.index3;
 
 	uint width = 1280 >> mipLevel;
 	uint height = 720 >> mipLevel;

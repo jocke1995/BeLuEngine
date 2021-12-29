@@ -5,8 +5,8 @@ static const int g_NumThreads = 64;
 [numthreads(g_NumThreads, 1, 1)]
 void CS_main(uint3 dispatchThreadID : SV_DispatchThreadID, int3 groupThreadID : SV_GroupThreadID)
 {
-	unsigned int readIndex = dhIndices.index0;
-	unsigned int writeIndex = dhIndices.index1;
+	unsigned int readIndex = rootConstantUints.index0;
+	unsigned int writeIndex = rootConstantUints.index1;
 
 	float2 screenSize = float2(1280.0f, 720.0f) / 2;
 	float2 uv = float2(dispatchThreadID.x / screenSize.x, dispatchThreadID.y / screenSize.y);

@@ -46,8 +46,8 @@ float4 TonemapACES(float4 inputColor)
 [numthreads(g_NumThreads, 1, 1)]
 void CS_main(uint3 dispatchThreadID : SV_DispatchThreadID, int3 groupThreadID : SV_GroupThreadID)
 {
-	unsigned int finalColorReadIndex = dhIndices.index0;
-	unsigned int finalColorWriteIndex = dhIndices.index1;
+	unsigned int finalColorReadIndex = rootConstantUints.index0;
+	unsigned int finalColorWriteIndex = rootConstantUints.index1;
 	float4 finalColor = textures[finalColorReadIndex][dispatchThreadID.xy];
 
 	// Tonemap

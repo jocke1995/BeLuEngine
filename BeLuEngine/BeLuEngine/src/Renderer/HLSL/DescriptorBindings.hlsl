@@ -28,7 +28,7 @@ ConstantBuffer<MaterialData> materialDatas[]   : register(b0, space1);
 
 // CBVs
 ConstantBuffer<SlotInfo>					slotInfo			: register(b0, space0);
-ConstantBuffer<DescriptorHeapIndices>		dhIndices			: register(b1, space0);
+ConstantBuffer<RootConstantUints>			rootConstantUints	: register(b1, space0);
 ConstantBuffer<MATRICES_PER_OBJECT_STRUCT>	matricesPerObject	: register(b2, space0);
 ConstantBuffer<CB_PER_FRAME_STRUCT>			cbPerFrame			: register(b3, space0);
 ConstantBuffer<CB_PER_SCENE_STRUCT>			cbPerScene			: register(b4, space0);

@@ -63,12 +63,12 @@ void TonemapComputeTask::Execute()
 
 		m_pGraphicsContext->SetupBindings(true);
 
-		DescriptorHeapIndices dhIndices = {};
-		dhIndices.index0 = finalColorTexture->GetShaderResourceHeapIndex(0);	// Read Un-tonemapped color
-		dhIndices.index1 = finalColorTexture->GetUnorderedAccessIndex(0);		// Write tonemapped color
+		RootConstantUints rootConstantUints = {};
+		rootConstantUints.index0 = finalColorTexture->GetShaderResourceHeapIndex(0);	// Read Un-tonemapped color
+		rootConstantUints.index1 = finalColorTexture->GetUnorderedAccessIndex(0);		// Write tonemapped color
 
 		m_pGraphicsContext->SetPipelineState(m_PipelineStates[0]);
-		m_pGraphicsContext->Set32BitConstants(Constants_DH_Indices_B1, sizeof(DescriptorHeapIndices) / 4, &dhIndices, 0, true);
+		m_pGraphicsContext->Set32BitConstants(Constants_DH_Indices_B1, sizeof(RootConstantUints) / 4, &rootConstantUints, 0, true);
 		m_pGraphicsContext->Dispatch(threadGroupsX, threadGroupsY, 1);
 
 		m_pGraphicsContext->UAVBarrier(finalColorTexture);

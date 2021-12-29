@@ -5,10 +5,10 @@ static const int g_NumThreads = 64;
 [numthreads(g_NumThreads, 1, 1)]
 void CS_main(uint3 dispatchThreadID : SV_DispatchThreadID, int3 groupThreadID : SV_GroupThreadID)
 {
-	unsigned int downScaledTextureIndex = dhIndices.index0;
-	unsigned int currentSizeTextureIndex = dhIndices.index1;
-	unsigned int writeIndex = dhIndices.index2;
-	unsigned int mipLevel = dhIndices.index3;
+	unsigned int downScaledTextureIndex = rootConstantUints.index0;
+	unsigned int currentSizeTextureIndex = rootConstantUints.index1;
+	unsigned int writeIndex = rootConstantUints.index2;
+	unsigned int mipLevel = rootConstantUints.index3;
 
 	float2 textureSize = float2(1280 >> mipLevel, 720 >> mipLevel);
 	// TODO: the "+ 1.0f"-part is kinda hacky...

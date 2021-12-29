@@ -308,9 +308,9 @@ void DXRReflectionTask::Execute()
 		// Bind the raytracing pipeline
 		m_pGraphicsContext->SetPipelineState(m_pStateObject);
 
-		DescriptorHeapIndices dhIndices = {};
-		dhIndices.index0 = finalColorBuffer->GetUnorderedAccessIndex();	// Write to this texture with this index
-		m_pGraphicsContext->Set32BitConstants(Constants_DH_Indices_B1, sizeof(DescriptorHeapIndices) / 4, &dhIndices, 0, true);
+		RootConstantUints rootConstantUints = {};
+		rootConstantUints.index0 = finalColorBuffer->GetUnorderedAccessIndex();	// Write to this texture with this index
+		m_pGraphicsContext->Set32BitConstants(Constants_DH_Indices_B1, sizeof(RootConstantUints) / 4, &rootConstantUints, 0, true);
 
 		// Dispatch the rays and write to the raytracing output
 		m_pGraphicsContext->DispatchRays(desc);

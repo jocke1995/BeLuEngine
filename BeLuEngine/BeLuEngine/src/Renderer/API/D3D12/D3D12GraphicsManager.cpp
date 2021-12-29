@@ -476,7 +476,7 @@ void D3D12GraphicsManager::Init(HWND hwnd, unsigned int width, unsigned int heig
 	rootParam[E_GLOBAL_ROOTSIGNATURE::Constants_DH_Indices_B1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
 	rootParam[E_GLOBAL_ROOTSIGNATURE::Constants_DH_Indices_B1].Constants.ShaderRegister = 1;
 	rootParam[E_GLOBAL_ROOTSIGNATURE::Constants_DH_Indices_B1].Constants.RegisterSpace = 0;
-	rootParam[E_GLOBAL_ROOTSIGNATURE::Constants_DH_Indices_B1].Constants.Num32BitValues = sizeof(DescriptorHeapIndices) / sizeof(UINT);
+	rootParam[E_GLOBAL_ROOTSIGNATURE::Constants_DH_Indices_B1].Constants.Num32BitValues = sizeof(RootConstantUints) / sizeof(UINT);
 	rootParam[E_GLOBAL_ROOTSIGNATURE::Constants_DH_Indices_B1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
 #pragma region ROOTPARAMS_CBV

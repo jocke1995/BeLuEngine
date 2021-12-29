@@ -124,7 +124,7 @@ void BloomComputePass::Execute()
 			}
 		}
 
-		DescriptorHeapIndices dhIndices = {};
+		RootConstantUints rootConstantUints = {};
 		// Filter brightAreas and Downsample
 		{
 			ScopedPixEvent(Filter_Downsample, m_pGraphicsContext);
@@ -133,14 +133,14 @@ void BloomComputePass::Execute()
 			unsigned int blurWidth = m_ScreenWidth >> 1;
 			unsigned int blurHeight = m_ScreenHeight >> 1;
 
-			dhIndices = {};
-			dhIndices.index0 = finalColorTexture->GetShaderResourceHeapIndex();		// Read and filter bright areas from this texture
-			dhIndices.index1 = m_PingPongTextures[0]->GetUnorderedAccessIndex(1);	// Write bright areas into this texture
+			rootConstantUints = {};
+			rootConstantUints.index0 = finalColorTexture->GetShaderResourceHeapIndex();		// Read and filter bright areas from this texture
+			rootConstantUints.index1 = m_PingPongTextures[0]->GetUnorderedAccessIndex(1);	// Write bright areas into this texture
 
 			m_pGraphicsContext->ResourceBarrier(finalColorTexture, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
 			m_pGraphicsContext->SetPipelineState(m_PipelineStates[Bloom_FilterAndDownSampleState]);
-			m_pGraphicsContext->Set32BitConstants(Constants_DH_Indices_B1, sizeof(DescriptorHeapIndices) / 4, &dhIndices, 0, true);
+			m_pGraphicsContext->Set32BitConstants(Constants_DH_Indices_B1, sizeof(RootConstantUints) / 4, &rootConstantUints, 0, true);
 
 			unsigned int threadGroupsX = static_cast<unsigned int>(ceilf(static_cast<float>(blurWidth) / m_ThreadsPerGroup));
 			unsigned int threadGroupsY = blurHeight;
@@ -167,14 +167,14 @@ void BloomComputePass::Execute()
 			{
 				ScopedPixEvent(HorizontalBlur, m_pGraphicsContext);
 
-				dhIndices = {};
-				dhIndices.index0 = m_PingPongTextures[0]->GetShaderResourceHeapIndex(mipLevel);		// Read
-				dhIndices.index1 = m_PingPongTextures[1]->GetUnorderedAccessIndex(mipLevel + 1);	// Write
-				dhIndices.index2 = mipLevel + 1; // Mip to write to
+				rootConstantUints = {};
+				rootConstantUints.index0 = m_PingPongTextures[0]->GetShaderResourceHeapIndex(mipLevel);		// Read
+				rootConstantUints.index1 = m_PingPongTextures[1]->GetUnorderedAccessIndex(mipLevel + 1);	// Write
+				rootConstantUints.index2 = mipLevel + 1; // Mip to write to
 
 				// Blur horizontal
 				m_pGraphicsContext->SetPipelineState(m_PipelineStates[Bloom_DownSampleAndBlurHorizontalState]);
-				m_pGraphicsContext->Set32BitConstants(Constants_DH_Indices_B1, sizeof(DescriptorHeapIndices) / 4, &dhIndices, 0, true);
+				m_pGraphicsContext->Set32BitConstants(Constants_DH_Indices_B1, sizeof(RootConstantUints) / 4, &rootConstantUints, 0, true);
 
 				unsigned int threadGroupsX = static_cast<unsigned int>(ceilf(static_cast<float>(blurWidth) / m_ThreadsPerGroup));
 				unsigned int threadGroupsY = blurHeight;
@@ -191,16 +191,16 @@ void BloomComputePass::Execute()
 			{
 				ScopedPixEvent(VerticalBlur, m_pGraphicsContext);
 
-				dhIndices = {};
-				dhIndices.index0 = m_PingPongTextures[1]->GetShaderResourceHeapIndex(mipLevel + 1);	// Read
-				dhIndices.index1 = m_PingPongTextures[0]->GetUnorderedAccessIndex(mipLevel + 1);	// Write
-				dhIndices.index2 = mipLevel + 1; // Mip to write to
+				rootConstantUints = {};
+				rootConstantUints.index0 = m_PingPongTextures[1]->GetShaderResourceHeapIndex(mipLevel + 1);	// Read
+				rootConstantUints.index1 = m_PingPongTextures[0]->GetUnorderedAccessIndex(mipLevel + 1);	// Write
+				rootConstantUints.index2 = mipLevel + 1; // Mip to write to
 
 				// The resource to write (Resource Barrier)
 				m_pGraphicsContext->ResourceBarrier(m_PingPongTextures[0], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
 				m_pGraphicsContext->SetPipelineState(m_PipelineStates[Bloom_BlurVerticalState]);
-				m_pGraphicsContext->Set32BitConstants(Constants_DH_Indices_B1, sizeof(DescriptorHeapIndices) / 4, &dhIndices, 0, true);
+				m_pGraphicsContext->Set32BitConstants(Constants_DH_Indices_B1, sizeof(RootConstantUints) / 4, &rootConstantUints, 0, true);
 
 				unsigned int threadGroupsX = blurWidth;
 				unsigned int threadGroupsY = static_cast<unsigned int>(ceilf(static_cast<float>(blurHeight) / m_ThreadsPerGroup));
@@ -229,14 +229,14 @@ void BloomComputePass::Execute()
 			unsigned int threadGroupsX = static_cast<unsigned int>(ceilf(static_cast<float>(textureWidth) / m_ThreadsPerGroup));
 			unsigned int threadGroupsY = textureHeight;
 
-			DescriptorHeapIndices dhIndices1 = {};
-			dhIndices1.index0 = inputTexture->GetShaderResourceHeapIndex(mipLevel);				// Read  (Downscaled)
-			dhIndices1.index1 = m_PingPongTextures[0]->GetShaderResourceHeapIndex(mipToWriteTo);// Read  (Current Size)
-			dhIndices1.index2 = m_PingPongTextures[1]->GetUnorderedAccessIndex(mipToWriteTo);	// Write (Current Size)
-			dhIndices1.index3 = mipToWriteTo;
+			RootConstantUints rootConstantUints1 = {};
+			rootConstantUints1.index0 = inputTexture->GetShaderResourceHeapIndex(mipLevel);				// Read  (Downscaled)
+			rootConstantUints1.index1 = m_PingPongTextures[0]->GetShaderResourceHeapIndex(mipToWriteTo);// Read  (Current Size)
+			rootConstantUints1.index2 = m_PingPongTextures[1]->GetUnorderedAccessIndex(mipToWriteTo);	// Write (Current Size)
+			rootConstantUints1.index3 = mipToWriteTo;
 
 			m_pGraphicsContext->SetPipelineState(m_PipelineStates[Bloom_UpSampleAndCombineState]);
-			m_pGraphicsContext->Set32BitConstants(Constants_DH_Indices_B1, sizeof(DescriptorHeapIndices) / 4, &dhIndices1, 0, true);
+			m_pGraphicsContext->Set32BitConstants(Constants_DH_Indices_B1, sizeof(RootConstantUints) / 4, &rootConstantUints1, 0, true);
 			m_pGraphicsContext->Dispatch(threadGroupsX, threadGroupsY, 1);
 			m_pGraphicsContext->UAVBarrier(m_PingPongTextures[1]);
 
@@ -248,17 +248,17 @@ void BloomComputePass::Execute()
 		{
 			ScopedPixEvent(Composite, m_pGraphicsContext);
 
-			DescriptorHeapIndices dhIndices2 = {};
-			dhIndices2.index0 = m_PingPongTextures[1]->GetShaderResourceHeapIndex(0);	// Read
-			dhIndices2.index1 = finalColorTexture->GetShaderResourceHeapIndex(0);		// Read
-			dhIndices2.index2 = finalColorTexture->GetUnorderedAccessIndex(0);			// Write
-			dhIndices2.index3 = g_NumMips;		// MipTemp
+			RootConstantUints rootConstantUints2 = {};
+			rootConstantUints2.index0 = m_PingPongTextures[1]->GetShaderResourceHeapIndex(0);	// Read
+			rootConstantUints2.index1 = finalColorTexture->GetShaderResourceHeapIndex(0);		// Read
+			rootConstantUints2.index2 = finalColorTexture->GetUnorderedAccessIndex(0);			// Write
+			rootConstantUints2.index3 = g_NumMips;		// MipTemp
 
 			m_pGraphicsContext->ResourceBarrier(m_PingPongTextures[1], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 			m_pGraphicsContext->ResourceBarrier(finalColorTexture, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
 			m_pGraphicsContext->SetPipelineState(m_PipelineStates[Bloom_CompositeState]);
-			m_pGraphicsContext->Set32BitConstants(Constants_DH_Indices_B1, sizeof(DescriptorHeapIndices) / 4, &dhIndices2, 0, true);
+			m_pGraphicsContext->Set32BitConstants(Constants_DH_Indices_B1, sizeof(RootConstantUints) / 4, &rootConstantUints2, 0, true);
 			m_pGraphicsContext->Dispatch(m_HorizontalThreadGroupsX, m_HorizontalThreadGroupsY, 1);
 
 			m_pGraphicsContext->UAVBarrier(finalColorTexture);
