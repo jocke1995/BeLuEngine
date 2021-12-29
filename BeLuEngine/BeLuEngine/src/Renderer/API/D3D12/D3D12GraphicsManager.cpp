@@ -6,6 +6,7 @@
 #include "../Renderer/RenderPasses/Graphics/GraphicsPass.h"
 
 #include "D3D12GraphicsContext.h"
+#include "D3D12GraphicsTexture.h"
 #include "D3D12DescriptorHeap.h"
 
 D3D12GraphicsManager::D3D12GraphicsManager()
@@ -37,6 +38,7 @@ D3D12GraphicsManager::~D3D12GraphicsManager()
 	BL_SAFE_DELETE(m_pDSVDescriptorHeap);
 
 	BL_SAFE_RELEASE(&m_pSwapChain4);
+	BL_SAFE_DELETE(m_pGraphicsContext);
 
 	for (unsigned int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
@@ -381,6 +383,8 @@ void D3D12GraphicsManager::Init(HWND hwnd, unsigned int width, unsigned int heig
 	}
 
 #pragma endregion
+
+	m_pGraphicsContext = new D3D12GraphicsContext(L"ManagerContext");
 
 #pragma region CreateRootSignature
 
@@ -793,8 +797,53 @@ void D3D12GraphicsManager::Execute(const std::vector<IGraphicsContext*>& graphic
 	m_pGraphicsCommandQueue->ExecuteCommandLists(numGraphicsContexts, cList.data());
 }
 
-void D3D12GraphicsManager::SyncAndPresent()
+void D3D12GraphicsManager::SyncAndPresent(IGraphicsTexture* finalColorTexture)
 {
+	auto TransferResourceState = [this](ID3D12Resource* resource, D3D12_RESOURCE_STATES stateBefore, D3D12_RESOURCE_STATES stateAfter)
+	{
+		D3D12_RESOURCE_BARRIER barrier = {};
+		barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+		barrier.Transition.Subresource = 0;
+		barrier.Transition.pResource = resource;
+		barrier.Transition.StateBefore = stateBefore;
+		barrier.Transition.StateAfter = stateAfter;
+
+		ID3D12GraphicsCommandList5* tempCL = static_cast<D3D12GraphicsContext*>(m_pGraphicsContext)->m_pCommandList;
+
+		tempCL->ResourceBarrier(1, &barrier);
+
+	};
+	// Copy to Swapchain
+	m_pGraphicsContext->Begin();
+	{
+		ScopedPixEvent(CopyToSwapchain, m_pGraphicsContext);
+
+		D3D12GraphicsTexture* d3d12FinalColorTexture = static_cast<D3D12GraphicsTexture*>(finalColorTexture);
+
+		D3D12_TEXTURE_COPY_LOCATION copyDst = {};
+		copyDst.pResource = m_SwapchainResources[m_CommandInterfaceIndex];
+		copyDst.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+		copyDst.SubresourceIndex = 0;
+
+		D3D12_TEXTURE_COPY_LOCATION copySrc = {};
+		copySrc.pResource = d3d12FinalColorTexture->m_pResource;
+		copySrc.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+		copySrc.SubresourceIndex = 0;
+
+		TransferResourceState(d3d12FinalColorTexture->m_pResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COPY_SOURCE);
+		TransferResourceState(m_SwapchainResources[m_CommandInterfaceIndex], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
+
+		m_pGraphicsContext->m_pCommandList->CopyTextureRegion(&copyDst, 0, 0, 0, &copySrc, nullptr);
+
+		TransferResourceState(m_SwapchainResources[m_CommandInterfaceIndex], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PRESENT);
+		TransferResourceState(d3d12FinalColorTexture->m_pResource, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	}
+	m_pGraphicsContext->End();
+
+	// Execute the finalCList
+	ID3D12CommandList* cList = m_pGraphicsContext->m_pCommandList;
+	m_pGraphicsCommandQueue->ExecuteCommandLists(1, &cList);
+
 	HRESULT hr = m_pSwapChain4->Present(0, 0);
 
 	waitForFrame(NUM_SWAP_BUFFERS - 1);

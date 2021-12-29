@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "BloomComputeTask.h"
 
+// Generic API
 #include "../Renderer/API/IGraphicsManager.h"
 #include "../Renderer/API/IGraphicsContext.h"
 #include "../Renderer/API/IGraphicsTexture.h"

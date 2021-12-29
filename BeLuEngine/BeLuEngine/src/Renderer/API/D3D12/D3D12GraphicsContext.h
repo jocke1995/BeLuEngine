@@ -41,6 +41,8 @@ public:
     virtual void SetViewPort(unsigned int width, unsigned int height, float topLeftX = 0.0f, float topLeftY = 0.0f, float minDepth = 0.0f, float maxDepth = 1.0f) override final;
     virtual void SetScizzorRect(unsigned int right, unsigned int bottom, float left = 0, unsigned int top = 0) override final;
 
+    virtual void CopyTextureRegion(IGraphicsTexture* dst, IGraphicsTexture* src, unsigned int xStart, unsigned int yStart) override final;
+
     virtual void ClearDepthTexture(IGraphicsTexture* depthTexture, bool clearDepth, float depthValue, bool clearStencil, unsigned int stencilValue) override final;
     virtual void ClearRenderTarget(IGraphicsTexture* renderTargetTexture, float clearColor[4]) override final;
     virtual void ClearUAVTextureFloat(IGraphicsTexture* uavTexture, float clearValues[4], unsigned int mipLevel = 0) override final;

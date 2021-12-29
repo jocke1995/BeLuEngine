@@ -2,6 +2,7 @@
 #define IGRAPHICSMANAGER_H
 
 class IGraphicsContext;
+class IGraphicsTexture;
 
 enum E_GLOBAL_ROOTSIGNATURE
 {
@@ -53,7 +54,7 @@ public:
 
 	virtual void Begin() = 0;
 	virtual void Execute(const std::vector<IGraphicsContext*>& graphicsContexts, unsigned int numGraphicsContexts) = 0;
-	virtual void SyncAndPresent() = 0;
+	virtual void SyncAndPresent(IGraphicsTexture* finalColorTexture) = 0;
 	virtual void End() = 0;
 
 	void Destroy();

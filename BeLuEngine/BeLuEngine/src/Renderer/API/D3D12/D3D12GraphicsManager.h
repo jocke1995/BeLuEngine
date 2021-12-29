@@ -6,10 +6,9 @@
 // Native D3D12 Objects
 struct ID3D12Device5;
 
-// D3D12 Wrappers
 class D3D12DescriptorHeap;
-
-class IGraphicsContext;
+class D3D12GraphicsContext;
+class IGraphicsTexture;
 
 namespace component
 {
@@ -36,7 +35,7 @@ public:
 	// Call everyframe
 	void Begin() override final;
 	void Execute(const std::vector<IGraphicsContext*>& graphicsContexts, unsigned int numGraphicsContexts) override final;
-	void SyncAndPresent() override final;
+	void SyncAndPresent(IGraphicsTexture* finalColorTexture) override final;
 	void End() override final;
 
 	static bool CHECK_HRESULT(HRESULT hrParam);
@@ -54,7 +53,6 @@ public:
 private:
 	// ABSTRACTION TEMP
 	friend class Renderer;
-	friend class component::ModelComponent;
 	friend class ImGuiHandler;
 	friend class ImGuiRenderTask;
 	friend class TonemapComputeTask;
@@ -95,6 +93,8 @@ private:
 	std::array<unsigned int, NUM_SWAP_BUFFERS> m_SwapchainRTVIndices;
 	std::array<unsigned int, NUM_SWAP_BUFFERS> m_SwapchainSRVIndices;
 
+	// CommandList used to copyResource at the end of the frame from the finalColor to the swapChain
+	D3D12GraphicsContext* m_pGraphicsContext = nullptr;
 	// Root Signature
 	ID3D12RootSignature* m_pGlobalRootSig = nullptr;
 

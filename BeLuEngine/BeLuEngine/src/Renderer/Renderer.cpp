@@ -468,7 +468,7 @@ void Renderer::ExecuteMT()
 
 
 	/*------------------- Present -------------------*/
-	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->SyncAndPresent();
+	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->SyncAndPresent(m_FinalColorBuffer);
 	
 	// Check to end ImGui if its active
 	ImGuiHandler::GetInstance().EndFrame();
@@ -555,7 +555,7 @@ void Renderer::ExecuteST()
 #endif
 
 	/*------------------- Present -------------------*/
-	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->SyncAndPresent();
+	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->SyncAndPresent(m_FinalColorBuffer);
 
 	// Check to end ImGui if its active
 	ImGuiHandler::GetInstance().EndFrame();
@@ -1005,6 +1005,7 @@ void Renderer::initGraphicsPasses()
 
 	// UI
 	GraphicsPass* imGuiPass = new ImGuiRenderTask();
+	imGuiPass->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
 
 	// Add the tasks to desired vectors so they can be used in m_pRenderer
 	/* -------------------------------------------------------------- */

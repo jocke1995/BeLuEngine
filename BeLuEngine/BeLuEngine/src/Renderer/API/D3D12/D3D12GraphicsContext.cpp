@@ -239,6 +239,24 @@ void D3D12GraphicsContext::SetScizzorRect(unsigned int right, unsigned int botto
 	m_pCommandList->RSSetScissorRects(1, &rect);
 }
 
+void D3D12GraphicsContext::CopyTextureRegion(IGraphicsTexture* dst, IGraphicsTexture* src, unsigned int xStart, unsigned int yStart)
+{
+	BL_ASSERT(dst);
+	BL_ASSERT(src);
+
+	D3D12_TEXTURE_COPY_LOCATION copyDst = {};
+	copyDst.pResource = static_cast<D3D12GraphicsTexture*>(dst)->m_pResource;
+	copyDst.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+	copyDst.SubresourceIndex = 0;
+
+	D3D12_TEXTURE_COPY_LOCATION copySrc = {};
+	copySrc.pResource = static_cast<D3D12GraphicsTexture*>(src)->m_pResource;
+	copySrc.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+	copySrc.SubresourceIndex = 0;
+
+	m_pCommandList->CopyTextureRegion(&copyDst, xStart, yStart, 0, &copySrc, nullptr);
+}
+
 void D3D12GraphicsContext::ClearDepthTexture(IGraphicsTexture* depthTexture, bool clearDepth, float depthValue, bool clearStencil, unsigned int stencilValue)
 {
 	BL_ASSERT(depthTexture);
