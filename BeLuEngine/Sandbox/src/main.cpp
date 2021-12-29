@@ -408,7 +408,7 @@ Scene* SponzaScene(SceneManager* sm)
     createEmissiveSphere("RedSphere", emissiveColor, position);
 
     emissiveColor = { 0.4f, 1.0f, 0.4f, 8.0f };
-    position = { 15.0f, 10.0f, 0.0f };
+    position = { 0.0f, 10.0f, 0.0f };
     createEmissiveSphere("GreenSphere", emissiveColor, position);
     
     emissiveColor = { 0.4f, 0.4f, 1.0f, 8.0f };
@@ -443,5 +443,33 @@ void TestUpdateScene(SceneManager* sm, double dt)
 
 void SponzaUpdateScene(SceneManager* sm, double dt)
 {
+    // Currently just some movement on three lights
+    component::TransformComponent* tcRed    = sm->GetScene("SponzaScene")->GetEntity("RedSphere")->GetComponent<component::TransformComponent>();
+    component::TransformComponent* tcGreen  = sm->GetScene("SponzaScene")->GetEntity("GreenSphere")->GetComponent<component::TransformComponent>();
+    component::TransformComponent* tcBlue   = sm->GetScene("SponzaScene")->GetEntity("BlueSphere")->GetComponent<component::TransformComponent>();
+    Transform* tRed     = tcRed->GetTransform();
+    Transform* tGreen   = tcGreen->GetTransform();
+    Transform* tBlue    = tcBlue->GetTransform();
 
+    float3 currPosRed   = tRed->GetPositionFloat3();
+    float3 currPosGreen = tGreen->GetPositionFloat3();
+    float3 currPosBlue  = tBlue->GetPositionFloat3();
+
+    static float zPosRedSphere      = currPosRed.z;
+    static float zPosGreenSphere    = currPosGreen.z;
+    static float zPosBlueSphere     = currPosBlue.z;
+
+    float movedZPosGreenSphere  = sinf(zPosGreenSphere) * 50;
+    float movedZPosRedSphere    = sinf(zPosRedSphere) * 50;
+    float movedZPosBlueSphere   = sinf(zPosBlueSphere) * 50;
+
+    // Set position
+    tRed->SetPosition(movedZPosGreenSphere, currPosRed.y, currPosRed.z);
+    tGreen->SetPosition(movedZPosRedSphere, currPosGreen.y, currPosGreen.z);
+    tBlue->SetPosition(movedZPosBlueSphere, currPosBlue.y, currPosBlue.z);
+
+    // Animate
+    zPosGreenSphere += 0.5f * dt;
+    zPosRedSphere   += 0.2f * dt;
+    zPosBlueSphere  += 1.0f * dt;
 }

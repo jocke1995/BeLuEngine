@@ -993,14 +993,14 @@ void Renderer::initGraphicsPasses()
 	GraphicsPass* wireFramePass = new WireframeRenderTask();
 	wireFramePass->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
 
-	// ComputeTasks
-	GraphicsPass* tonemapPass = new TonemapComputeTask(m_CurrentRenderingWidth, m_CurrentRenderingHeight);
-	tonemapPass->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
-
+	// Post Processing
 	GraphicsPass* bloomPass = new BloomComputePass(m_CurrentRenderingWidth, m_CurrentRenderingHeight);
 	bloomPass->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
 
-	// CopyTasks
+	GraphicsPass* tonemapPass = new TonemapComputeTask(m_CurrentRenderingWidth, m_CurrentRenderingHeight);
+	tonemapPass->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
+
+	// LazyCopy
 	GraphicsPass* copyOnDemandTask = new CopyOnDemandTask();
 
 	// UI
