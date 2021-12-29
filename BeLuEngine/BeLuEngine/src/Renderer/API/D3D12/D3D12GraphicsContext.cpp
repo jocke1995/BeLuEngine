@@ -266,7 +266,7 @@ void D3D12GraphicsContext::ClearRenderTarget(IGraphicsTexture* renderTargetTextu
 	m_pCommandList->ClearRenderTargetView(cpuHandle, clearColor, 0, nullptr);
 }
 
-void D3D12GraphicsContext::ClearUAVTextureFloat(IGraphicsTexture* uavTexture, float clearValues[4])
+void D3D12GraphicsContext::ClearUAVTextureFloat(IGraphicsTexture* uavTexture, float clearValues[4], unsigned int mipLevel)
 {
 	BL_ASSERT(uavTexture);
 	D3D12GraphicsTexture* d3d12Texture = static_cast<D3D12GraphicsTexture*>(uavTexture);
@@ -275,12 +275,12 @@ void D3D12GraphicsContext::ClearUAVTextureFloat(IGraphicsTexture* uavTexture, fl
 	D3D12GraphicsManager* graphicsManager = D3D12GraphicsManager::GetInstance();
 	D3D12DescriptorHeap* mainDHeap = graphicsManager->GetMainDescriptorHeap();
 
-	D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = mainDHeap->GetGPUHeapAt(uavTexture->GetUnorderedAccessIndex());
-	D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = d3d12Texture->m_CPUDescriptorHeap->GetCPUHeapAt(0);
+	D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = mainDHeap->GetGPUHeapAt(uavTexture->GetUnorderedAccessIndex(mipLevel));
+	D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = d3d12Texture->m_CPUDescriptorHeap->GetCPUHeapAt(mipLevel);
 	m_pCommandList->ClearUnorderedAccessViewFloat(gpuHandle, cpuHandle, d3d12Texture->m_pResource, clearValues, 0, nullptr);
 }
 
-void D3D12GraphicsContext::ClearUAVTextureUINT(IGraphicsTexture* uavTexture, unsigned int clearValues[4])
+void D3D12GraphicsContext::ClearUAVTextureUINT(IGraphicsTexture* uavTexture, unsigned int clearValues[4], unsigned int mipLevel)
 {
 	BL_ASSERT(uavTexture);
 	D3D12GraphicsTexture* d3d12Texture = static_cast<D3D12GraphicsTexture*>(uavTexture);
@@ -289,8 +289,8 @@ void D3D12GraphicsContext::ClearUAVTextureUINT(IGraphicsTexture* uavTexture, uns
 	D3D12GraphicsManager* graphicsManager = D3D12GraphicsManager::GetInstance();
 	D3D12DescriptorHeap* mainDHeap = graphicsManager->GetMainDescriptorHeap();
 
-	D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = mainDHeap->GetGPUHeapAt(uavTexture->GetUnorderedAccessIndex());
-	D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = d3d12Texture->m_CPUDescriptorHeap->GetCPUHeapAt(0);
+	D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = mainDHeap->GetGPUHeapAt(uavTexture->GetUnorderedAccessIndex(mipLevel));
+	D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = d3d12Texture->m_CPUDescriptorHeap->GetCPUHeapAt(mipLevel);
 	m_pCommandList->ClearUnorderedAccessViewUint(gpuHandle, cpuHandle, d3d12Texture->m_pResource, clearValues, 0, nullptr);
 }
 

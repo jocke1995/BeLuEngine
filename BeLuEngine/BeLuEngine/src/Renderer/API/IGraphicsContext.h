@@ -34,8 +34,8 @@ public:
 
     virtual void ClearDepthTexture(IGraphicsTexture* depthTexture, bool clearDepth, float depthValue, bool clearStencil, unsigned int stencilValue) = 0;
     virtual void ClearRenderTarget(IGraphicsTexture* renderTargetTexture, float clearColor[4]) = 0;
-    virtual void ClearUAVTextureFloat(IGraphicsTexture* uavTexture, float clearValues[4]) = 0;
-    virtual void ClearUAVTextureUINT(IGraphicsTexture* uavTexture, unsigned int clearValues[4]) = 0;
+    virtual void ClearUAVTextureFloat(IGraphicsTexture* uavTexture, float clearValues[4], unsigned int mipLevel = 0) = 0;
+    virtual void ClearUAVTextureUINT(IGraphicsTexture* uavTexture, unsigned int clearValues[4], unsigned int mipLevel = 0) = 0;
     virtual void SetRenderTargets(unsigned int numRenderTargets, IGraphicsTexture* renderTargetTextures[], IGraphicsTexture* depthTexture) = 0;
 
     virtual void SetShaderResourceView(unsigned int rootParamSlot, IGraphicsTexture* graphicsTexture, bool isComputePipeline) = 0;

@@ -114,11 +114,15 @@ void BloomComputePass::Execute()
 		m_pGraphicsContext->SetupBindings(true);
 
 		// Clear
-		float clearValues[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-		m_pGraphicsContext->ClearUAVTextureFloat(m_PingPongTextures[0], clearValues);
-		m_pGraphicsContext->ClearUAVTextureFloat(m_PingPongTextures[1], clearValues);
-
-		m_pGraphicsContext->ResourceBarrier(m_PingPongTextures[0], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+		{
+			ScopedPixEvent(ClearPingPongTextures_AllMips, m_pGraphicsContext);
+			float clearValues[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+			for (unsigned int i = 0; i < g_NumMips; i++)
+			{
+				m_pGraphicsContext->ClearUAVTextureFloat(m_PingPongTextures[0], clearValues, i);
+				m_pGraphicsContext->ClearUAVTextureFloat(m_PingPongTextures[1], clearValues, i);
+			}
+		}
 
 		DescriptorHeapIndices dhIndices = {};
 		// Filter brightAreas and Downsample
@@ -134,7 +138,6 @@ void BloomComputePass::Execute()
 			dhIndices.index1 = m_PingPongTextures[0]->GetUnorderedAccessIndex(1);	// Write bright areas into this texture
 
 			m_pGraphicsContext->ResourceBarrier(finalColorTexture, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-			m_pGraphicsContext->ResourceBarrier(m_PingPongTextures[0], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
 			m_pGraphicsContext->SetPipelineState(m_PipelineStates[Bloom_FilterAndDownSampleState]);
 			m_pGraphicsContext->Set32BitConstants(Constants_DH_Indices_B1, sizeof(DescriptorHeapIndices) / 4, &dhIndices, 0, true);
@@ -227,8 +230,8 @@ void BloomComputePass::Execute()
 			unsigned int threadGroupsY = textureHeight;
 
 			DescriptorHeapIndices dhIndices1 = {};
-			dhIndices1.index0 = inputTexture->GetShaderResourceHeapIndex(mipLevel);	// Read  (Downscaled)
-			dhIndices1.index1 = m_PingPongTextures[0]->GetShaderResourceHeapIndex(mipToWriteTo);	// Read  (Current Size)
+			dhIndices1.index0 = inputTexture->GetShaderResourceHeapIndex(mipLevel);				// Read  (Downscaled)
+			dhIndices1.index1 = m_PingPongTextures[0]->GetShaderResourceHeapIndex(mipToWriteTo);// Read  (Current Size)
 			dhIndices1.index2 = m_PingPongTextures[1]->GetUnorderedAccessIndex(mipToWriteTo);	// Write (Current Size)
 			dhIndices1.index3 = mipToWriteTo;
 
@@ -261,7 +264,7 @@ void BloomComputePass::Execute()
 			m_pGraphicsContext->UAVBarrier(finalColorTexture);
 
 			// Begin next frame as UAV, because the first thing that happens is that they get cleared
-			// m_PingPongTextures[0] is already in UAV state
+			m_pGraphicsContext->ResourceBarrier(m_PingPongTextures[0], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 			m_pGraphicsContext->ResourceBarrier(m_PingPongTextures[1], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 		}
 	}

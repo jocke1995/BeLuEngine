@@ -214,14 +214,7 @@ bool D3D12GraphicsTexture::CreateTexture2D(unsigned int width, unsigned int heig
 	{
 		// Create Non-CPUVisible DescriptorHeap and descriptor
 		std::wstring dHeapName = name + L"_CPU_DescriptorHeap";
-		m_CPUDescriptorHeap = new D3D12DescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, dHeapName, false);
-
-		D3D12_UNORDERED_ACCESS_VIEW_DESC uavDescCPU = {};
-		uavDescCPU.Format = dxgiFormat;
-		uavDescCPU.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-
-		D3D12_CPU_DESCRIPTOR_HANDLE cdhCPUHeap = m_CPUDescriptorHeap->GetCPUHeapAt(0);
-		device5->CreateUnorderedAccessView(m_pResource, nullptr, &uavDescCPU, cdhCPUHeap);
+		m_CPUDescriptorHeap = new D3D12DescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, m_NumMipLevels, dHeapName, false);
 
 		// Create CPU-Visible descriptors
 		for (unsigned int i = 0; i < m_NumMipLevels; i++)
@@ -231,10 +224,16 @@ bool D3D12GraphicsTexture::CreateTexture2D(unsigned int width, unsigned int heig
 			uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
 			uavDesc.Texture2D.MipSlice = i;
 
+			// Main descriptorHeap, used to access the descriptor within shaders
 			m_UnorderedAccessDescriptorHeapIndices[i] = mainDHeap->GetNextDescriptorHeapIndex(1);
 			D3D12_CPU_DESCRIPTOR_HANDLE cdhMainHeap = mainDHeap->GetCPUHeapAt(m_UnorderedAccessDescriptorHeapIndices[i]);
-
 			device5->CreateUnorderedAccessView(m_pResource, nullptr, &uavDesc, cdhMainHeap);
+
+			// CPUHeap, needed to clear UAV's. This heap is per-texture which has the UAV flag
+			// ID3D12GraphicsCommandList5::ClearUnorderedAccessViewFloat
+			// ID3D12GraphicsCommandList5::ClearUnorderedAccessViewUint
+			D3D12_CPU_DESCRIPTOR_HANDLE cdhCPUHeap = m_CPUDescriptorHeap->GetCPUHeapAt(i);
+			device5->CreateUnorderedAccessView(m_pResource, nullptr, &uavDesc, cdhCPUHeap);
 		}
 	}
 
