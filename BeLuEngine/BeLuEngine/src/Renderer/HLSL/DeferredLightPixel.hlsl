@@ -36,7 +36,7 @@ PS_OUTPUT PS_main(VS_OUT input)
 	{
 		DirectionalLight dirLight = rawBufferLights.Load<DirectionalLight>(sizeof(LightHeader) + i * sizeof(DirectionalLight));
 	
-		finalColor += CalcDirLight(
+		float3 lightColor = CalcDirLight(
 			dirLight,
 			camPos,
 			viewDir,
@@ -46,6 +46,12 @@ PS_OUTPUT PS_main(VS_OUT input)
 			roughness,
 			normal.rgb,
 			baseReflectivity);
+
+		float3 position = float3(-dirLight.direction.xyz * 150);
+		float3 lightDir = normalize(position - worldPos.xyz);
+		float shadowFactor = RT_ShadowFactor(worldPos.xyz, 0.1f, 100000.0f, lightDir, sceneBVH[cbPerScene.rayTracingBVH]);
+
+		finalColor += lightColor * shadowFactor;
 	}
 	
 	// PointLight contributions

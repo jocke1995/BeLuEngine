@@ -1030,6 +1030,9 @@ void Renderer::setupNewScene(Scene* activeScene)
 {
 	m_pCurrActiveScene = activeScene;
 
+	BL_ASSERT_MESSAGE(m_pScenePrimaryCamera, "No primary camera was set in scene!\n");
+	m_pMousePicker->SetPrimaryCamera(m_pScenePrimaryCamera);
+
 	// Submit CB_PER_SCENE_STRUCT
 	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_ON_DEMAND]);
 	BL_ASSERT(codt);
@@ -1037,16 +1040,6 @@ void Renderer::setupNewScene(Scene* activeScene)
 	codt->SubmitBuffer(m_pCbPerScene, m_pCbPerSceneData);
 
 	submitUploadPerFrameData();
-
-	// -------------------- DEBUG STUFF --------------------
-	// Test to change m_pCamera to the shadow casting m_lights cameras
-	//auto& tuple = m_Lights[LIGHT_TYPE::DIRECTIONAL_LIGHT].at(0);
-	//BaseCamera* tempCam = std::get<0>(tuple)->GetCamera();
-	//m_pScenePrimaryCamera = tempCam;
-
-	BL_ASSERT_MESSAGE(m_pScenePrimaryCamera, "No primary camera was set in scene!\n");
-
-	m_pMousePicker->SetPrimaryCamera(m_pScenePrimaryCamera);
 
 	setRenderTasksRenderComponents();
 
