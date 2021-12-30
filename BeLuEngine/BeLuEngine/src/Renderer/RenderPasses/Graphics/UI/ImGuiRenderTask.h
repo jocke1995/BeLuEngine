@@ -1,7 +1,7 @@
 #ifndef IMGUIRENDERTASK_H
 #define IMGUIRENDERTASK_H
 
-#include "GraphicsPass.h"
+#include "../GraphicsPass.h"
 class ImGuiRenderTask : public GraphicsPass
 {
 public:

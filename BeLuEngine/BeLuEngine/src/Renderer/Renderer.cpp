@@ -11,7 +11,7 @@
 
 // ImGui
 #include "../ImGui/ImGuiHandler.h"
-#include "RenderPasses/Graphics/ImGuiRenderTask.h"
+#include "RenderPasses/Graphics/UI/ImGuiRenderTask.h"
 
 // ECS
 #include "../ECS/Scene.h"
