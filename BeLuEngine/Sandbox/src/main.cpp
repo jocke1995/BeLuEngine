@@ -52,14 +52,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
    
    TestAsyncThread test1 = TestAsyncThread();
 
-   unsigned int width = 1280;
-   unsigned int height = 720;
-
-   
-   float2 uv = { 0 / width, 0 / height };
-   float2 uv2 = { 1280 / width, 720 / height };
-   float2 uv3 = { (float)600 / width, (float)5 / height };
-
    Log::Print("Entering Game-Loop ...\n\n");
    while (!window->ExitWindow())
    {
@@ -149,6 +141,7 @@ Scene* TestScene(SceneManager* sm)
     Model* floorModel = al->LoadModel(L"../Vendor/Resources/Models/FloorPBR/floor.obj");
     Model* sphereModel = al->LoadModel(L"../Vendor/Resources/Models/SpherePBR/ball.obj");
     Model* posterModel = al->LoadModel(L"../Vendor/Resources/Models/Poster/Poster.obj");
+    Model* boxModel = al->LoadModel(L"../Vendor/Resources/Models/CubePBR/cube.obj");
 
     /* ---------------------- Player ---------------------- */
     Entity* entity = (scene->AddEntity("player"));
@@ -165,10 +158,10 @@ Scene* TestScene(SceneManager* sm)
 
     mc->SetModel(posterModel);
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
-    tc->GetTransform()->SetScale(30.0f);
+    tc->GetTransform()->SetScale(5.0f);
     tc->GetTransform()->SetRotationX(PI / 2);
     tc->GetTransform()->SetRotationY(PI);
-    tc->GetTransform()->SetPosition(0, 30, 40);
+    tc->GetTransform()->SetPosition(0, 5, 10);
 
     MaterialData* sharedMatData = mc->GetMaterialAt(0)->GetSharedMaterialData();
     sharedMatData->hasMetallicTexture = false;
@@ -190,9 +183,22 @@ Scene* TestScene(SceneManager* sm)
     mc->SetModel(floorModel);
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
     tc = entity->GetComponent<component::TransformComponent>();
-    tc->GetTransform()->SetScale(50, 1, 50);
+    tc->GetTransform()->SetScale(10, 1, 10);
     tc->GetTransform()->SetPosition(0.0f, 0.0f, 0.0f);
     /* ---------------------- Floor ---------------------- */
+
+    /* ---------------------- 1Metre Box ---------------------- */
+    entity = scene->AddEntity("Box");
+    mc = entity->AddComponent<component::ModelComponent>();
+    tc = entity->AddComponent<component::TransformComponent>();
+
+    mc = entity->GetComponent<component::ModelComponent>();
+    mc->SetModel(boxModel);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
+    tc = entity->GetComponent<component::TransformComponent>();
+    tc->GetTransform()->SetScale(1, 1, 1);
+    tc->GetTransform()->SetPosition(5.0f, 5.0f, 5.0f);
+    /* ---------------------- 1Metre Box ---------------------- */
 
     /* ---------------------- Sphere ---------------------- */
     entity = scene->AddEntity("sphere1");
@@ -210,15 +216,14 @@ Scene* TestScene(SceneManager* sm)
     sharedMatData->hasNormalTexture = false;
     sharedMatData->metallicValue = 0.8f;
     sharedMatData->roughnessValue = 0.10f;
-    sharedMatData->emissiveValue = { 0.2f, 1.0f, 0.5f, 10.0f };
+    sharedMatData->emissiveValue = { 0.2f, 1.0f, 0.5f, 5.0f };
     sharedMatData->hasEmissiveTexture = false;
 
     plc->SetColor({ 0.2f, 1.0f, 0.5f, });
-    plc->SetIntensity(10.0f);
+    plc->SetIntensity(3.0f);
 
-    //tc->GetTransform()->SetScale(2.0f);
-    tc->GetTransform()->SetScale(5.0f, 0.5f, 0.5f);
-    tc->GetTransform()->SetPosition(0.0f, 4, 10);
+    tc->GetTransform()->SetScale(2.0f, 1.0f, 1.0f);
+    tc->GetTransform()->SetPosition(0.0f, 4, 0);
 
     mc->UpdateMaterialRawBufferFromMaterial();
     bbc->Init();
@@ -274,7 +279,7 @@ Scene* TestScene(SceneManager* sm)
     dlc = entity->AddComponent<component::DirectionalLightComponent>();
     dlc->SetColor({ 1.0f, 1.0f, 1.0f });
     dlc->SetDirection({ -1.0f, -2.0f, 0.03f });
-    dlc->SetIntensity(50.0f);
+    dlc->SetIntensity(3.0f);
 
     dlc->Update(0);
     /* ---------------------- Update Function ---------------------- */
@@ -319,11 +324,11 @@ Scene* SponzaScene(SceneManager* sm)
 
     mc->SetModel(posterModel);
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
-    tc->GetTransform()->SetScale(6.0f);
+    tc->GetTransform()->SetScale(4.0f);
     //tc->GetTransform()->SetRotationX(PI/2 + 0.5);
     //tc->GetTransform()->SetRotationY(PI / 4);
     tc->GetTransform()->SetRotationZ(PI / 2);
-    tc->GetTransform()->SetPosition(55, 4.5, 0);
+    tc->GetTransform()->SetPosition(23, 3.0, 0);
 
     MaterialData* sharedMatData = mc->GetMaterialAt(0)->GetSharedMaterialData();
     sharedMatData->hasMetallicTexture = false;
@@ -344,11 +349,11 @@ Scene* SponzaScene(SceneManager* sm)
 
     mc->SetModel(posterModel);
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
-    tc->GetTransform()->SetScale(6.0f);
+    tc->GetTransform()->SetScale(4.0f);
     //tc->GetTransform()->SetRotationX(PI/2 + 0.5);
     tc->GetTransform()->SetRotationY(PI);
     tc->GetTransform()->SetRotationZ(PI / 2);
-    tc->GetTransform()->SetPosition(-55, 4.5, 0);
+    tc->GetTransform()->SetPosition(-23, 3.0, 0);
 
     sharedMatData = mc->GetMaterialAt(0)->GetSharedMaterialData();
     sharedMatData->hasMetallicTexture = false;
@@ -369,7 +374,7 @@ Scene* SponzaScene(SceneManager* sm)
     mc->SetModel(sponza);
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
     tc->GetTransform()->SetPosition({0.0f, 0.0f, 0.0f});
-    tc->GetTransform()->SetScale(0.05f, 0.05f, 0.05f);
+    tc->GetTransform()->SetScale(0.02f, 0.02f, 0.02f);
     /* ---------------------- Sponza ---------------------- */
 
     /* ------------------------ EmissiveSphere --------------------------------- */
@@ -393,7 +398,7 @@ Scene* SponzaScene(SceneManager* sm)
         mc->SetMaterialAt(0, newMat);
 
         plc->SetColor({ emissiveColor.r, emissiveColor.g, emissiveColor.b });
-        plc->SetIntensity(emissiveColor.a / 8);
+        plc->SetIntensity(emissiveColor.a / 1);
 
         tc->GetTransform()->SetScale(0.5f, 0.5f, 0.5f);
         tc->GetTransform()->SetPosition(position.x, position.y, position.z);
@@ -403,26 +408,37 @@ Scene* SponzaScene(SceneManager* sm)
     };
 
 
-    float4 emissiveColor = { 1.0f, 0.4f, 0.4f, 8.0f };
-    float3 position = { 15.0f, 10.0f, -20.0f };
+    float4 emissiveColor = { 1.0f, 0.4f, 0.4f, 4.0f };
+    float3 position = { 15.0f, 4.0f, -8.0f };
     createEmissiveSphere("RedSphere", emissiveColor, position);
 
-    emissiveColor = { 0.4f, 1.0f, 0.4f, 8.0f };
+    emissiveColor = { 0.4f, 1.0f, 0.4f, 4.0f };
     position = { 0.0f, 10.0f, 0.0f };
     createEmissiveSphere("GreenSphere", emissiveColor, position);
     
-    emissiveColor = { 0.4f, 0.4f, 1.0f, 8.0f };
-    position = { 15.0f, 10.0f, 22.0f };
+    emissiveColor = { 0.4f, 0.4f, 1.0f, 4.0f };
+    position = { 15.0f, 4.0f, 9.0f };
     createEmissiveSphere("BlueSphere", emissiveColor, position);
 
+    /* ---------------------- 1Metre Box ---------------------- */
+    entity = scene->AddEntity("Box");
+    mc = entity->AddComponent<component::ModelComponent>();
+    tc = entity->AddComponent<component::TransformComponent>();
 
-   
+    mc = entity->GetComponent<component::ModelComponent>();
+    mc->SetModel(boxModel);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
+    tc = entity->GetComponent<component::TransformComponent>();
+    tc->GetTransform()->SetScale(1, 1, 1);
+    tc->GetTransform()->SetPosition(0.0f, 5.0f, 5.0f);
+    /* ---------------------- 1Metre Box ---------------------- */
+
     /* ---------------------- Sun ---------------------- */
     entity = scene->AddEntity("Sun");
     dlc = entity->AddComponent<component::DirectionalLightComponent>(F_LIGHT_FLAGS::CAST_SHADOW);
     dlc->SetColor({ 1.0f, 1.0f, 1.0f });
     dlc->SetIntensity(2.0f);
-    dlc->SetDirection({ -0.35f, -1.0f, 0.13f });
+    dlc->SetDirection({ 0.2f, -1.0f, 0.35f });
     /* ---------------------- Sun ---------------------- */
 
     /* ---------------------- Update Function ---------------------- */
@@ -460,10 +476,10 @@ void SponzaUpdateScene(SceneManager* sm, double dt)
     static float yPosGreenSphere    = currPosGreen.y;
     static float zPosBlueSphere     = currPosBlue.z;
 
-    float movedZPosRedSphere    = sinf(zPosRedSphere) * 50;
-    float movedZPosGreenSphere  = sinf(zPosGreenSphere) * 50;
+    float movedZPosRedSphere    = sinf(zPosRedSphere) * 20;
+    float movedZPosGreenSphere  = sinf(zPosGreenSphere) * 20;
     float movedYPosGreenSphere  = abs(sinf(yPosGreenSphere)) * 5;
-    float movedZPosBlueSphere   = sinf(zPosBlueSphere) * 50;
+    float movedZPosBlueSphere   = sinf(zPosBlueSphere) * 20;
 
     // Set position
     tRed->SetPosition(movedZPosRedSphere, currPosRed.y, currPosRed.z);

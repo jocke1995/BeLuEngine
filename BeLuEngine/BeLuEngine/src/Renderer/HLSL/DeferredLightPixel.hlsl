@@ -47,7 +47,7 @@ PS_OUTPUT PS_main(VS_OUT input)
 			normal.rgb,
 			baseReflectivity);
 
-		float3 position = float3(-dirLight.direction.xyz * 150);
+		float3 position = float3(-dirLight.direction.xyz * 500);
 		float3 lightDir = normalize(position - worldPos.xyz);
 		float shadowFactor = RT_ShadowFactor(worldPos.xyz, 0.1f, 100000.0f, lightDir, sceneBVH[cbPerScene.rayTracingBVH]);
 
@@ -93,7 +93,7 @@ PS_OUTPUT PS_main(VS_OUT input)
 			baseReflectivity);
 	}
 	
-	float3 ambient = 0.01f * albedo;
+	float3 ambient = 0.0f * albedo;
 	finalColor += ambient;
 
 	PS_OUTPUT output = (PS_OUTPUT)0;

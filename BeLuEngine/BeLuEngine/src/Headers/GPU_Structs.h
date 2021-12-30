@@ -128,7 +128,6 @@ struct DirectionalLight
 struct PointLight
 {
 	float4 position;
-	float4 attenuation;	// 4byte-constant, 4byte-linear, 4byte-quadratic, 4byte-padding
 
 	BaseLight baseLight;
 };
@@ -139,7 +138,6 @@ struct SpotLight
 
 	float4 position_cutOff;			// position  .x.y.z & cutOff in .w (cutOff = radius)
 	float4 direction_outerCutoff;	// direction .x.y.z & outerCutOff in .w
-	float4 attenuation;	// 4byte-constant, 4byte-linear, 4byte-quadratic, 4byte-padding
 	BaseLight baseLight;
 
 	unsigned int textureShadowMap;	// Index to the shadowMap (srv)

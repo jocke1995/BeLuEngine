@@ -91,7 +91,7 @@ float3 CalcPointLight(
 
 	// Attenuation
 	float distancePixelToLight = length(pointLight.position.xyz - fragPos.xyz);
-	float attenuation = 1.0f / max(pow(distancePixelToLight, 1), 0.01f);
+	float attenuation = 1.0f / pow(distancePixelToLight, 2);
 	
 	float3 radiance = pointLight.baseLight.color.rgb * pointLight.baseLight.intensity * attenuation;
 	
@@ -140,7 +140,7 @@ float3 CalcSpotLight(
 
 	// Attenuation
 	float distancePixelToLight = length(spotLight.position_cutOff.xyz - fragPos.xyz);
-	float attenuation = 1.0f / max(pow(distancePixelToLight, 2), 0.01f);
+	float attenuation = 1.0f / pow(distancePixelToLight, 1);
 
 	float3 radiance = spotLight.baseLight.color.rgb * spotLight.baseLight.intensity * attenuation;
 

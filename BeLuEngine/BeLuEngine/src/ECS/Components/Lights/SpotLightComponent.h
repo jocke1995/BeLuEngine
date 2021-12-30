@@ -17,7 +17,6 @@ namespace component
 		void OnUnInitScene() override;
 
 		void SetCutOff(float degrees);
-		void SetAttenuation(float3 attenuation);
 
 		// Set functions which modifies the shadowCamera
 		void SetPosition(float3 position);

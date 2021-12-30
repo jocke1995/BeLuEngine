@@ -17,7 +17,6 @@ namespace component
 		void OnUnInitScene() override;
 
 		void SetPosition(float3 position);
-		void SetAttenuation(float3 attenuation);
 
 		void* GetLightData() const override;
 

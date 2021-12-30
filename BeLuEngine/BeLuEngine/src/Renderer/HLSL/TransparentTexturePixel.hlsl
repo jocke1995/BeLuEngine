@@ -58,7 +58,7 @@ float4 PS_main(VS_OUT input) : SV_TARGET0
 			normal.rgb,
 			baseReflectivity);
 
-		float3 position = float3(-dirLight.direction.xyz * 150);
+		float3 position = float3(-dirLight.direction.xyz * 500);
 		float3 lightDir = normalize(position - input.worldPos.xyz);
 		float shadowFactor = RT_ShadowFactor(input.worldPos.xyz, 0.1f, 100000.0f, lightDir, sceneBVH[cbPerScene.rayTracingBVH]);
 

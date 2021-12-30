@@ -18,7 +18,6 @@ namespace component
         m_pSpotLight = new SpotLight();
         m_pSpotLight->position_cutOff = { 0.0f, 0.0f, 0.0f, cos(DirectX::XMConvertToRadians(30.0f)) };
         m_pSpotLight->direction_outerCutoff = { 1.0f, 0.0f, 0.0f, cos(DirectX::XMConvertToRadians(45.0f)) };
-        m_pSpotLight->attenuation = { 1.0f, 0.027f, 0.0028f, 0.0f };
         m_pSpotLight->baseLight = *m_pBaseLight;
 
         m_pSpotLight->textureShadowMap = 0;
@@ -67,13 +66,6 @@ namespace component
     void SpotLightComponent::SetCutOff(float degrees)
     {
         m_pSpotLight->position_cutOff.w = cos(DirectX::XMConvertToRadians(degrees));
-    }
-
-    void SpotLightComponent::SetAttenuation(float3 attenuation)
-    {
-        m_pSpotLight->attenuation.x = attenuation.x;
-        m_pSpotLight->attenuation.y = attenuation.y;
-        m_pSpotLight->attenuation.z = attenuation.z;
     }
 
     // This function modifies the camera aswell as the position

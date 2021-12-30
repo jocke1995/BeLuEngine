@@ -15,7 +15,6 @@ namespace component
 	{
 		m_pPointLight = new PointLight();
 		m_pPointLight->position = { 0.0f,  2.0f,  0.0f, 0.0f };
-		m_pPointLight->attenuation = { 1.0f, 0.027f, 0.0028f, 0.0f };
 		m_pPointLight->baseLight = *m_pBaseLight;
 	}
 
@@ -58,13 +57,6 @@ namespace component
 	void PointLightComponent::SetPosition(float3 position)
 	{
 		m_pPointLight->position = { position.x, position.y, position.z, 1.0f };
-	}
-
-	void PointLightComponent::SetAttenuation(float3 attenuation)
-	{
-		m_pPointLight->attenuation.x = attenuation.x;
-		m_pPointLight->attenuation.y = attenuation.y;
-		m_pPointLight->attenuation.z = attenuation.z;
 	}
 
 	void* PointLightComponent::GetLightData() const
