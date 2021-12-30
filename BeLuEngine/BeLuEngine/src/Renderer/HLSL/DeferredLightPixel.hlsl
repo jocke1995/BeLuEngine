@@ -93,7 +93,7 @@ PS_OUTPUT PS_main(VS_OUT input)
 			baseReflectivity);
 	}
 	
-	float3 ambient = 0.001f * albedo;
+	float3 ambient = 0.01f * albedo;
 	finalColor += ambient;
 
 	PS_OUTPUT output = (PS_OUTPUT)0;

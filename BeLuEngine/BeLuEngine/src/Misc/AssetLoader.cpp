@@ -90,12 +90,12 @@ void AssetLoader::loadDefaultMaterial()
 {
 	// Load default textures
 	std::map<E_TEXTURE2D_TYPE, IGraphicsTexture*> matTextures;
-	matTextures[E_TEXTURE2D_TYPE::ALBEDO]	 = LoadTexture2D(m_FilePathDefaultTextures + L"default_albedo.dds");
-	matTextures[E_TEXTURE2D_TYPE::ROUGHNESS] = LoadTexture2D(m_FilePathDefaultTextures + L"default_roughness.dds");
-	matTextures[E_TEXTURE2D_TYPE::METALLIC]  = LoadTexture2D(m_FilePathDefaultTextures + L"default_metallic.dds");
-	matTextures[E_TEXTURE2D_TYPE::NORMAL]	 = LoadTexture2D(m_FilePathDefaultTextures + L"default_normal.dds");
-	matTextures[E_TEXTURE2D_TYPE::EMISSIVE]  = LoadTexture2D(m_FilePathDefaultTextures + L"default_emissive.dds");
-	matTextures[E_TEXTURE2D_TYPE::OPACITY]	 = LoadTexture2D(m_FilePathDefaultTextures + L"default_opacity.dds");
+	matTextures[E_TEXTURE2D_TYPE::ALBEDO]		= LoadTexture2D(E_TEXTURE2D_TYPE::ALBEDO,	m_FilePathDefaultTextures + L"default_albedo.dds");
+	matTextures[E_TEXTURE2D_TYPE::ROUGHNESS]	= LoadTexture2D(E_TEXTURE2D_TYPE::ROUGHNESS,m_FilePathDefaultTextures + L"default_roughness.dds");
+	matTextures[E_TEXTURE2D_TYPE::METALLIC]		= LoadTexture2D(E_TEXTURE2D_TYPE::METALLIC, m_FilePathDefaultTextures + L"default_metallic.dds");
+	matTextures[E_TEXTURE2D_TYPE::NORMAL]		= LoadTexture2D(E_TEXTURE2D_TYPE::NORMAL,	m_FilePathDefaultTextures + L"default_normal.dds");
+	matTextures[E_TEXTURE2D_TYPE::EMISSIVE]		= LoadTexture2D(E_TEXTURE2D_TYPE::EMISSIVE, m_FilePathDefaultTextures + L"default_emissive.dds");
+	matTextures[E_TEXTURE2D_TYPE::OPACITY]		= LoadTexture2D(E_TEXTURE2D_TYPE::OPACITY,	m_FilePathDefaultTextures + L"default_opacity.dds");
 
 	std::wstring matName = L"DefaultMaterial";
 	Material* material = new Material(&matName, &matTextures);
@@ -184,7 +184,7 @@ Model* AssetLoader::LoadModel(const std::wstring& path)
 	return m_LoadedModels[path].second;
 }
 
-IGraphicsTexture* AssetLoader::LoadTexture2D(const std::wstring& path)
+IGraphicsTexture* AssetLoader::LoadTexture2D(E_TEXTURE2D_TYPE textureType, const std::wstring& path)
 {
 	// Check if the texture already exists
 	if (m_LoadedTextures.count(path) != 0)
@@ -194,10 +194,10 @@ IGraphicsTexture* AssetLoader::LoadTexture2D(const std::wstring& path)
 
 	// Check if the texture is DDS or of other commonType
 	std::string fileEnding = GetFileExtension(to_string(path));
-	BL_ASSERT(fileEnding == "dds");
+	BL_ASSERT(fileEnding == "dds");	// Currently only supporting dds..
 
 	IGraphicsTexture* texture = IGraphicsTexture::Create();
-	bool loaded = texture->LoadTextureDDS(path);
+	bool loaded = texture->LoadTextureDDS(textureType, path);
 	BL_ASSERT(loaded);
 
 	m_LoadedTextures[path].first = false;
@@ -425,7 +425,7 @@ IGraphicsTexture* AssetLoader::processTexture(aiMaterial* mat, E_TEXTURE2D_TYPE 
 	std::wstring textureFile = to_wstring(str.C_Str());
 	if (textureFile.size() != 0)
 	{
-		texture = LoadTexture2D(filePathWithoutTexture + textureFile);
+		texture = LoadTexture2D(texture_type, filePathWithoutTexture + textureFile);
 	}
 
 	if (texture != nullptr)

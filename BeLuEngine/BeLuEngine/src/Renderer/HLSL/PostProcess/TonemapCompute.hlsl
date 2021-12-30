@@ -2,6 +2,12 @@
 
 static const int g_NumThreads = 64;
 
+float4 GammaCorrect(float4 finalColor)
+{
+	const float gamma = 2.2f;
+	return float4(pow(finalColor.rgb, float3(1 / gamma, 1 / gamma, 1 / gamma)), 1.0f);
+}
+
 float4 TonemapReinhard(float4 inputColor)
 {
 	return inputColor / (inputColor + float4(1.0f, 1.0f, 1.0f, 1.0f));
@@ -54,5 +60,7 @@ void CS_main(uint3 dispatchThreadID : SV_DispatchThreadID, int3 groupThreadID : 
 	finalColor = TonemapACES(finalColor);
 	//finalColor = TonemapReinhard(finalColor);
 
+	finalColor = GammaCorrect(saturate(finalColor));
+	//finalColor = GammaCorrect(finalColor);
 	texturesUAV[finalColorWriteIndex][dispatchThreadID.xy] = finalColor;
 }

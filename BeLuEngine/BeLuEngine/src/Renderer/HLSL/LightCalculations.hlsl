@@ -90,11 +90,8 @@ float3 CalcPointLight(
 	float3 normalized_bisector = normalize(viewDir + lightDir);
 
 	// Attenuation
-	float constantFactor = pointLight.attenuation.x;
-	float linearFactor = pointLight.attenuation.y;
-	float quadraticFactor = pointLight.attenuation.z;
 	float distancePixelToLight = length(pointLight.position.xyz - fragPos.xyz);
-	float attenuation = 1.0f / (constantFactor + (linearFactor * distancePixelToLight) + (quadraticFactor * pow(distancePixelToLight, 2)));
+	float attenuation = 1.0f / max(pow(distancePixelToLight, 1), 0.01f);
 	
 	float3 radiance = pointLight.baseLight.color.rgb * pointLight.baseLight.intensity * attenuation;
 	
@@ -142,11 +139,8 @@ float3 CalcSpotLight(
 	float edgeIntensity = clamp((theta - spotLight.direction_outerCutoff.w) / epsilon, 0.0f, 1.0f);
 
 	// Attenuation
-	float constantFactor = spotLight.attenuation.x;
-	float linearFactor = spotLight.attenuation.y;
-	float quadraticFactor = spotLight.attenuation.z;
 	float distancePixelToLight = length(spotLight.position_cutOff.xyz - fragPos.xyz);
-	float attenuation = 1.0f / (constantFactor + (linearFactor * distancePixelToLight) + (quadraticFactor * pow(distancePixelToLight, 2)));
+	float attenuation = 1.0f / max(pow(distancePixelToLight, 2), 0.01f);
 
 	float3 radiance = spotLight.baseLight.color.rgb * spotLight.baseLight.intensity * attenuation;
 

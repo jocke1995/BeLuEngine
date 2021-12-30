@@ -393,7 +393,7 @@ Scene* SponzaScene(SceneManager* sm)
         mc->SetMaterialAt(0, newMat);
 
         plc->SetColor({ emissiveColor.r, emissiveColor.g, emissiveColor.b });
-        plc->SetIntensity(emissiveColor.a / 4);
+        plc->SetIntensity(emissiveColor.a / 8);
 
         tc->GetTransform()->SetScale(0.5f, 0.5f, 0.5f);
         tc->GetTransform()->SetPosition(position.x, position.y, position.z);
@@ -421,7 +421,7 @@ Scene* SponzaScene(SceneManager* sm)
     entity = scene->AddEntity("Sun");
     dlc = entity->AddComponent<component::DirectionalLightComponent>(F_LIGHT_FLAGS::CAST_SHADOW);
     dlc->SetColor({ 1.0f, 1.0f, 1.0f });
-    dlc->SetIntensity(3.0f);
+    dlc->SetIntensity(2.0f);
     dlc->SetDirection({ -0.35f, -1.0f, 0.13f });
     /* ---------------------- Sun ---------------------- */
 
@@ -457,19 +457,22 @@ void SponzaUpdateScene(SceneManager* sm, double dt)
 
     static float zPosRedSphere      = currPosRed.z;
     static float zPosGreenSphere    = currPosGreen.z;
+    static float yPosGreenSphere    = currPosGreen.y;
     static float zPosBlueSphere     = currPosBlue.z;
 
-    float movedZPosGreenSphere  = sinf(zPosGreenSphere) * 50;
     float movedZPosRedSphere    = sinf(zPosRedSphere) * 50;
+    float movedZPosGreenSphere  = sinf(zPosGreenSphere) * 50;
+    float movedYPosGreenSphere  = abs(sinf(yPosGreenSphere)) * 5;
     float movedZPosBlueSphere   = sinf(zPosBlueSphere) * 50;
 
     // Set position
-    tRed->SetPosition(movedZPosGreenSphere, currPosRed.y, currPosRed.z);
-    tGreen->SetPosition(movedZPosRedSphere, currPosGreen.y, currPosGreen.z);
+    tRed->SetPosition(movedZPosRedSphere, currPosRed.y, currPosRed.z);
+    tGreen->SetPosition(movedZPosGreenSphere, movedYPosGreenSphere, currPosGreen.z);
     tBlue->SetPosition(movedZPosBlueSphere, currPosBlue.y, currPosBlue.z);
 
     // Animate
     zPosGreenSphere += 0.5f * dt;
+    yPosGreenSphere += 1.9f * dt;
     zPosRedSphere   += 0.2f * dt;
     zPosBlueSphere  += 1.0f * dt;
 }

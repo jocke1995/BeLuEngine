@@ -6,7 +6,24 @@
 #include "D3D12GraphicsManager.h"
 #include "D3D12DescriptorHeap.h"
 
-TODO("Wrapper for DXGI_FORMAT");
+DXGI_FORMAT ConvertFormatToSRGB(DXGI_FORMAT format)
+{
+	switch (format)
+	{
+	case DXGI_FORMAT_R8G8B8A8_UNORM: return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+	case DXGI_FORMAT_BC1_UNORM: return DXGI_FORMAT_BC1_UNORM_SRGB;
+	case DXGI_FORMAT_BC2_UNORM: return DXGI_FORMAT_BC2_UNORM_SRGB;
+	case DXGI_FORMAT_BC3_UNORM: return DXGI_FORMAT_BC3_UNORM_SRGB;
+	case DXGI_FORMAT_B8G8R8A8_UNORM: return DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+	case DXGI_FORMAT_B8G8R8X8_UNORM: return DXGI_FORMAT_B8G8R8X8_UNORM_SRGB;
+	case DXGI_FORMAT_BC7_UNORM: return DXGI_FORMAT_BC7_UNORM_SRGB;
+	default: BL_LOG_WARNING("Cannot convert textureFormat to SRGB"); return format;
+	}
+
+	// Should never reach this point
+	BL_ASSERT(false);
+	return format;
+}
 
 D3D12GraphicsTexture::D3D12GraphicsTexture()
 	:IGraphicsTexture()
@@ -25,7 +42,7 @@ D3D12GraphicsTexture::~D3D12GraphicsTexture()
 	BL_SAFE_DELETE(m_pTextureData);
 }
 
-bool D3D12GraphicsTexture::LoadTextureDDS(const std::wstring& filePath)
+bool D3D12GraphicsTexture::LoadTextureDDS(E_TEXTURE2D_TYPE textureType, const std::wstring& filePath)
 {
 	D3D12GraphicsManager* graphicsManager = D3D12GraphicsManager::GetInstance();
 	ID3D12Device5* device5 = graphicsManager->GetDevice();
@@ -69,11 +86,15 @@ bool D3D12GraphicsTexture::LoadTextureDDS(const std::wstring& filePath)
 
 #pragma endregion
 
+	DXGI_FORMAT textureFormat = resourceDesc.Format;
+	if (textureType == E_TEXTURE2D_TYPE::ALBEDO)
+		textureFormat = ConvertFormatToSRGB(textureFormat);
+
 #pragma region CreateDescriptors
 	// Create srv
 	D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
 	desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	desc.Format = resourceDesc.Format;
+	desc.Format = textureFormat;
 	desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 	desc.Texture2D.MipLevels = m_NumMipLevels;
 	desc.Texture2D.MostDetailedMip = 0;
