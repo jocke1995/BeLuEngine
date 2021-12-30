@@ -51,12 +51,8 @@ public:
 	ID3D12RootSignature* GetGlobalRootSignature() const { return m_pGlobalRootSig; }
 	unsigned int GetCommandInterfaceIndex() const { return m_CommandInterfaceIndex; }
 private:
-	// ABSTRACTION TEMP
-	friend class Renderer;
 	friend class ImGuiHandler;
-	friend class ImGuiRenderTask;
-	friend class TonemapComputeTask;
-	friend class RayTracingPipelineGenerator;
+	friend class RayTracingPipelineGenerator;	// ABSTRACTION TEMP
 	// -------------------------- Native D3D12 -------------------------- 
 	// D3D12 DLL
 	HINSTANCE m_D3D12Handle;

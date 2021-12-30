@@ -130,11 +130,6 @@ void Renderer::InitD3D12(HWND hwnd, unsigned int width, unsigned int height, HIN
 	m_CurrentRenderingWidth = width;
 	m_CurrentRenderingHeight = height;
 
-	// ABSTRACTION TEMP
-	ID3D12Device5* m_pDevice5 = static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->m_pDevice5;
-	D3D12DescriptorHeap* mainHeap= static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetMainDescriptorHeap();
-	D3D12DescriptorHeap* rtvHeap= static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->GetRTVDescriptorHeap();
-
 #pragma region RenderTargets
 	// Main color renderTarget (used until the swapchain RT is drawn to)
 	m_FinalColorBuffer = IGraphicsTexture::Create();
@@ -204,7 +199,7 @@ void Renderer::InitD3D12(HWND hwnd, unsigned int width, unsigned int height, HIN
 	AssetLoader* al = AssetLoader::Get();
 
 	// Init BoundingBoxPool
-	BoundingBoxPool::Get(m_pDevice5, mainHeap);
+	BoundingBoxPool::Get();
 
 	// Allocate memory for cbPerScene
 	m_pCbPerScene = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::ConstantBuffer, sizeof(CB_PER_SCENE_STRUCT), 1, DXGI_FORMAT_UNKNOWN, L"CB_PER_SCENE");
