@@ -10,8 +10,7 @@ static bool tabPressed = false;
 class Window
 {
 public:
-	// Varying screensize constructor
-	Window( // Default values
+	static void Create(
 		HINSTANCE hInstance,
 		int nCmdShow,
 		bool windowedFullScreen = false,
@@ -19,8 +18,9 @@ public:
 		int screenHeight = 600,
 		LPCTSTR windowName = L"windowName",
 		LPCTSTR windowTitle = L"windowTitle");
-
 	~Window();
+
+	static Window* GetInstance();
 
 	void SetWindowTitle(std::wstring newTitle);
 
@@ -39,6 +39,15 @@ public:
 	bool WasTabPressed();
 
 private:
+	Window(
+		HINSTANCE hInstance,
+		int nCmdShow,
+		bool windowedFullScreen = false,
+		int screenWidth = 800,
+		int screenHeight = 600,
+		LPCTSTR windowName = L"windowName",
+		LPCTSTR windowTitle = L"windowTitle");
+
 	int m_ScreenWidth;
 	int m_ScreenHeight;
 	bool m_WindowedFullScreen;

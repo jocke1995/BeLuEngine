@@ -41,5 +41,4 @@ IGraphicsManager* IGraphicsManager::Create(const E_GRAPHICS_API graphicsApi)
 void IGraphicsManager::Destroy()
 {
     BL_SAFE_DELETE(m_sInstance);
-    m_sInstance = nullptr;
 }

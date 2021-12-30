@@ -51,13 +51,13 @@ public:
 	static E_GRAPHICS_API GetGraphicsApiType() { return m_sGraphicsAPI; }
 
 	virtual void Init(HWND hwnd, unsigned int width, unsigned int height, DXGI_FORMAT dxgiFormat) = 0;
+	void Destroy();
 
 	virtual void Begin() = 0;
 	virtual void Execute(const std::vector<IGraphicsContext*>& graphicsContexts, unsigned int numGraphicsContexts) = 0;
 	virtual void SyncAndPresent(IGraphicsTexture* finalColorTexture) = 0;
 	virtual void End() = 0;
 
-	void Destroy();
 private:
 	static inline IGraphicsManager* m_sInstance = nullptr;
 	static inline E_GRAPHICS_API m_sGraphicsAPI = E_GRAPHICS_API::NONE;

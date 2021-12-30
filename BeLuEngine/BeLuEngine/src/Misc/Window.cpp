@@ -4,17 +4,16 @@
 #include "../Input/Input.h"
 
 
-#ifdef DEBUG
-	#include "../ImGui/imgui_impl_win32.h"
-	extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-#endif
+#include "../ImGui/imgui_impl_win32.h"
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
+static Window* gWindow = nullptr;
 
 // callback function for windows messages
 LRESULT CALLBACK WndProc(HWND hWnd, unsigned int msg, WPARAM wParam, LPARAM lParam)
 {
-#ifdef DEBUG
 	ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
-#endif
+
 	switch (msg)
 	{
 	case WM_SYSKEYDOWN: // alt+enter
@@ -146,7 +145,18 @@ Window::Window(
 
 Window::~Window()
 {
+}
 
+Window* Window::GetInstance()
+{
+	BL_ASSERT(gWindow);
+	return gWindow;
+}
+
+void Window::Create(HINSTANCE hInstance, int nCmdShow, bool windowedFullScreen, int screenWidth, int screenHeight, LPCTSTR windowName, LPCTSTR windowTitle)
+{
+	BL_ASSERT(!gWindow);
+	gWindow = new Window(hInstance, nCmdShow, windowedFullScreen, screenWidth, screenHeight, windowName, windowTitle);
 }
 
 void Window::SetWindowTitle(std::wstring newTitle)

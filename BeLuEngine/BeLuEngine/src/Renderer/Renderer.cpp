@@ -10,9 +10,6 @@
 #include "DXILShaderCompiler.h"
 
 // ImGui
-#include "../ImGUI/imgui.h"
-#include "../ImGUI/imgui_impl_win32.h"
-#include "../ImGUI/imgui_impl_dx12.h"
 #include "../ImGui/ImGuiHandler.h"
 #include "RenderPasses/Graphics/ImGuiRenderTask.h"
 
@@ -124,13 +121,6 @@ void Renderer::deleteRenderer()
 
 	BL_SAFE_DELETE(Light::m_pLightsRawBuffer);
 	free(Light::m_pRawData);
-
-#ifdef DEBUG
-	// Cleanup ImGui
-	ImGui_ImplDX12_Shutdown();
-	ImGui_ImplWin32_Shutdown();
-	ImGui::DestroyContext();
-#endif
 }
 
 void Renderer::InitD3D12(HWND hwnd, unsigned int width, unsigned int height, HINSTANCE hInstance, ThreadPool* threadPool)
@@ -224,29 +214,6 @@ void Renderer::InitD3D12(HWND hwnd, unsigned int width, unsigned int height, HIN
 	m_pCbPerFrame = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::ConstantBuffer, sizeof(CB_PER_FRAME_STRUCT), 1, DXGI_FORMAT_UNKNOWN, L"CB_PER_FRAME");
 	m_pCbPerFrameData = new CB_PER_FRAME_STRUCT();
 
-#ifdef DEBUG
-	// Setup ImGui context
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-
-	// Setup ImGui style
-	ImGui::StyleColorsDark();
-
-	ImGuiIO& io = ImGui::GetIO();
-	io.ConfigFlags = ImGuiConfigFlags_NoMouse;
-
-	io.DisplaySize.x = m_CurrentRenderingWidth;
-	io.DisplaySize.y = m_CurrentRenderingHeight;
-
-	unsigned int imGuiTextureIndex = mainHeap->GetNextDescriptorHeapIndex(1);
-
-	// Setup Platform/Renderer bindings
-	ImGui_ImplWin32_Init(hwnd);
-	ImGui_ImplDX12_Init(m_pDevice5, NUM_SWAP_BUFFERS,
-		DXGI_FORMAT_R16G16B16A16_FLOAT, mainHeap->GetID3D12DescriptorHeap(),
-		mainHeap->GetCPUHeapAt(imGuiTextureIndex),
-		mainHeap->GetGPUHeapAt(imGuiTextureIndex));
-#endif
 	createRawBufferForLights();
 
 	initGraphicsPasses();
@@ -301,9 +268,7 @@ void Renderer::Update(double dt)
 	updateMousePicker();
 
 	// ImGui
-#ifdef DEBUG
 	ImGuiHandler::GetInstance().NewFrame();
-#endif
 
 	// DXR
 	TopLevelAccelerationStructure* pTLAS = static_cast<TopLevelRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::TLAS])->GetTLAS();
@@ -455,8 +420,6 @@ void Renderer::ExecuteMT()
 	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->Execute(m_MainGraphicsContexts, m_MainGraphicsContexts.size());
 	/* --------------------------------------------------------------- */
 
-	// ImGui
-#ifdef DEBUG
 	// Have to update ImGui here to get all information that happens inside rendering
 	ImGuiHandler::GetInstance().UpdateFrame();
 
@@ -464,8 +427,6 @@ void Renderer::ExecuteMT()
 	graphicsPass->Execute();
 
 	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->Execute(m_ImGuiGraphicsContext, m_ImGuiGraphicsContext.size());
-#endif
-
 
 	/*------------------- Present -------------------*/
 	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->SyncAndPresent(m_FinalColorBuffer);
@@ -543,8 +504,6 @@ void Renderer::ExecuteST()
 
 	/*------------------- Post draw stuff -------------------*/
 
-	// ImGui
-#ifdef DEBUG
 	// Have to update ImGui here to get all information that happens inside rendering
 	ImGuiHandler::GetInstance().UpdateFrame();
 
@@ -552,7 +511,6 @@ void Renderer::ExecuteST()
 	graphicsPass->Execute();
 
 	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->Execute(m_ImGuiGraphicsContext, m_ImGuiGraphicsContext.size());
-#endif
 
 	/*------------------- Present -------------------*/
 	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->SyncAndPresent(m_FinalColorBuffer);
@@ -1004,7 +962,7 @@ void Renderer::initGraphicsPasses()
 	GraphicsPass* copyOnDemandTask = new CopyOnDemandTask();
 
 	// UI
-	GraphicsPass* imGuiPass = new ImGuiRenderTask();
+	GraphicsPass* imGuiPass = new ImGuiRenderTask(m_CurrentRenderingWidth, m_CurrentRenderingHeight);
 	imGuiPass->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
 
 	// Add the tasks to desired vectors so they can be used in m_pRenderer

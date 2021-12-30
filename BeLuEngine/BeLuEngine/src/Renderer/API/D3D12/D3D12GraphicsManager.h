@@ -112,7 +112,6 @@ private:
 	unsigned int m_CommandInterfaceIndex = 0;
 	unsigned int mFrameIndex = 0;
 
-
 	// -------------------------- Private Functions -------------------------- 
 	// Sync
 	void waitForFrame(unsigned int frameToWaitFor);

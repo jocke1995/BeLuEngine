@@ -37,7 +37,8 @@ void BeLuEngine::Init(HINSTANCE hInstance, int nCmdShow)
 	EngineStatistics::GetIM_CommonStats().m_ResY = windowHeight;
 
 	// Misc
-	m_pWindow = new Window(hInstance, nCmdShow, windowedFullscreen, windowWidth, windowHeight);
+	Window::Create(hInstance, nCmdShow, windowedFullscreen, windowWidth, windowHeight);
+	m_pWindow = Window::GetInstance();
 	m_pTimer = new Timer(m_pWindow);
 
 	// ThreadPool
