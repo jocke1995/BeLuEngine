@@ -34,7 +34,7 @@ public:
 
 	// Call everyframe
 	void Begin() override final;
-	void Execute(const std::vector<IGraphicsContext*>& graphicsContexts, unsigned int numGraphicsContexts) override final;
+	void ExecuteGraphicsContexts(const std::vector<IGraphicsContext*>& graphicsContexts, unsigned int numGraphicsContexts) override final;
 	void SyncAndPresent(IGraphicsTexture* finalColorTexture) override final;
 	void End() override final;
 

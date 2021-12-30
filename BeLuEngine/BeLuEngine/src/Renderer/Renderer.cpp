@@ -24,7 +24,6 @@
 #include "../ECS/Components/Lights/SpotLightComponent.h"
 
 // Renderer-Engine 
-#include "API/D3D12/D3D12DescriptorHeap.h"
 #include "Geometry/Transform.h"
 #include "Camera/BaseCamera.h"
 #include "Geometry/Model.h"
@@ -59,12 +58,10 @@
 // Event
 #include "../Events/EventBus.h"
 
-// ABSTRACTION TEMP
-#include "API/D3D12/D3D12GraphicsManager.h"
-#include "API/D3D12/D3D12GraphicsBuffer.h"
-#include "API/D3D12/D3D12GraphicsTexture.h"
-
+// Generic API
+#include "API/IGraphicsManager.h"
 #include "API/IGraphicsBuffer.h"
+#include "API/IGraphicsTexture.h"
 
 Renderer::Renderer()
 {
@@ -412,7 +409,7 @@ void Renderer::ExecuteMT()
 	m_pThreadPool->WaitForThreads(F_THREAD_FLAGS::GRAPHICS);
 
 
-	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->Execute(m_MainGraphicsContexts, m_MainGraphicsContexts.size());
+	graphicsManager->ExecuteGraphicsContexts(m_MainGraphicsContexts, m_MainGraphicsContexts.size());
 	/* --------------------------------------------------------------- */
 
 	// Have to update ImGui here to get all information that happens inside rendering
@@ -421,10 +418,10 @@ void Renderer::ExecuteMT()
 	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::IMGUI];
 	graphicsPass->Execute();
 
-	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->Execute(m_ImGuiGraphicsContext, m_ImGuiGraphicsContext.size());
+	graphicsManager->ExecuteGraphicsContexts(m_ImGuiGraphicsContext, m_ImGuiGraphicsContext.size());
 
 	/*------------------- Present -------------------*/
-	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->SyncAndPresent(m_FinalColorBuffer);
+	graphicsManager->SyncAndPresent(m_FinalColorBuffer);
 	
 	// Check to end ImGui if its active
 	ImGuiHandler::GetInstance().EndFrame();
@@ -493,7 +490,7 @@ void Renderer::ExecuteST()
 	}
 
 	/* ----------------------------- DEVELOPERMODE CommandLists ----------------------------- */
-	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->Execute(m_MainGraphicsContexts, m_MainGraphicsContexts.size());
+	graphicsManager->ExecuteGraphicsContexts(m_MainGraphicsContexts, m_MainGraphicsContexts.size());
 
 	/* --------------------------------------------------------------- */
 
@@ -505,10 +502,10 @@ void Renderer::ExecuteST()
 	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::IMGUI];
 	graphicsPass->Execute();
 
-	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->Execute(m_ImGuiGraphicsContext, m_ImGuiGraphicsContext.size());
+	graphicsManager->ExecuteGraphicsContexts(m_ImGuiGraphicsContext, m_ImGuiGraphicsContext.size());
 
 	/*------------------- Present -------------------*/
-	static_cast<D3D12GraphicsManager*>(D3D12GraphicsManager::GetInstance())->SyncAndPresent(m_FinalColorBuffer);
+	graphicsManager->SyncAndPresent(m_FinalColorBuffer);
 
 	// Check to end ImGui if its active
 	ImGuiHandler::GetInstance().EndFrame();

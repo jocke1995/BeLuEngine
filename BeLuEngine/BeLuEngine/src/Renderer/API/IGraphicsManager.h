@@ -54,7 +54,7 @@ public:
 	void Destroy();
 
 	virtual void Begin() = 0;
-	virtual void Execute(const std::vector<IGraphicsContext*>& graphicsContexts, unsigned int numGraphicsContexts) = 0;
+	virtual void ExecuteGraphicsContexts(const std::vector<IGraphicsContext*>& graphicsContexts, unsigned int numGraphicsContexts) = 0;
 	virtual void SyncAndPresent(IGraphicsTexture* finalColorTexture) = 0;
 	virtual void End() = 0;
 

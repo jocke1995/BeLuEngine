@@ -784,7 +784,7 @@ void D3D12GraphicsManager::End()
 	m_pIntermediateUploadHeapAtomicCurrentOffset = 0;
 }
 
-void D3D12GraphicsManager::Execute(const std::vector<IGraphicsContext*>& graphicsContexts, unsigned int numGraphicsContexts)
+void D3D12GraphicsManager::ExecuteGraphicsContexts(const std::vector<IGraphicsContext*>& graphicsContexts, unsigned int numGraphicsContexts)
 {
 	std::vector<ID3D12CommandList*> cList;
 	cList.reserve(numGraphicsContexts);
