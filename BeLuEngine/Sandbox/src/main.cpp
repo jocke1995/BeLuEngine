@@ -422,7 +422,7 @@ Scene* SponzaScene(SceneManager* sm)
     dlc = entity->AddComponent<component::DirectionalLightComponent>(F_LIGHT_FLAGS::CAST_SHADOW);
     dlc->SetColor({ 1.0f, 1.0f, 1.0f });
     dlc->SetIntensity(3.0f);
-    dlc->SetDirection({ -1.0f, -2.0f, 0.03f });
+    dlc->SetDirection({ -0.35f, -1.0f, 0.13f });
     /* ---------------------- Sun ---------------------- */
 
     /* ---------------------- Update Function ---------------------- */
