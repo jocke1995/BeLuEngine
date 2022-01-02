@@ -57,8 +57,8 @@ void CS_main(uint3 dispatchThreadID : SV_DispatchThreadID, int3 groupThreadID : 
 	float4 finalColor = textures[finalColorReadIndex][dispatchThreadID.xy];
 
 	// Tonemap
-	//finalColor = TonemapACES(finalColor);
-	finalColor = TonemapReinhard(finalColor);
+	finalColor = TonemapACES(finalColor);
+	//finalColor = TonemapReinhard(finalColor);
 
 	finalColor = GammaCorrect(finalColor);
 	texturesUAV[finalColorWriteIndex][dispatchThreadID.xy] = saturate(finalColor);

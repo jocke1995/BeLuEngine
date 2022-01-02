@@ -29,7 +29,7 @@ PS_OUTPUT PS_main(VS_OUT input)
 	
 	// Linear interpolation
 	float3 baseReflectivity = lerp(float3(0.04f, 0.04f, 0.04f), albedo.rgb, metallic);
-	
+
 	LightHeader lHeader = rawBufferLights.Load<LightHeader>(0);
 	// DirectionalLight contributions
 	for (unsigned int i = 0; i < lHeader.numDirectionalLights; i++)
@@ -73,7 +73,7 @@ PS_OUTPUT PS_main(VS_OUT input)
 		float3 lightDir = normalize(pointLight.position.xyz - worldPos.xyz);
 		float shadowFactor = RT_ShadowFactor(worldPos.xyz, 0.1f, length(pointLight.position.xyz - worldPos.xyz) - 1.0, lightDir, sceneBVH[cbPerScene.rayTracingBVH]);
 
-		finalColor += lightColor * shadowFactor;
+		finalColor += lightColor;// * shadowFactor;
 	}
 	
 	// SpotLight  contributions
@@ -93,7 +93,7 @@ PS_OUTPUT PS_main(VS_OUT input)
 			baseReflectivity);
 	}
 	
-	float3 ambient = 0.0f * albedo;
+	float3 ambient = 0.01f * albedo;
 	finalColor += ambient;
 
 	PS_OUTPUT output = (PS_OUTPUT)0;

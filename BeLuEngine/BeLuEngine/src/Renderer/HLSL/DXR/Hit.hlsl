@@ -31,26 +31,27 @@ void ClosestHit(inout ReflectionPayload reflectionPayload, in BuiltInTriangleInt
 	
     float2 uv = v1.uv * bary.x + v2.uv * bary.y + v3.uv * bary.z; 
     
-    float4 albedo	= textures[matData.textureAlbedo].SampleLevel(BilinearWrap, uv, 2);
+   float4 albedo		= matData.hasAlbedoTexture ? textures[matData.textureAlbedo].SampleLevel(BilinearWrap, uv, 2) : matData.albedoValue;
 	float roughness	= matData.hasRoughnessTexture ? textures[matData.textureRoughness].SampleLevel(BilinearWrap, uv, 2).r : matData.roughnessValue;
-	float metallic	= matData.hasMetallicTexture  ? textures[matData.textureMetallic].SampleLevel(BilinearWrap, uv, 2).g  : matData.metallicValue;
-	float4 emissive = matData.hasEmissiveTexture ? textures[matData.textureEmissive].SampleLevel(BilinearWrap, uv, 2) : matData.emissiveValue;
+	float metallic		= matData.hasMetallicTexture  ? textures[matData.textureMetallic].SampleLevel(BilinearWrap, uv, 2).g  : matData.metallicValue;
+	float4 emissive	= matData.hasEmissiveTexture ? textures[matData.textureEmissive].SampleLevel(BilinearWrap, uv, 2) : matData.emissiveValue;
 
 	float3 worldPos = WorldRayOrigin() + RayTCurrent() * WorldRayDirection();
 	float3 camPos = cbPerFrame.camPos;
 	float3 viewDir = normalize(camPos - worldPos.xyz);
 	
-	if (roughness < 0.11 && metallic > 0.9f)
-	{
-		RayDesc ray;
-		ray.Origin = float4(worldPos, 1.0f) + float4(normal.xyz, 0.0f) * 0.5f;
-		ray.Direction = normalize(reflect(WorldRayDirection(), float3(normal.xyz)));
-		ray.TMin = 0;
-		ray.TMax = 10000;
+	float4 finalColor = float4(0.0f, 0.0f, 0.0f, 1.0f);
+#if 1 // Trace new rays
+	RayDesc ray;
+	ray.Origin = float4(worldPos, 1.0f) + float4(normal.xyz, 0.0f) * 0.5f;
+	ray.Direction = normalize(reflect(WorldRayDirection(), float3(normal.xyz)));
+	ray.TMin = 0.1f;
+	ray.TMax = 10000;
 	
-		// Trace the ray
-		reflectionPayload.color += TraceRadianceRay(ray, reflectionPayload.recursionDepth, sceneBVH[cbPerScene.rayTracingBVH]);
-	}
+	 //Trace the ray
+	finalColor.rgb += TraceRadianceRay(ray, reflectionPayload.recursionDepth, sceneBVH[cbPerScene.rayTracingBVH]);
+
+#endif
 
 	// Do lightning calculations
 	float3 baseReflectivity = lerp(float3(0.04f, 0.04f, 0.04f), albedo.rgb, metallic);
@@ -61,7 +62,7 @@ void ClosestHit(inout ReflectionPayload reflectionPayload, in BuiltInTriangleInt
 	{
 		DirectionalLight dirLight = rawBufferLights.Load<DirectionalLight>(sizeof(LightHeader) + i * sizeof(DirectionalLight));
 	
-		reflectionPayload.color += CalcDirLight(
+		float3 lightColor = CalcDirLight(
 			dirLight,
 			camPos,
 			viewDir,
@@ -71,6 +72,8 @@ void ClosestHit(inout ReflectionPayload reflectionPayload, in BuiltInTriangleInt
 			roughness,
 			normal,
 			baseReflectivity);
+
+		finalColor += float4(lightColor, 1.0f); //* shadowFactor;
 	}
 	
 	// PointLight contributions
@@ -92,9 +95,11 @@ void ClosestHit(inout ReflectionPayload reflectionPayload, in BuiltInTriangleInt
 		float3 lightDir = normalize(pointLight.position.xyz - worldPos.xyz);
 		//float shadowFactor = RT_ShadowFactor(worldPos.xyz, 0.1f, length(pointLight.position.xyz - worldPos.xyz) - 1.0, lightDir, sceneBVH[cbPerScene.rayTracingBVH]);
 
-		reflectionPayload.color += lightColor; //* shadowFactor;
+		finalColor += float4(lightColor, 1.0f); //* shadowFactor;
 	}
 
-	reflectionPayload.color += 0.001f * albedo.rgb;
-	reflectionPayload.color += (emissive.rgb * emissive.a);
+	finalColor += float4(0.01f * albedo.rgb, 1.0f);
+	finalColor += float4(emissive.rgb * emissive.a, 1.0f);
+
+	reflectionPayload.color = finalColor.rgb;
 } 

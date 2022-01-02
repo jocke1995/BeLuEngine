@@ -76,8 +76,7 @@ private:
     friend class ScopedPIXEvent;
 
     // TEMP
-    friend class ImGuiRenderTask;
-    friend class TonemapComputeTask;
+    friend class DXRReflectionTask;
 
 	ID3D12GraphicsCommandList5* m_pCommandList{ nullptr };
 	ID3D12CommandAllocator* m_pCommandAllocators[NUM_SWAP_BUFFERS]{ nullptr };

@@ -18,7 +18,7 @@ float NormalDistributionGGX(float NdotH, float roughness)
 	
 	float denom = NdotH * NdotH * (a2 - 1.0f) + 1.0f;
 	denom = PI * denom * denom;
-	return a2 / max(denom, 0.00000001f);
+	return a / max(denom, 0.00000001f);
 }
 
 // Approximate the self-shadowing for each microsurface

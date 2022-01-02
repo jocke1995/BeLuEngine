@@ -90,14 +90,14 @@ namespace component
 			material->GetSharedMaterialData()->hasMetallicTexture,
 			material->GetSharedMaterialData()->hasOpacityTexture,
 			material->GetSharedMaterialData()->hasNormalTexture,
-			material->GetSharedMaterialData()->pad1,
+			material->GetSharedMaterialData()->hasAlbedoTexture,
 
 			material->GetSharedMaterialData()->emissiveValue,
 
 			material->GetSharedMaterialData()->roughnessValue,
 			material->GetSharedMaterialData()->metallicValue,
 			material->GetSharedMaterialData()->opacityValue,
-			material->GetSharedMaterialData()->pad3,
+			material->GetSharedMaterialData()->pad1,
 		};
 	}
 
@@ -159,14 +159,16 @@ namespace component
 				m_Materials[i]->GetSharedMaterialData()->hasMetallicTexture,
 				m_Materials[i]->GetSharedMaterialData()->hasOpacityTexture,
 				m_Materials[i]->GetSharedMaterialData()->hasNormalTexture,
-				m_Materials[i]->GetSharedMaterialData()->pad1,
+				m_Materials[i]->GetSharedMaterialData()->hasAlbedoTexture,
 
 				m_Materials[i]->GetSharedMaterialData()->emissiveValue,
 
 				m_Materials[i]->GetSharedMaterialData()->roughnessValue,
 				m_Materials[i]->GetSharedMaterialData()->metallicValue,
 				m_Materials[i]->GetSharedMaterialData()->opacityValue,
-				m_Materials[i]->GetSharedMaterialData()->pad3,
+				m_Materials[i]->GetSharedMaterialData()->pad1,
+
+				m_Materials[i]->GetSharedMaterialData()->albedoValue,
 			};
 		}
 	}

@@ -65,9 +65,10 @@ float3 CalcDirLight(
 
 	float3 specular = D * G * F / (4.0f * NdotV * NdotL);
 
-	// Energy conservation
+	// Energy conservation: ks + kd = 1
+	float3 ks = F;
 	float3 kD = float3(1.0f, 1.0f, 1.0f) - F;
-	kD *= 1.0f - metallic;
+	kD *= (1.0f - metallic);
 
 	DirLightContribution = (kD * albedo / PI + specular) * radiance * NdotL;
 	return DirLightContribution;
@@ -109,7 +110,7 @@ float3 CalcPointLight(
 	
 	// Energy conservation
 	float3 kD = float3(1.0f, 1.0f, 1.0f) - F;
-	kD *= 1.0f - metallic;
+	kD *= (1.0f - metallic);
 	
 	pointLightContribution = (kD * albedo / PI + specular) * radiance * NdotL;
 	return pointLightContribution;
@@ -158,7 +159,7 @@ float3 CalcSpotLight(
 
 	// Energy conservation
 	float3 kD = float3(1.0f, 1.0f, 1.0f) - F;
-	kD *= 1.0f - metallic;
+	kD *= (1.0f - metallic);
 
 	spotLightContribution = ((kD * albedo / PI + specular) * radiance * NdotL) * edgeIntensity;
 	return spotLightContribution;

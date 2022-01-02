@@ -17,10 +17,12 @@
 #include "../ECS/Components/TransformComponent.h"
 
 TODO("Abstract this class")
-#include "../../API/D3D12/D3D12GraphicsManager.h"
-#include "../../API/D3D12/D3D12GraphicsBuffer.h"
-#include "../../API/IGraphicsTexture.h"
-#include "../../API/IGraphicsContext.h"
+#include "../Renderer/API/D3D12/D3D12GraphicsManager.h"
+#include "../Renderer/API/D3D12/D3D12GraphicsBuffer.h"
+#include "../Renderer/API/IGraphicsTexture.h"
+#include "../Renderer/API/D3D12/D3D12GraphicsContext.h"
+#include "../Renderer/API/IGraphicsContext.h"
+#include "../Renderer/API/D3D12/D3D12DescriptorHeap.h"
 
 DXRReflectionTask::DXRReflectionTask(unsigned int dispatchWidth, unsigned int dispatchHeight)
 	:GraphicsPass(L"DXR_ReflectionPass")
@@ -173,7 +175,7 @@ DXRReflectionTask::DXRReflectionTask(unsigned int dispatchWidth, unsigned int di
 	// then requires a trace depth of 1. Note that this recursion depth should be
 	// kept to a minimum for best performance. Path tracing algorithms can be
 	// easily flattened into a simple loop in the ray generation.
-	rtPipelineGenerator.SetMaxRecursionDepth(15);
+	rtPipelineGenerator.SetMaxRecursionDepth(2);
 
 	// Compile the pipeline for execution on the GPU
 	m_pStateObject = rtPipelineGenerator.Generate();
@@ -309,7 +311,8 @@ void DXRReflectionTask::Execute()
 		m_pGraphicsContext->SetPipelineState(m_pStateObject);
 
 		RootConstantUints rootConstantUints = {};
-		rootConstantUints.index0 = finalColorBuffer->GetUnorderedAccessIndex();	// Write to this texture with this index
+		rootConstantUints.index0 = finalColorBuffer->GetShaderResourceHeapIndex();	// Read from this texture with this index
+		rootConstantUints.index1 = finalColorBuffer->GetUnorderedAccessIndex();		// Write to this texture with this index
 		m_pGraphicsContext->Set32BitConstants(Constants_DH_Indices_B1, sizeof(RootConstantUints) / 4, &rootConstantUints, 0, true);
 
 		// Dispatch the rays and write to the raytracing output

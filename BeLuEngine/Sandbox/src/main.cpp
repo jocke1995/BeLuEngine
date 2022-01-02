@@ -1,9 +1,9 @@
 #include "BeLuEngine.h"
 
-Scene* TestScene(SceneManager* sm);
+Scene* PBRScene(SceneManager* sm);
 Scene* SponzaScene(SceneManager* sm);
 
-void TestUpdateScene(SceneManager* sm, double dt);
+void PBRUpdateScene(SceneManager* sm, double dt);
 void SponzaUpdateScene(SceneManager* sm, double dt);
 
 // Temp
@@ -44,8 +44,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
     /*------ AssetLoader to load models / textures ------*/
    AssetLoader* al = AssetLoader::Get();
    
-   Scene* scene = SponzaScene(sceneManager);
-   //Scene* scene = TestScene(sceneManager);
+   //Scene* scene = SponzaScene(sceneManager);
+   Scene* scene = PBRScene(sceneManager);
 
    // Set scene
    sceneManager->SetScene(scene);
@@ -70,7 +70,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
            static unsigned int counter = 1;
            std::string name = "pointLight" + std::to_string(counter);
            /* ---------------------- PointLightDynamic ---------------------- */
-           Model* sphereModel = al->LoadModel(L"../Vendor/Resources/Models/SpherePBR/ball.obj");
+           Model* sphereModel = al->LoadModel(L"../Vendor/Resources/Models/SpherePBR/sphere.obj");
            Entity* entity = scene->AddEntity(name);
            component::ModelComponent* mc = entity->AddComponent<component::ModelComponent>();
            component::TransformComponent* tc = entity->AddComponent<component::TransformComponent>();
@@ -121,10 +121,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
     return EXIT_SUCCESS;
 }
 
-Scene* TestScene(SceneManager* sm)
+Scene* PBRScene(SceneManager* sm)
 {
     // Create Scene
-    Scene* scene = sm->CreateScene("TestScene");
+    Scene* scene = sm->CreateScene("PBRScene");
 
     component::CameraComponent* cc = nullptr;
     component::ModelComponent* mc = nullptr;
@@ -139,7 +139,7 @@ Scene* TestScene(SceneManager* sm)
 
     // Get the models needed
     Model* floorModel = al->LoadModel(L"../Vendor/Resources/Models/FloorPBR/floor.obj");
-    Model* sphereModel = al->LoadModel(L"../Vendor/Resources/Models/SpherePBR/ball.obj");
+    Model* sphereModel = al->LoadModel(L"../Vendor/Resources/Models/SpherePBR/sphere.obj");
     Model* posterModel = al->LoadModel(L"../Vendor/Resources/Models/Poster/Poster.obj");
     Model* boxModel = al->LoadModel(L"../Vendor/Resources/Models/CubePBR/cube.obj");
 
@@ -151,27 +151,27 @@ Scene* TestScene(SceneManager* sm)
     /* ---------------------- Player ---------------------- */
 
     /* ---------------------- Mirror ---------------------- */
-    entity = scene->AddEntity("Mirror");
-    mc = entity->AddComponent<component::ModelComponent>();
-    tc = entity->AddComponent<component::TransformComponent>();
-    bbc = entity->AddComponent <component::BoundingBoxComponent>();
-
-    mc->SetModel(posterModel);
-    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
-    tc->GetTransform()->SetScale(5.0f);
-    tc->GetTransform()->SetRotationX(PI / 2);
-    tc->GetTransform()->SetRotationY(PI);
-    tc->GetTransform()->SetPosition(0, 5, 10);
-
-    MaterialData* sharedMatData = mc->GetMaterialAt(0)->GetSharedMaterialData();
-    sharedMatData->hasMetallicTexture = false;
-    sharedMatData->hasRoughnessTexture = false;
-    sharedMatData->hasNormalTexture = false;
-    sharedMatData->metallicValue = 0.99f;
-    sharedMatData->roughnessValue = 0.10f;
-
-    mc->UpdateMaterialRawBufferFromMaterial();
-    bbc->Init();
+    //entity = scene->AddEntity("Mirror");
+    //mc = entity->AddComponent<component::ModelComponent>();
+    //tc = entity->AddComponent<component::TransformComponent>();
+    //bbc = entity->AddComponent <component::BoundingBoxComponent>();
+    //
+    //mc->SetModel(posterModel);
+    //mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
+    //tc->GetTransform()->SetScale(5.0f);
+    //tc->GetTransform()->SetRotationX(PI / 2);
+    //tc->GetTransform()->SetRotationY(PI);
+    //tc->GetTransform()->SetPosition(0, 5, 10);
+    //
+    //MaterialData* sharedMatData = mc->GetMaterialAt(0)->GetSharedMaterialData();
+    //sharedMatData->hasMetallicTexture = false;
+    //sharedMatData->hasRoughnessTexture = false;
+    //sharedMatData->hasNormalTexture = false;
+    //sharedMatData->metallicValue = 0.99f;
+    //sharedMatData->roughnessValue = 0.10f;
+    //
+    //mc->UpdateMaterialRawBufferFromMaterial();
+    //bbc->Init();
     /* ---------------------- Mirror ---------------------- */
 
     /* ---------------------- Floor ---------------------- */
@@ -187,103 +187,119 @@ Scene* TestScene(SceneManager* sm)
     tc->GetTransform()->SetPosition(0.0f, 0.0f, 0.0f);
     /* ---------------------- Floor ---------------------- */
 
-    /* ---------------------- 1Metre Box ---------------------- */
-    entity = scene->AddEntity("Box");
-    mc = entity->AddComponent<component::ModelComponent>();
+    /* ---------------------- Spheres ---------------------- */
+    auto createSphereLambda = [&scene, sphereModel](std::string name, float3 albedoColor, float3 position, float metallic, float roughness)
+    {
+        static int index = 0;
+        std::string finalName = name + std::to_string(index);
+        Entity* entity = scene->AddEntity(finalName);
+        component::ModelComponent* mc = entity->AddComponent<component::ModelComponent>();
+        component::TransformComponent* tc = entity->AddComponent<component::TransformComponent>();
+
+        mc->SetModel(sphereModel);
+        mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
+
+        AssetLoader* al = AssetLoader::Get();
+        std::wstring matName = L"pbrMaterialMainLoop" + std::to_wstring(index);
+        Material* newMat = al->CreateMaterial(matName, al->LoadMaterial(mc->GetMaterialAt(0)->GetName()));
+        index++;
+        MaterialData* matData = newMat->GetSharedMaterialData();
+        matData->hasAlbedoTexture = false;
+        matData->albedoValue = { albedoColor.x, albedoColor.y, albedoColor.z, 0.0f};
+
+        matData->hasMetallicTexture = false;
+        matData->metallicValue = metallic;
+        matData->hasRoughnessTexture = false;
+        matData->roughnessValue = roughness;
+
+        mc->SetMaterialAt(0, newMat);
+
+        tc->GetTransform()->SetScale(0.5f, 0.5f, 0.5f);
+        tc->GetTransform()->SetPosition(position.x, position.y, position.z);
+
+        tc->Update(0);
+        mc->UpdateMaterialRawBufferFromMaterial();
+    };
+
+    auto createSpheresLambda = [createSphereLambda](float3 color)
+    {
+       static unsigned int globalOffset = 0;
+
+       unsigned int length = 7;
+       for (unsigned int metallic = 0; metallic < length; metallic++)
+       {
+          for (unsigned int roughness = 0; roughness < length; roughness++)
+          {
+             float metallicFloat = (float)metallic / (length - 1);
+             float roughnessFloat = max(min((float)roughness / (length - 1), 1.0f), 0.05f);
+
+             std::string name = "Sphere_";
+             name.append("M: " + std::to_string(metallicFloat));
+             name.append("__R: " + std::to_string(roughnessFloat));
+
+             float localOffset = 1.5f;
+             //float3 position = {metallic + offset, roughness + offset, 5.0f};
+             float3 position =
+             {
+                 (roughness - (float(length) / 2)) * localOffset,   // X
+                 ((metallic - (float(length) / 2)) * localOffset) + 7,    // Y
+                 5.0f + localOffset+ globalOffset // Z
+             };
+             createSphereLambda(name, color, position, metallicFloat, roughnessFloat);
+          }
+          int a = 15;
+       }
+
+       globalOffset +=5;
+    };
+
+    createSpheresLambda({1.0f, 0.0f, 0.0f});
+    createSpheresLambda({1.0f, 0.8f, 0.2f});
+    createSpheresLambda({0.0f, 1.0f, 0.0f});
+    /* ---------------------- Spheres ---------------------- */
+
+    /* ---------------------- PointLights ---------------------- */
+    unsigned int lightIntensity = 50.0f;
+    entity = scene->AddEntity("pointLight1");
     tc = entity->AddComponent<component::TransformComponent>();
+    plc = entity->AddComponent<component::PointLightComponent>(F_LIGHT_FLAGS::USE_TRANSFORM_POSITION);
 
-    mc = entity->GetComponent<component::ModelComponent>();
-    mc->SetModel(boxModel);
-    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
-    tc = entity->GetComponent<component::TransformComponent>();
-    tc->GetTransform()->SetScale(1, 1, 1);
-    tc->GetTransform()->SetPosition(5.0f, 5.0f, 5.0f);
-    /* ---------------------- 1Metre Box ---------------------- */
+    tc->GetTransform()->SetPosition({ -9.0f, 4.4f, -7.0f });
+    plc->SetColor({ 1.0f, 1.0f, 1.0f });
+    plc->SetIntensity(lightIntensity);
 
-    /* ---------------------- Sphere ---------------------- */
-    entity = scene->AddEntity("sphere1");
-    mc = entity->AddComponent<component::ModelComponent>();
+    entity = scene->AddEntity("pointLight2");
     tc = entity->AddComponent<component::TransformComponent>();
-    bbc = entity->AddComponent<component::BoundingBoxComponent>();
-    plc = entity->AddComponent<component::PointLightComponent>();
+    plc = entity->AddComponent<component::PointLightComponent>(F_LIGHT_FLAGS::USE_TRANSFORM_POSITION);
 
-    mc->SetModel(sphereModel);
-    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE);
+    tc->GetTransform()->SetPosition({ -9.0f, 17.0f, -7.0f });
+    plc->SetColor({ 1.0f, 1.0f, 1.0f });
+    plc->SetIntensity(lightIntensity);
 
-    sharedMatData = mc->GetMaterialAt(0)->GetSharedMaterialData();
-    sharedMatData->hasMetallicTexture = false;
-    sharedMatData->hasRoughnessTexture = false;
-    sharedMatData->hasNormalTexture = false;
-    sharedMatData->metallicValue = 0.8f;
-    sharedMatData->roughnessValue = 0.10f;
-    sharedMatData->emissiveValue = { 0.2f, 1.0f, 0.5f, 5.0f };
-    sharedMatData->hasEmissiveTexture = false;
-
-    plc->SetColor({ 0.2f, 1.0f, 0.5f, });
-    plc->SetIntensity(3.0f);
-
-    tc->GetTransform()->SetScale(2.0f, 1.0f, 1.0f);
-    tc->GetTransform()->SetPosition(0.0f, 4, 0);
-
-    mc->UpdateMaterialRawBufferFromMaterial();
-    bbc->Init();
-    mc->Update(0);
-#if 0
-    entity = scene->AddEntity("sphere2");
-    mc = entity->AddComponent<component::ModelComponent>();
+    entity = scene->AddEntity("pointLight3");
     tc = entity->AddComponent<component::TransformComponent>();
-    bbc = entity->AddComponent<component::BoundingBoxComponent>();
+    plc = entity->AddComponent<component::PointLightComponent>(F_LIGHT_FLAGS::USE_TRANSFORM_POSITION);
 
-    mc->SetModel(sphereModel);
-    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
+    tc->GetTransform()->SetPosition({ 5.0f, 17.0f, -7.0f});
+    plc->SetColor({ 1.0f, 1.0f, 1.0f });
+    plc->SetIntensity(lightIntensity);
 
-    sharedMatData = mc->GetMaterialAt(0)->GetSharedMaterialData();
-    sharedMatData->hasMetallicTexture = false;
-    sharedMatData->hasRoughnessTexture = false;
-    sharedMatData->hasNormalTexture = false;
-    sharedMatData->metallicValue = 0.99f;
-    sharedMatData->roughnessValue = 0.10f;
-    tc->GetTransform()->SetScale(1.0f);
-    tc->GetTransform()->SetPosition(15, 4, 4);
-
-    mc->UpdateMaterialRawBufferFromMaterial();
-    bbc->Init();
-    mc->Update(0);
-
-
-    entity = scene->AddEntity("sphere3");
-    mc = entity->AddComponent<component::ModelComponent>();
+    entity = scene->AddEntity("pointLight4");
     tc = entity->AddComponent<component::TransformComponent>();
-    bbc = entity->AddComponent<component::BoundingBoxComponent>();
+    plc = entity->AddComponent<component::PointLightComponent>(F_LIGHT_FLAGS::USE_TRANSFORM_POSITION);
 
-    mc->SetModel(sphereModel);
-    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
+    tc->GetTransform()->SetPosition({ 5.0f, 4.4f, -7.0f });
+    plc->SetColor({ 1.0f, 1.0f, 1.0f });
+    plc->SetIntensity(lightIntensity);
+    /* ---------------------- PointLights ---------------------- */
 
-    sharedMatData = mc->GetMaterialAt(0)->GetSharedMaterialData();
-    sharedMatData->hasMetallicTexture = false;
-    sharedMatData->hasRoughnessTexture = false;
-    sharedMatData->hasNormalTexture = false;
-    sharedMatData->metallicValue = 0.99f;
-    sharedMatData->roughnessValue = 0.10f;
-    tc->GetTransform()->SetScale(1.0f);
-    tc->GetTransform()->SetPosition(15, 7, 7);
+    /* ---------------------- LonelySphere ---------------------- */
+    createSphereLambda("LonelySphere", { 1.0f, 0.0f, 1.0f }, { -2.0f, 7.0f, -8.5f }, 0.5f, 0.2f);
+    /* ---------------------- LonelySphere ---------------------- */
+    
 
-    mc->UpdateMaterialRawBufferFromMaterial();
-    bbc->Init();
-    mc->Update(0);
-#endif
-    /* ---------------------- Sphere ---------------------- */
-
-    entity = scene->AddEntity("dirLight1");
-
-    dlc = entity->AddComponent<component::DirectionalLightComponent>();
-    dlc->SetColor({ 1.0f, 1.0f, 1.0f });
-    dlc->SetDirection({ -1.0f, -2.0f, 0.03f });
-    dlc->SetIntensity(3.0f);
-
-    dlc->Update(0);
     /* ---------------------- Update Function ---------------------- */
-    scene->SetUpdateScene(&TestUpdateScene);
+    scene->SetUpdateScene(&PBRUpdateScene);
     return scene;
 }
 
@@ -305,9 +321,9 @@ Scene* SponzaScene(SceneManager* sm)
 
     // Get the models needed
     Model* sponza = al->LoadModel(L"../Vendor/Resources/Scenes/Sponza/textures_pbr/sponza.obj");
-    Model* sphereModel = al->LoadModel(L"../Vendor/Resources/Models/SpherePBR/ball.obj");
+    Model* sphereModel = al->LoadModel(L"../Vendor/Resources/Models/SpherePBR/sphere.obj");
     Model* boxModel = al->LoadModel(L"../Vendor/Resources/Models/CubePBR/cube.obj");
-    Model* posterModel = al->LoadModel(L"../Vendor/Resources/Models/Poster/Poster.obj");
+    Model* goldenPlane = al->LoadModel(L"../Vendor/Resources/Models/GoldenPlane/GoldenPlane.obj");
 
     /* ---------------------- Player ---------------------- */
     Entity* entity = (scene->AddEntity("player"));
@@ -322,20 +338,13 @@ Scene* SponzaScene(SceneManager* sm)
     tc = entity->AddComponent<component::TransformComponent>();
     bbc = entity->AddComponent <component::BoundingBoxComponent>();
 
-    mc->SetModel(posterModel);
+    mc->SetModel(goldenPlane);
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
     tc->GetTransform()->SetScale(4.0f);
     //tc->GetTransform()->SetRotationX(PI/2 + 0.5);
     //tc->GetTransform()->SetRotationY(PI / 4);
     tc->GetTransform()->SetRotationZ(PI / 2);
     tc->GetTransform()->SetPosition(23, 3.0, 0);
-
-    MaterialData* sharedMatData = mc->GetMaterialAt(0)->GetSharedMaterialData();
-    sharedMatData->hasMetallicTexture = false;
-    sharedMatData->hasRoughnessTexture = false;
-    sharedMatData->hasNormalTexture = false;
-    sharedMatData->metallicValue = 0.99f;
-    sharedMatData->roughnessValue = 0.10f;
 
     mc->UpdateMaterialRawBufferFromMaterial();
     bbc->Init();
@@ -347,20 +356,13 @@ Scene* SponzaScene(SceneManager* sm)
     tc = entity->AddComponent<component::TransformComponent>();
     bbc = entity->AddComponent <component::BoundingBoxComponent>();
 
-    mc->SetModel(posterModel);
+    mc->SetModel(goldenPlane);
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
     tc->GetTransform()->SetScale(4.0f);
     //tc->GetTransform()->SetRotationX(PI/2 + 0.5);
     tc->GetTransform()->SetRotationY(PI);
     tc->GetTransform()->SetRotationZ(PI / 2);
     tc->GetTransform()->SetPosition(-23, 3.0, 0);
-
-    sharedMatData = mc->GetMaterialAt(0)->GetSharedMaterialData();
-    sharedMatData->hasMetallicTexture = false;
-    sharedMatData->hasRoughnessTexture = false;
-    sharedMatData->hasNormalTexture = false;
-    sharedMatData->metallicValue = 0.99f;
-    sharedMatData->roughnessValue = 0.10f;
 
     mc->UpdateMaterialRawBufferFromMaterial();
     bbc->Init();
@@ -446,7 +448,7 @@ Scene* SponzaScene(SceneManager* sm)
     return scene;
 }
 
-void TestUpdateScene(SceneManager* sm, double dt)
+void PBRUpdateScene(SceneManager* sm, double dt)
 {
     //static float intensity = 0.0f;
     //component::SpotLightComponent* slc = sm->GetScene("TestScene")->GetEntity("spotLightDynamic")->GetComponent<component::SpotLightComponent>();

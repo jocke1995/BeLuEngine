@@ -15,7 +15,7 @@ float4 PS_main(VS_OUT input) : SV_TARGET0
 
 	// Sample from textures
 	float2 uvScaled = float2(input.uv.x, input.uv.y);
-	float4 albedo = textures[matData.textureAlbedo].Sample(Anisotropic16_Wrap, uvScaled);
+	float4 albedo = matData.hasAlbedoTexture ? textures[matData.textureAlbedo].Sample(Anisotropic16_Wrap, uvScaled) : matData.albedoValue;
 	float roughness = matData.hasRoughnessTexture ? textures[matData.textureRoughness].Sample(Anisotropic16_Wrap, uvScaled).r : matData.roughnessValue;
 	float metallic = matData.hasMetallicTexture ? textures[matData.textureMetallic].Sample(Anisotropic16_Wrap, uvScaled).r : matData.metallicValue;
 	float4 emissive = matData.hasEmissiveTexture ? textures[matData.textureEmissive].Sample(Anisotropic16_Wrap, uvScaled) : matData.emissiveValue;

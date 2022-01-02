@@ -88,7 +88,7 @@ void TopLevelAccelerationStructure::SetupAccelerationStructureForBuilding(bool u
 
 	TODO("Fix this size");
 	unsigned int sizeInBytes = numInstances * sizeof(D3D12_RAYTRACING_INSTANCE_DESC);
-	D3D12_RAYTRACING_INSTANCE_DESC instanceDescs[50] = {};
+	D3D12_RAYTRACING_INSTANCE_DESC instanceDescs[250] = {};
 	
 
 	// Create the description for each instance

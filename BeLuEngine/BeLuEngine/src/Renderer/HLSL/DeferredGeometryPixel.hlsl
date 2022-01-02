@@ -25,22 +25,22 @@ PS_OUTPUT PS_main(VS_OUT input)
 
 	// Sample from textures
 	float2 uvScaled = float2(input.uv.x, input.uv.y);
-	float4 albedo = textures[matData.textureAlbedo].Sample(Anisotropic16_Wrap, uvScaled);
+	float4 albedo = matData.hasAlbedoTexture ? textures[matData.textureAlbedo].Sample(Anisotropic16_Wrap, uvScaled) : matData.albedoValue;
 	float roughness = matData.hasRoughnessTexture ? textures[matData.textureRoughness].Sample(Anisotropic16_Wrap, uvScaled).r : matData.roughnessValue;
 	float metallic = matData.hasMetallicTexture ? textures[matData.textureMetallic].Sample(Anisotropic16_Wrap, uvScaled).r : matData.metallicValue;
 	float4 emissive = matData.hasEmissiveTexture ? textures[matData.textureEmissive].Sample(Anisotropic16_Wrap, uvScaled) : matData.emissiveValue;
 	
 	float3 normal = float3(0.0f, 0.0f, 0.0f);
-	if (matData.hasNormalTexture)
-	{
-		normal = textures[matData.textureNormal].Sample(Anisotropic16_Wrap, uvScaled).xyz;
-		normal = normalize((2.0f * normal) - 1.0f);
-		normal = normalize(mul(normal, input.tbn));
-	}
-	else
-	{
+	//if (matData.hasNormalTexture)
+	//{
+	//	normal = textures[matData.textureNormal].Sample(Anisotropic16_Wrap, uvScaled).xyz;
+	//	normal = normalize((2.0f * normal) - 1.0f);
+	//	normal = normalize(mul(normal, input.tbn));
+	//}
+	//else
+	//{
 		normal = input.norm.xyz;
-	}
+	//}
 
 	output.AlbedoColor	 = albedo;
 	output.NormalColor	 = float4(normal, 1.0f);

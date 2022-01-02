@@ -16,7 +16,7 @@ struct Attributes
 
 float3 TraceRadianceRay(in RayDesc rayDescIn, in unsigned int currentRayRecursionDepth, RaytracingAccelerationStructure sceneBVH)
 {
-    if (currentRayRecursionDepth >= 15)
+    if (currentRayRecursionDepth >= 2)
     {
         return float3(0, 0, 0);
     }
@@ -25,7 +25,7 @@ float3 TraceRadianceRay(in RayDesc rayDescIn, in unsigned int currentRayRecursio
     RayDesc ray;
     ray.Origin = rayDescIn.Origin;
     ray.Direction = rayDescIn.Direction;
-    ray.TMin = 0;
+    ray.TMin = 0.1f;
     ray.TMax = 10000;
 
     ReflectionPayload rayPayload;
