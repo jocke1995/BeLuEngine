@@ -55,10 +55,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
    Log::Print("Entering Game-Loop ...\n\n");
    while (!window->ExitWindow())
    {
-       // Async Test
+       // Hacky Async Test
        //threadPool->AddTask(static_cast<MultiThreadedTask*>(&test1));
 
-       // Temporary functions to test functionalities in the engine
+       // Temporary functions to test functionalities in the renderer
        if (window->WasSpacePressed() == true)
        {
            // Get camera Pos
