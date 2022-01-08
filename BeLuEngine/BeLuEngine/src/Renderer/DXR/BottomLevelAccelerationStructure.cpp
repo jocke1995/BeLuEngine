@@ -15,6 +15,8 @@ BottomLevelAccelerationStructure::BottomLevelAccelerationStructure()
 
 BottomLevelAccelerationStructure::~BottomLevelAccelerationStructure()
 {
+	BL_SAFE_DELETE(m_pScratchBuffer);
+	BL_SAFE_DELETE(m_pResultBuffer);
 }
 
 void BottomLevelAccelerationStructure::AddVertexBuffer(
@@ -94,4 +96,14 @@ void BottomLevelAccelerationStructure::SetupAccelerationStructureForBuilding(boo
 	m_BuildDesc.SourceAccelerationStructureData = 0;
 
 	m_BuildDesc.Inputs.Flags = flags;
+}
+
+IGraphicsBuffer* BottomLevelAccelerationStructure::GetRayTracingResultBuffer() const
+{
+	return m_pResultBuffer;
+}
+
+const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC& BottomLevelAccelerationStructure::GetBuildDesc() const
+{
+	return m_BuildDesc;
 }

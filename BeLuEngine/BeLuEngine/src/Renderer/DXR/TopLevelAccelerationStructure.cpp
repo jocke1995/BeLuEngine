@@ -15,6 +15,8 @@ TopLevelAccelerationStructure::TopLevelAccelerationStructure()
 
 TopLevelAccelerationStructure::~TopLevelAccelerationStructure()
 {
+	BL_SAFE_DELETE(m_pScratchBuffer);
+	BL_SAFE_DELETE(m_pResultBuffer);
 }
 
 void TopLevelAccelerationStructure::AddInstance(
@@ -118,4 +120,14 @@ void TopLevelAccelerationStructure::SetupAccelerationStructureForBuilding(bool u
 	m_BuildDesc.DestAccelerationStructureData	 = static_cast<D3D12GraphicsBuffer*>(m_pResultBuffer)->m_pResource->GetGPUVirtualAddress();
 	m_BuildDesc.ScratchAccelerationStructureData = static_cast<D3D12GraphicsBuffer*>(m_pScratchBuffer)->m_pResource->GetGPUVirtualAddress();
 	m_BuildDesc.SourceAccelerationStructureData	 = 0;// update ? m_pResult->GetID3D12Resource1()->GetGPUVirtualAddress() : 0;
+}
+
+IGraphicsBuffer* TopLevelAccelerationStructure::GetRayTracingResultBuffer() const
+{
+	return m_pResultBuffer;
+}
+
+const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC& TopLevelAccelerationStructure::GetBuildDesc() const
+{
+	return m_BuildDesc;
 }

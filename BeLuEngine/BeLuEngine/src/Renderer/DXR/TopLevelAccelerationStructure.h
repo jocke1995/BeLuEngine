@@ -1,9 +1,8 @@
 #ifndef TOPLEVELACCELERATIONSTRUCTURE_H
 #define TOPLEVELACCELERATIONSTRUCTURE_H
 
-#include "AccelerationStructure.h"
-
 class BottomLevelAccelerationStructure;
+class IGraphicsBuffer;
 
 struct Instance
 {
@@ -21,7 +20,7 @@ struct Instance
     unsigned int m_HitGroupIndex = 0;
 };
 
-class TopLevelAccelerationStructure : public AccelerationStructure
+class TopLevelAccelerationStructure
 {
 public:
     TopLevelAccelerationStructure();
@@ -32,21 +31,26 @@ public:
         const DirectX::XMMATRIX& m_Transform,
         unsigned int hitGroupIndex);
 
-    void Reset() override;
-    void GenerateBuffers() override;
-    void SetupAccelerationStructureForBuilding(bool update) override;
+    void Reset();
+    void GenerateBuffers();
+    void SetupAccelerationStructureForBuilding(bool update);
+
+    IGraphicsBuffer* GetRayTracingResultBuffer() const;
+    const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC& GetBuildDesc() const;
 
 private:
     friend class TopLevelRenderTask;
 
+    IGraphicsBuffer* m_pScratchBuffer = nullptr;
+    IGraphicsBuffer* m_pResultBuffer = nullptr;
+
+    D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC m_BuildDesc = {};
     unsigned int m_InstanceDescsSizeInBytes = 0;
 
     std::vector<Instance> m_Instances;
+    unsigned int m_InstanceCounter = 0; // Sets to 0 in Reset(), increments for each instance for unique IDs.
 
     bool m_IsBuilt = false;
-
-    // Sets to 0 in Reset(), increments for each instance for unique IDs.
-    unsigned int m_InstanceCounter = 0;
 };
 
 #endif

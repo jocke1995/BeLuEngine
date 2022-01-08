@@ -1,11 +1,9 @@
 #ifndef BOTTOMLEVELACCELERATIONSTRUCTURE_H
 #define BOTTOMLEVELACCELERATIONSTRUCTURE_H
 
-#include "AccelerationStructure.h"
-
 class IGraphicsBuffer;
 
-class BottomLevelAccelerationStructure : public AccelerationStructure
+class BottomLevelAccelerationStructure
 {
 public:
     BottomLevelAccelerationStructure();
@@ -15,14 +13,22 @@ public:
         IGraphicsBuffer* vertexBuffer, uint32_t vertexCount,
         IGraphicsBuffer* indexBuffer , uint32_t indexCount);
 
-    void Reset() override;
-    void GenerateBuffers() override;
-    void SetupAccelerationStructureForBuilding(bool update) override;
+    void Reset();
+    void GenerateBuffers();
+    void SetupAccelerationStructureForBuilding(bool update);
+
+    IGraphicsBuffer* GetRayTracingResultBuffer() const;
+    const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC& GetBuildDesc() const;
 
 private:
     friend class TopLevelAccelerationStructure;
 
 	std::vector<D3D12_RAYTRACING_GEOMETRY_DESC> m_vertexBuffers = {};
+
+    IGraphicsBuffer* m_pScratchBuffer = nullptr;
+    IGraphicsBuffer* m_pResultBuffer = nullptr;
+
+    D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC m_BuildDesc = {};
 };
 
 #endif
