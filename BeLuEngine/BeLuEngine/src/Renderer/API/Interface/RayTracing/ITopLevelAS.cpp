@@ -1,9 +1,9 @@
 #include "stdafx.h"
 #include "ITopLevelAS.h"
 
-#include "IGraphicsManager.h"
+#include "../IGraphicsManager.h"
 
-#include "../API/D3D12/DXR/D3D12TopLevelAS.h"
+#include "../../D3D12/DXR/D3D12TopLevelAS.h"
 
 ITopLevelAS::~ITopLevelAS()
 {

@@ -10,9 +10,9 @@
 #include "../ECS/Components/TransformComponent.h"
 
 // Generic API
-#include "../Renderer/API/IGraphicsManager.h"
-#include "../Renderer/API/IGraphicsContext.h"
-#include "../Renderer/API/IGraphicsPipelineState.h"
+#include "../Renderer/API/Interface/IGraphicsManager.h"
+#include "../Renderer/API/Interface/IGraphicsContext.h"
+#include "../Renderer/API/Interface/IGraphicsPipelineState.h"
 
 DepthRenderTask::DepthRenderTask()
 	: GraphicsPass(L"DepthPrePass")

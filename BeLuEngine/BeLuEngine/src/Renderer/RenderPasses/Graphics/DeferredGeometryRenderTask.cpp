@@ -10,11 +10,11 @@
 #include "../ECS/Components/TransformComponent.h"
 
 // Generic API
-#include "../../API/IGraphicsManager.h"
-#include "../../API/IGraphicsBuffer.h"
-#include "../../API/IGraphicsTexture.h"
-#include "../../API/IGraphicsContext.h"
-#include "../../API/IGraphicsPipelineState.h"
+#include "../../API/Interface/IGraphicsManager.h"
+#include "../../API/Interface/IGraphicsBuffer.h"
+#include "../../API/Interface/IGraphicsTexture.h"
+#include "../../API/Interface/IGraphicsContext.h"
+#include "../../API/Interface/IGraphicsPipelineState.h"
 
 DeferredGeometryRenderTask::DeferredGeometryRenderTask()
 	: GraphicsPass(L"GeometryPass")

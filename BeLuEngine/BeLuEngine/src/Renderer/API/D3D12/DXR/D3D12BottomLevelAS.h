@@ -1,7 +1,7 @@
 #ifndef D3D12BOTTOMLEVELAS_H
 #define D3D12BOTTOMLEVELAS_H
 
-#include "../../IBottomLevelAS.h"
+#include "../../Interface/RayTracing/IBottomLevelAS.h"
 
 class D3D12BottomLevelAS : public IBottomLevelAS
 {

@@ -3,7 +3,7 @@
 
 #include "IGraphicsManager.h"
 
-#include "../API/D3D12/D3D12GraphicsTexture.h"
+#include "../../API/D3D12/D3D12GraphicsTexture.h"
 
 IGraphicsTexture::~IGraphicsTexture()
 {

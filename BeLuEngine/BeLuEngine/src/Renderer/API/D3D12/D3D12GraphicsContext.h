@@ -1,7 +1,7 @@
 #ifndef D3D12GRAPHICSCONTEXT_H
 #define D3D12GRAPHICSCONTEXT_H
 
-#include "../IGraphicsContext.h"
+#include "../Interface/IGraphicsContext.h"
 
 namespace component
 {

@@ -7,7 +7,7 @@
 #include "Window.h"
 #include "../Renderer/Geometry/Mesh.h"
 #include "../Renderer/Geometry/Model.h"
-#include "../Renderer/Shader.h"
+#include "../Renderer/Shaders/Shader.h"
 #include "../Renderer/Geometry/Material.h"
 #include "../Renderer/Geometry/Transform.h"
 
@@ -22,7 +22,7 @@
 #include "EngineMath.h"
 
 // API
-#include "../Renderer/API/IGraphicsTexture.h"
+#include "../Renderer/API/Interface/IGraphicsTexture.h"
 
 AssetLoader::AssetLoader()
 {

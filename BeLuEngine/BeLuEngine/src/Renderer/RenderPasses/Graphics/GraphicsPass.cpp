@@ -2,10 +2,10 @@
 #include "GraphicsPass.h"
 
 // API Generic
-#include "../Renderer/API/IGraphicsManager.h"
-#include "../Renderer/API/IGraphicsBuffer.h"
-#include "../Renderer/API/IGraphicsTexture.h"
-#include "../Renderer/API/IGraphicsPipelineState.h"
+#include "../Renderer/API/Interface/IGraphicsManager.h"
+#include "../Renderer/API/Interface/IGraphicsBuffer.h"
+#include "../Renderer/API/Interface/IGraphicsTexture.h"
+#include "../Renderer/API/Interface/IGraphicsPipelineState.h"
 
 // API Specific
 #include "../Renderer/API/D3D12/D3D12GraphicsContext.h"

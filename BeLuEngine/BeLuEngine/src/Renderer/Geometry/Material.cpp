@@ -4,7 +4,7 @@
 #include "../Misc/AssetLoader.h"
 #include "../Renderer/Renderer.h"
 
-#include "../API/IGraphicsTexture.h"
+#include "../API/Interface/IGraphicsTexture.h"
 
 Material::Material(const std::wstring& name)
 {

@@ -1,7 +1,7 @@
 #ifndef D3D12GRAPHICSMANAGER_H
 #define D3D12GRAPHICSMANAGER_H
 
-#include "../IGraphicsManager.h"
+#include "../Interface/IGraphicsManager.h"
 
 // Native D3D12 Objects
 struct ID3D12Device5;

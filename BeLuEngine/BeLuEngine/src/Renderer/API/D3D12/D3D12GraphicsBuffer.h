@@ -1,7 +1,7 @@
 #ifndef D3D12GRAPHICSBUFFER_H
 #define D3D12GRAPHICSBUFFER_H
 
-#include "../IGraphicsBuffer.h"
+#include "../Interface/IGraphicsBuffer.h"
 
 class D3D12GraphicsBuffer : public IGraphicsBuffer
 {

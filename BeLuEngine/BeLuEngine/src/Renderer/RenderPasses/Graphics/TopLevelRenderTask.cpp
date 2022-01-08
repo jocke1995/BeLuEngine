@@ -2,8 +2,8 @@
 #include "TopLevelRenderTask.h"
 
 // Generic API
-#include "../Renderer/API/IGraphicsContext.h"
-#include "../Renderer/API/ITopLevelAS.h"
+#include "../Renderer/API/Interface/IGraphicsContext.h"
+#include "../Renderer/API/Interface/RayTracing/ITopLevelAS.h"
 
 TopLevelRenderTask::TopLevelRenderTask()
 	:GraphicsPass(L"DXR_TopLevelASPass")

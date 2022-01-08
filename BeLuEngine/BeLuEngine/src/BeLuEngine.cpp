@@ -4,7 +4,7 @@
 
 #include "../Misc/EngineStatistics.h"
 
-#include "Renderer/API/IGraphicsManager.h"
+#include "Renderer/API/Interface/IGraphicsManager.h"
 
 BeLuEngine::BeLuEngine()
 {

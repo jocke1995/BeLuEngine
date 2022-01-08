@@ -13,8 +13,8 @@
 #include "../Renderer/API/D3D12/D3D12DescriptorHeap.h"
 
 // Generic API
-#include "../Renderer/API/IGraphicsTexture.h"
-#include "../Renderer/API/IGraphicsContext.h"
+#include "../Renderer/API/Interface/IGraphicsTexture.h"
+#include "../Renderer/API/Interface/IGraphicsContext.h"
 
 ImGuiRenderTask::ImGuiRenderTask(unsigned int screenWidth, unsigned int screenHeight)
 	:GraphicsPass(L"ImGuiPass")

@@ -1,7 +1,7 @@
 #ifndef D3D12GRAPHICSTEXTURE_H
 #define D3D12GRAPHICSTEXTURE_H
 
-#include "../IGraphicsTexture.h"
+#include "../Interface/IGraphicsTexture.h"
 
 class D3D12DescriptorHeap;
 

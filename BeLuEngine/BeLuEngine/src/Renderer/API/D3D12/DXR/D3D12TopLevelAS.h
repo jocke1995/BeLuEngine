@@ -1,7 +1,7 @@
 #ifndef D3D12TOPLEVELAS_H
 #define D3D12TOPLEVELAS_H
 
-#include "../../ITopLevelAS.h"
+#include "../../Interface/RayTracing/ITopLevelAS.h"
 
 class D3D12TopLevelAS : public ITopLevelAS
 {

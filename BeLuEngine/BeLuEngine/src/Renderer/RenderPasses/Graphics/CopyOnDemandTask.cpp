@@ -1,10 +1,10 @@
 #include "stdafx.h"
 #include "CopyOnDemandTask.h"
 
-#include "../Renderer/API/IGraphicsManager.h"
-#include "../Renderer/API/IGraphicsTexture.h"
-#include "../Renderer/API/IGraphicsBuffer.h"
-#include "../Renderer/API/IGraphicsContext.h"
+#include "../Renderer/API/Interface/IGraphicsManager.h"
+#include "../Renderer/API/Interface/IGraphicsTexture.h"
+#include "../Renderer/API/Interface/IGraphicsBuffer.h"
+#include "../Renderer/API/Interface/IGraphicsContext.h"
 
 CopyOnDemandTask::CopyOnDemandTask()
 	:GraphicsPass(L"CopyOnDemandPass")

@@ -1,8 +1,7 @@
 #include "stdafx.h"
 #include "DXRReflectionTask.h"
 
-// DX12 Specifics
-#include "../Renderer/Shader.h"
+#include "../Renderer/Shaders/Shader.h"
 #include "../Misc/AssetLoader.h"
 
 // Model info
@@ -19,9 +18,8 @@ TODO("Include Generic API");
 TODO("Abstract this class")
 #include "../Renderer/API/D3D12/D3D12GraphicsManager.h"
 #include "../Renderer/API/D3D12/D3D12GraphicsBuffer.h"
-#include "../Renderer/API/IGraphicsTexture.h"
+#include "../Renderer/API/Interface/IGraphicsTexture.h"
 #include "../Renderer/API/D3D12/D3D12GraphicsContext.h"
-#include "../Renderer/API/IGraphicsContext.h"
 #include "../Renderer/API/D3D12/D3D12DescriptorHeap.h"
 
 DXRReflectionTask::DXRReflectionTask(unsigned int dispatchWidth, unsigned int dispatchHeight)

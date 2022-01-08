@@ -2,10 +2,10 @@
 #include "BloomComputeTask.h"
 
 // Generic API
-#include "../Renderer/API/IGraphicsManager.h"
-#include "../Renderer/API/IGraphicsContext.h"
-#include "../Renderer/API/IGraphicsTexture.h"
-#include "../Renderer/API/IGraphicsPipelineState.h"
+#include "../Renderer/API/Interface/IGraphicsManager.h"
+#include "../Renderer/API/Interface/IGraphicsContext.h"
+#include "../Renderer/API/Interface/IGraphicsTexture.h"
+#include "../Renderer/API/Interface/IGraphicsPipelineState.h"
 
 enum E_BLOOM_PIPELINE_STATES
 {

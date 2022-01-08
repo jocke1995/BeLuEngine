@@ -1,9 +1,9 @@
 #include "stdafx.h"
 #include "IBottomLevelAS.h"
 
-#include "IGraphicsManager.h"
+#include "../IGraphicsManager.h"
 
-#include "../API/D3D12/DXR/D3D12BottomLevelAS.h"
+#include "../../D3D12/DXR/D3D12BottomLevelAS.h"
 
 IBottomLevelAS::~IBottomLevelAS()
 {

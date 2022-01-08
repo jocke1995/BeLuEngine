@@ -14,7 +14,7 @@
 #include "../Renderer/Geometry/Mesh.h"
 #include "../Renderer/Renderer.h"
 
-#include "../Renderer/API/IGraphicsBuffer.h"
+#include "../Renderer/API/Interface/IGraphicsBuffer.h"
 
 namespace component
 {

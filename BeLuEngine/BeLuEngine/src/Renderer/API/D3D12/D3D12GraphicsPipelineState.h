@@ -1,7 +1,7 @@
 #ifndef D3D12GRAPHICSPIPELINESTATE_H
 #define D3D12GRAPHICSPIPELINESTATE_H
 
-#include "../IGraphicsPipelineState.h"
+#include "../Interface/IGraphicsPipelineState.h"
 
 struct alignas(void*) StreamingRasterizerDesc
 {

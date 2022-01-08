@@ -8,9 +8,11 @@
 #include "../Misc/Window.h"
 #include "../Misc/EngineStatistics.h"
 
+// Event
 #include "../Events/EventBus.h"
-TODO("Remove from here?");
-#include "DXILShaderCompiler.h" 
+
+// Shader
+#include "Shaders/DXILShaderCompiler.h"
 
 // ImGui
 #include "../ImGui/ImGuiHandler.h"
@@ -56,13 +58,13 @@ TODO("Remove from here?");
 #include "RenderPasses/Graphics/PostProcess/TonemapComputeTask.h"
 
 // Generic API
-#include "API/IGraphicsManager.h"
-#include "API/IGraphicsBuffer.h"
-#include "API/IGraphicsTexture.h"
+#include "API/Interface/IGraphicsManager.h"
+#include "API/Interface/IGraphicsBuffer.h"
+#include "API/Interface/IGraphicsTexture.h"
 
 // Generic API (Raytracing)
-#include "API/IBottomLevelAS.h"
-#include "API/ITopLevelAS.h"
+#include "API/Interface/RayTracing/IBottomLevelAS.h"
+#include "API/Interface/RayTracing/ITopLevelAS.h"
 
 Renderer::Renderer()
 {

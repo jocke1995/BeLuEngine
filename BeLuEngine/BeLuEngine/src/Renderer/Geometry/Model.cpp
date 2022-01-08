@@ -5,7 +5,7 @@
 #include "Mesh.h"
 #include "Material.h"
 
-#include "../API/IBottomLevelAS.h"
+#include "../API/Interface/RayTracing/IBottomLevelAS.h"
 
 Model::Model(
 	const std::wstring* path,

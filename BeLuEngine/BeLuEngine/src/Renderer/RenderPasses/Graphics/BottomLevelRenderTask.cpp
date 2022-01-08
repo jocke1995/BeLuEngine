@@ -1,8 +1,8 @@
 #include "stdafx.h"
 #include "BottomLevelRenderTask.h"
 
-#include "../Renderer/API/IBottomLevelAS.h"
-#include "../Renderer/API/IGraphicsContext.h"
+#include "../Renderer/API/Interface/RayTracing/IBottomLevelAS.h"
+#include "../Renderer/API/Interface/IGraphicsContext.h"
 
 BottomLevelRenderTask::BottomLevelRenderTask()
 	:GraphicsPass(L"DXR_BottomlevelASPass")

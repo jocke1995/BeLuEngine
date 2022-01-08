@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Mesh.h"
 
-#include "../API/IGraphicsBuffer.h"
+#include "../API/Interface/IGraphicsBuffer.h"
 
 Mesh::Mesh(std::vector<Vertex>* vertices, std::vector<unsigned int>* indices, const std::wstring& path)
 {

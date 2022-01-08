@@ -1,7 +1,7 @@
 #ifndef DESCRIPTORBINDINGS_H
 #define DESCRIPTORBINDINGS_H
 
-#include "../../Headers/GPU_Structs.h"
+#include "../../../Headers/GPU_Structs.h"
 
 // Static Samplers
 SamplerState Anisotropic2_Wrap			: register (s0);

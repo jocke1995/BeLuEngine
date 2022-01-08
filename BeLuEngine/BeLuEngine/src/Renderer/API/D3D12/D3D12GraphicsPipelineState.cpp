@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "D3D12GraphicsPipelineState.h"
 
-#include "../Renderer/Shader.h"
+#include "../Renderer/Shaders/Shader.h"
 
 #include "D3D12GraphicsManager.h"
 #include "../Misc/AssetLoader.h"
