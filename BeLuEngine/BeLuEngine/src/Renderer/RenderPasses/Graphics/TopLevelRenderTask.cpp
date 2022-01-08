@@ -1,15 +1,14 @@
 #include "stdafx.h"
 #include "TopLevelRenderTask.h"
 
-#include "../Renderer/DXR/TopLevelAccelerationStructure.h"
-
 // Generic API
 #include "../Renderer/API/IGraphicsContext.h"
+#include "../Renderer/API/ITopLevelAS.h"
 
 TopLevelRenderTask::TopLevelRenderTask()
 	:GraphicsPass(L"DXR_TopLevelASPass")
 {
-	m_pTLAS = new TopLevelAccelerationStructure();
+	m_pTLAS = ITopLevelAS::Create();
 }
 
 TopLevelRenderTask::~TopLevelRenderTask()
@@ -23,16 +22,12 @@ void TopLevelRenderTask::Execute()
 	{
 		ScopedPixEvent(DXR_TLAS, m_pGraphicsContext);
 
-		m_pGraphicsContext->BuildAccelerationStructure(m_pTLAS->GetBuildDesc());
-		m_pGraphicsContext->UAVBarrier(m_pTLAS->GetRayTracingResultBuffer());
-
-		m_pTLAS->m_IsBuilt = true;
+		m_pGraphicsContext->BuildTLAS(m_pTLAS);
 	}
 	m_pGraphicsContext->End();
 }
 
-TopLevelAccelerationStructure* TopLevelRenderTask::GetTLAS() const
+ITopLevelAS* TopLevelRenderTask::GetTLAS() const
 {
 	return m_pTLAS;
 }
-

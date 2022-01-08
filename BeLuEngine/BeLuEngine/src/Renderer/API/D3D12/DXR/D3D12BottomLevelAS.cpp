@@ -1,25 +1,25 @@
 #include "stdafx.h"
-#include "BottomLevelAccelerationStructure.h"
+#include "D3D12BottomLevelAS.h"
 
 // For the sizeof(Vertex)
-#include "../Geometry/Mesh.h"
+#include "../Renderer/Geometry/Mesh.h"
 
-// TODO ABSTRACTION
-#include "../API/D3D12/D3D12GraphicsManager.h"
-#include "../API/D3D12/D3D12GraphicsBuffer.h"
-#include "../API/D3D12/D3D12GraphicsTexture.h"
+// D3D12
+#include "../D3D12GraphicsManager.h"
+#include "../D3D12GraphicsBuffer.h"
+#include "../D3D12GraphicsTexture.h"
 
-BottomLevelAccelerationStructure::BottomLevelAccelerationStructure()
+D3D12BottomLevelAS::D3D12BottomLevelAS()
 {
 }
 
-BottomLevelAccelerationStructure::~BottomLevelAccelerationStructure()
+D3D12BottomLevelAS::~D3D12BottomLevelAS()
 {
 	BL_SAFE_DELETE(m_pScratchBuffer);
 	BL_SAFE_DELETE(m_pResultBuffer);
 }
 
-void BottomLevelAccelerationStructure::AddVertexBuffer(
+void D3D12BottomLevelAS::AddGeometry(
 	IGraphicsBuffer* vertexBuffer, uint32_t vertexCount,
 	IGraphicsBuffer* indexBuffer, uint32_t indexCount)
 {
@@ -40,14 +40,14 @@ void BottomLevelAccelerationStructure::AddVertexBuffer(
 	rtGeometryDesc.Triangles.IndexCount = indexCount;
 	rtGeometryDesc.Triangles.IndexFormat = DXGI_FORMAT_R32_UINT;
 
-	m_vertexBuffers.push_back(rtGeometryDesc);
+	m_GeometryBuffers.push_back(rtGeometryDesc);
 }
 
-void BottomLevelAccelerationStructure::Reset()
+void D3D12BottomLevelAS::Reset()
 {
 }
 
-void BottomLevelAccelerationStructure::GenerateBuffers()
+void D3D12BottomLevelAS::GenerateBuffers()
 {
 	D3D12GraphicsManager* manager = D3D12GraphicsManager::GetInstance();
 	ID3D12Device5* device5 = manager->GetDevice();
@@ -61,8 +61,8 @@ void BottomLevelAccelerationStructure::GenerateBuffers()
 	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS prebuildDesc;
 	prebuildDesc.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
 	prebuildDesc.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
-	prebuildDesc.NumDescs = m_vertexBuffers.size();
-	prebuildDesc.pGeometryDescs = m_vertexBuffers.data();
+	prebuildDesc.NumDescs = m_GeometryBuffers.size();
+	prebuildDesc.pGeometryDescs = m_GeometryBuffers.data();
 	prebuildDesc.Flags = flags;
 
 	// This structure is used to hold the sizes of the required scratch memory and
@@ -81,7 +81,7 @@ void BottomLevelAccelerationStructure::GenerateBuffers()
 	idCounter++;
 }
 
-void BottomLevelAccelerationStructure::SetupAccelerationStructureForBuilding(bool update)
+void D3D12BottomLevelAS::SetupAccelerationStructureForBuilding(bool update)
 {
 	D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
 
@@ -89,8 +89,8 @@ void BottomLevelAccelerationStructure::SetupAccelerationStructureForBuilding(boo
 
 	m_BuildDesc.Inputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
 	m_BuildDesc.Inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
-	m_BuildDesc.Inputs.NumDescs = static_cast<UINT>(m_vertexBuffers.size());
-	m_BuildDesc.Inputs.pGeometryDescs = m_vertexBuffers.data();
+	m_BuildDesc.Inputs.NumDescs = static_cast<UINT>(m_GeometryBuffers.size());
+	m_BuildDesc.Inputs.pGeometryDescs = m_GeometryBuffers.data();
 	m_BuildDesc.DestAccelerationStructureData = static_cast<D3D12GraphicsBuffer*>(m_pResultBuffer)->m_pResource->GetGPUVirtualAddress();
 	m_BuildDesc.ScratchAccelerationStructureData = static_cast<D3D12GraphicsBuffer*>(m_pScratchBuffer)->m_pResource->GetGPUVirtualAddress();
 	m_BuildDesc.SourceAccelerationStructureData = 0;
@@ -98,12 +98,7 @@ void BottomLevelAccelerationStructure::SetupAccelerationStructureForBuilding(boo
 	m_BuildDesc.Inputs.Flags = flags;
 }
 
-IGraphicsBuffer* BottomLevelAccelerationStructure::GetRayTracingResultBuffer() const
+IGraphicsBuffer* D3D12BottomLevelAS::GetRayTracingResultBuffer() const
 {
 	return m_pResultBuffer;
-}
-
-const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC& BottomLevelAccelerationStructure::GetBuildDesc() const
-{
-	return m_BuildDesc;
 }

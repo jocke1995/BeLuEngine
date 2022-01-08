@@ -5,6 +5,9 @@ class IGraphicsTexture;
 class IGraphicsBuffer;
 class IGraphicsPipelineState;
 
+class ITopLevelAS;
+class IBottomLevelAS;
+
 class IGraphicsContext
 {
 public:
@@ -58,7 +61,8 @@ public:
 
     TODO("Wrapper");
     // Raytracing
-    virtual void BuildAccelerationStructure(const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC& buildDesc) = 0;
+    virtual void BuildTLAS(ITopLevelAS* pTlas) = 0;
+    virtual void BuildBLAS(IBottomLevelAS* pBlas) = 0;
     virtual void DispatchRays(const D3D12_DISPATCH_RAYS_DESC& dispatchRaysDesc) = 0;
     virtual void SetPipelineState(ID3D12StateObject* pso) = 0;
 

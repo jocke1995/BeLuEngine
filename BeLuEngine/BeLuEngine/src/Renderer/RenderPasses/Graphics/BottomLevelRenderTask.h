@@ -3,7 +3,7 @@
 
 #include "GraphicsPass.h"
 
-class BottomLevelAccelerationStructure;
+class IBottomLevelAS;
 
 class BottomLevelRenderTask : public GraphicsPass
 {
@@ -13,10 +13,10 @@ public:
 	
 	void Execute() override final;
 
-	void SubmitBLAS(BottomLevelAccelerationStructure* pBLAS);
+	void SubmitBLAS(IBottomLevelAS* pBLAS);
 
 private:
-	std::vector<BottomLevelAccelerationStructure*> m_BLASesToUpdate;
+	std::vector<IBottomLevelAS*> m_BLASesToUpdate;
 };
 
 #endif

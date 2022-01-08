@@ -5,7 +5,7 @@
 #include "Mesh.h"
 #include "Material.h"
 
-#include "../DXR/BottomLevelAccelerationStructure.h"
+#include "../API/IBottomLevelAS.h"
 
 Model::Model(
 	const std::wstring* path,
@@ -19,11 +19,11 @@ Model::Model(
 	m_OriginalMaterial = *materials;
 
 	// DXR
-	m_pBLAS = new BottomLevelAccelerationStructure();
+	m_pBLAS = IBottomLevelAS::Create();
 
 	for (const Mesh* mesh : m_Meshes)
 	{
-		m_pBLAS->AddVertexBuffer(
+		m_pBLAS->AddGeometry(
 			mesh->GetVertexBuffer(), mesh->GetNumVertices(),
 			mesh->GetIndexBuffer(), mesh->GetNumIndices());
 	}

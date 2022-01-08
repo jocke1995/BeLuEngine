@@ -8,10 +8,10 @@
 // Model info
 #include "../../Geometry/Transform.h"
 
+TODO("Include Generic API");
 // DXR stuff
-#include "../../DXR/ShaderBindingTableGenerator.h"
-#include "../../DXR/RaytracingPipelineGenerator.h"
-
+#include "../Renderer/API/D3D12/DXR/RaytracingPipelineGenerator.h"
+#include "../Renderer/API/D3D12/DXR/ShaderBindingTableGenerator.h"
 // ECS
 #include "../ECS/Components/ModelComponent.h"
 #include "../ECS/Components/TransformComponent.h"

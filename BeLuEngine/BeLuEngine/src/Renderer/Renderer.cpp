@@ -7,11 +7,13 @@
 #include "../Misc/MultiThreading/Thread.h"
 #include "../Misc/Window.h"
 #include "../Misc/EngineStatistics.h"
-#include "DXILShaderCompiler.h"
+
+#include "../Events/EventBus.h"
+TODO("Remove from here?");
+#include "DXILShaderCompiler.h" 
 
 // ImGui
 #include "../ImGui/ImGuiHandler.h"
-#include "RenderPasses/Graphics/UI/ImGuiRenderTask.h"
 
 // ECS
 #include "../ECS/Scene.h"
@@ -36,6 +38,7 @@
 #include "Techniques/BoundingBoxPool.h"
 
 // RenderPasses
+#include "RenderPasses/Graphics/UI/ImGuiRenderTask.h"
 #include "RenderPasses/Graphics/DepthRenderTask.h"
 #include "RenderPasses/Graphics/WireframeRenderTask.h"
 #include "RenderPasses/Graphics/OutliningRenderTask.h"
@@ -43,10 +46,7 @@
 #include "RenderPasses/Graphics/DeferredLightRenderTask.h"
 #include "RenderPasses/Graphics/TransparentRenderTask.h"
 #include "RenderPasses/Graphics/CopyOnDemandTask.h"
-
-// Raytracing
-#include "DXR/BottomLevelAccelerationStructure.h"
-#include "DXR/TopLevelAccelerationStructure.h"
+// RenderPasses (DXR)
 #include "RenderPasses/Graphics/BottomLevelRenderTask.h"
 #include "RenderPasses/Graphics/TopLevelRenderTask.h"
 #include "RenderPasses/Graphics/DXRReflectionTask.h"
@@ -55,13 +55,14 @@
 #include "RenderPasses/Graphics/PostProcess/BloomComputeTask.h"
 #include "RenderPasses/Graphics/PostProcess/TonemapComputeTask.h"
 
-// Event
-#include "../Events/EventBus.h"
-
 // Generic API
 #include "API/IGraphicsManager.h"
 #include "API/IGraphicsBuffer.h"
 #include "API/IGraphicsTexture.h"
+
+// Generic API (Raytracing)
+#include "API/IBottomLevelAS.h"
+#include "API/ITopLevelAS.h"
 
 Renderer::Renderer()
 {
@@ -263,7 +264,7 @@ void Renderer::Update(double dt)
 	ImGuiHandler::GetInstance().NewFrame();
 
 	// DXR
-	TopLevelAccelerationStructure* pTLAS = static_cast<TopLevelRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::TLAS])->GetTLAS();
+	ITopLevelAS* pTLAS = static_cast<TopLevelRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::TLAS])->GetTLAS();
 
 	pTLAS->Reset();
 
@@ -1041,12 +1042,12 @@ void Renderer::setupNewScene(Scene* activeScene)
 	setRenderTasksRenderComponents();
 
 	// DXR, create buffers and create for the first time
-	TopLevelAccelerationStructure* pTLAS = static_cast<TopLevelRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::TLAS])->GetTLAS();
+	ITopLevelAS* pTLAS = static_cast<TopLevelRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::TLAS])->GetTLAS();
 
 	unsigned int i = 0;
 	for (RenderComponent rc : m_RayTracedRenderComponents)
 	{
-		pTLAS->AddInstance(rc.mc->GetModel()->m_pBLAS, *rc.tc->GetTransform()->GetWorldMatrix(), i);	// TODO: HitgroupID
+		pTLAS->AddInstance(rc.mc->GetModel()->m_pBLAS, *rc.tc->GetTransform()->GetWorldMatrix(), i);
 		i++;
 	}
 	pTLAS->GenerateBuffers();

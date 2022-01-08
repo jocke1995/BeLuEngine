@@ -6,9 +6,7 @@ class ThreadPool;
 
 // Renderer Engine
 class BoundingBoxPool;
-class D3D12DescriptorHeap;
 class Mesh;
-class Texture;
 class Model;
 class BaseCamera;
 

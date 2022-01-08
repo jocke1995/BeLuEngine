@@ -3,7 +3,7 @@
 
 #include "GraphicsPass.h"
 
-class TopLevelAccelerationStructure;
+class ITopLevelAS;
 
 class TopLevelRenderTask : public GraphicsPass
 {
@@ -13,10 +13,10 @@ public:
 
 	void Execute() override final;
 
-	TopLevelAccelerationStructure* GetTLAS() const;
+	ITopLevelAS* GetTLAS() const;
 
 private:
-	TopLevelAccelerationStructure* m_pTLAS = nullptr;
+	ITopLevelAS* m_pTLAS = nullptr;
 };
 
 #endif

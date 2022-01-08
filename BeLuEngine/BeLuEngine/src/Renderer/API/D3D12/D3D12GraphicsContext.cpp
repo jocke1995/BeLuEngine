@@ -7,6 +7,9 @@
 #include "D3D12GraphicsPipelineState.h"
 #include "D3D12DescriptorHeap.h"
 
+#include "DXR/D3D12TopLevelAS.h"
+#include "DXR/D3D12BottomLevelAS.h"
+
 //ImGui
 #include "../ImGUI/imgui.h"
 #include "../ImGUI/imgui_impl_win32.h"
@@ -462,9 +465,25 @@ void D3D12GraphicsContext::DrawImGui()
 	ImGui_ImplDX12_RenderDrawData(drawData, m_pCommandList);
 }
 
-void D3D12GraphicsContext::BuildAccelerationStructure(const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC& buildDesc)
+void D3D12GraphicsContext::BuildTLAS(ITopLevelAS* pTlas)
 {
-	m_pCommandList->BuildRaytracingAccelerationStructure(&buildDesc, 0, nullptr);
+	BL_ASSERT(pTlas);
+
+	D3D12TopLevelAS* d3d12Tlas = static_cast<D3D12TopLevelAS*>(pTlas);
+	m_pCommandList->BuildRaytracingAccelerationStructure(&d3d12Tlas->m_BuildDesc, 0, nullptr);
+	d3d12Tlas->m_IsBuilt = true;
+
+	this->UAVBarrier(d3d12Tlas->m_pResultBuffer);
+}
+
+void D3D12GraphicsContext::BuildBLAS(IBottomLevelAS* pBlas)
+{
+	BL_ASSERT(pBlas);
+
+	D3D12BottomLevelAS* d3d12Blas = static_cast<D3D12BottomLevelAS*>(pBlas);
+	m_pCommandList->BuildRaytracingAccelerationStructure(&d3d12Blas->m_BuildDesc, 0, nullptr);
+
+	this->UAVBarrier(d3d12Blas->m_pResultBuffer);
 }
 
 void D3D12GraphicsContext::DispatchRays(const D3D12_DISPATCH_RAYS_DESC& dispatchRaysDesc)

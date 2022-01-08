@@ -67,7 +67,8 @@ public:
 
     TODO("Abstract")
     // Raytracing
-    virtual void BuildAccelerationStructure(const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC& buildDesc) override final;
+    virtual void BuildTLAS(ITopLevelAS* pTlas) override;
+    virtual void BuildBLAS(IBottomLevelAS* pBlas) override;
     virtual void DispatchRays(const D3D12_DISPATCH_RAYS_DESC& dispatchRaysDesc) override final;
     virtual void SetPipelineState(ID3D12StateObject* pso) override final;
 

@@ -15,10 +15,10 @@ public:
 	unsigned int GetSize() const override { return m_Size; }
 private:
 	friend class D3D12GraphicsContext;
+	friend class D3D12TopLevelAS;
 
 	TODO("These are temporary until dxr is abstracted away");
-	friend class BottomLevelAccelerationStructure;
-	friend class TopLevelAccelerationStructure;
+	friend class D3D12BottomLevelAS;
 	friend class DXRReflectionTask;
 
 	ID3D12Resource1* m_pResource = nullptr;

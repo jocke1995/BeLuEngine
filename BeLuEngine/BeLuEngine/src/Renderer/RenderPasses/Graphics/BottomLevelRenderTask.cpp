@@ -1,9 +1,8 @@
 #include "stdafx.h"
 #include "BottomLevelRenderTask.h"
 
-#include "../../DXR/BottomLevelAccelerationStructure.h"
-
-#include "../../API/IGraphicsContext.h"
+#include "../Renderer/API/IBottomLevelAS.h"
+#include "../Renderer/API/IGraphicsContext.h"
 
 BottomLevelRenderTask::BottomLevelRenderTask()
 	:GraphicsPass(L"DXR_BottomlevelASPass")
@@ -20,10 +19,9 @@ void BottomLevelRenderTask::Execute()
 	{
 		ScopedPixEvent(Build_BLAS, m_pGraphicsContext);
 
-		for (BottomLevelAccelerationStructure* pBLAS : m_BLASesToUpdate)
+		for (IBottomLevelAS* pBLAS : m_BLASesToUpdate)
 		{
-			m_pGraphicsContext->BuildAccelerationStructure(pBLAS->GetBuildDesc());
-			m_pGraphicsContext->UAVBarrier(pBLAS->GetRayTracingResultBuffer());
+			m_pGraphicsContext->BuildBLAS(pBLAS);
 		}
 	}
 	m_pGraphicsContext->End();
@@ -33,7 +31,7 @@ void BottomLevelRenderTask::Execute()
 	m_BLASesToUpdate.clear();
 }
 
-void BottomLevelRenderTask::SubmitBLAS(BottomLevelAccelerationStructure* pBLAS)
+void BottomLevelRenderTask::SubmitBLAS(IBottomLevelAS* pBLAS)
 {
 	m_BLASesToUpdate.push_back(pBLAS);
 }

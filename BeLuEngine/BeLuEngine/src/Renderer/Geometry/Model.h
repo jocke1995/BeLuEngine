@@ -3,14 +3,10 @@
 
 class Mesh;
 class Material;
-class D3D12DescriptorHeap;
 struct SlotInfo;
 
-// DX12 Forward Declarations
-struct ID3D12Device5;
-
 // DXR
-class BottomLevelAccelerationStructure;
+class IBottomLevelAS;
 
 class Model
 {
@@ -42,7 +38,7 @@ protected:
     std::vector<Material*> m_OriginalMaterial;
 
     // DXR
-    BottomLevelAccelerationStructure* m_pBLAS = nullptr;
+    IBottomLevelAS* m_pBLAS = nullptr;
 };
 
 #endif
