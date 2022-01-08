@@ -25,7 +25,7 @@ float3 TraceRadianceRay(in RayDesc rayDescIn, in unsigned int currentRayRecursio
     RayDesc ray;
     ray.Origin = rayDescIn.Origin;
     ray.Direction = rayDescIn.Direction;
-    ray.TMin = 0.1f;
+    ray.TMin = 0.01f;
     ray.TMax = 10000;
 
     ReflectionPayload rayPayload;

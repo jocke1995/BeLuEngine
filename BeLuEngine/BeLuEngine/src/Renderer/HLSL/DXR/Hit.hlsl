@@ -42,14 +42,18 @@ void ClosestHit(inout ReflectionPayload reflectionPayload, in BuiltInTriangleInt
 	
 	float4 finalColor = float4(0.0f, 0.0f, 0.0f, 1.0f);
 #if 1 // Trace new rays
-	RayDesc ray;
-	ray.Origin = float4(worldPos, 1.0f) + float4(normal.xyz, 0.0f) * 0.5f;
-	ray.Direction = normalize(reflect(WorldRayDirection(), float3(normal.xyz)));
-	ray.TMin = 0.1f;
-	ray.TMax = 10000;
-	
-	 //Trace the ray
-	finalColor.rgb += TraceRadianceRay(ray, reflectionPayload.recursionDepth, sceneBVH[cbPerScene.rayTracingBVH]);
+
+	if (metallic > 0.9f)
+	{
+		RayDesc ray;
+		ray.Origin = float4(worldPos, 1.0f) + float4(normal.xyz, 0.0f) * 0.5f;
+		ray.Direction = normalize(reflect(WorldRayDirection(), float3(normal.xyz)));
+		ray.TMin = 0.1f;
+		ray.TMax = 10000;
+
+		//Trace the ray
+		finalColor.rgb += TraceRadianceRay(ray, reflectionPayload.recursionDepth, sceneBVH[cbPerScene.rayTracingBVH]);
+	}
 
 #endif
 

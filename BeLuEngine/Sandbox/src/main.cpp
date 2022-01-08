@@ -44,8 +44,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
     /*------ AssetLoader to load models / textures ------*/
    AssetLoader* al = AssetLoader::Get();
    
-   //Scene* scene = SponzaScene(sceneManager);
-   Scene* scene = PBRScene(sceneManager);
+   Scene* scene = SponzaScene(sceneManager);
+   //Scene* scene = PBRScene(sceneManager);
 
    // Set scene
    sceneManager->SetScene(scene);
@@ -142,6 +142,7 @@ Scene* PBRScene(SceneManager* sm)
     Model* sphereModel = al->LoadModel(L"../Vendor/Resources/Models/SpherePBR/sphere.obj");
     Model* posterModel = al->LoadModel(L"../Vendor/Resources/Models/Poster/Poster.obj");
     Model* boxModel = al->LoadModel(L"../Vendor/Resources/Models/CubePBR/cube.obj");
+    Model* funnyModel = al->LoadModel(L"../Vendor/Resources/Models/Private/FunnyModel/funnyModel.obj");
 
     /* ---------------------- Player ---------------------- */
     Entity* entity = (scene->AddEntity("player"));
@@ -149,6 +150,20 @@ Scene* PBRScene(SceneManager* sm)
     ic = entity->AddComponent<component::InputComponent>();
     scene->SetPrimaryCamera(cc->GetCamera());
     /* ---------------------- Player ---------------------- */
+
+    /* ---------------------- FunnyObject ---------------------- */
+    entity = scene->AddEntity("FunnyObject");
+    mc = entity->AddComponent<component::ModelComponent>();
+    tc = entity->AddComponent<component::TransformComponent>();
+
+    mc = entity->GetComponent<component::ModelComponent>();
+    mc->SetModel(funnyModel);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
+    tc = entity->GetComponent<component::TransformComponent>();
+    tc->GetTransform()->SetScale(7, 7, 7);
+    tc->GetTransform()->SetPosition(-4.0f, 0.0f, -6.0f);
+    tc->GetTransform()->SetRotationY(PI + PI/8);
+    /* ---------------------- FunnyObject ---------------------- */
 
     /* ---------------------- Mirror ---------------------- */
     //entity = scene->AddEntity("Mirror");
@@ -207,6 +222,7 @@ Scene* PBRScene(SceneManager* sm)
         matData->hasAlbedoTexture = false;
         matData->albedoValue = { albedoColor.x, albedoColor.y, albedoColor.z, 0.0f};
 
+        matData->hasNormalTexture = false;
         matData->hasMetallicTexture = false;
         matData->metallicValue = metallic;
         matData->hasRoughnessTexture = false;
@@ -260,7 +276,7 @@ Scene* PBRScene(SceneManager* sm)
 
     /* ---------------------- PointLights ---------------------- */
     unsigned int lightIntensity = 50.0f;
-    entity = scene->AddEntity("pointLight1");
+    entity = scene->AddEntity("pl1");
     tc = entity->AddComponent<component::TransformComponent>();
     plc = entity->AddComponent<component::PointLightComponent>(F_LIGHT_FLAGS::USE_TRANSFORM_POSITION);
 
@@ -268,7 +284,7 @@ Scene* PBRScene(SceneManager* sm)
     plc->SetColor({ 1.0f, 1.0f, 1.0f });
     plc->SetIntensity(lightIntensity);
 
-    entity = scene->AddEntity("pointLight2");
+    entity = scene->AddEntity("pl2");
     tc = entity->AddComponent<component::TransformComponent>();
     plc = entity->AddComponent<component::PointLightComponent>(F_LIGHT_FLAGS::USE_TRANSFORM_POSITION);
 
@@ -276,7 +292,7 @@ Scene* PBRScene(SceneManager* sm)
     plc->SetColor({ 1.0f, 1.0f, 1.0f });
     plc->SetIntensity(lightIntensity);
 
-    entity = scene->AddEntity("pointLight3");
+    entity = scene->AddEntity("pl3");
     tc = entity->AddComponent<component::TransformComponent>();
     plc = entity->AddComponent<component::PointLightComponent>(F_LIGHT_FLAGS::USE_TRANSFORM_POSITION);
 
@@ -284,7 +300,7 @@ Scene* PBRScene(SceneManager* sm)
     plc->SetColor({ 1.0f, 1.0f, 1.0f });
     plc->SetIntensity(lightIntensity);
 
-    entity = scene->AddEntity("pointLight4");
+    entity = scene->AddEntity("pl4");
     tc = entity->AddComponent<component::TransformComponent>();
     plc = entity->AddComponent<component::PointLightComponent>(F_LIGHT_FLAGS::USE_TRANSFORM_POSITION);
 

@@ -73,7 +73,7 @@ PS_OUTPUT PS_main(VS_OUT input)
 		float3 lightDir = normalize(pointLight.position.xyz - worldPos.xyz);
 		float shadowFactor = RT_ShadowFactor(worldPos.xyz, 0.1f, length(pointLight.position.xyz - worldPos.xyz) - 1.0, lightDir, sceneBVH[cbPerScene.rayTracingBVH]);
 
-		finalColor += lightColor;// * shadowFactor;
+		finalColor += lightColor * shadowFactor;
 	}
 	
 	// SpotLight  contributions

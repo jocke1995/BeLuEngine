@@ -2,6 +2,7 @@
 
 BeLuEngine/build/
 BeLuEngine/bin/
+BeLuEngine/Vendor/Resources/Models/Private
 
 **.sln
 **.vcxproj

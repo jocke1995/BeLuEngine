@@ -30,7 +30,7 @@ void RayGen()
     RayDesc ray;
     ray.Origin = float4(worldPos.xyz, 1.0f) + float4(normal.xyz, 0.0f) * 0.5f;
     ray.Direction = normalize(reflect(cameraDir, float3(normal.xyz)));
-    ray.TMin = 0.1f;
+    ray.TMin = 0.01f;
     ray.TMax = 10000;
     
     // Initialize the ray payload
@@ -39,16 +39,13 @@ void RayGen()
     reflectionPayload.recursionDepth = 0;
 
     // Trace the ray if it reflects anything
-    //float3 rayTracedColor = TraceRadianceRay(ray, 0, sceneBVH[cbPerScene.rayTracingBVH]);
-    //
-    //texturesUAV[writeIndex][launchIndex] += float4(rayTracedColor, 1.0f);
+    float3 rayTracedColor = float4(0.0f, 0.0f, 0.0f, 1.0f);
+    if (metallic > 0.9f)
+    {
+        rayTracedColor = TraceRadianceRay(ray, 0, sceneBVH[cbPerScene.rayTracingBVH]);
+    }
 
+    float3 finalColor = textures[readIndex][launchIndex].rgb + rayTracedColor;
 
-
-    // Trace the ray if it reflects anything
-    float3 rayTracedColor = TraceRadianceRay(ray, 0, sceneBVH[cbPerScene.rayTracingBVH]);
-    
-    float3 finalColor = textures[readIndex][launchIndex].rgb * (1 - metallic);
-    finalColor += (rayTracedColor * albedo * metallic);
-    texturesUAV[writeIndex][launchIndex] = saturate(float4(finalColor, 1.0f));
+    texturesUAV[writeIndex][launchIndex] = float4(finalColor, 1.0f);
 }

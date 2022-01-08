@@ -31,16 +31,16 @@ PS_OUTPUT PS_main(VS_OUT input)
 	float4 emissive = matData.hasEmissiveTexture ? textures[matData.textureEmissive].Sample(Anisotropic16_Wrap, uvScaled) : matData.emissiveValue;
 	
 	float3 normal = float3(0.0f, 0.0f, 0.0f);
-	//if (matData.hasNormalTexture)
-	//{
-	//	normal = textures[matData.textureNormal].Sample(Anisotropic16_Wrap, uvScaled).xyz;
-	//	normal = normalize((2.0f * normal) - 1.0f);
-	//	normal = normalize(mul(normal, input.tbn));
-	//}
-	//else
-	//{
+	if (matData.hasNormalTexture)
+	{
+		normal = textures[matData.textureNormal].Sample(Anisotropic16_Wrap, uvScaled).xyz;
+		normal = normalize((2.0f * normal) - 1.0f);
+		normal = normalize(mul(normal, input.tbn));
+	}
+	else
+	{
 		normal = input.norm.xyz;
-	//}
+	}
 
 	output.AlbedoColor	 = albedo;
 	output.NormalColor	 = float4(normal, 1.0f);
