@@ -625,7 +625,7 @@ void D3D12GraphicsManager::Init(HWND hwnd, unsigned int width, unsigned int heig
 	ssd[5].MaxLOD = D3D12_FLOAT32_MAX;
 	ssd[5].MipLODBias = 0.0f;
 
-	// BilinearWrap
+	// BilinearClamp
 	ssd[6].ShaderRegister = 6;
 	ssd[6].Filter = D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT;
 	ssd[6].AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
