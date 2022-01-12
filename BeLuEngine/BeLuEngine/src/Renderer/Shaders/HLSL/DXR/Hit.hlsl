@@ -31,20 +31,21 @@ void ClosestHit(inout ReflectionPayload reflectionPayload, in BuiltInTriangleInt
 	
     float2 uv = v1.uv * bary.x + v2.uv * bary.y + v3.uv * bary.z; 
     
-   float4 albedo		= matData.hasAlbedoTexture ? textures[matData.textureAlbedo].SampleLevel(BilinearWrap, uv, 2) : matData.albedoValue;
-	float roughness	= matData.hasRoughnessTexture ? textures[matData.textureRoughness].SampleLevel(BilinearWrap, uv, 2).r : matData.roughnessValue;
-	float metallic		= matData.hasMetallicTexture  ? textures[matData.textureMetallic].SampleLevel(BilinearWrap, uv, 2).g  : matData.metallicValue;
-	float4 emissive	= matData.hasEmissiveTexture ? textures[matData.textureEmissive].SampleLevel(BilinearWrap, uv, 2) : matData.emissiveValue;
+	float4 albedo	= matData.hasAlbedoTexture		? textures[matData.textureAlbedo].SampleLevel(BilinearWrap, uv, 2) : matData.albedoValue;
+	float roughness	= matData.hasRoughnessTexture	? textures[matData.textureRoughness].SampleLevel(BilinearWrap, uv, 2).r : matData.roughnessValue;
+	float metallic	= matData.hasMetallicTexture	? textures[matData.textureMetallic].SampleLevel(BilinearWrap, uv, 2).g  : matData.metallicValue;
+	float4 emissive	= matData.hasEmissiveTexture	? textures[matData.textureEmissive].SampleLevel(BilinearWrap, uv, 2) : matData.emissiveValue;
 
 	float3 worldPos = WorldRayOrigin() + RayTCurrent() * WorldRayDirection();
 	float3 camPos = cbPerFrame.camPos;
 	float3 viewDir = normalize(camPos - worldPos.xyz);
 	
 	float4 finalColor = float4(0.0f, 0.0f, 0.0f, 1.0f);
+	float4 reflectedColor = float4(0.0f, 0.0f, 0.0f, 1.0f);
 #if 1 // Trace new rays
 
-	if (metallic > 0.9f)
-	{
+	//if (metallic > 0.9f)
+	//{
 		RayDesc ray;
 		ray.Origin = float4(worldPos, 1.0f) + float4(normal.xyz, 0.0f) * 0.5f;
 		ray.Direction = normalize(reflect(WorldRayDirection(), float3(normal.xyz)));
@@ -52,8 +53,8 @@ void ClosestHit(inout ReflectionPayload reflectionPayload, in BuiltInTriangleInt
 		ray.TMax = 10000;
 
 		//Trace the ray
-		finalColor.rgb += TraceRadianceRay(ray, reflectionPayload.recursionDepth, sceneBVH[cbPerScene.rayTracingBVH]);
-	}
+		reflectedColor.rgb = TraceRadianceRay(ray, reflectionPayload.recursionDepth, sceneBVH[cbPerScene.rayTracingBVH]);
+	//}
 
 #endif
 
@@ -105,5 +106,5 @@ void ClosestHit(inout ReflectionPayload reflectionPayload, in BuiltInTriangleInt
 	finalColor += float4(0.01f * albedo.rgb, 1.0f);
 	finalColor += float4(emissive.rgb * emissive.a, 1.0f);
 
-	reflectionPayload.color = finalColor.rgb;
+	reflectionPayload.color = (finalColor * (1 - metallic)) + (metallic * albedo * reflectedColor);
 } 

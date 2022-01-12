@@ -40,12 +40,12 @@ void RayGen()
 
     // Trace the ray if it reflects anything
     float3 rayTracedColor = float4(0.0f, 0.0f, 0.0f, 1.0f);
-    if (metallic > 0.9f)
+    if (metallic > 0.1f)
     {
         rayTracedColor = TraceRadianceRay(ray, 0, sceneBVH[cbPerScene.rayTracingBVH]);
     }
 
-    float3 finalColor = textures[readIndex][launchIndex].rgb + rayTracedColor;
+    float3 finalColor = (textures[readIndex][launchIndex].rgb *(1 - metallic)) + (metallic * albedo * rayTracedColor);
 
     texturesUAV[writeIndex][launchIndex] = float4(finalColor, 1.0f);
 }

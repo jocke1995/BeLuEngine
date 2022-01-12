@@ -381,3 +381,18 @@ D3D12_PRIMITIVE_TOPOLOGY_TYPE ConvertBLPrimTopPipelineStateToD3D12PrimTopPipelin
         return D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH;
     }
 }
+
+D3D12_ROOT_PARAMETER_TYPE ConvertBLRootParameterTypeToD3D12RootParameterType(BL_ROOT_PARAMETER_TYPE rootParamType)
+{
+    switch (rootParamType)
+    {
+        case BL_ROOT_PARAMETER_DESCRIPTOR_TABLE: return D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        case BL_ROOT_PARAMETER_32BIT_CONSTANTS: return D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+        case BL_ROOT_PARAMETER_CBV: return D3D12_ROOT_PARAMETER_TYPE_CBV;
+        case BL_ROOT_PARAMETER_SRV: return D3D12_ROOT_PARAMETER_TYPE_SRV;
+        case BL_ROOT_PARAMETER_UAV: return D3D12_ROOT_PARAMETER_TYPE_UAV;
+        default: BL_ASSERT(false);
+    }
+
+    BL_ASSERT_MESSAGE(false, "This should never happen!\n");
+}

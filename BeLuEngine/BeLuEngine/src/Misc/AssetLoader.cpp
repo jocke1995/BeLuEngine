@@ -336,7 +336,7 @@ Material* AssetLoader::processMaterial(std::wstring path, const aiScene* assimpS
 	// Create our material
 	material = loadMaterial(mat, filePathWithoutTexture);
 
-	return material;			// MAY DESTRUCT CAUSE OUT OF SCOPE
+	return material;
 }
 
 Material* AssetLoader::loadMaterial(aiMaterial* mat, const std::wstring& folderPath)

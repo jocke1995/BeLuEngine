@@ -50,10 +50,9 @@ public:
 
 private:
     friend class D3D12GraphicsPipelineState;;
-    friend class DXRReflectionTask;
+    friend class RayTracingPSDesc;  // This class loads ray-tracing shaders
 
-    // Renderer needs access to m_LoadedModels & m_LoadedTextures so it can check if they are uploaded to GPU.
-    friend class Renderer;
+    friend class Renderer; // Renderer needs access to m_LoadedModels & m_LoadedTextures so it can check if they are uploaded to GPU.
 
     AssetLoader();
     AssetLoader(AssetLoader const&) = delete;

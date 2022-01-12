@@ -44,8 +44,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
     /*------ AssetLoader to load models / textures ------*/
    AssetLoader* al = AssetLoader::Get();
    
-   Scene* scene = SponzaScene(sceneManager);
-   //Scene* scene = PBRScene(sceneManager);
+   //Scene* scene = SponzaScene(sceneManager);
+   Scene* scene = PBRScene(sceneManager);
 
    // Set scene
    sceneManager->SetScene(scene);
@@ -313,6 +313,13 @@ Scene* PBRScene(SceneManager* sm)
     createSphereLambda("LonelySphere", { 1.0f, 0.0f, 1.0f }, { -2.0f, 7.0f, -8.5f }, 0.5f, 0.2f);
     /* ---------------------- LonelySphere ---------------------- */
     
+    /* ---------------------- Sun ---------------------- */
+    entity = scene->AddEntity("Sun");
+    dlc = entity->AddComponent<component::DirectionalLightComponent>(F_LIGHT_FLAGS::CAST_SHADOW);
+    dlc->SetColor({ 1.0f, 1.0f, 1.0f });
+    dlc->SetIntensity(2.0f);
+    dlc->SetDirection({ -0.25f, -0.7f, -0.5f});
+    /* ---------------------- Sun ---------------------- */
 
     /* ---------------------- Update Function ---------------------- */
     scene->SetUpdateScene(&PBRUpdateScene);

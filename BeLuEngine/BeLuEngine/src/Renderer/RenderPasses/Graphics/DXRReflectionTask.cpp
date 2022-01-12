@@ -7,6 +7,8 @@
 // Model info
 #include "../../Geometry/Transform.h"
 
+#include "../Renderer/API/Interface/RayTracing/IRayTracingPipelineState.h"
+
 TODO("Include Generic API");
 // DXR stuff
 #include "../Renderer/API/D3D12/DXR/RaytracingPipelineGenerator.h"
@@ -25,6 +27,40 @@ TODO("Abstract this class")
 DXRReflectionTask::DXRReflectionTask(unsigned int dispatchWidth, unsigned int dispatchHeight)
 	:GraphicsPass(L"DXR_ReflectionPass")
 {
+	{
+		RayTracingPSDesc rtDesc = {};
+		rtDesc.AddShader(L"DXR/RayGen.hlsl", { L"RayGen" });
+		rtDesc.AddShader(L"DXR/Hit.hlsl", { L"ClosestHit" });
+		rtDesc.AddShader(L"DXR/Miss.hlsl", { L"Miss" });
+
+		// No anyhit or intersection
+		rtDesc.AddHitgroup(L"HitGroup", L"ClosestHit");
+
+		// Associate rootsignatures
+		std::vector<IRayTracingRootSignatureParams> hitGroupRootSigParams;
+		std::vector<IRayTracingRootSignatureParams> emptyRootSigParams;
+		hitGroupRootSigParams.resize(NUM_LOCAL_PARAMS);
+
+		hitGroupRootSigParams[RootParamLocal_SRV_T6].rootParamType = BL_ROOT_PARAMETER_SRV;
+		hitGroupRootSigParams[RootParamLocal_SRV_T6].shaderRegister = 6;
+		hitGroupRootSigParams[RootParamLocal_SRV_T7].rootParamType = BL_ROOT_PARAMETER_SRV;
+		hitGroupRootSigParams[RootParamLocal_SRV_T7].shaderRegister = 7;
+		hitGroupRootSigParams[RootParamLocal_CBV_B8].rootParamType = BL_ROOT_PARAMETER_CBV;
+		hitGroupRootSigParams[RootParamLocal_CBV_B8].shaderRegister = 8;
+
+		rtDesc.AddRootSignatureAssociation(hitGroupRootSigParams, L"HitGroup", L"HitGroupRootSignature");
+		rtDesc.AddRootSignatureAssociation(emptyRootSigParams, L"RayGen", L"RayGenEmptyRootSignature");
+		rtDesc.AddRootSignatureAssociation(emptyRootSigParams, L"Miss", L"MissEmptyRootSignature");
+
+		// Misc
+		rtDesc.SetPayloadSize(3 * sizeof(float) + sizeof(unsigned int)); // RGB + recursionDepth
+		rtDesc.SetMaxAttributesSize(2 * sizeof(float));
+		rtDesc.SetMaxRecursionDepth(2);
+
+		m_pRayTracingState = IRayTracingPipelineState::Create(rtDesc, L"DXR_ReflectionPipelineState");
+	}
+	
+
 #pragma region PipelineState Object
 	// Gets deleted in Assetloader
 	m_pRayGenShader = AssetLoader::Get()->loadShader(L"DXR/RayGen.hlsl", E_SHADER_TYPE::DXR);
@@ -109,10 +145,10 @@ DXRReflectionTask::DXRReflectionTask(unsigned int dispatchWidth, unsigned int di
 	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_SRV_T6].Descriptor.RegisterSpace = 0;
 	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_SRV_T6].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_CBV_T7].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
-	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_CBV_T7].Descriptor.ShaderRegister = 7;
-	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_CBV_T7].Descriptor.RegisterSpace = 0;
-	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_CBV_T7].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_SRV_T7].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_SRV_T7].Descriptor.ShaderRegister = 7;
+	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_SRV_T7].Descriptor.RegisterSpace = 0;
+	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_SRV_T7].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
 	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_CBV_B8].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_CBV_B8].Descriptor.ShaderRegister = 8;
@@ -199,14 +235,14 @@ DXRReflectionTask::DXRReflectionTask(unsigned int dispatchWidth, unsigned int di
 
 DXRReflectionTask::~DXRReflectionTask()
 {
+	// RayTracing State
+	BL_SAFE_DELETE(m_pRayTracingState);
+
+
 	// ShaderBindingTable
 	BL_SAFE_DELETE(m_pSbtGenerator);
 	BL_SAFE_DELETE(m_pShaderTableBuffer);
 
-	// Local rootSignatures
-	BL_SAFE_RELEASE(&m_pRayGenSignature);
-	BL_SAFE_RELEASE(&m_pHitSignature);
-	BL_SAFE_RELEASE(&m_pMissSignature);
 
 	TODO("Deferred Deletion");
 	Sleep(50);	// Hack
