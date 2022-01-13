@@ -7,6 +7,7 @@ class IGraphicsPipelineState;
 
 class ITopLevelAS;
 class IBottomLevelAS;
+class IRayTracingPipelineState;
 
 class IGraphicsContext
 {
@@ -64,7 +65,7 @@ public:
     virtual void BuildTLAS(ITopLevelAS* pTlas) = 0;
     virtual void BuildBLAS(IBottomLevelAS* pBlas) = 0;
     virtual void DispatchRays(const D3D12_DISPATCH_RAYS_DESC& dispatchRaysDesc) = 0;
-    virtual void SetPipelineState(ID3D12StateObject* pso) = 0;
+    virtual void SetRayTracingPipelineState(IRayTracingPipelineState* rtPipelineState) = 0;
 
 private:
 };

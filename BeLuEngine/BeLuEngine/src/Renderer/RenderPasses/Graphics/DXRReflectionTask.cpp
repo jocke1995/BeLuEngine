@@ -7,7 +7,7 @@
 // Model info
 #include "../../Geometry/Transform.h"
 
-#include "../Renderer/API/Interface/RayTracing/IRayTracingPipelineState.h"
+#include "../Renderer/API/D3D12/DXR/D3D12RayTracingPipelineState.h"
 
 TODO("Include Generic API");
 // DXR stuff
@@ -29,17 +29,16 @@ DXRReflectionTask::DXRReflectionTask(unsigned int dispatchWidth, unsigned int di
 {
 	{
 		RayTracingPSDesc rtDesc = {};
-		rtDesc.AddShader(L"DXR/RayGen.hlsl", { L"RayGen" });
-		rtDesc.AddShader(L"DXR/Hit.hlsl", { L"ClosestHit" });
-		rtDesc.AddShader(L"DXR/Miss.hlsl", { L"Miss" });
+		rtDesc.AddShader(L"DXR/RayGen.hlsl", L"RayGen");
+		rtDesc.AddShader(L"DXR/Hit.hlsl", L"ClosestHit");
+		rtDesc.AddShader(L"DXR/Miss.hlsl", L"Miss" );
 
 		// No anyhit or intersection
 		rtDesc.AddHitgroup(L"HitGroup", L"ClosestHit");
 
 		// Associate rootsignatures
-		std::vector<IRayTracingRootSignatureParams> hitGroupRootSigParams;
+		std::vector<IRayTracingRootSignatureParams> hitGroupRootSigParams(NUM_LOCAL_PARAMS);
 		std::vector<IRayTracingRootSignatureParams> emptyRootSigParams;
-		hitGroupRootSigParams.resize(NUM_LOCAL_PARAMS);
 
 		hitGroupRootSigParams[RootParamLocal_SRV_T6].rootParamType = BL_ROOT_PARAMETER_SRV;
 		hitGroupRootSigParams[RootParamLocal_SRV_T6].shaderRegister = 6;
@@ -60,166 +59,10 @@ DXRReflectionTask::DXRReflectionTask(unsigned int dispatchWidth, unsigned int di
 		m_pRayTracingState = IRayTracingPipelineState::Create(rtDesc, L"DXR_ReflectionPipelineState");
 	}
 	
-
-#pragma region PipelineState Object
-	// Gets deleted in Assetloader
-	m_pRayGenShader = AssetLoader::Get()->loadShader(L"DXR/RayGen.hlsl", E_SHADER_TYPE::DXR);
-	m_pHitShader = AssetLoader::Get()->loadShader(L"DXR/Hit.hlsl", E_SHADER_TYPE::DXR);
-	m_pMissShader = AssetLoader::Get()->loadShader(L"DXR/Miss.hlsl", E_SHADER_TYPE::DXR);
-
-	D3D12GraphicsManager* manager = D3D12GraphicsManager::GetInstance();
-	ID3D12Device5* device5 = manager->GetDevice();
-
-	RayTracingPipelineGenerator rtPipelineGenerator(device5);
-
-
-	// In a way similar to DLLs, each library is associated with a number of
-	// exported symbols. This
-	// has to be done explicitly in the lines below. Note that a single library
-	// can contain an arbitrary number of symbols, whose semantic is given in HLSL
-	// using the [shader("xxx")] syntax
-	rtPipelineGenerator.AddLibrary(m_pRayGenShader->GetBlob(), { L"RayGen" });
-	rtPipelineGenerator.AddLibrary(m_pHitShader->GetBlob(), { L"ClosestHit" });
-	rtPipelineGenerator.AddLibrary(m_pMissShader->GetBlob(), { L"Miss" });
-
-	// To be used, each DX12 shader needs a root signature defining which
-	// parameters and buffers will be accessed.
-#pragma region CreateLocalRootSignatures
-
-	auto createLocalRootSig = [device5](const D3D12_ROOT_SIGNATURE_DESC& rootDesc) -> ID3D12RootSignature*
-	{
-		BL_ASSERT(rootDesc.Flags & D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE);
-
-		ID3DBlob* errorMessages = nullptr;
-		ID3DBlob* m_pBlob = nullptr;
-
-		HRESULT hr = D3D12SerializeRootSignature(
-			&rootDesc,
-			D3D_ROOT_SIGNATURE_VERSION_1,
-			&m_pBlob,
-			&errorMessages);
-
-		if (FAILED(hr) && errorMessages)
-		{
-			BL_LOG_CRITICAL("Failed to Serialize local RootSignature\n");
-
-			const char* errorMsg = static_cast<const char*>(errorMessages->GetBufferPointer());
-			BL_LOG_CRITICAL("%s\n", errorMsg);
-		}
-
-		ID3D12RootSignature* pRootSig;
-		hr = device5->CreateRootSignature(
-			0,
-			m_pBlob->GetBufferPointer(),
-			m_pBlob->GetBufferSize(),
-			IID_PPV_ARGS(&pRootSig));
-
-		if (FAILED(hr))
-		{
-			BL_ASSERT_MESSAGE(pRootSig != nullptr, "Failed to create local RootSignature\n");
-		}
-
-		BL_SAFE_RELEASE(&m_pBlob);
-		return pRootSig;
-	};
-
-	// Specify the root signature with its set of parameters
-	const unsigned int numStaticSamplers = 0;
-	D3D12_ROOT_SIGNATURE_DESC rootDesc = {};
-	rootDesc.NumParameters = 0;
-	rootDesc.pParameters = nullptr;
-	rootDesc.NumStaticSamplers = numStaticSamplers;
-	rootDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
-	rootDesc.pStaticSamplers = nullptr;
-
-	m_pRayGenSignature = createLocalRootSig(rootDesc);
-	m_pRayGenSignature->SetName(L"RayGenRootSig");
-	m_pMissSignature = createLocalRootSig(rootDesc);
-	m_pMissSignature->SetName(L"MissRootSig");
-
-	// RegisterSpace 0 is dedicated to descriptors, and globalRootsig uses 0-5 on all SRV and UAV and 0-7 on CBV
-	D3D12_ROOT_PARAMETER rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::NUM_LOCAL_PARAMS]{};
-
-	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_SRV_T6].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
-	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_SRV_T6].Descriptor.ShaderRegister = 6;
-	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_SRV_T6].Descriptor.RegisterSpace = 0;
-	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_SRV_T6].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-
-	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_SRV_T7].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
-	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_SRV_T7].Descriptor.ShaderRegister = 7;
-	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_SRV_T7].Descriptor.RegisterSpace = 0;
-	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_SRV_T7].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-
-	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_CBV_B8].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_CBV_B8].Descriptor.ShaderRegister = 8;
-	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_CBV_B8].Descriptor.RegisterSpace = 0;
-	rootParam[E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::RootParamLocal_CBV_B8].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-
-	
-
-	rootDesc.NumParameters = E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION::NUM_LOCAL_PARAMS;
-	rootDesc.pParameters = rootParam;
-	m_pHitSignature = createLocalRootSig(rootDesc);
-	m_pHitSignature->SetName(L"HitRootSig");
-
-#pragma endregion
-
-	// 3 different shaders can be invoked to obtain an intersection: an
-	// intersection shader is called
-	// when hitting the bounding box of non-triangular geometry. This is beyond
-	// the scope of this tutorial. An any-hit shader is called on potential
-	// intersections. This shader can, for example, perform alpha-testing and
-	// discard some intersections. Finally, the closest-hit program is invoked on
-	// the intersection point closest to the ray origin. Those 3 shaders are bound
-	// together into a hit group.
-
-	// Note that for triangular geometry the intersection shader is built-in. An
-	// empty any-hit shader is also defined by default, so in our simple case each
-	// hit group contains only the closest hit shader. Note that since the
-	// exported symbols are defined above the shaders can be simply referred to by
-	// name.
-
-	// Hit group for the triangles, with a shader simply interpolating vertex
-	// colors
-	rtPipelineGenerator.AddHitGroup(L"HitGroup", L"ClosestHit");
-
-	// The following section associates the root signature to each shader.Note
-	// that we can explicitly show that some shaders share the same root signature
-	// (eg. Miss and ShadowMiss). Note that the hit shaders are now only referred
-	// to as hit groups, meaning that the underlying intersection, any-hit and
-	// closest-hit shaders share the same root signature.
-	rtPipelineGenerator.AddRootSignatureAssociation(m_pRayGenSignature, { L"RayGen" });
-	rtPipelineGenerator.AddRootSignatureAssociation(m_pHitSignature, { L"HitGroup" });
-	rtPipelineGenerator.AddRootSignatureAssociation(m_pMissSignature, { L"Miss" });
-	// The payload size defines the maximum size of the data carried by the rays,
-	// ie. the the data
-	// exchanged between shaders, such as the HitInfo structure in the HLSL code.
-	// It is important to keep this value as low as possible as a too high value
-	// would result in unnecessary memory consumption and cache trashing.
-	rtPipelineGenerator.SetMaxPayloadSize(3 * sizeof(float) + sizeof(unsigned int)); // RGB + recursionDepth
-
-	// Upon hitting a surface, DXR can provide several attributes to the hit. In
-	// our sample we just use the barycentric coordinates defined by the weights
-	// u,v of the last two vertices of the triangle. The actual barycentrics can
-	// be obtained using float3 barycentrics = float3(1.f-u-v, u, v);
-	rtPipelineGenerator.SetMaxAttributeSize(2 * sizeof(float)); // barycentric coordinates
-
-	// The raytracing process can shoot rays from existing hit points, resulting
-	// in nested TraceRay calls. Our sample code traces only primary rays, which
-	// then requires a trace depth of 1. Note that this recursion depth should be
-	// kept to a minimum for best performance. Path tracing algorithms can be
-	// easily flattened into a simple loop in the ray generation.
-	rtPipelineGenerator.SetMaxRecursionDepth(2);
-
-	// Compile the pipeline for execution on the GPU
-	m_pStateObject = rtPipelineGenerator.Generate();
-
 	// Cast the state object into a properties object, allowing to later access
 	// the shader pointers by name
-	m_pStateObject->QueryInterface(IID_PPV_ARGS(&m_pRTStateObjectProps));
+	static_cast<D3D12RayTracingPipelineState*>(m_pRayTracingState)->GetTempStateObject()->QueryInterface(IID_PPV_ARGS(&m_pRTStateObjectProps));
 
-	m_pStateObject->SetName(L"DXR_Reflection_StateObject");
-#pragma endregion
 
 #pragma region ShaderBindingTable
 	// This will get generated from outside of this class (by calling CreateShaderBindingTable), whenever sbt needs updating..
@@ -243,11 +86,8 @@ DXRReflectionTask::~DXRReflectionTask()
 	BL_SAFE_DELETE(m_pSbtGenerator);
 	BL_SAFE_DELETE(m_pShaderTableBuffer);
 
-
-	TODO("Deferred Deletion");
-	Sleep(50);	// Hack
+	TODO("put insiode shader table class?")
 	// StateObject
-	BL_SAFE_RELEASE(&m_pStateObject);
 	BL_SAFE_RELEASE(&m_pRTStateObjectProps);
 }
 
@@ -342,7 +182,7 @@ void DXRReflectionTask::Execute()
 		desc.Depth = 1;
 
 		// Bind the raytracing pipeline
-		m_pGraphicsContext->SetPipelineState(m_pStateObject);
+		m_pGraphicsContext->SetRayTracingPipelineState(m_pRayTracingState);
 
 		RootConstantUints rootConstantUints = {};
 		rootConstantUints.index0 = finalColorBuffer->GetShaderResourceHeapIndex();	// Read from this texture with this index

@@ -3,7 +3,7 @@
 
 #include "IGraphicsManager.h"
 
-#include "../API/D3D12/D3D12GraphicsPipelineState.h"
+#include "../Renderer/API/D3D12/D3D12GraphicsPipelineState.h"
 
 IGraphicsPipelineState::~IGraphicsPipelineState()
 {

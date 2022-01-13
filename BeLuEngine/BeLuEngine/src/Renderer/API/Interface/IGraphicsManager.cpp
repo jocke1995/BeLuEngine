@@ -1,8 +1,7 @@
 #include "stdafx.h"
 #include "IGraphicsManager.h"
 
-#include "D3D12/D3D12GraphicsManager.h"
-TODO("Include future Vulkan Manager");
+#include "../D3D12/D3D12GraphicsManager.h"
 
 IGraphicsManager* IGraphicsManager::GetBaseInstance()
 {

@@ -3,16 +3,6 @@
 
 #include "../Interface/IGraphicsContext.h"
 
-namespace component
-{
-	class ModelComponent;
-}
-
-class IGraphicsTexture;
-class IGraphicsBuffer;
-
-struct ImDrawData;
-
 class D3D12GraphicsContext: public IGraphicsContext
 {
 public:
@@ -70,7 +60,7 @@ public:
     virtual void BuildTLAS(ITopLevelAS* pTlas) override;
     virtual void BuildBLAS(IBottomLevelAS* pBlas) override;
     virtual void DispatchRays(const D3D12_DISPATCH_RAYS_DESC& dispatchRaysDesc) override final;
-    virtual void SetPipelineState(ID3D12StateObject* pso) override final;
+    virtual void SetRayTracingPipelineState(IRayTracingPipelineState* rtPipelineState) override final;
 
 private:
     friend class D3D12GraphicsManager;

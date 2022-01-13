@@ -44,7 +44,7 @@ RayTracingPSDesc::~RayTracingPSDesc()
 {
 }
 
-bool RayTracingPSDesc::AddShader(std::wstring shaderFileName, const std::vector<std::wstring>& shaderEntryPointNames)
+bool RayTracingPSDesc::AddShader(std::wstring shaderFileName, const std::wstring& shaderEntryPointNames)
 {
     Shader* shader = AssetLoader::Get()->loadShader(shaderFileName, E_SHADER_TYPE::DXR);
 
@@ -85,13 +85,14 @@ void RayTracingPSDesc::SetMaxRecursionDepth(unsigned int maxRecursionDepth)
     m_MaxRecursionDepth = maxRecursionDepth;
 }
 
-RayTracingShader::RayTracingShader(Shader* shader, const std::vector<std::wstring>& shaderEntryPointNames)
+RayTracingShader::RayTracingShader(Shader* shader, const std::wstring& shaderEntryPointNames)
 {
     m_Shader = shader;
 
-    m_ShaderEntryPointNames.resize(shaderEntryPointNames.size());
-    for (std::wstring shaderEntryPointName : shaderEntryPointNames)
-        m_ShaderEntryPointNames.push_back(shaderEntryPointName);
+    unsigned int numShaderEntryPointNames = shaderEntryPointNames.size();
+    m_ShaderEntryPointNames.resize(numShaderEntryPointNames);
+    for (unsigned int i = 0; i < numShaderEntryPointNames; i++)
+        m_ShaderEntryPointNames[i] = shaderEntryPointNames[i];
 }
 
 RayTracingHitGroup::RayTracingHitGroup(const std::wstring hitGroupName, const std::wstring closestHitName, const std::wstring anyHitName, const std::wstring intersectionName)
@@ -104,9 +105,10 @@ RayTracingHitGroup::RayTracingHitGroup(const std::wstring hitGroupName, const st
 
 RayTracingRootSignatureAssociation::RayTracingRootSignatureAssociation(const std::vector<IRayTracingRootSignatureParams>& rootSigParams, std::wstring entryPointNameOrHitGroupName, std::wstring rootSigDebugName)
 {
-    m_RootSigParams.resize(rootSigParams.size());
-    for (IRayTracingRootSignatureParams rootSigParam : rootSigParams)
-        m_RootSigParams.push_back(rootSigParam);
+    unsigned int numRootSigParams = rootSigParams.size();
+    m_RootSigParams.resize(numRootSigParams);
+    for (unsigned int i = 0; i < numRootSigParams; i++)
+        m_RootSigParams[i] = rootSigParams[i];
 
     m_EntryPointNameOrHitGroupName = entryPointNameOrHitGroupName;
     

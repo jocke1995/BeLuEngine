@@ -9,6 +9,7 @@
 
 #include "DXR/D3D12TopLevelAS.h"
 #include "DXR/D3D12BottomLevelAS.h"
+#include "DXR/D3D12RayTracingPipelineState.h"
 
 //ImGui
 #include "../ImGUI/imgui.h"
@@ -491,7 +492,10 @@ void D3D12GraphicsContext::DispatchRays(const D3D12_DISPATCH_RAYS_DESC& dispatch
 	m_pCommandList->DispatchRays(&dispatchRaysDesc);
 }
 
-void D3D12GraphicsContext::SetPipelineState(ID3D12StateObject* pso)
+void D3D12GraphicsContext::SetRayTracingPipelineState(IRayTracingPipelineState* rtPipelineState)
 {
-	m_pCommandList->SetPipelineState1(pso);
+	BL_ASSERT(rtPipelineState);
+
+	D3D12RayTracingPipelineState* d3d12rtState = static_cast<D3D12RayTracingPipelineState*>(rtPipelineState);
+	m_pCommandList->SetPipelineState1(d3d12rtState->m_pRayTracingStateObject);
 }

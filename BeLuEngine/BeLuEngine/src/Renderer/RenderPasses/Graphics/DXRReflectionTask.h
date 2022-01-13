@@ -30,10 +30,9 @@ public:
 
 private:
 	IRayTracingPipelineState* m_pRayTracingState = nullptr;
-	ID3D12StateObject* m_pStateObject = nullptr;
-	ID3D12StateObjectProperties* m_pRTStateObjectProps = nullptr;
 
 	// Shader binding table
+	ID3D12StateObjectProperties* m_pRTStateObjectProps = nullptr;
 	ShaderBindingTableGenerator* m_pSbtGenerator = nullptr;
 	IGraphicsBuffer* m_pShaderTableBuffer = nullptr;
 

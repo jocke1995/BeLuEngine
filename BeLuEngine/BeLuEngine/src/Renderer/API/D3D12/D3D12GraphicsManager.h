@@ -52,7 +52,8 @@ public:
 	unsigned int GetCommandInterfaceIndex() const { return m_CommandInterfaceIndex; }
 private:
 	friend class ImGuiHandler;
-	friend class RayTracingPipelineGenerator;	// ABSTRACTION TEMP
+	friend class RayTracingPipelineGenerator;	TODO("ABSTRACTION TEMP");
+	friend class D3D12RayTracingPipelineState;
 	// -------------------------- Native D3D12 -------------------------- 
 	// D3D12 DLL
 	HINSTANCE m_D3D12Handle;

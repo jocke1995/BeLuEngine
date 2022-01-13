@@ -7,13 +7,10 @@ class Shader;
 
 struct RayTracingShader
 {
-	RayTracingShader(Shader* shader, const std::vector<std::wstring>& shaderEntryPointNames);
+	RayTracingShader(Shader* shader, const std::wstring& shaderEntryPointNames);
 
 	Shader* m_Shader = nullptr;
-    std::vector<std::wstring> m_ShaderEntryPointNames;
-
-    //std::vector<D3D12_EXPORT_DESC> m_exports;
-    //D3D12_DXIL_LIBRARY_DESC m_libDesc;
+    std::wstring m_ShaderEntryPointNames;
 };
 
 struct RayTracingHitGroup
@@ -48,7 +45,7 @@ public:
 	virtual ~RayTracingPSDesc();
 
 	// Example: AddShader(L"myRayGenerationTestShader.hlsl", L"RayGen");
-	bool AddShader(std::wstring shaderFileName, const std::vector<std::wstring>& shaderEntryPointNames);
+	bool AddShader(std::wstring shaderFileName, const std::wstring& shaderEntryPointNames);
 
 	// AnyHit and Intersection are optional
 	bool AddHitgroup(const std::wstring hitGroupName, const std::wstring closestHitName, const std::wstring anyHitName = L"", const std::wstring intersectionName = L"");
