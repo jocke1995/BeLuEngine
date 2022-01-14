@@ -71,9 +71,9 @@ D3D12GraphicsContext::~D3D12GraphicsContext()
 	D3D12GraphicsManager* graphicsManager = D3D12GraphicsManager::GetInstance();
 	for (unsigned int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
-		graphicsManager->AddD3D12ObjectToDefferedDeletion(m_pCommandAllocators[i]);
+		graphicsManager->AddIUknownForDefferedDeletion(m_pCommandAllocators[i]);
 	}
-	graphicsManager->AddD3D12ObjectToDefferedDeletion(m_pCommandList);
+	graphicsManager->AddIUknownForDefferedDeletion(m_pCommandList);
 }
 
 void D3D12GraphicsContext::Begin()

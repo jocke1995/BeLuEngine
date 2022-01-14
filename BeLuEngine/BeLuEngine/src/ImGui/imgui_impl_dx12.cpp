@@ -615,9 +615,9 @@ void ImGui_ImplDX12_InvalidateDeviceObjects()
         return;
 
     D3D12GraphicsManager* beLuEngineGraphicsManager = D3D12GraphicsManager::GetInstance();
-    beLuEngineGraphicsManager->AddD3D12ObjectToDefferedDeletion(g_pRootSignature);
-    beLuEngineGraphicsManager->AddD3D12ObjectToDefferedDeletion(g_pPipelineState);
-    beLuEngineGraphicsManager->AddD3D12ObjectToDefferedDeletion(g_pFontTextureResource);
+    beLuEngineGraphicsManager->AddIUknownForDefferedDeletion(g_pRootSignature);
+    beLuEngineGraphicsManager->AddIUknownForDefferedDeletion(g_pPipelineState);
+    beLuEngineGraphicsManager->AddIUknownForDefferedDeletion(g_pFontTextureResource);
 
     ImGuiIO& io = ImGui::GetIO();
     io.Fonts->TexID = NULL; // We copied g_pFontTextureView to io.Fonts->TexID so let's clear that as well.
@@ -625,8 +625,8 @@ void ImGui_ImplDX12_InvalidateDeviceObjects()
     for (UINT i = 0; i < g_numFramesInFlight; i++)
     {
         FrameResources* fr = &g_pFrameResources[i];
-        beLuEngineGraphicsManager->AddD3D12ObjectToDefferedDeletion(fr->IndexBuffer);
-        beLuEngineGraphicsManager->AddD3D12ObjectToDefferedDeletion(fr->VertexBuffer);
+        beLuEngineGraphicsManager->AddIUknownForDefferedDeletion(fr->IndexBuffer);
+        beLuEngineGraphicsManager->AddIUknownForDefferedDeletion(fr->VertexBuffer);
     }
 }
 

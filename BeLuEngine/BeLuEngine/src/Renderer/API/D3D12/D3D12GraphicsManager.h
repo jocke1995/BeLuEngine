@@ -40,7 +40,7 @@ public:
 
 	static bool CHECK_HRESULT(HRESULT hrParam);
 
-	void AddD3D12ObjectToDefferedDeletion(ID3D12Object* object);
+	void AddIUknownForDefferedDeletion(IUnknown* object);
 	DynamicDataParams SetDynamicData(unsigned int size, const void* data);
 
 	// Getters
@@ -97,7 +97,7 @@ private:
 
 	// Objects to be deffered deleted.
 	// Pair information: <indexSubmitted, objectItSelf>
-	std::vector<std::pair<unsigned int, ID3D12Object*>> m_ObjectsToBeDeleted;
+	std::vector<std::pair<unsigned int, IUnknown*>> m_ObjectsToBeDeleted;
 
 	ID3D12Resource1* m_pIntermediateUploadHeap[NUM_SWAP_BUFFERS] = {};
 	void* m_pIntermediateUploadHeapBegin[NUM_SWAP_BUFFERS] = {};

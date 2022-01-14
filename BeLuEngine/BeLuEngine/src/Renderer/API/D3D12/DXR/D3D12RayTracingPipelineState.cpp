@@ -164,15 +164,14 @@ D3D12RayTracingPipelineState::~D3D12RayTracingPipelineState()
 	D3D12GraphicsManager* graphicsManager = D3D12GraphicsManager::GetInstance();
 	for (ID3D12RootSignature* rootSig : m_RootSigs)
 	{
-		graphicsManager->AddD3D12ObjectToDefferedDeletion(rootSig);
+		graphicsManager->AddIUknownForDefferedDeletion(rootSig);
 	}
 	
 	// StateObject
-	graphicsManager->AddD3D12ObjectToDefferedDeletion(m_pRayTracingStateObject);
+	graphicsManager->AddIUknownForDefferedDeletion(m_pRayTracingStateObject);
 
 	// State Properties
-	BL_SAFE_RELEASE(&m_pRTStateObjectProps);
-
+	graphicsManager->AddIUknownForDefferedDeletion(m_pRTStateObjectProps);
 }
 
 ID3D12RootSignature* D3D12RayTracingPipelineState::createLocalRootSignature(const RayTracingRootSignatureAssociation& rootSigAssociation)

@@ -154,7 +154,7 @@ D3D12GraphicsPipelineState::D3D12GraphicsPipelineState(const PSODesc& desc, cons
 
 D3D12GraphicsPipelineState::~D3D12GraphicsPipelineState()
 {
-	D3D12GraphicsManager::GetInstance()->AddD3D12ObjectToDefferedDeletion(m_pPSO);
+	D3D12GraphicsManager::GetInstance()->AddIUknownForDefferedDeletion(m_pPSO);
 }
 
 StreamingRasterizerDesc::StreamingRasterizerDesc()

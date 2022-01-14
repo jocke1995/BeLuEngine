@@ -888,7 +888,7 @@ bool D3D12GraphicsManager::CHECK_HRESULT(HRESULT hrParam)
 	return false;
 }
 
-void D3D12GraphicsManager::AddD3D12ObjectToDefferedDeletion(ID3D12Object* object)
+void D3D12GraphicsManager::AddIUknownForDefferedDeletion(IUnknown* object)
 {
 	m_ObjectsToBeDeleted.push_back(std::make_pair(mFrameIndex, object));
 }
@@ -965,9 +965,9 @@ void D3D12GraphicsManager::deleteDefferedDeletionObjects(bool forceDeleteAll)
 {
 	unsigned int framesToWait = forceDeleteAll ? 0 : NUM_SWAP_BUFFERS;
 	{
-		std::vector<std::pair<unsigned int, ID3D12Object*>> remainingD3D12Objects;
-		remainingD3D12Objects.reserve(m_ObjectsToBeDeleted.size());
+		std::vector<std::pair<unsigned int, IUnknown*>> remainingIUnknowns(m_ObjectsToBeDeleted.size());
 
+		unsigned int numObjectsToSave = 0;
 		for (auto [frameDeleted, object] : m_ObjectsToBeDeleted)
 		{
 			if ((frameDeleted + framesToWait) == mFrameIndex)
@@ -976,10 +976,11 @@ void D3D12GraphicsManager::deleteDefferedDeletionObjects(bool forceDeleteAll)
 			}
 			else
 			{
-				remainingD3D12Objects.push_back(std::pair(frameDeleted, object));
+				remainingIUnknowns[numObjectsToSave] = std::pair(frameDeleted, object);
+				numObjectsToSave++;
 			}
 		}
 
-		m_ObjectsToBeDeleted = remainingD3D12Objects;
+		m_ObjectsToBeDeleted = remainingIUnknowns;
 	}
 }

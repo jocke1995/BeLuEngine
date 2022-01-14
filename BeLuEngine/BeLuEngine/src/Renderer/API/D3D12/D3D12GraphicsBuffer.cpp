@@ -166,7 +166,7 @@ D3D12GraphicsBuffer::~D3D12GraphicsBuffer()
 	D3D12GraphicsManager* graphicsManager = D3D12GraphicsManager::GetInstance();
 
 	BL_ASSERT(m_pResource);
-	graphicsManager->AddD3D12ObjectToDefferedDeletion(m_pResource);
+	graphicsManager->AddIUknownForDefferedDeletion(m_pResource);
 }
 
 unsigned int D3D12GraphicsBuffer::GetConstantBufferDescriptorIndex() const
