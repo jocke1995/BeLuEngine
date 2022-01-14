@@ -81,12 +81,11 @@ DXRReflectionTask::~DXRReflectionTask()
 	// RayTracing State
 	BL_SAFE_DELETE(m_pRayTracingState);
 
-
 	// ShaderBindingTable
 	BL_SAFE_DELETE(m_pSbtGenerator);
 	BL_SAFE_DELETE(m_pShaderTableBuffer);
 
-	TODO("put insiode shader table class?")
+	TODO("put inside shader table class?")
 	// StateObject
 	BL_SAFE_RELEASE(&m_pRTStateObjectProps);
 }

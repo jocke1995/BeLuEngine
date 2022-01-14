@@ -162,7 +162,7 @@ D3D12RayTracingPipelineState::~D3D12RayTracingPipelineState()
 	{
 		graphicsManager->AddD3D12ObjectToDefferedDeletion(rootSig);
 	}
-
+	
 	// StateObject
 	graphicsManager->AddD3D12ObjectToDefferedDeletion(m_pRayTracingStateObject);
 }

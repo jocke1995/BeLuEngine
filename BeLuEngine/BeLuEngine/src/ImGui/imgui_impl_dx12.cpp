@@ -28,6 +28,11 @@
 //  2018-06-08: DirectX12: Use draw_data->DisplayPos and draw_data->DisplaySize to setup projection matrix and clipping rectangle (to ease support for future multi-viewport).
 //  2018-02-22: Merged into master with all Win32 code synchronized to other examples.
 
+/* ---------------------------------------------- - BeLuEngine------------------------------------------------ */
+// This includes GPUManager from my renderer so that I can release the resources properly when releasing ImGui.
+#include "../Renderer/API/D3D12/D3D12GraphicsManager.h"
+/* ---------------------------------------------- - BeLuEngine------------------------------------------------ */
+
 #include "imgui.h"
 #include "imgui_impl_dx12.h"
 
@@ -604,14 +609,15 @@ bool    ImGui_ImplDX12_CreateDeviceObjects()
     return true;
 }
 
-void    ImGui_ImplDX12_InvalidateDeviceObjects()
+void ImGui_ImplDX12_InvalidateDeviceObjects()
 {
     if (!g_pd3dDevice)
         return;
 
-    SafeRelease(g_pRootSignature);
-    SafeRelease(g_pPipelineState);
-    SafeRelease(g_pFontTextureResource);
+    D3D12GraphicsManager* beLuEngineGraphicsManager = D3D12GraphicsManager::GetInstance();
+    beLuEngineGraphicsManager->AddD3D12ObjectToDefferedDeletion(g_pRootSignature);
+    beLuEngineGraphicsManager->AddD3D12ObjectToDefferedDeletion(g_pPipelineState);
+    beLuEngineGraphicsManager->AddD3D12ObjectToDefferedDeletion(g_pFontTextureResource);
 
     ImGuiIO& io = ImGui::GetIO();
     io.Fonts->TexID = NULL; // We copied g_pFontTextureView to io.Fonts->TexID so let's clear that as well.
@@ -619,8 +625,8 @@ void    ImGui_ImplDX12_InvalidateDeviceObjects()
     for (UINT i = 0; i < g_numFramesInFlight; i++)
     {
         FrameResources* fr = &g_pFrameResources[i];
-        SafeRelease(fr->IndexBuffer);
-        SafeRelease(fr->VertexBuffer);
+        beLuEngineGraphicsManager->AddD3D12ObjectToDefferedDeletion(fr->IndexBuffer);
+        beLuEngineGraphicsManager->AddD3D12ObjectToDefferedDeletion(fr->VertexBuffer);
     }
 }
 
