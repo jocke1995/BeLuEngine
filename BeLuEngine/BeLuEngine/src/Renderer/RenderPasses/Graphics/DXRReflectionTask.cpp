@@ -59,11 +59,6 @@ DXRReflectionTask::DXRReflectionTask(unsigned int dispatchWidth, unsigned int di
 		m_pRayTracingState = IRayTracingPipelineState::Create(rtDesc, L"DXR_ReflectionPipelineState");
 	}
 	
-	// Cast the state object into a properties object, allowing to later access
-	// the shader pointers by name
-	static_cast<D3D12RayTracingPipelineState*>(m_pRayTracingState)->GetTempStateObject()->QueryInterface(IID_PPV_ARGS(&m_pRTStateObjectProps));
-
-
 #pragma region ShaderBindingTable
 	// This will get generated from outside of this class (by calling CreateShaderBindingTable), whenever sbt needs updating..
 	// It needs updating whenever instances has been added/removed from the rtScene.
@@ -84,10 +79,6 @@ DXRReflectionTask::~DXRReflectionTask()
 	// ShaderBindingTable
 	BL_SAFE_DELETE(m_pSbtGenerator);
 	BL_SAFE_DELETE(m_pShaderTableBuffer);
-
-	TODO("put inside shader table class?")
-	// StateObject
-	BL_SAFE_RELEASE(&m_pRTStateObjectProps);
 }
 
 void DXRReflectionTask::CreateShaderBindingTable(const std::vector<RenderComponent>& rayTracedRenderComponents)
@@ -128,7 +119,7 @@ void DXRReflectionTask::CreateShaderBindingTable(const std::vector<RenderCompone
 	m_pShaderTableBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::CPUBuffer, sbtSize, 1, DXGI_FORMAT_UNKNOWN, L"ShaderBindingTable_CPUBUFFER");
 
 	// Compile the SBT from the shader and parameters info
-	m_pSbtGenerator->Generate(static_cast<D3D12GraphicsBuffer*>(m_pShaderTableBuffer)->m_pResource, m_pRTStateObjectProps);
+	m_pSbtGenerator->Generate(static_cast<D3D12GraphicsBuffer*>(m_pShaderTableBuffer)->m_pResource, static_cast<D3D12RayTracingPipelineState*>(m_pRayTracingState)->GetTempStatePropsObject());
 }
 
 void DXRReflectionTask::Execute()

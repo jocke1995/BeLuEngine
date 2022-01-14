@@ -152,6 +152,10 @@ D3D12RayTracingPipelineState::D3D12RayTracingPipelineState(const RayTracingPSDes
 
 	m_pRayTracingStateObject->SetName(name.c_str());
 #pragma endregion
+
+	// Prepare for shaderBindingTable
+	hr = m_pRayTracingStateObject->QueryInterface(IID_PPV_ARGS(&m_pRTStateObjectProps));
+	d3d12Manager->CHECK_HRESULT(hr);
 }
 
 D3D12RayTracingPipelineState::~D3D12RayTracingPipelineState()
@@ -165,6 +169,10 @@ D3D12RayTracingPipelineState::~D3D12RayTracingPipelineState()
 	
 	// StateObject
 	graphicsManager->AddD3D12ObjectToDefferedDeletion(m_pRayTracingStateObject);
+
+	// State Properties
+	BL_SAFE_RELEASE(&m_pRTStateObjectProps);
+
 }
 
 ID3D12RootSignature* D3D12RayTracingPipelineState::createLocalRootSignature(const RayTracingRootSignatureAssociation& rootSigAssociation)
