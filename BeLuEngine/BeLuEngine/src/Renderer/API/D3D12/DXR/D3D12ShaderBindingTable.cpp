@@ -1,0 +1,129 @@
+#include "stdafx.h"
+#include "D3D12ShaderBindingTable.h"
+
+#include "../D3D12GraphicsManager.h"
+#include "../D3D12GraphicsBuffer.h"
+
+#include "D3D12RayTracingPipelineState.h"
+
+D3D12ShaderBindingTable::D3D12ShaderBindingTable(const std::wstring& name)
+{
+#ifdef DEBUG
+	m_DebugName = name;
+#endif
+}
+
+D3D12ShaderBindingTable::~D3D12ShaderBindingTable()
+{
+	BL_SAFE_DELETE(m_pCPUShaderTableBuffer);
+}
+
+void D3D12ShaderBindingTable::GenerateShaderBindingTable(IRayTracingPipelineState* rtPipelineState)
+{
+	BL_ASSERT(rtPipelineState);
+
+	D3D12RayTracingPipelineState* d3d12RayTracingState = static_cast<D3D12RayTracingPipelineState*>(rtPipelineState);
+
+	BL_SAFE_DELETE(m_pCPUShaderTableBuffer);
+
+	unsigned int sbtSize = calculateShaderBindingTableSize();
+
+	// Create the ShaderBindingTable buffer
+	m_pCPUShaderTableBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::CPUBuffer, sbtSize, 1, DXGI_FORMAT_UNKNOWN, L"ShaderBindingTable_CPUBUFFER");
+	D3D12GraphicsBuffer* d3d12CPUBuffer = static_cast<D3D12GraphicsBuffer*>(m_pCPUShaderTableBuffer);
+
+	// Map data in the SBT
+	unsigned char* pMappedData = nullptr;
+	HRESULT hr = d3d12CPUBuffer->m_pResource->Map(0, nullptr, reinterpret_cast<void**>(&pMappedData));
+	D3D12GraphicsManager::CHECK_HRESULT(hr);
+
+	unsigned int offset = 0;
+	offset = copyShaderRecords(d3d12RayTracingState, pMappedData, m_RayGenerationRecords, mMaxRayGenerationSize);
+	pMappedData += offset;
+
+	offset = copyShaderRecords(d3d12RayTracingState, pMappedData, m_MissRecords, mMaxMissRecordSize);
+	pMappedData += offset;
+
+	offset = copyShaderRecords(d3d12RayTracingState, pMappedData, m_HitGroupRecords, mMaxHitGroupSize);
+
+	// Unmap the SBT
+	d3d12CPUBuffer->m_pResource->Unmap(0, nullptr);
+}
+
+unsigned int D3D12ShaderBindingTable::calculateShaderBindingTableSize()
+{
+	auto calculateMaxShaderRecordSize = [](const std::vector<ShaderRecord> shaderRecords) -> unsigned int
+	{
+		// Find the maximum number of parameters used by a single entry
+		unsigned int maxArgs = 0;
+		for (const auto& shaderRecord : shaderRecords)
+		{
+			maxArgs = Max(maxArgs, (unsigned int)shaderRecord.m_InputData.size());
+		}
+
+		// A SBT entry is made of a program ID and a set of parameters, taking 8 bytes each. Those
+		// parameters can either be 8-bytes pointers, or 4-bytes constants
+		unsigned int entrySize = D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT + 8 * maxArgs;
+
+		// Align
+		unsigned int entrySizePadded = (entrySize + (D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT - 1)) & ~(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT - 1);
+
+		return entrySizePadded;
+	};
+
+	// Compute the entry size of each program type depending on the maximum number of parameters in each category
+	mMaxRayGenerationSize	= calculateMaxShaderRecordSize(m_RayGenerationRecords);
+	mMaxMissRecordSize		= calculateMaxShaderRecordSize(m_MissRecords);
+	mMaxHitGroupSize		= calculateMaxShaderRecordSize(m_HitGroupRecords);
+
+	// The total SBT size is the sum of the entries for ray generation, miss and hit groups
+	unsigned int sbtSizeUnPadded =
+		mMaxRayGenerationSize * m_RayGenerationRecords.size() +	// Raygen Sizes
+		mMaxMissRecordSize * m_MissRecords.size() +				// Miss Sizes
+		mMaxHitGroupSize * m_HitGroupRecords.size();			// Hitgroup Sizes
+	;
+	TODO("Wrong byte alignment? Maybe should be (256 - 1)?")
+	unsigned int sbtSizePadded = (sbtSizeUnPadded + D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT) & ~D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT;
+
+	return sbtSizePadded;
+}
+
+unsigned int D3D12ShaderBindingTable::copyShaderRecords(
+	D3D12RayTracingPipelineState* d3d12RayTracingPipelineState,
+	unsigned char* pMappedData,
+	const std::vector<ShaderRecord>& shaderRecords,
+	unsigned int maxShaderRecordSize)
+{
+	ID3D12StateObjectProperties* stateObjectProps = d3d12RayTracingPipelineState->m_pRTStateObjectProps;
+
+	uint8_t* pData = pMappedData;
+	for (const auto& shaderRecord : shaderRecords)
+	{
+		unsigned int currentOffset = 0;
+		// Get the shader identifier
+		void* shaderIdentifier = stateObjectProps->GetShaderIdentifier(shaderRecord.m_EntryPointName.c_str());
+		BL_ASSERT(shaderIdentifier);
+
+		// Copy the shader identifier
+		memcpy(pData, shaderIdentifier, D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+		currentOffset += D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
+
+		// Copy all its descriptors
+		unsigned int descriptorPointerSize = sizeof(D3D12_GPU_VIRTUAL_ADDRESS);
+		for (unsigned int i = 0; i < shaderRecord.m_InputData.size(); i++)
+		{
+			D3D12GraphicsBuffer* d3d12Buffer = static_cast<D3D12GraphicsBuffer*>(shaderRecord.m_InputData[i]);
+			D3D12_GPU_VIRTUAL_ADDRESS vAddr = d3d12Buffer->m_pResource->GetGPUVirtualAddress();
+			
+			memcpy(pData + currentOffset, reinterpret_cast<void*>(&vAddr), descriptorPointerSize);
+
+			currentOffset += descriptorPointerSize;
+		}
+
+		// Offset the pointer for the next ShaderRecord
+		pData += maxShaderRecordSize;
+	}
+
+	// Return the number of bytes actually written to the output buffer so that the next section knows were to begin
+	return static_cast<unsigned int>(shaderRecords.size()) * maxShaderRecordSize;
+}

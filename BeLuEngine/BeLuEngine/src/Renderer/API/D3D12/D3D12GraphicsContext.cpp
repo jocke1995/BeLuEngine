@@ -1,15 +1,18 @@
 ﻿#include "stdafx.h"
 #include "D3D12GraphicsContext.h"
 
+// Common DX12
 #include "D3D12GraphicsManager.h"
 #include "D3D12GraphicsTexture.h"
 #include "D3D12GraphicsBuffer.h"
 #include "D3D12GraphicsPipelineState.h"
 #include "D3D12DescriptorHeap.h"
 
+// DXR
 #include "DXR/D3D12TopLevelAS.h"
 #include "DXR/D3D12BottomLevelAS.h"
 #include "DXR/D3D12RayTracingPipelineState.h"
+#include "DXR/D3D12ShaderBindingTable.h"
 
 //ImGui
 #include "../ImGUI/imgui.h"
@@ -487,9 +490,42 @@ void D3D12GraphicsContext::BuildBLAS(IBottomLevelAS* pBlas)
 	this->UAVBarrier(d3d12Blas->m_pResultBuffer);
 }
 
-void D3D12GraphicsContext::DispatchRays(const D3D12_DISPATCH_RAYS_DESC& dispatchRaysDesc)
+void D3D12GraphicsContext::DispatchRays(IShaderBindingTable* sbt, unsigned int dispatchWidth, unsigned int dispatchHeight, unsigned int dispatchDepth)
 {
-	m_pCommandList->DispatchRays(&dispatchRaysDesc);
+	BL_ASSERT(sbt);
+	BL_ASSERT(dispatchWidth || dispatchHeight || dispatchWidth); // All entries gotta be atleast 1!
+
+	D3D12ShaderBindingTable* d3d12SBT = static_cast<D3D12ShaderBindingTable*>(sbt);
+	ID3D12Resource* sbtCPUBuffer = static_cast<D3D12GraphicsBuffer*>(d3d12SBT->m_pCPUShaderTableBuffer)->m_pResource;
+
+	// Setup the raytracing task
+	D3D12_DISPATCH_RAYS_DESC desc = {};
+
+	// Ray generation section
+	uint32_t rayGenerationSectionSizeInBytes = d3d12SBT->GetRayGenSectionSize();
+	desc.RayGenerationShaderRecord.StartAddress = sbtCPUBuffer->GetGPUVirtualAddress();
+	desc.RayGenerationShaderRecord.SizeInBytes = rayGenerationSectionSizeInBytes;
+
+	// Miss section
+	uint32_t missSectionSizeInBytes = d3d12SBT->GetMissSectionSize();
+	desc.MissShaderTable.StartAddress = sbtCPUBuffer->GetGPUVirtualAddress() + rayGenerationSectionSizeInBytes;
+	desc.MissShaderTable.SizeInBytes = missSectionSizeInBytes;
+	desc.MissShaderTable.StrideInBytes = d3d12SBT->GetMaxMissShaderRecordSize();
+
+	// Hit group section
+	uint32_t hitGroupsSectionSize = d3d12SBT->GetHitGroupSectionSize();
+	desc.HitGroupTable.StartAddress = sbtCPUBuffer->GetGPUVirtualAddress() +
+		rayGenerationSectionSizeInBytes +
+		missSectionSizeInBytes;
+	desc.HitGroupTable.SizeInBytes = hitGroupsSectionSize;
+	desc.HitGroupTable.StrideInBytes = d3d12SBT->GetMaxHitGroupShaderRecordSize();
+
+	// Dimensions of the image to render
+	desc.Width	= dispatchWidth;
+	desc.Height = dispatchHeight;
+	desc.Depth	= dispatchDepth;
+
+	m_pCommandList->DispatchRays(&desc);
 }
 
 void D3D12GraphicsContext::SetRayTracingPipelineState(IRayTracingPipelineState* rtPipelineState)

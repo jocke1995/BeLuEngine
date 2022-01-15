@@ -12,7 +12,7 @@ IRayTracingPipelineState::~IRayTracingPipelineState()
 {
 }
 
-IRayTracingPipelineState* IRayTracingPipelineState::Create(const RayTracingPSDesc& desc, const std::wstring& name)
+IRayTracingPipelineState* IRayTracingPipelineState::Create(const RayTracingPipelineStateDesc& desc, const std::wstring& name)
 {
     E_GRAPHICS_API graphicsApi = IGraphicsManager::GetGraphicsApiType();
 
@@ -32,7 +32,7 @@ IRayTracingPipelineState* IRayTracingPipelineState::Create(const RayTracingPSDes
     }
 }
 
-RayTracingPSDesc::RayTracingPSDesc()
+RayTracingPipelineStateDesc::RayTracingPipelineStateDesc()
 {
     // Set defaults
     m_PayloadSize = 4 * sizeof(unsigned int);
@@ -40,11 +40,11 @@ RayTracingPSDesc::RayTracingPSDesc()
     m_MaxRecursionDepth = 2;
 }
 
-RayTracingPSDesc::~RayTracingPSDesc()
+RayTracingPipelineStateDesc::~RayTracingPipelineStateDesc()
 {
 }
 
-bool RayTracingPSDesc::AddShader(std::wstring shaderFileName, const std::wstring& shaderEntryPointNames)
+bool RayTracingPipelineStateDesc::AddShader(std::wstring shaderFileName, const std::wstring& shaderEntryPointNames)
 {
     Shader* shader = AssetLoader::Get()->loadShader(shaderFileName, E_SHADER_TYPE::DXR);
 
@@ -58,29 +58,29 @@ bool RayTracingPSDesc::AddShader(std::wstring shaderFileName, const std::wstring
     return true;
 }
 
-bool RayTracingPSDesc::AddHitgroup(const std::wstring hitGroupName, const std::wstring closestHitName, const std::wstring anyHitName /*= L"" */, const std::wstring intersectionName /*= L"" */)
+bool RayTracingPipelineStateDesc::AddHitgroup(const std::wstring hitGroupName, const std::wstring closestHitName, const std::wstring anyHitName /*= L"" */, const std::wstring intersectionName /*= L"" */)
 {
     m_HitGroups.emplace_back(RayTracingHitGroup(hitGroupName, closestHitName, anyHitName, intersectionName));
     return true;
 }
 
-bool RayTracingPSDesc::AddRootSignatureAssociation(const std::vector<IRayTracingRootSignatureParams>& rootSigParams, std::wstring entryPointNameOrHitGroupName, std::wstring rootSigDebugName)
+bool RayTracingPipelineStateDesc::AddRootSignatureAssociation(const std::vector<IRayTracingRootSignatureParams>& rootSigParams, std::wstring entryPointNameOrHitGroupName, std::wstring rootSigDebugName)
 {
     m_RootSignatureAssociations.emplace_back(RayTracingRootSignatureAssociation(rootSigParams, entryPointNameOrHitGroupName, rootSigDebugName));
     return false;
 }
 
-void RayTracingPSDesc::SetPayloadSize(unsigned int payloadSize)
+void RayTracingPipelineStateDesc::SetPayloadSize(unsigned int payloadSize)
 {
     m_PayloadSize = payloadSize;
 }
 
-void RayTracingPSDesc::SetMaxAttributesSize(unsigned int maxAttributesSize)
+void RayTracingPipelineStateDesc::SetMaxAttributesSize(unsigned int maxAttributesSize)
 {
     m_MaxAttributeSize = maxAttributesSize;
 }
 
-void RayTracingPSDesc::SetMaxRecursionDepth(unsigned int maxRecursionDepth)
+void RayTracingPipelineStateDesc::SetMaxRecursionDepth(unsigned int maxRecursionDepth)
 {
     m_MaxRecursionDepth = maxRecursionDepth;
 }

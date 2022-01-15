@@ -38,11 +38,11 @@ struct RayTracingRootSignatureAssociation
 	std::wstring m_RootSigDebugName;
 };
 
-class RayTracingPSDesc
+class RayTracingPipelineStateDesc
 {
 public:
-	RayTracingPSDesc();
-	virtual ~RayTracingPSDesc();
+	RayTracingPipelineStateDesc();
+	virtual ~RayTracingPipelineStateDesc();
 
 	// Example: AddShader(L"myRayGenerationTestShader.hlsl", L"RayGen");
 	bool AddShader(std::wstring shaderFileName, const std::wstring& shaderEntryPointNames);
@@ -73,7 +73,7 @@ class IRayTracingPipelineState
 public:
 	virtual ~IRayTracingPipelineState();
 
-	static IRayTracingPipelineState* Create(const RayTracingPSDesc& desc, const std::wstring& name);
+	static IRayTracingPipelineState* Create(const RayTracingPipelineStateDesc& desc, const std::wstring& name);
 
 protected:
 

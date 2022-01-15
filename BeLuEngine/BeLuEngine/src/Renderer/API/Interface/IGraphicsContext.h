@@ -8,6 +8,7 @@ class IGraphicsPipelineState;
 class ITopLevelAS;
 class IBottomLevelAS;
 class IRayTracingPipelineState;
+class IShaderBindingTable;
 
 class IGraphicsContext
 {
@@ -64,7 +65,7 @@ public:
     // Raytracing
     virtual void BuildTLAS(ITopLevelAS* pTlas) = 0;
     virtual void BuildBLAS(IBottomLevelAS* pBlas) = 0;
-    virtual void DispatchRays(const D3D12_DISPATCH_RAYS_DESC& dispatchRaysDesc) = 0;
+    virtual void DispatchRays(IShaderBindingTable* sbt, unsigned int dispatchWidth, unsigned int dispatchHeight, unsigned int dispatchDepth = 1) = 0;
     virtual void SetRayTracingPipelineState(IRayTracingPipelineState* rtPipelineState) = 0;
 
 private:

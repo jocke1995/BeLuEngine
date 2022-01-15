@@ -3,11 +3,10 @@
 
 #include "GraphicsPass.h"
 
-class Shader;
-class ShaderBindingTableGenerator;
-
 class IGraphicsBuffer;
+
 class IRayTracingPipelineState;
+class IShaderBindingTable;
 
 enum E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION
 {
@@ -31,9 +30,7 @@ public:
 private:
 	IRayTracingPipelineState* m_pRayTracingState = nullptr;
 
-	// Shader binding table
-	ShaderBindingTableGenerator* m_pSbtGenerator = nullptr;
-	IGraphicsBuffer* m_pShaderTableBuffer = nullptr;
+	IShaderBindingTable* m_pShaderBindingTable = nullptr;
 
 	unsigned int m_DispatchWidth = 0, m_DispatchHeight = 0;
 };

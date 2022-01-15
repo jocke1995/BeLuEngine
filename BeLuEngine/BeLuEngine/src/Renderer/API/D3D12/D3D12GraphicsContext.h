@@ -59,7 +59,7 @@ public:
     // Raytracing
     virtual void BuildTLAS(ITopLevelAS* pTlas) override;
     virtual void BuildBLAS(IBottomLevelAS* pBlas) override;
-    virtual void DispatchRays(const D3D12_DISPATCH_RAYS_DESC& dispatchRaysDesc) override final;
+    virtual void DispatchRays(IShaderBindingTable* sbt, unsigned int dispatchWidth, unsigned int dispatchHeight, unsigned int dispatchDepth = 1) override final;
     virtual void SetRayTracingPipelineState(IRayTracingPipelineState* rtPipelineState) override final;
 
 private:

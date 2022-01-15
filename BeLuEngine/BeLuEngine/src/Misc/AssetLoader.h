@@ -50,7 +50,7 @@ public:
 
 private:
     friend class D3D12GraphicsPipelineState;;
-    friend class RayTracingPSDesc;  // This class loads ray-tracing shaders
+    friend class RayTracingPipelineStateDesc;  // This class loads ray-tracing shaders
 
     friend class Renderer; // Renderer needs access to m_LoadedModels & m_LoadedTextures so it can check if they are uploaded to GPU.
 

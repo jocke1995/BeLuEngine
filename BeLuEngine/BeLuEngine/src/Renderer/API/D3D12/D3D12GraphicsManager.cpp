@@ -885,6 +885,8 @@ bool D3D12GraphicsManager::CHECK_HRESULT(HRESULT hrParam)
 
 	BL_LOG_CRITICAL(buffer.c_str());
 
+	__debugbreak();
+
 	return false;
 }
 

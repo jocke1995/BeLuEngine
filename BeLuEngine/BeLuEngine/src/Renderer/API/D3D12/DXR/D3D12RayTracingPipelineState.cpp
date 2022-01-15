@@ -4,7 +4,7 @@
 #include "../D3D12GraphicsManager.h"
 #include "../Renderer/Shaders/Shader.h"
 
-D3D12RayTracingPipelineState::D3D12RayTracingPipelineState(const RayTracingPSDesc& desc, const std::wstring& name)
+D3D12RayTracingPipelineState::D3D12RayTracingPipelineState(const RayTracingPipelineStateDesc& desc, const std::wstring& name)
 {
 	D3D12GraphicsManager* d3d12Manager = static_cast<D3D12GraphicsManager*>(IGraphicsManager::GetBaseInstance());
 	const unsigned int maxSubObjects = 100;
