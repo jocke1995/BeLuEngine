@@ -346,7 +346,7 @@ Scene* SponzaScene(SceneManager* sm)
     Model* sponza = al->LoadModel(L"../Vendor/Resources/Scenes/Sponza/textures_pbr/sponza.obj");
     Model* sphereModel = al->LoadModel(L"../Vendor/Resources/Models/SpherePBR/sphere.obj");
     Model* boxModel = al->LoadModel(L"../Vendor/Resources/Models/CubePBR/cube.obj");
-    Model* goldenPlane = al->LoadModel(L"../Vendor/Resources/Models/GoldenPlane/GoldenPlane.obj");
+    Model* mirror = al->LoadModel(L"../Vendor/Resources/Models/Mirror/Mirror.obj");
 
     /* ---------------------- Player ---------------------- */
     Entity* entity = (scene->AddEntity("player"));
@@ -361,7 +361,7 @@ Scene* SponzaScene(SceneManager* sm)
     tc = entity->AddComponent<component::TransformComponent>();
     bbc = entity->AddComponent <component::BoundingBoxComponent>();
 
-    mc->SetModel(goldenPlane);
+    mc->SetModel(mirror);
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
     tc->GetTransform()->SetScale(4.0f);
     //tc->GetTransform()->SetRotationX(PI/2 + 0.5);
@@ -379,7 +379,7 @@ Scene* SponzaScene(SceneManager* sm)
     tc = entity->AddComponent<component::TransformComponent>();
     bbc = entity->AddComponent <component::BoundingBoxComponent>();
 
-    mc->SetModel(goldenPlane);
+    mc->SetModel(mirror);
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
     tc->GetTransform()->SetScale(4.0f);
     //tc->GetTransform()->SetRotationX(PI/2 + 0.5);
@@ -418,7 +418,13 @@ Scene* SponzaScene(SceneManager* sm)
         std::wstring matName = L"dynamicMaterialMainLoop" + std::to_wstring(index);
         Material* newMat = al->CreateMaterial(matName, al->LoadMaterial(mc->GetMaterialAt(0)->GetName()));
         index++;
-        newMat->GetSharedMaterialData()->emissiveValue = emissiveColor;
+
+        MaterialData* matData = newMat->GetSharedMaterialData();
+        matData->emissiveValue = emissiveColor;
+        matData->hasMetallicTexture = false;
+        matData->metallicValue = 0.8f;
+        matData->hasRoughnessTexture = false;
+        matData->roughnessValue = 0.3f;
 
         mc->SetMaterialAt(0, newMat);
 
@@ -433,15 +439,15 @@ Scene* SponzaScene(SceneManager* sm)
     };
 
 
-    float4 emissiveColor = { 1.0f, 0.4f, 0.4f, 4.0f };
+    float4 emissiveColor = { 1.0f, 0.4f, 0.4f, 8.0f };
     float3 position = { 15.0f, 4.0f, -8.0f };
     createEmissiveSphere("RedSphere", emissiveColor, position);
 
-    emissiveColor = { 0.4f, 1.0f, 0.4f, 4.0f };
+    emissiveColor = { 0.4f, 1.0f, 0.4f, 8.0f };
     position = { 0.0f, 10.0f, 0.0f };
     createEmissiveSphere("GreenSphere", emissiveColor, position);
     
-    emissiveColor = { 0.4f, 0.4f, 1.0f, 4.0f };
+    emissiveColor = { 0.4f, 0.4f, 1.0f, 8.0f };
     position = { 15.0f, 4.0f, 9.0f };
     createEmissiveSphere("BlueSphere", emissiveColor, position);
 
@@ -463,7 +469,7 @@ Scene* SponzaScene(SceneManager* sm)
     dlc = entity->AddComponent<component::DirectionalLightComponent>(F_LIGHT_FLAGS::CAST_SHADOW);
     dlc->SetColor({ 1.0f, 1.0f, 1.0f });
     dlc->SetIntensity(2.0f);
-    dlc->SetDirection({ 0.2f, -1.0f, 0.35f });
+    dlc->SetDirection({ -0.6f, -1.0f, 0.05f});
     /* ---------------------- Sun ---------------------- */
 
     /* ---------------------- Update Function ---------------------- */
