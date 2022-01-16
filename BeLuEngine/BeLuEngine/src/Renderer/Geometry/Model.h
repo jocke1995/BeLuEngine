@@ -30,6 +30,7 @@ public:
 protected:
     friend class Renderer;
     friend class AssetLoader;
+    friend class TopLevelRenderTask;
 
     std::wstring m_Path;
     unsigned int m_Size = 0;

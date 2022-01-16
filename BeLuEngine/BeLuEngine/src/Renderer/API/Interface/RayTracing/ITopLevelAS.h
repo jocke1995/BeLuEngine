@@ -29,19 +29,22 @@ public:
 
     static ITopLevelAS* Create();
 
-    virtual void AddInstance(
+    void AddInstance(
         IBottomLevelAS* BLAS,
         const DirectX::XMMATRIX& m_Transform,
         unsigned int hitGroupIndex,
-        bool giveShadows) = 0;
+        bool giveShadows);
+    void Reset();
 
-    virtual void Reset() = 0;
-    virtual void GenerateBuffers() = 0;
-    virtual void SetupAccelerationStructureForBuilding(bool update) = 0;
+    // Override these
+    virtual bool CreateResultBuffer() = 0;
+    virtual void MapResultBuffer() = 0;
 
     virtual IGraphicsBuffer* GetRayTracingResultBuffer() const = 0;
 
-private:
+protected:
+    std::vector<Instance> m_Instances;
+    unsigned int m_InstanceCounter = 0; // Sets to 0 in Reset(), increments for each instance for unique IDs.
 };
 
 #endif

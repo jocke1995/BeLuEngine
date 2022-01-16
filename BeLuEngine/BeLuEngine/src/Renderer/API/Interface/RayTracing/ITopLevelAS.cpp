@@ -2,6 +2,7 @@
 #include "ITopLevelAS.h"
 
 #include "../IGraphicsManager.h"
+#include "IBottomLevelAS.h"
 
 #include "../../D3D12/DXR/D3D12TopLevelAS.h"
 
@@ -28,4 +29,15 @@ ITopLevelAS* ITopLevelAS::Create()
         BL_ASSERT_MESSAGE(false, "Invalid Graphics API");
         return nullptr;
     }
+}
+
+void ITopLevelAS::AddInstance(IBottomLevelAS* BLAS, const DirectX::XMMATRIX& transform, unsigned int hitGroupIndex, bool giveShadows)
+{
+    m_Instances.emplace_back(Instance(BLAS->GetRayTracingResultBuffer(), transform, m_InstanceCounter++, hitGroupIndex, giveShadows));
+}
+
+void ITopLevelAS::Reset()
+{
+    m_Instances.clear();
+    m_InstanceCounter = 0;
 }

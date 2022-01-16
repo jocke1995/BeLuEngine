@@ -22,79 +22,63 @@ D3D12TopLevelAS::~D3D12TopLevelAS()
 	BL_SAFE_DELETE(m_pResultBuffer);
 }
 
-void D3D12TopLevelAS::AddInstance(
-	IBottomLevelAS* BLAS,
-	const DirectX::XMMATRIX& m_Transform,
-	unsigned int hitGroupIndex,
-	bool giveShadows)
+bool D3D12TopLevelAS::CreateResultBuffer()
 {
-	m_Instances.emplace_back(Instance(static_cast<D3D12BottomLevelAS*>(BLAS)->m_pResultBuffer, m_Transform, m_InstanceCounter++, hitGroupIndex, giveShadows));
-	//BL_LOG_INFO("Added instance! %d\n", m_InstanceCounter);
+	// Only generate new buffers if we added new objects and the current one is to small
+	// This buffer is only increasing in size, never shrinking.
+	if (m_ResultBufferMaxNumberOfInstances < m_Instances.size())
+	{
+		D3D12GraphicsManager* manager = D3D12GraphicsManager::GetInstance();
+		ID3D12Device5* device5 = manager->GetDevice();
+
+		D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE;
+		m_ResultBufferMaxNumberOfInstances = m_Instances.size();
+
+		// Describe the work being requested, in this case the construction of a
+		D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS prebuildDesc = {};
+		prebuildDesc.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
+		prebuildDesc.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
+		prebuildDesc.NumDescs = m_ResultBufferMaxNumberOfInstances;
+		prebuildDesc.Flags = flags;
+
+		// This structure is used to hold the sizes of the required scratch memory and resulting AS
+		D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO info = {};
+		device5->GetRaytracingAccelerationStructurePrebuildInfo(&prebuildDesc, &info);
+
+		// Buffer sizes need to be 256-byte-aligned
+		unsigned int scratchSizeInBytes = (info.ScratchDataSizeInBytes + 255) & ~255;
+		unsigned int resultSizeInBytes = (info.ResultDataMaxSizeInBytes + 255) & ~255;
+
+		BL_SAFE_DELETE(m_pScratchBuffer);
+		BL_SAFE_DELETE(m_pResultBuffer);
+
+		// Create new buffers for scratch and result
+		m_pScratchBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::UnorderedAccessBuffer, scratchSizeInBytes, 1, DXGI_FORMAT_UNKNOWN, L"SCRATCHBUFFER_TLAS");
+		m_pResultBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::RayTracingBuffer, resultSizeInBytes, 1, DXGI_FORMAT_UNKNOWN, L"RESULTBUFFER_TLAS");
+
+		return true;
+	}
+
+	return false;
 }
 
-void D3D12TopLevelAS::Reset()
+IGraphicsBuffer* D3D12TopLevelAS::GetRayTracingResultBuffer() const
 {
-	m_Instances.clear();
-	m_InstanceCounter = 0;
+	BL_ASSERT(m_pResultBuffer);
+	return m_pResultBuffer;
 }
 
-void D3D12TopLevelAS::GenerateBuffers()
+void D3D12TopLevelAS::MapResultBuffer()
 {
+	BL_ASSERT(m_pResultBuffer && m_pScratchBuffer);
+
 	D3D12GraphicsManager* manager = D3D12GraphicsManager::GetInstance();
-	ID3D12Device5* device5 = manager->GetDevice();
-
-	// TODO: fast trace?
-	D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE;
-
-	// Describe the work being requested, in this case the construction of a
-	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS prebuildDesc = {};
-	prebuildDesc.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
-	prebuildDesc.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
-	prebuildDesc.NumDescs = static_cast<UINT>(m_Instances.size());
-	prebuildDesc.Flags = flags;
-
-	// This structure is used to hold the sizes of the required scratch memory and resulting AS
-	D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO info = {};
-	device5->GetRaytracingAccelerationStructurePrebuildInfo(&prebuildDesc, &info);
-
-	// Buffer sizes need to be 256-byte-aligned
-	unsigned int scratchSizeInBytes = (info.ScratchDataSizeInBytes + 255) & ~255;
-	unsigned int resultSizeInBytes = (info.ResultDataMaxSizeInBytes + 255) & ~255;
-
-	// Create buffers for scratch and result
-	BL_SAFE_DELETE(m_pScratchBuffer);
-	BL_SAFE_DELETE(m_pResultBuffer);
-
-	m_pScratchBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::UnorderedAccessBuffer, scratchSizeInBytes, 1, DXGI_FORMAT_UNKNOWN, L"SCRATCHBUFFER_TLAS");
-	m_pResultBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::RayTracingBuffer, resultSizeInBytes, 1, DXGI_FORMAT_UNKNOWN, L"RESULTBUFFER_TLAS");
-
-	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	srvDesc.Format = DXGI_FORMAT_UNKNOWN;
-	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
-	srvDesc.RaytracingAccelerationStructure.Location = static_cast<D3D12GraphicsBuffer*>(m_pResultBuffer)->m_pResource->GetGPUVirtualAddress();
-}
-
-void D3D12TopLevelAS::SetupAccelerationStructureForBuilding(bool update)
-{
-	D3D12GraphicsManager* manager = D3D12GraphicsManager::GetInstance();
-
-	// Ignore first
-	if (m_IsBuilt == false && update == true)
-		return;
-
-	//if (update == true)
-	//	return;
-
-	D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;// D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
-	//flags |= update ? D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE : D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
 
 	unsigned int numInstances = m_Instances.size();
 
 	TODO("Don't do this on the heap every frame.. Create a stack allocator!");
 	unsigned int sizeInBytes = numInstances * sizeof(D3D12_RAYTRACING_INSTANCE_DESC);
 	D3D12_RAYTRACING_INSTANCE_DESC* instanceDescs = new D3D12_RAYTRACING_INSTANCE_DESC[numInstances];
-	
 
 	// Create the description for each instance
 	for (unsigned int i = 0; i < numInstances; i++)
@@ -124,14 +108,9 @@ void D3D12TopLevelAS::SetupAccelerationStructureForBuilding(bool update)
 	m_BuildDesc.Inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
 	m_BuildDesc.Inputs.InstanceDescs = dynamicDataParams.uploadResource->GetGPUVirtualAddress();
 	m_BuildDesc.Inputs.NumDescs = numInstances;
-	m_BuildDesc.Inputs.Flags = flags;
+	m_BuildDesc.Inputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
 
-	m_BuildDesc.DestAccelerationStructureData	 = static_cast<D3D12GraphicsBuffer*>(m_pResultBuffer)->m_pResource->GetGPUVirtualAddress();
+	m_BuildDesc.DestAccelerationStructureData = static_cast<D3D12GraphicsBuffer*>(m_pResultBuffer)->m_pResource->GetGPUVirtualAddress();
 	m_BuildDesc.ScratchAccelerationStructureData = static_cast<D3D12GraphicsBuffer*>(m_pScratchBuffer)->m_pResource->GetGPUVirtualAddress();
-	m_BuildDesc.SourceAccelerationStructureData	 = 0;// update ? m_pResult->GetID3D12Resource1()->GetGPUVirtualAddress() : 0;
-}
-
-IGraphicsBuffer* D3D12TopLevelAS::GetRayTracingResultBuffer() const
-{
-	return m_pResultBuffer;
+	m_BuildDesc.SourceAccelerationStructureData = 0;
 }

@@ -24,10 +24,13 @@ class GraphicsPass;
 // ECS
 class Entity;
 
-// API
+// Generic API
 class IGraphicsBuffer;
 class IGraphicsTexture;
 class IGraphicsContext;
+
+// Generic API (Raytracing)
+class ITopLevelAS;
 
 namespace component
 {
@@ -140,10 +143,12 @@ private:
 
 	// Current scene to be drawn
 	Scene* m_pCurrActiveScene = nullptr;
+
+	// Update on demand
 	CB_PER_SCENE_STRUCT* m_pCbPerSceneData = nullptr;
 	IGraphicsBuffer* m_pCbPerScene = nullptr;
 
-	// update per frame
+	// Update per frame
 	CB_PER_FRAME_STRUCT* m_pCbPerFrameData = nullptr;
 	IGraphicsBuffer* m_pCbPerFrame = nullptr;
 
@@ -158,6 +163,7 @@ private:
 
 	// Submit data for lazy copy
 	void submitUploadPerFrameData();
+	void submitCbPerSceneData(ITopLevelAS* pTLAS);
 
 	// Contexts
 	std::vector<IGraphicsContext*> m_MainGraphicsContexts;

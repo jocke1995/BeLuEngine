@@ -29,7 +29,7 @@ Model::Model(
 	}
 
 	m_pBLAS->GenerateBuffers();
-	m_pBLAS->SetupAccelerationStructureForBuilding(false);
+	m_pBLAS->SetupAccelerationStructureForBuilding();
 }
 
 Model::~Model()

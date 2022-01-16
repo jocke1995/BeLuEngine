@@ -13,9 +13,12 @@ public:
 
 	void Execute() override final;
 
-	ITopLevelAS* GetTLAS() const;
+	void SetRenderComponents(const std::vector<RenderComponent>& renderComponents);
 
+	ITopLevelAS* GetTopLevelAS() const;
 private:
+	std::vector<RenderComponent> m_RenderComponents;
+
 	ITopLevelAS* m_pTLAS = nullptr;
 };
 

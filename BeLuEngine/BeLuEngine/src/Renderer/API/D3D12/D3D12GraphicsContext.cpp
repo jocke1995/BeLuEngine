@@ -475,7 +475,6 @@ void D3D12GraphicsContext::BuildTLAS(ITopLevelAS* pTlas)
 
 	D3D12TopLevelAS* d3d12Tlas = static_cast<D3D12TopLevelAS*>(pTlas);
 	m_pCommandList->BuildRaytracingAccelerationStructure(&d3d12Tlas->m_BuildDesc, 0, nullptr);
-	d3d12Tlas->m_IsBuilt = true;
 
 	this->UAVBarrier(d3d12Tlas->m_pResultBuffer);
 }

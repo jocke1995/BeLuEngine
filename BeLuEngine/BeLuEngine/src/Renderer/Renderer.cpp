@@ -259,30 +259,31 @@ void Renderer::Update(double dt)
 		IGraphicsBuffer* matricesBuffer = t->GetConstantBuffer();
 		codt->SubmitBuffer(matricesBuffer, t->GetMatricesPerObjectData());
 	}
+
 	// Picking
 	updateMousePicker();
 
 	// ImGui
 	ImGuiHandler::GetInstance().NewFrame();
 
-	// DXR
-	ITopLevelAS* pTLAS = static_cast<TopLevelRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::TLAS])->GetTLAS();
-
+	// Update the resultBuffer of DXR if needed
+	ITopLevelAS* pTLAS = static_cast<TopLevelRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::TLAS])->GetTopLevelAS();
 	pTLAS->Reset();
 
 	unsigned int i = 0;
 	for (RenderComponent rc : m_RayTracedRenderComponents)
 	{
 		bool giveShadow = rc.mc->GetDrawFlag() & F_DRAW_FLAGS::GIVE_SHADOW;
-
 		pTLAS->AddInstance(rc.mc->GetModel()->m_pBLAS, *rc.tc->GetTransform()->GetWorldMatrix(), i, giveShadow);
 		i++;
 	}
 
-	pTLAS->SetupAccelerationStructureForBuilding(true);
-
-	DXRReflectionTask* dxrReflectionTask = static_cast<DXRReflectionTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::REFLECTIONS]);
-	dxrReflectionTask->CreateShaderBindingTable(m_RayTracedRenderComponents);
+	// This function is smart enough to only create a new buffer if it needs to.
+	// If it does, the descriptor to the resultBuffer needs to be updated
+	if (pTLAS->CreateResultBuffer())
+	{
+		submitCbPerSceneData(pTLAS);
+	}
 }
 
 void Renderer::SortObjects()
@@ -1027,6 +1028,10 @@ void Renderer::setRenderTasksRenderComponents()
 	static_cast<DepthRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DEPTH_PRE_PASS])->SetRenderComponents(m_RenderComponents[F_DRAW_FLAGS::NO_DEPTH]);
 	static_cast<DeferredGeometryRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DEFERRED_GEOMETRY])->SetRenderComponents(m_RenderComponents[F_DRAW_FLAGS::DRAW_OPAQUE]);
 	static_cast<TransparentRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::OPACITY])->SetRenderComponents(m_RenderComponents[F_DRAW_FLAGS::DRAW_TRANSPARENT]);
+
+	// DXR
+	static_cast<TopLevelRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::TLAS])->SetRenderComponents(m_RayTracedRenderComponents);
+	static_cast<DXRReflectionTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::REFLECTIONS])->SetRenderComponents(m_RayTracedRenderComponents);
 }
 
 void Renderer::setupNewScene(Scene* activeScene)
@@ -1036,36 +1041,7 @@ void Renderer::setupNewScene(Scene* activeScene)
 	BL_ASSERT_MESSAGE(m_pScenePrimaryCamera, "No primary camera was set in scene!\n");
 	m_pMousePicker->SetPrimaryCamera(m_pScenePrimaryCamera);
 
-	// Submit CB_PER_SCENE_STRUCT
-	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_ON_DEMAND]);
-	BL_ASSERT(codt);
-	BL_ASSERT(m_pCbPerScene && m_pCbPerSceneData);
-	codt->SubmitBuffer(m_pCbPerScene, m_pCbPerSceneData);
-
 	submitUploadPerFrameData();
-
-	// DXR, create buffers and create for the first time
-	ITopLevelAS* pTLAS = static_cast<TopLevelRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::TLAS])->GetTLAS();
-
-	TODO("Remove this from here, and let it happen in update loop. create new buffer ONLY if it's needed.")
-	unsigned int i = 0;
-	for (RenderComponent rc : m_RayTracedRenderComponents)
-	{
-		bool giveShadow = rc.mc->GetDrawFlag() & F_DRAW_FLAGS::GIVE_SHADOW;
-		
-		pTLAS->AddInstance(rc.mc->GetModel()->m_pBLAS, *rc.tc->GetTransform()->GetWorldMatrix(), i, giveShadow);
-		i++;
-	}
-	pTLAS->GenerateBuffers();
-	pTLAS->SetupAccelerationStructureForBuilding(false);
-
-	// PerSceneData 
-	m_pCbPerSceneData->rayTracingBVH			 = pTLAS->GetRayTracingResultBuffer()->GetShaderResourceHeapIndex();
-	m_pCbPerSceneData->gBufferAlbedo			 = m_GBufferAlbedo->GetShaderResourceHeapIndex();
-	m_pCbPerSceneData->gBufferNormal			 = m_GBufferNormal->GetShaderResourceHeapIndex();
-	m_pCbPerSceneData->gBufferMaterialProperties = m_GBufferMaterialProperties->GetShaderResourceHeapIndex();
-	m_pCbPerSceneData->gBufferEmissive			 = m_GBufferEmissive->GetShaderResourceHeapIndex();
-	m_pCbPerSceneData->depth					 = m_pMainDepthStencil->GetShaderResourceHeapIndex();
 }
 
 void Renderer::submitUploadPerFrameData()
@@ -1081,4 +1057,22 @@ void Renderer::submitUploadPerFrameData()
 	// Sending entire buffer (4kb as of writing this code), every frame for simplicity. Even if some lights might be static.
 	BL_ASSERT(Light::m_pLightsRawBuffer && Light::m_pRawData);
 	codt->SubmitBuffer(Light::m_pLightsRawBuffer, Light::m_pRawData);
+}
+
+void Renderer::submitCbPerSceneData(ITopLevelAS* pTLAS)
+{
+	BL_ASSERT(pTLAS);
+
+	// PerSceneData 
+	m_pCbPerSceneData->rayTracingBVH = pTLAS->GetRayTracingResultBuffer()->GetShaderResourceHeapIndex();
+	m_pCbPerSceneData->gBufferAlbedo = m_GBufferAlbedo->GetShaderResourceHeapIndex();
+	m_pCbPerSceneData->gBufferNormal = m_GBufferNormal->GetShaderResourceHeapIndex();
+	m_pCbPerSceneData->gBufferMaterialProperties = m_GBufferMaterialProperties->GetShaderResourceHeapIndex();
+	m_pCbPerSceneData->gBufferEmissive = m_GBufferEmissive->GetShaderResourceHeapIndex();
+	m_pCbPerSceneData->depth = m_pMainDepthStencil->GetShaderResourceHeapIndex();
+
+	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_ON_DEMAND]);
+	BL_ASSERT(codt);
+	BL_ASSERT(m_pCbPerScene && m_pCbPerSceneData);
+	codt->SubmitBuffer(m_pCbPerScene, m_pCbPerSceneData);
 }

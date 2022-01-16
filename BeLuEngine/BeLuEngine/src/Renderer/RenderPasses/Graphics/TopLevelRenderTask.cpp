@@ -1,6 +1,15 @@
 #include "stdafx.h"
 #include "TopLevelRenderTask.h"
 
+// ECS
+#include "../ECS/Components/ModelComponent.h"
+#include "../ECS/Components/TransformComponent.h"
+#include "../../Geometry/Model.h"
+#include "../../Geometry/Transform.h"
+
+// Renderer
+#include "../Renderer/Renderer.h"
+
 // Generic API
 #include "../Renderer/API/Interface/IGraphicsContext.h"
 #include "../Renderer/API/Interface/RayTracing/ITopLevelAS.h"
@@ -18,6 +27,9 @@ TopLevelRenderTask::~TopLevelRenderTask()
 
 void TopLevelRenderTask::Execute()
 {
+	// Add topLevel instances to the resultBuffer
+	m_pTLAS->MapResultBuffer();
+
 	m_pGraphicsContext->Begin();
 	{
 		ScopedPixEvent(DXR_TLAS, m_pGraphicsContext);
@@ -27,7 +39,12 @@ void TopLevelRenderTask::Execute()
 	m_pGraphicsContext->End();
 }
 
-ITopLevelAS* TopLevelRenderTask::GetTLAS() const
+void TopLevelRenderTask::SetRenderComponents(const std::vector<RenderComponent>& renderComponents)
 {
-	return m_pTLAS;
+	m_RenderComponents = renderComponents;
+}
+
+ITopLevelAS* TopLevelRenderTask::GetTopLevelAS() const
+{
+	return m_pTLAS;;
 }

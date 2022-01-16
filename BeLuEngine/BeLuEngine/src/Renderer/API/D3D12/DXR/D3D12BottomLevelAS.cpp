@@ -43,10 +43,6 @@ void D3D12BottomLevelAS::AddGeometry(
 	m_GeometryBuffers.push_back(rtGeometryDesc);
 }
 
-void D3D12BottomLevelAS::Reset()
-{
-}
-
 void D3D12BottomLevelAS::GenerateBuffers()
 {
 	D3D12GraphicsManager* manager = D3D12GraphicsManager::GetInstance();
@@ -81,11 +77,11 @@ void D3D12BottomLevelAS::GenerateBuffers()
 	idCounter++;
 }
 
-void D3D12BottomLevelAS::SetupAccelerationStructureForBuilding(bool update)
+void D3D12BottomLevelAS::SetupAccelerationStructureForBuilding()
 {
 	D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
 
-	flags |= update ? D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE : D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
+	//flags |= update ? D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE : D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
 
 	m_BuildDesc.Inputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
 	m_BuildDesc.Inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;

@@ -13,20 +13,15 @@ public:
         IGraphicsBuffer* vertexBuffer, uint32_t vertexCount,
         IGraphicsBuffer* indexBuffer , uint32_t indexCount) override;
 
-    virtual void Reset() override;
     virtual void GenerateBuffers() override;
-    virtual void SetupAccelerationStructureForBuilding(bool update) override;
+    virtual void SetupAccelerationStructureForBuilding() override;
 
     IGraphicsBuffer* GetRayTracingResultBuffer() const;
 
 private:
-    friend class D3D12TopLevelAS;
     friend class D3D12GraphicsContext;
 
 	std::vector<D3D12_RAYTRACING_GEOMETRY_DESC> m_GeometryBuffers = {};
-
-    IGraphicsBuffer* m_pScratchBuffer = nullptr;
-    IGraphicsBuffer* m_pResultBuffer = nullptr;
 
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC m_BuildDesc = {};
 };
