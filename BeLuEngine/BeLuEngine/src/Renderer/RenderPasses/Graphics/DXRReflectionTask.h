@@ -22,15 +22,16 @@ public:
 	DXRReflectionTask(unsigned int dispatchWidth, unsigned int dispatchHeight);
 	~DXRReflectionTask();
 
-	// Call this whenever new instances has been added/or removed from the rayTraced-scene
-	void CreateShaderBindingTable(const std::vector<RenderComponent>& rayTracedRenderComponents);
-
 	void Execute() override final;
 
+	void SetRenderComponents(const std::vector<RenderComponent>& renderComponents);
 private:
 	IRayTracingPipelineState* m_pRayTracingState = nullptr;
 
+	// Shader binding table
 	IShaderBindingTable* m_pShaderBindingTable = nullptr;
+	std::vector<RenderComponent> m_RenderComponents;
+	void createShaderBindingTable();
 
 	unsigned int m_DispatchWidth = 0, m_DispatchHeight = 0;
 };

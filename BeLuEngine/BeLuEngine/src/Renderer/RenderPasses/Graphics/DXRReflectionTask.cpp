@@ -70,34 +70,11 @@ DXRReflectionTask::~DXRReflectionTask()
 	BL_SAFE_DELETE(m_pShaderBindingTable);
 }
 
-void DXRReflectionTask::CreateShaderBindingTable(const std::vector<RenderComponent>& rayTracedRenderComponents)
-{
-	m_pShaderBindingTable->Reset();
-
-	// RayGen, Miss and ShadowMiss are empty, needing no descriptors
-	m_pShaderBindingTable->AddShaderRecord(E_SHADER_RECORD_TYPE::RAY_GENERATION_SHADER_RECORD, L"RayGen", {});
-
-	// Note: Make sure they are added in this order, or change the enum E_RT_SECTION_INDICES in GPU_Structs.h
-	m_pShaderBindingTable->AddShaderRecord(E_SHADER_RECORD_TYPE::MISS_SHADER_RECORD, L"Miss", {});
-	m_pShaderBindingTable->AddShaderRecord(E_SHADER_RECORD_TYPE::MISS_SHADER_RECORD, L"ShadowMiss", {});
-	
-	// Add Parameters to hitgroup so that the triangleData can be accessed within them
-	for (const RenderComponent& rc : rayTracedRenderComponents)
-	{
-		m_pShaderBindingTable->AddShaderRecord(E_SHADER_RECORD_TYPE::HIT_GROUP_SHADER_RECORD, L"HitGroup",
-		{
-			rc.mc->GetSlotInfoByteAdressBufferDXR(),	// SlotInfoRawBuffer
-			rc.mc->GetMaterialByteAdressBuffer(),		// MaterialData
-			rc.tc->GetTransform()->m_pConstantBuffer	// MATRICES_PER_OBJECT_STRUCT
-		});
-	}
-
-	// Generate the SBT on a CPU buffer
-	m_pShaderBindingTable->GenerateShaderBindingTable(m_pRayTracingState);
-}
-
 void DXRReflectionTask::Execute()
 {
+	// Updating the sbt every frame
+	createShaderBindingTable();
+
 	IGraphicsTexture* finalColorBuffer = m_GraphicTextures["finalColorBuffer"];
 	IGraphicsTexture* depthTexture = m_GraphicTextures["mainDSV"];
 	m_pGraphicsContext->Begin();
@@ -132,4 +109,35 @@ void DXRReflectionTask::Execute()
 		m_pGraphicsContext->ResourceBarrier(finalColorBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	}
 	m_pGraphicsContext->End();
+}
+
+void DXRReflectionTask::SetRenderComponents(const std::vector<RenderComponent>& renderComponents)
+{
+	m_RenderComponents = renderComponents;
+}
+
+void DXRReflectionTask::createShaderBindingTable()
+{
+	m_pShaderBindingTable->Reset();
+
+	// RayGen, Miss and ShadowMiss are empty, needing no descriptors
+	m_pShaderBindingTable->AddShaderRecord(E_SHADER_RECORD_TYPE::RAY_GENERATION_SHADER_RECORD, L"RayGen", {});
+
+	// Note: Make sure they are added in this order, or change the enum E_RT_SECTION_INDICES in GPU_Structs.h
+	m_pShaderBindingTable->AddShaderRecord(E_SHADER_RECORD_TYPE::MISS_SHADER_RECORD, L"Miss", {});
+	m_pShaderBindingTable->AddShaderRecord(E_SHADER_RECORD_TYPE::MISS_SHADER_RECORD, L"ShadowMiss", {});
+
+	// Add Parameters to hitgroup so that the triangleData can be accessed within them
+	for (const RenderComponent& rc : m_RenderComponents)
+	{
+		m_pShaderBindingTable->AddShaderRecord(E_SHADER_RECORD_TYPE::HIT_GROUP_SHADER_RECORD, L"HitGroup",
+			{
+				rc.mc->GetSlotInfoByteAdressBufferDXR(),	// SlotInfoRawBuffer
+				rc.mc->GetMaterialByteAdressBuffer(),		// MaterialData
+				rc.tc->GetTransform()->m_pConstantBuffer	// MATRICES_PER_OBJECT_STRUCT
+			});
+	}
+
+	// Generate the SBT on a CPU buffer
+	m_pShaderBindingTable->GenerateShaderBindingTable(m_pRayTracingState);
 }
