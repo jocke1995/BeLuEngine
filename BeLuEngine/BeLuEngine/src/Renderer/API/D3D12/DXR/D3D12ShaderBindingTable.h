@@ -21,7 +21,7 @@ public:
 private:
     friend class D3D12GraphicsContext;
 
-    IGraphicsBuffer* m_pCPUShaderTableBuffer = nullptr;
+    D3D12_GPU_VIRTUAL_ADDRESS m_VAddr = {};
 
     unsigned int calculateShaderBindingTableSize();
 

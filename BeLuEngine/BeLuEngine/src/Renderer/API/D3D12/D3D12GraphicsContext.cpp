@@ -496,25 +496,25 @@ void D3D12GraphicsContext::DispatchRays(IShaderBindingTable* sbt, unsigned int d
 	BL_ASSERT(dispatchWidth || dispatchHeight || dispatchWidth); // All entries gotta be atleast 1!
 
 	D3D12ShaderBindingTable* d3d12SBT = static_cast<D3D12ShaderBindingTable*>(sbt);
-	ID3D12Resource* sbtCPUBuffer = static_cast<D3D12GraphicsBuffer*>(d3d12SBT->m_pCPUShaderTableBuffer)->m_pResource;
+	D3D12_GPU_VIRTUAL_ADDRESS sbtVirtualAdress = d3d12SBT->m_VAddr;
 
 	// Setup the raytracing task
 	D3D12_DISPATCH_RAYS_DESC desc = {};
 
 	// Ray generation section
 	uint32_t rayGenerationSectionSizeInBytes = d3d12SBT->GetRayGenSectionSize();
-	desc.RayGenerationShaderRecord.StartAddress = sbtCPUBuffer->GetGPUVirtualAddress();
+	desc.RayGenerationShaderRecord.StartAddress = sbtVirtualAdress;
 	desc.RayGenerationShaderRecord.SizeInBytes = rayGenerationSectionSizeInBytes;
 
 	// Miss section
 	uint32_t missSectionSizeInBytes = d3d12SBT->GetMissSectionSize();
-	desc.MissShaderTable.StartAddress = sbtCPUBuffer->GetGPUVirtualAddress() + rayGenerationSectionSizeInBytes;
+	desc.MissShaderTable.StartAddress = sbtVirtualAdress + rayGenerationSectionSizeInBytes;
 	desc.MissShaderTable.SizeInBytes = missSectionSizeInBytes;
 	desc.MissShaderTable.StrideInBytes = d3d12SBT->GetMaxMissShaderRecordSize();
 
 	// Hit group section
 	uint32_t hitGroupsSectionSize = d3d12SBT->GetHitGroupSectionSize();
-	desc.HitGroupTable.StartAddress = sbtCPUBuffer->GetGPUVirtualAddress() +
+	desc.HitGroupTable.StartAddress = sbtVirtualAdress +
 		rayGenerationSectionSizeInBytes +
 		missSectionSizeInBytes;
 	desc.HitGroupTable.SizeInBytes = hitGroupsSectionSize;

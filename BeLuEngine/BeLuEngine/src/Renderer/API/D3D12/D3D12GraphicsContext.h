@@ -55,7 +55,6 @@ public:
 
     virtual void DrawImGui() override final;
 
-    TODO("Abstract")
     // Raytracing
     virtual void BuildTLAS(ITopLevelAS* pTlas) override;
     virtual void BuildBLAS(IBottomLevelAS* pBlas) override;
@@ -65,9 +64,6 @@ public:
 private:
     friend class D3D12GraphicsManager;
     friend class ScopedPIXEvent;
-
-    // TEMP
-    friend class DXRReflectionTask;
 
 	ID3D12GraphicsCommandList5* m_pCommandList{ nullptr };
 	ID3D12CommandAllocator* m_pCommandAllocators[NUM_SWAP_BUFFERS]{ nullptr };

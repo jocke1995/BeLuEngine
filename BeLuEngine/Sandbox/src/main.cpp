@@ -44,8 +44,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
     /*------ AssetLoader to load models / textures ------*/
    AssetLoader* al = AssetLoader::Get();
    
-   Scene* scene = SponzaScene(sceneManager);
-   //Scene* scene = PBRScene(sceneManager);
+   //Scene* scene = SponzaScene(sceneManager);
+   Scene* scene = PBRScene(sceneManager);
 
    // Set scene
    sceneManager->SetScene(scene);
@@ -140,7 +140,6 @@ Scene* PBRScene(SceneManager* sm)
     // Get the models needed
     Model* floorModel = al->LoadModel(L"../Vendor/Resources/Models/FloorPBR/floor.obj");
     Model* sphereModel = al->LoadModel(L"../Vendor/Resources/Models/SpherePBR/sphere.obj");
-    Model* posterModel = al->LoadModel(L"../Vendor/Resources/Models/Poster/Poster.obj");
     Model* boxModel = al->LoadModel(L"../Vendor/Resources/Models/CubePBR/cube.obj");
     Model* funnyModel = al->LoadModel(L"../Vendor/Resources/Models/Private/FunnyModel/funnyModel.obj");
 
@@ -164,30 +163,6 @@ Scene* PBRScene(SceneManager* sm)
     tc->GetTransform()->SetPosition(-4.0f, 0.0f, -6.0f);
     tc->GetTransform()->SetRotationY(PI + PI/8);
     /* ---------------------- FunnyObject ---------------------- */
-
-    /* ---------------------- Mirror ---------------------- */
-    //entity = scene->AddEntity("Mirror");
-    //mc = entity->AddComponent<component::ModelComponent>();
-    //tc = entity->AddComponent<component::TransformComponent>();
-    //bbc = entity->AddComponent <component::BoundingBoxComponent>();
-    //
-    //mc->SetModel(posterModel);
-    //mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
-    //tc->GetTransform()->SetScale(5.0f);
-    //tc->GetTransform()->SetRotationX(PI / 2);
-    //tc->GetTransform()->SetRotationY(PI);
-    //tc->GetTransform()->SetPosition(0, 5, 10);
-    //
-    //MaterialData* sharedMatData = mc->GetMaterialAt(0)->GetSharedMaterialData();
-    //sharedMatData->hasMetallicTexture = false;
-    //sharedMatData->hasRoughnessTexture = false;
-    //sharedMatData->hasNormalTexture = false;
-    //sharedMatData->metallicValue = 0.99f;
-    //sharedMatData->roughnessValue = 0.10f;
-    //
-    //mc->UpdateMaterialRawBufferFromMaterial();
-    //bbc->Init();
-    /* ---------------------- Mirror ---------------------- */
 
     /* ---------------------- Floor ---------------------- */
     entity = scene->AddEntity("floor");

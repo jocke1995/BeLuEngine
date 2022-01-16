@@ -15,7 +15,6 @@ D3D12ShaderBindingTable::D3D12ShaderBindingTable(const std::wstring& name)
 
 D3D12ShaderBindingTable::~D3D12ShaderBindingTable()
 {
-	BL_SAFE_DELETE(m_pCPUShaderTableBuffer);
 }
 
 void D3D12ShaderBindingTable::GenerateShaderBindingTable(IRayTracingPipelineState* rtPipelineState)
@@ -23,31 +22,31 @@ void D3D12ShaderBindingTable::GenerateShaderBindingTable(IRayTracingPipelineStat
 	BL_ASSERT(rtPipelineState);
 
 	D3D12RayTracingPipelineState* d3d12RayTracingState = static_cast<D3D12RayTracingPipelineState*>(rtPipelineState);
-
-	BL_SAFE_DELETE(m_pCPUShaderTableBuffer);
+	D3D12GraphicsManager* d3d12Manager = D3D12GraphicsManager::GetInstance();
 
 	unsigned int sbtSize = calculateShaderBindingTableSize();
 
 	// Create the ShaderBindingTable buffer
-	m_pCPUShaderTableBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::CPUBuffer, sbtSize, 1, DXGI_FORMAT_UNKNOWN, L"ShaderBindingTable_CPUBUFFER");
-	D3D12GraphicsBuffer* d3d12CPUBuffer = static_cast<D3D12GraphicsBuffer*>(m_pCPUShaderTableBuffer);
-
-	// Map data in the SBT
-	unsigned char* pMappedData = nullptr;
-	HRESULT hr = d3d12CPUBuffer->m_pResource->Map(0, nullptr, reinterpret_cast<void**>(&pMappedData));
-	D3D12GraphicsManager::CHECK_HRESULT(hr);
+	TODO("Don't do this on the heap every frame.. Create a stack allocator!");
+	unsigned char* dataToMap = new unsigned char[sbtSize];
+	memset(dataToMap, 0, sbtSize);
+	unsigned char* pDataToMap = dataToMap;
 
 	unsigned int offset = 0;
-	offset = copyShaderRecords(d3d12RayTracingState, pMappedData, m_RayGenerationRecords, mMaxRayGenerationSize);
-	pMappedData += offset;
+	offset = copyShaderRecords(d3d12RayTracingState, pDataToMap, m_RayGenerationRecords, mMaxRayGenerationSize);
+	pDataToMap += offset;
 
-	offset = copyShaderRecords(d3d12RayTracingState, pMappedData, m_MissRecords, mMaxMissRecordSize);
-	pMappedData += offset;
+	offset = copyShaderRecords(d3d12RayTracingState, pDataToMap, m_MissRecords, mMaxMissRecordSize);
+	pDataToMap += offset;
 
-	offset = copyShaderRecords(d3d12RayTracingState, pMappedData, m_HitGroupRecords, mMaxHitGroupSize);
+	offset = copyShaderRecords(d3d12RayTracingState, pDataToMap, m_HitGroupRecords, mMaxHitGroupSize);
 
-	// Unmap the SBT
-	d3d12CPUBuffer->m_pResource->Unmap(0, nullptr);
+	// Set the data into the CPU Buffer and store the D3D12_GPU_VIRTUAL_ADDRESS for later usage when setting upp the SBT for dispatching
+	DynamicDataParams ddp = d3d12Manager->SetDynamicData(sbtSize, dataToMap);
+	m_VAddr = ddp.vAddr;
+
+	// Data is now free to release
+	delete[] dataToMap;
 }
 
 unsigned int D3D12ShaderBindingTable::calculateShaderBindingTableSize()
@@ -63,7 +62,7 @@ unsigned int D3D12ShaderBindingTable::calculateShaderBindingTableSize()
 
 		// A SBT entry is made of a program ID and a set of parameters, taking 8 bytes each. Those
 		// parameters can either be 8-bytes pointers, or 4-bytes constants
-		unsigned int entrySize = D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT + 8 * maxArgs;
+		unsigned int entrySize = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + 8 * maxArgs;
 
 		// Align
 		unsigned int entrySizePadded = (entrySize + (D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT - 1)) & ~(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT - 1);

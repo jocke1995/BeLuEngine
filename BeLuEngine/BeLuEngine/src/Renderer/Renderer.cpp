@@ -281,7 +281,8 @@ void Renderer::Update(double dt)
 
 	pTLAS->SetupAccelerationStructureForBuilding(true);
 
-	TODO("Update ShaderTable");
+	DXRReflectionTask* dxrReflectionTask = static_cast<DXRReflectionTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::REFLECTIONS]);
+	dxrReflectionTask->CreateShaderBindingTable(m_RayTracedRenderComponents);
 }
 
 void Renderer::SortObjects()
@@ -1043,11 +1044,10 @@ void Renderer::setupNewScene(Scene* activeScene)
 
 	submitUploadPerFrameData();
 
-	setRenderTasksRenderComponents();
-
 	// DXR, create buffers and create for the first time
 	ITopLevelAS* pTLAS = static_cast<TopLevelRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::TLAS])->GetTLAS();
 
+	TODO("Remove this from here, and let it happen in update loop. create new buffer ONLY if it's needed.")
 	unsigned int i = 0;
 	for (RenderComponent rc : m_RayTracedRenderComponents)
 	{
@@ -1058,8 +1058,6 @@ void Renderer::setupNewScene(Scene* activeScene)
 	}
 	pTLAS->GenerateBuffers();
 	pTLAS->SetupAccelerationStructureForBuilding(false);
-
-	static_cast<DXRReflectionTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::REFLECTIONS])->CreateShaderBindingTable(m_RayTracedRenderComponents);
 
 	// PerSceneData 
 	m_pCbPerSceneData->rayTracingBVH			 = pTLAS->GetRayTracingResultBuffer()->GetShaderResourceHeapIndex();
@@ -1072,7 +1070,6 @@ void Renderer::setupNewScene(Scene* activeScene)
 
 void Renderer::submitUploadPerFrameData()
 {
-	// Submit dynamic-light-data to be uploaded to VRAM
 	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_ON_DEMAND]);
 	BL_ASSERT(codt);
 

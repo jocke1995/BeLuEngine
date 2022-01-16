@@ -77,11 +77,13 @@ void RayTracingPipelineStateDesc::SetPayloadSize(unsigned int payloadSize)
 
 void RayTracingPipelineStateDesc::SetMaxAttributesSize(unsigned int maxAttributesSize)
 {
+    BL_ASSERT(maxAttributesSize < D3D12_RAYTRACING_MAX_ATTRIBUTE_SIZE_IN_BYTES);
     m_MaxAttributeSize = maxAttributesSize;
 }
 
 void RayTracingPipelineStateDesc::SetMaxRecursionDepth(unsigned int maxRecursionDepth)
 {
+    BL_ASSERT(maxRecursionDepth <= D3D12_RAYTRACING_MAX_DECLARABLE_TRACE_RECURSION_DEPTH);
     m_MaxRecursionDepth = maxRecursionDepth;
 }
 

@@ -60,7 +60,6 @@ void D3D12TopLevelAS::GenerateBuffers()
 	// Buffer sizes need to be 256-byte-aligned
 	unsigned int scratchSizeInBytes = (info.ScratchDataSizeInBytes + 255) & ~255;
 	unsigned int resultSizeInBytes = (info.ResultDataMaxSizeInBytes + 255) & ~255;
-	m_InstanceDescsSizeInBytes = (sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * static_cast<UINT64>(m_Instances.size() + 255)) & ~255;
 
 	// Create buffers for scratch and result
 	BL_SAFE_DELETE(m_pScratchBuffer);
@@ -92,9 +91,9 @@ void D3D12TopLevelAS::SetupAccelerationStructureForBuilding(bool update)
 
 	unsigned int numInstances = m_Instances.size();
 
-	TODO("Fix this size");
+	TODO("Don't do this on the heap every frame.. Create a stack allocator!");
 	unsigned int sizeInBytes = numInstances * sizeof(D3D12_RAYTRACING_INSTANCE_DESC);
-	D3D12_RAYTRACING_INSTANCE_DESC instanceDescs[250] = {};
+	D3D12_RAYTRACING_INSTANCE_DESC* instanceDescs = new D3D12_RAYTRACING_INSTANCE_DESC[numInstances];
 	
 
 	// Create the description for each instance
@@ -117,6 +116,7 @@ void D3D12TopLevelAS::SetupAccelerationStructureForBuilding(bool update)
 	}
 
 	DynamicDataParams dynamicDataParams = manager->SetDynamicData(sizeInBytes, instanceDescs);
+	delete[] instanceDescs;
 
 	// Create a descriptor of the requested builder work, to generate a TLAS
 	m_BuildDesc = {};
