@@ -411,7 +411,7 @@ Scene* SponzaScene(SceneManager* sm)
         component::PointLightComponent* plc = entity->AddComponent<component::PointLightComponent>(F_LIGHT_FLAGS::USE_TRANSFORM_POSITION);
 
         mc->SetModel(sphereModel);
-        mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
+        mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE);
 
         static int index = 0;
         AssetLoader* al = AssetLoader::Get();

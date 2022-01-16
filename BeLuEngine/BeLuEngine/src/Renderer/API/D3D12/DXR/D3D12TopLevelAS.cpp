@@ -1,6 +1,9 @@
 #include "stdafx.h"
 #include "D3D12TopLevelAS.h"
 
+// For the InstanceMask flagstruct
+#include "GPU_Structs.h"
+
 #include "D3D12BottomLevelAS.h"
 
 // D3D12
@@ -22,9 +25,10 @@ D3D12TopLevelAS::~D3D12TopLevelAS()
 void D3D12TopLevelAS::AddInstance(
 	IBottomLevelAS* BLAS,
 	const DirectX::XMMATRIX& m_Transform,
-	unsigned int hitGroupIndex)
+	unsigned int hitGroupIndex,
+	bool giveShadows)
 {
-	m_Instances.emplace_back(Instance(static_cast<D3D12BottomLevelAS*>(BLAS)->m_pResultBuffer, m_Transform, m_InstanceCounter++, hitGroupIndex));
+	m_Instances.emplace_back(Instance(static_cast<D3D12BottomLevelAS*>(BLAS)->m_pResultBuffer, m_Transform, m_InstanceCounter++, hitGroupIndex, giveShadows));
 	//BL_LOG_INFO("Added instance! %d\n", m_InstanceCounter);
 }
 
@@ -103,8 +107,13 @@ void D3D12TopLevelAS::SetupAccelerationStructureForBuilding(bool update)
 		memcpy(instanceDescs[i].Transform, &m, sizeof(instanceDescs[i].Transform));
 		instanceDescs[i].AccelerationStructure = static_cast<D3D12GraphicsBuffer*>(m_Instances[i].m_pBLAS)->m_pResource->GetGPUVirtualAddress();
 
-		// TODO: Add the possibilty to set flags for enabling shadows etc..
-		instanceDescs[i].InstanceMask = 0xFF;
+		// Objects who doesn't give shadows doesn't get this maskFlag added to them.
+		if (m_Instances[i].m_GiveShadows)
+		{
+			instanceDescs[i].InstanceMask = INSTANCE_MASK_SCENE_MINUS_NOSHADOWOBJECTS;
+		}
+
+		instanceDescs[i].InstanceMask |= INSTANCE_MASK_ENTIRE_SCENE;
 	}
 
 	DynamicDataParams dynamicDataParams = manager->SetDynamicData(sizeInBytes, instanceDescs);

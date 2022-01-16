@@ -273,7 +273,9 @@ void Renderer::Update(double dt)
 	unsigned int i = 0;
 	for (RenderComponent rc : m_RayTracedRenderComponents)
 	{
-		pTLAS->AddInstance(rc.mc->GetModel()->m_pBLAS, *rc.tc->GetTransform()->GetWorldMatrix(), i);
+		bool giveShadow = rc.mc->GetDrawFlag() & F_DRAW_FLAGS::GIVE_SHADOW;
+
+		pTLAS->AddInstance(rc.mc->GetModel()->m_pBLAS, *rc.tc->GetTransform()->GetWorldMatrix(), i, giveShadow);
 		i++;
 	}
 
@@ -1049,7 +1051,9 @@ void Renderer::setupNewScene(Scene* activeScene)
 	unsigned int i = 0;
 	for (RenderComponent rc : m_RayTracedRenderComponents)
 	{
-		pTLAS->AddInstance(rc.mc->GetModel()->m_pBLAS, *rc.tc->GetTransform()->GetWorldMatrix(), i);
+		bool giveShadow = rc.mc->GetDrawFlag() & F_DRAW_FLAGS::GIVE_SHADOW;
+		
+		pTLAS->AddInstance(rc.mc->GetModel()->m_pBLAS, *rc.tc->GetTransform()->GetWorldMatrix(), i, giveShadow);
 		i++;
 	}
 	pTLAS->GenerateBuffers();

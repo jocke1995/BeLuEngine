@@ -42,7 +42,7 @@ void ClosestHit(inout ReflectionPayload reflectionPayload, in BuiltInTriangleInt
 	
 	float4 finalColor = float4(0.0f, 0.0f, 0.0f, 1.0f);
 	float4 reflectedColor = float4(0.0f, 0.0f, 0.0f, 1.0f);
-#if 1 // Trace new rays
+#if 0 // Trace new rays
 
 	//if (metallic > 0.9f)
 	//{
@@ -78,7 +78,18 @@ void ClosestHit(inout ReflectionPayload reflectionPayload, in BuiltInTriangleInt
 			normal,
 			baseReflectivity);
 
-		finalColor += float4(lightColor, 1.0f); //* shadowFactor;
+		float3 lightPos = float3(-dirLight.direction.xyz * 500);
+		float3 lightDir = normalize(lightPos - worldPos.xyz);
+
+		RayDesc shadowRayDesc;
+		shadowRayDesc.Origin = worldPos;
+		shadowRayDesc.Direction = normalize(lightDir);
+		shadowRayDesc.TMin = 0.1f;
+		shadowRayDesc.TMax = distance(lightPos, worldPos);
+
+		bool isHit = TraceShadowRay(shadowRayDesc, sceneBVH[cbPerScene.rayTracingBVH]);
+		float shadowFactor = isHit ? 0.0 : 1.0;
+		finalColor += float4(lightColor, 1.0f) * shadowFactor;
 	}
 	
 	// PointLight contributions
@@ -98,9 +109,17 @@ void ClosestHit(inout ReflectionPayload reflectionPayload, in BuiltInTriangleInt
 			baseReflectivity);
 
 		float3 lightDir = normalize(pointLight.position.xyz - worldPos.xyz);
-		//float shadowFactor = RT_ShadowFactor(worldPos.xyz, 0.1f, length(pointLight.position.xyz - worldPos.xyz) - 1.0, lightDir, sceneBVH[cbPerScene.rayTracingBVH]);
 
-		finalColor += float4(lightColor, 1.0f); //* shadowFactor;
+		RayDesc shadowRayDesc;
+		shadowRayDesc.Origin = worldPos;
+		shadowRayDesc.Direction = normalize(lightDir);
+		shadowRayDesc.TMin = 0.0f;
+		shadowRayDesc.TMax = distance(pointLight.position.xyz, worldPos);
+
+		bool isHit = TraceShadowRay(shadowRayDesc, sceneBVH[cbPerScene.rayTracingBVH]);
+		float shadowFactor = isHit ? 0.0 : 1.0;
+
+		finalColor += float4(lightColor, 1.0f) * shadowFactor;
 	}
 
 	finalColor += float4(0.01f * albedo.rgb, 1.0f);

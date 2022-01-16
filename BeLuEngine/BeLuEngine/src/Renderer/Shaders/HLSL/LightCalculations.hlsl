@@ -6,7 +6,6 @@ float RT_ShadowFactor(float3 worldPos, float tMin, float tMax, float3 rayDir, Ra
 	RayQuery<RAY_FLAG_SKIP_CLOSEST_HIT_SHADER | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH> q;
 	
 	uint rayFlags = 0;
-	uint instanceMask = 0xff;
 	
 	float shadowFactor = 1.0f;
 	
@@ -20,7 +19,7 @@ float RT_ShadowFactor(float3 worldPos, float tMin, float tMax, float3 rayDir, Ra
 	q.TraceRayInline(
 		sceneBVH,
 		rayFlags,
-		instanceMask,
+		INSTANCE_MASK_SCENE_MINUS_NOSHADOWOBJECTS,
 		ray
 	);
 	

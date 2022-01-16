@@ -7,6 +7,11 @@ struct ReflectionPayload
     unsigned int recursionDepth;
 };
 
+struct ShadowPayload
+{
+    bool isHit;
+};
+
 // Attributes output by the raytracing when hitting a surface,
 // here the barycentric coordinates
 struct Attributes
@@ -16,7 +21,7 @@ struct Attributes
 
 float3 TraceRadianceRay(in RayDesc rayDescIn, in unsigned int currentRayRecursionDepth, RaytracingAccelerationStructure sceneBVH)
 {
-    if (currentRayRecursionDepth >= 2)
+    if (currentRayRecursionDepth >= 4)
     {
         return float3(0, 0, 0);
     }
@@ -35,12 +40,30 @@ float3 TraceRadianceRay(in RayDesc rayDescIn, in unsigned int currentRayRecursio
     TraceRay(
         sceneBVH,
         RAY_FLAG_CULL_BACK_FACING_TRIANGLES,
-        0xFF,
+        INSTANCE_MASK_ENTIRE_SCENE,
         0,  // Hit group index
         0,
-        0,  // Miss Shader index
+        MISS_SHADER_REFLECTIONS,  // Miss Shader index
         ray,
         rayPayload);
 
     return rayPayload.color;
+}
+
+bool TraceShadowRay(in RayDesc shadowRayDescIn, RaytracingAccelerationStructure sceneBVH)
+{
+    ShadowPayload shadowPayload;
+    shadowPayload.isHit = true;
+
+    TraceRay(
+        sceneBVH,
+        RAY_FLAG_CULL_BACK_FACING_TRIANGLES | RAY_FLAG_SKIP_CLOSEST_HIT_SHADER | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH,
+        INSTANCE_MASK_SCENE_MINUS_NOSHADOWOBJECTS,
+        0,  // Hit group index
+        0,
+        MISS_SHADER_SHADOWS,  // Miss Shader index
+        shadowRayDescIn,
+        shadowPayload);
+
+    return shadowPayload.isHit;
 }

@@ -12,7 +12,8 @@ public:
     void AddInstance(
         IBottomLevelAS* BLAS,
         const DirectX::XMMATRIX& m_Transform,
-        unsigned int hitGroupIndex);
+        unsigned int hitGroupIndex,
+        bool giveShadows);
 
     void Reset();
     void GenerateBuffers();

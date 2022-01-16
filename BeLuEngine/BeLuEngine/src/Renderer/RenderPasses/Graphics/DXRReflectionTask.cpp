@@ -25,6 +25,7 @@ DXRReflectionTask::DXRReflectionTask(unsigned int dispatchWidth, unsigned int di
 		rtDesc.AddShader(L"DXR/RayGen.hlsl", L"RayGen");
 		rtDesc.AddShader(L"DXR/Hit.hlsl", L"ClosestHit");
 		rtDesc.AddShader(L"DXR/Miss.hlsl", L"Miss" );
+		rtDesc.AddShader(L"DXR/ShadowMiss.hlsl", L"ShadowMiss" );
 
 		// No anyhit or intersection
 		rtDesc.AddHitgroup(L"HitGroup", L"ClosestHit");
@@ -40,14 +41,15 @@ DXRReflectionTask::DXRReflectionTask(unsigned int dispatchWidth, unsigned int di
 		hitGroupRootSigParams[RootParamLocal_CBV_B8].rootParamType = BL_ROOT_PARAMETER_CBV;
 		hitGroupRootSigParams[RootParamLocal_CBV_B8].shaderRegister = 8;
 
-		rtDesc.AddRootSignatureAssociation(hitGroupRootSigParams, L"HitGroup", L"HitGroupRootSignature");
-		rtDesc.AddRootSignatureAssociation(emptyRootSigParams, L"RayGen", L"RayGenEmptyRootSignature");
-		rtDesc.AddRootSignatureAssociation(emptyRootSigParams, L"Miss", L"MissEmptyRootSignature");
+		rtDesc.AddRootSignatureAssociation(hitGroupRootSigParams, L"HitGroup", L"HitGroup_LocalRootSignature");
+		rtDesc.AddRootSignatureAssociation(emptyRootSigParams, L"RayGen", L"RayGenEmpty_LocalRootSignature");
+		rtDesc.AddRootSignatureAssociation(emptyRootSigParams, L"Miss", L"MissEmpty_LocalRootSignature");
+		rtDesc.AddRootSignatureAssociation(emptyRootSigParams, L"ShadowMiss", L"ShadowMissEmpty_LocalRootSignature");
 
 		// Misc
 		rtDesc.SetPayloadSize(3 * sizeof(float) + sizeof(unsigned int)); // RGB + recursionDepth
 		rtDesc.SetMaxAttributesSize(2 * sizeof(float));
-		rtDesc.SetMaxRecursionDepth(2);
+		rtDesc.SetMaxRecursionDepth(4);
 
 		m_pRayTracingState = IRayTracingPipelineState::Create(rtDesc, L"DXR_Reflection_PipelineState");
 	}
@@ -72,9 +74,12 @@ void DXRReflectionTask::CreateShaderBindingTable(const std::vector<RenderCompone
 {
 	m_pShaderBindingTable->Reset();
 
-	// RayGen and Miss are empty, needing no descriptors
+	// RayGen, Miss and ShadowMiss are empty, needing no descriptors
 	m_pShaderBindingTable->AddShaderRecord(E_SHADER_RECORD_TYPE::RAY_GENERATION_SHADER_RECORD, L"RayGen", {});
+
+	// Note: Make sure they are added in this order, or change the enum E_RT_SECTION_INDICES in GPU_Structs.h
 	m_pShaderBindingTable->AddShaderRecord(E_SHADER_RECORD_TYPE::MISS_SHADER_RECORD, L"Miss", {});
+	m_pShaderBindingTable->AddShaderRecord(E_SHADER_RECORD_TYPE::MISS_SHADER_RECORD, L"ShadowMiss", {});
 	
 	// Add Parameters to hitgroup so that the triangleData can be accessed within them
 	for (const RenderComponent& rc : rayTracedRenderComponents)

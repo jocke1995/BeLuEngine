@@ -22,7 +22,6 @@ struct RayTracingHitGroup
 	std::wstring m_IntersectionName = L"";
 };
 
-TODO("Add support for descriptorTables and 32BitConstants");
 struct IRayTracingRootSignatureParams
 {
 	BL_ROOT_PARAMETER_TYPE rootParamType = (BL_ROOT_PARAMETER_TYPE)0;

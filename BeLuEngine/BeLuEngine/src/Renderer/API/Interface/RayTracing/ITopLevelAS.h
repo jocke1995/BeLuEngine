@@ -10,14 +10,16 @@ struct Instance
         IGraphicsBuffer* BLAS,
         const DirectX::XMMATRIX& transform,
         unsigned int instanceID,
-        unsigned int hitGroupIndex)
-        :m_pBLAS(BLAS), m_Transform(transform), m_ID(instanceID), m_HitGroupIndex(hitGroupIndex)
+        unsigned int hitGroupIndex,
+        bool giveShadows)
+        :m_pBLAS(BLAS), m_Transform(transform), m_ID(instanceID), m_HitGroupIndex(hitGroupIndex), m_GiveShadows(giveShadows)
     {}
 
     IGraphicsBuffer* m_pBLAS = nullptr;
     const DirectX::XMMATRIX& m_Transform = {};
     unsigned int m_ID = 0;
     unsigned int m_HitGroupIndex = 0;
+    bool m_GiveShadows = true;
 };
 
 class ITopLevelAS
@@ -30,7 +32,8 @@ public:
     virtual void AddInstance(
         IBottomLevelAS* BLAS,
         const DirectX::XMMATRIX& m_Transform,
-        unsigned int hitGroupIndex) = 0;
+        unsigned int hitGroupIndex,
+        bool giveShadows) = 0;
 
     virtual void Reset() = 0;
     virtual void GenerateBuffers() = 0;
