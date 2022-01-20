@@ -15,6 +15,10 @@ D3D12ShaderBindingTable::D3D12ShaderBindingTable(const std::wstring& name)
 
 D3D12ShaderBindingTable::~D3D12ShaderBindingTable()
 {
+	for (unsigned int i = 0; i < NUM_SWAP_BUFFERS; i++)
+	{
+		BL_SAFE_DELETE(m_pSBTBuffer[i]);
+	}
 }
 
 void D3D12ShaderBindingTable::GenerateShaderBindingTable(IRayTracingPipelineState* rtPipelineState)
@@ -26,7 +30,11 @@ void D3D12ShaderBindingTable::GenerateShaderBindingTable(IRayTracingPipelineStat
 
 	unsigned int sbtSize = calculateShaderBindingTableSize();
 
-	// Create the ShaderBindingTable buffer
+	// Check to see if we need new buffers for the sbt
+	if (m_CurrentMaxSBTSize < sbtSize)
+		reAllocateHeaps(sbtSize);
+
+	// Map the ShaderBindingTable buffer
 	TODO("Don't do this on the heap every frame.. Create a stack allocator!");
 	unsigned char* dataToMap = new unsigned char[sbtSize];
 	memset(dataToMap, 0, sbtSize);
@@ -41,9 +49,9 @@ void D3D12ShaderBindingTable::GenerateShaderBindingTable(IRayTracingPipelineStat
 
 	offset = copyShaderRecords(d3d12RayTracingState, pDataToMap, m_HitGroupRecords, mMaxHitGroupSize);
 
-	// Set the data into the CPU Buffer and store the D3D12_GPU_VIRTUAL_ADDRESS for later usage when setting upp the SBT for dispatching
-	DynamicDataParams ddp = d3d12Manager->SetDynamicData(sbtSize, dataToMap);
-	m_VAddr = ddp.vAddr;
+	// Set the data into the CPU Buffer
+	unsigned int backBufferIndex = d3d12Manager->GetCommandInterfaceIndex();
+	m_pSBTBuffer[backBufferIndex]->SetData(sbtSize, dataToMap);
 
 	// Data is now free to release
 	delete[] dataToMap;
@@ -55,7 +63,7 @@ unsigned int D3D12ShaderBindingTable::calculateShaderBindingTableSize()
 	{
 		// Find the maximum number of parameters used by a single entry
 		unsigned int maxArgs = 0;
-		for (const auto& shaderRecord : shaderRecords)
+		for (const ShaderRecord& shaderRecord : shaderRecords)
 		{
 			maxArgs = Max(maxArgs, (unsigned int)shaderRecord.m_InputData.size());
 		}
@@ -85,6 +93,27 @@ unsigned int D3D12ShaderBindingTable::calculateShaderBindingTableSize()
 	unsigned int sbtSizePadded = (sbtSizeUnPadded + D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT) & ~D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT;
 
 	return sbtSizePadded;
+}
+
+bool D3D12ShaderBindingTable::reAllocateHeaps(unsigned int sizeInBytes)
+{
+	BL_ASSERT(sizeInBytes);
+
+	D3D12GraphicsManager* graphicsManager = D3D12GraphicsManager::GetInstance();
+	ID3D12Device5* device5 = graphicsManager->GetDevice();
+
+	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
+	{
+		// Delete the old one first
+		BL_SAFE_DELETE(m_pSBTBuffer[i]);
+
+		std::wstring bufferName = L"ShaderBindingTable_UploadHeap" + std::to_wstring(i);
+		m_pSBTBuffer[i] = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::CPUBuffer, sizeInBytes, 1, DXGI_FORMAT_UNKNOWN, bufferName);
+	}
+
+	m_CurrentMaxSBTSize = sizeInBytes;
+
+	return true;
 }
 
 unsigned int D3D12ShaderBindingTable::copyShaderRecords(

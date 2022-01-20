@@ -9,6 +9,8 @@ public:
 	D3D12GraphicsBuffer(E_GRAPHICSBUFFER_TYPE type, unsigned int sizeOfSingleItem, unsigned int numItems, DXGI_FORMAT format, std::wstring name);
 	virtual ~D3D12GraphicsBuffer();
 
+	virtual bool SetData(unsigned int size, const void* data) override;
+
 	unsigned int GetConstantBufferDescriptorIndex() const override;
 	unsigned int GetShaderResourceHeapIndex() const override;
 

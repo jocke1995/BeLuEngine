@@ -22,6 +22,7 @@ public:
 	DXRReflectionTask(unsigned int dispatchWidth, unsigned int dispatchHeight);
 	~DXRReflectionTask();
 
+
 	void Execute() override final;
 
 	void SetRenderComponents(const std::vector<RenderComponent>& renderComponents);
@@ -30,8 +31,8 @@ private:
 
 	// Shader binding table
 	IShaderBindingTable* m_pShaderBindingTable = nullptr;
-	std::vector<RenderComponent> m_RenderComponents;
 	void createShaderBindingTable();
+	std::vector<RenderComponent> m_RenderComponents;
 
 	unsigned int m_DispatchWidth = 0, m_DispatchHeight = 0;
 };

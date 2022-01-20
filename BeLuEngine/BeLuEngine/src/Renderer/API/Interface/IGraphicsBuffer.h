@@ -21,6 +21,8 @@ public:
 
 	static IGraphicsBuffer* Create(E_GRAPHICSBUFFER_TYPE type, unsigned int sizeOfSingleItem, unsigned int numItems, DXGI_FORMAT format, std::wstring name);
 
+	virtual bool SetData(unsigned int size, const void* data) = 0;
+
 	virtual unsigned int GetConstantBufferDescriptorIndex() const = 0;
 	virtual unsigned int GetShaderResourceHeapIndex() const = 0;
 

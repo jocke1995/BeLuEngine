@@ -106,7 +106,7 @@ void D3D12TopLevelAS::MapResultBuffer()
 	m_BuildDesc = {};
 	m_BuildDesc.Inputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
 	m_BuildDesc.Inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
-	m_BuildDesc.Inputs.InstanceDescs = dynamicDataParams.uploadResource->GetGPUVirtualAddress();
+	m_BuildDesc.Inputs.InstanceDescs = dynamicDataParams.uploadResource->GetGPUVirtualAddress() + dynamicDataParams.offsetFromStart;
 	m_BuildDesc.Inputs.NumDescs = numInstances;
 	m_BuildDesc.Inputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
 

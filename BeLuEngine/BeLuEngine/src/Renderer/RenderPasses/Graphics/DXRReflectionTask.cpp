@@ -73,6 +73,7 @@ DXRReflectionTask::~DXRReflectionTask()
 void DXRReflectionTask::Execute()
 {
 	// Updating the sbt every frame
+	BL_ASSERT(m_RenderComponents.size());
 	createShaderBindingTable();
 
 	IGraphicsTexture* finalColorBuffer = m_GraphicTextures["finalColorBuffer"];

@@ -151,6 +151,7 @@ void D3D12GraphicsContext::UploadBuffer(IGraphicsBuffer* graphicsBuffer, const v
 	// Set the data in the perFrameImmediate buffer
 	DynamicDataParams dynamicDataParams = D3D12GraphicsManager::GetInstance()->SetDynamicData(sizeInBytes, data);
 
+	//BL_LOG_INFO("%d\n", dynamicDataParams.offsetFromStart);
 	m_pCommandList->CopyBufferRegion(defaultHeap, 0, dynamicDataParams.uploadResource, dynamicDataParams.offsetFromStart, sizeInBytes);
 }
 
@@ -494,26 +495,30 @@ void D3D12GraphicsContext::DispatchRays(IShaderBindingTable* sbt, unsigned int d
 	BL_ASSERT(sbt);
 	BL_ASSERT(dispatchWidth || dispatchHeight || dispatchWidth); // All entries gotta be atleast 1!
 
+	D3D12GraphicsManager* d3d12Manager = D3D12GraphicsManager::GetInstance();
 	D3D12ShaderBindingTable* d3d12SBT = static_cast<D3D12ShaderBindingTable*>(sbt);
-	D3D12_GPU_VIRTUAL_ADDRESS sbtVirtualAdress = d3d12SBT->m_VAddr;
+	D3D12GraphicsBuffer* d3d12SbtBuffer = static_cast<D3D12GraphicsBuffer*>(d3d12SBT->m_pSBTBuffer[d3d12Manager->GetCommandInterfaceIndex()]);
+	BL_ASSERT(d3d12SbtBuffer);
+
+	D3D12_GPU_VIRTUAL_ADDRESS vAddr = d3d12SbtBuffer->m_pResource->GetGPUVirtualAddress();
 
 	// Setup the raytracing task
 	D3D12_DISPATCH_RAYS_DESC desc = {};
 
 	// Ray generation section
 	uint32_t rayGenerationSectionSizeInBytes = d3d12SBT->GetRayGenSectionSize();
-	desc.RayGenerationShaderRecord.StartAddress = sbtVirtualAdress;
+	desc.RayGenerationShaderRecord.StartAddress = vAddr;
 	desc.RayGenerationShaderRecord.SizeInBytes = rayGenerationSectionSizeInBytes;
 
 	// Miss section
 	uint32_t missSectionSizeInBytes = d3d12SBT->GetMissSectionSize();
-	desc.MissShaderTable.StartAddress = sbtVirtualAdress + rayGenerationSectionSizeInBytes;
+	desc.MissShaderTable.StartAddress = vAddr + rayGenerationSectionSizeInBytes;
 	desc.MissShaderTable.SizeInBytes = missSectionSizeInBytes;
 	desc.MissShaderTable.StrideInBytes = d3d12SBT->GetMaxMissShaderRecordSize();
 
 	// Hit group section
 	uint32_t hitGroupsSectionSize = d3d12SBT->GetHitGroupSectionSize();
-	desc.HitGroupTable.StartAddress = sbtVirtualAdress +
+	desc.HitGroupTable.StartAddress = vAddr +
 		rayGenerationSectionSizeInBytes +
 		missSectionSizeInBytes;
 	desc.HitGroupTable.SizeInBytes = hitGroupsSectionSize;

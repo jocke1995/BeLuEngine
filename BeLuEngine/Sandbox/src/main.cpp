@@ -20,7 +20,7 @@ public:
     {
         //while (true)
         //{
-            Sleep(200);
+        Sleep(200);
             //Log::Print("Async!\n");
         //}
     }
@@ -44,8 +44,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
     /*------ AssetLoader to load models / textures ------*/
    AssetLoader* al = AssetLoader::Get();
    
-   //Scene* scene = SponzaScene(sceneManager);
-   Scene* scene = PBRScene(sceneManager);
+   Scene* scene = SponzaScene(sceneManager);
+   //Scene* scene = PBRScene(sceneManager);
 
    // Set scene
    sceneManager->SetScene(scene);
@@ -108,7 +108,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
    
        
        /* ------ Sort ------ */
-       renderer->SortObjects();
+       //renderer->SortObjects();
    
        /* ------ Draw ------ */
        // For easier debugging purposes

@@ -169,6 +169,26 @@ D3D12GraphicsBuffer::~D3D12GraphicsBuffer()
 	graphicsManager->AddIUknownForDefferedDeletion(m_pResource);
 }
 
+bool D3D12GraphicsBuffer::SetData(unsigned int size, const void* data)
+{
+	BL_ASSERT(size);
+	BL_ASSERT(m_Size >= size);
+	BL_ASSERT(data);
+
+	void* mappedData = nullptr;
+	HRESULT hr = m_pResource->Map(0, nullptr, &mappedData);
+
+	// Some safety checks
+	bool mappedSuccessful = D3D12GraphicsManager::CHECK_HRESULT(hr);
+	BL_ASSERT(mappedData);
+
+	memcpy(mappedData, data, size);
+
+	m_pResource->Unmap(0, nullptr);
+
+	return mappedSuccessful;
+}
+
 unsigned int D3D12GraphicsBuffer::GetConstantBufferDescriptorIndex() const
 {
 	BL_ASSERT(m_BufferType == E_GRAPHICSBUFFER_TYPE::ConstantBuffer);

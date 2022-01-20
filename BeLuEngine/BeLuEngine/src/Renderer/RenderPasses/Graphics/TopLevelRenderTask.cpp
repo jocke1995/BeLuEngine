@@ -25,6 +25,12 @@ TopLevelRenderTask::~TopLevelRenderTask()
 	BL_SAFE_DELETE(m_pTLAS);
 }
 
+
+void TopLevelRenderTask::SetRenderComponents(const std::vector<RenderComponent>& renderComponents)
+{
+	m_RenderComponents = renderComponents;
+}
+
 void TopLevelRenderTask::Execute()
 {
 	// Add topLevel instances to the resultBuffer
@@ -37,11 +43,6 @@ void TopLevelRenderTask::Execute()
 		m_pGraphicsContext->BuildTLAS(m_pTLAS);
 	}
 	m_pGraphicsContext->End();
-}
-
-void TopLevelRenderTask::SetRenderComponents(const std::vector<RenderComponent>& renderComponents)
-{
-	m_RenderComponents = renderComponents;
 }
 
 ITopLevelAS* TopLevelRenderTask::GetTopLevelAS() const

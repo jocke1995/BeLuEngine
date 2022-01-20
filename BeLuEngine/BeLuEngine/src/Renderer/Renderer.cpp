@@ -284,6 +284,8 @@ void Renderer::Update(double dt)
 	{
 		submitCbPerSceneData(pTLAS);
 	}
+
+	setRenderTasksRenderComponents();
 }
 
 void Renderer::SortObjects()
@@ -442,7 +444,7 @@ void Renderer::ExecuteST()
 	graphicsManager->Begin();
 
 	GraphicsPass* graphicsPass = nullptr;
-
+	
 	/* --------------------- Record command lists --------------------- */
 	// Copy on demand
 	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_ON_DEMAND];
@@ -1030,8 +1032,10 @@ void Renderer::setRenderTasksRenderComponents()
 	static_cast<TransparentRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::OPACITY])->SetRenderComponents(m_RenderComponents[F_DRAW_FLAGS::DRAW_TRANSPARENT]);
 
 	// DXR
-	static_cast<TopLevelRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::TLAS])->SetRenderComponents(m_RayTracedRenderComponents);
-	static_cast<DXRReflectionTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::REFLECTIONS])->SetRenderComponents(m_RayTracedRenderComponents);
+	TopLevelRenderTask* pTLAS = static_cast<TopLevelRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::TLAS]);
+	DXRReflectionTask* pReflectionTask = static_cast<DXRReflectionTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::REFLECTIONS]);
+	pTLAS->SetRenderComponents(m_RayTracedRenderComponents);
+	pReflectionTask->SetRenderComponents(m_RayTracedRenderComponents);
 }
 
 void Renderer::setupNewScene(Scene* activeScene)

@@ -892,7 +892,8 @@ bool D3D12GraphicsManager::CHECK_HRESULT(HRESULT hrParam)
 
 void D3D12GraphicsManager::AddIUknownForDefferedDeletion(IUnknown* object)
 {
-	m_ObjectsToBeDeleted.push_back(std::make_pair(mFrameIndex, object));
+	if(object != nullptr)
+		m_ObjectsToBeDeleted.push_back(std::make_pair(mFrameIndex, object));
 }
 
 DynamicDataParams D3D12GraphicsManager::SetDynamicData(unsigned int size, const void* data)
@@ -903,6 +904,7 @@ DynamicDataParams D3D12GraphicsManager::SetDynamicData(unsigned int size, const 
 	if (offset > m_IntermediateUploadHeapSize)
 	{
 		BL_LOG_CRITICAL("IntermediateUploadHeap to small");
+		__debugbreak();
 		DynamicDataParams emptyParam = {};
 		return emptyParam;
 	}

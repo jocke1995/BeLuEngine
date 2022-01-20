@@ -10,6 +10,8 @@ class IGraphicsBuffer;
 class IRayTracingPipelineState;
 class D3D12RayTracingPipelineState;
 
+struct ID3D12Resource1;
+
 class D3D12ShaderBindingTable : public IShaderBindingTable
 {
 public:
@@ -21,9 +23,11 @@ public:
 private:
     friend class D3D12GraphicsContext;
 
-    D3D12_GPU_VIRTUAL_ADDRESS m_VAddr = {};
-
     unsigned int calculateShaderBindingTableSize();
+
+    bool reAllocateHeaps(unsigned int sizeInBytes);
+    IGraphicsBuffer* m_pSBTBuffer[NUM_SWAP_BUFFERS] = {};
+    unsigned int m_CurrentMaxSBTSize = 0;
 
     unsigned int copyShaderRecords(
         D3D12RayTracingPipelineState* d3d12RayTracingPipelineState,
