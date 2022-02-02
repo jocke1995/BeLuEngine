@@ -44,8 +44,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
     /*------ AssetLoader to load models / textures ------*/
    AssetLoader* al = AssetLoader::Get();
    
-   Scene* scene = SponzaScene(sceneManager);
-   //Scene* scene = PBRScene(sceneManager);
+   //Scene* scene = SponzaScene(sceneManager);
+   Scene* scene = PBRScene(sceneManager);
 
    // Set scene
    sceneManager->SetScene(scene);
@@ -138,10 +138,11 @@ Scene* PBRScene(SceneManager* sm)
     AssetLoader* al = AssetLoader::Get();
 
     // Get the models needed
-    Model* floorModel = al->LoadModel(L"../Vendor/Resources/Models/FloorPBR/floor.obj");
-    Model* sphereModel = al->LoadModel(L"../Vendor/Resources/Models/SpherePBR/sphere.obj");
-    Model* boxModel = al->LoadModel(L"../Vendor/Resources/Models/CubePBR/cube.obj");
-    Model* funnyModel = al->LoadModel(L"../Vendor/Resources/Models/Private/FunnyModel/funnyModel.obj");
+    Model* floorModel   = al->LoadModel(L"../Vendor/Resources/Models/FloorPBR/floor.obj");
+    Model* boxModel     = al->LoadModel(L"../Vendor/Resources/Models/CubePBR/cube.obj");
+    Model* goldenSphere = al->LoadModel(L"../Vendor/Resources/Models/GoldenSphere/sphere.obj");
+    Model* steelSphere  = al->LoadModel(L"../Vendor/Resources/Models/SteelSphere/sphere.obj");
+    Model* funnyModel   = al->LoadModel(L"../Vendor/Resources/Models/Private/FunnyModel/funnyModel.obj");
 
     /* ---------------------- Player ---------------------- */
     Entity* entity = (scene->AddEntity("player"));
@@ -164,6 +165,32 @@ Scene* PBRScene(SceneManager* sm)
     tc->GetTransform()->SetRotationY(PI + PI/8);
     /* ---------------------- FunnyObject ---------------------- */
 
+    /* ---------------------- GoldenSphere ---------------------- */
+    entity = scene->AddEntity("GoldenSphere");
+    mc = entity->AddComponent<component::ModelComponent>();
+    tc = entity->AddComponent<component::TransformComponent>();
+
+    mc = entity->GetComponent<component::ModelComponent>();
+    mc->SetModel(goldenSphere);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE);
+    tc = entity->GetComponent<component::TransformComponent>();
+    tc->GetTransform()->SetScale(1, 1, 1);
+    tc->GetTransform()->SetPosition(6.0f, 2.0f, 8.0f);
+    /* ---------------------- GoldenSphere ---------------------- */
+
+    /* ---------------------- SteelSphere ---------------------- */
+    entity = scene->AddEntity("SteelSphere");
+    mc = entity->AddComponent<component::ModelComponent>();
+    tc = entity->AddComponent<component::TransformComponent>();
+
+    mc = entity->GetComponent<component::ModelComponent>();
+    mc->SetModel(steelSphere);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE);
+    tc = entity->GetComponent<component::TransformComponent>();
+    tc->GetTransform()->SetScale(1, 1, 1);
+    tc->GetTransform()->SetPosition(1.0f, 6.0f, -2.5f);
+    /* ---------------------- SteelSphere ---------------------- */
+
     /* ---------------------- Floor ---------------------- */
     entity = scene->AddEntity("floor");
     mc = entity->AddComponent<component::ModelComponent>();
@@ -178,7 +205,7 @@ Scene* PBRScene(SceneManager* sm)
     /* ---------------------- Floor ---------------------- */
 
     /* ---------------------- Spheres ---------------------- */
-    auto createSphereLambda = [&scene, sphereModel](std::string name, float3 albedoColor, float3 position, float metallic, float roughness)
+    auto createSphereLambda = [&scene, steelSphere](std::string name, float3 albedoColor, float3 position, float metallic, float roughness)
     {
         static int index = 0;
         std::string finalName = name + std::to_string(index);
@@ -186,7 +213,7 @@ Scene* PBRScene(SceneManager* sm)
         component::ModelComponent* mc = entity->AddComponent<component::ModelComponent>();
         component::TransformComponent* tc = entity->AddComponent<component::TransformComponent>();
 
-        mc->SetModel(sphereModel);
+        mc->SetModel(steelSphere);
         mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
 
         AssetLoader* al = AssetLoader::Get();

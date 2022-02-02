@@ -125,7 +125,7 @@ unsigned int D3D12ShaderBindingTable::copyShaderRecords(
 	ID3D12StateObjectProperties* stateObjectProps = d3d12RayTracingPipelineState->m_pRTStateObjectProps;
 
 	uint8_t* pData = pMappedData;
-	for (const auto& shaderRecord : shaderRecords)
+	for (const ShaderRecord& shaderRecord : shaderRecords)
 	{
 		unsigned int currentOffset = 0;
 		// Get the shader identifier

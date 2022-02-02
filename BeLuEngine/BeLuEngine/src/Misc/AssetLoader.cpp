@@ -92,9 +92,9 @@ void AssetLoader::loadDefaultMaterial()
 	std::map<E_TEXTURE2D_TYPE, IGraphicsTexture*> matTextures;
 	matTextures[E_TEXTURE2D_TYPE::ALBEDO]		= LoadTexture2D(E_TEXTURE2D_TYPE::ALBEDO,	m_FilePathDefaultTextures + L"default_albedo.dds");
 	matTextures[E_TEXTURE2D_TYPE::ROUGHNESS]	= LoadTexture2D(E_TEXTURE2D_TYPE::ROUGHNESS,m_FilePathDefaultTextures + L"default_roughness.dds");
-	matTextures[E_TEXTURE2D_TYPE::METALLIC]		= LoadTexture2D(E_TEXTURE2D_TYPE::METALLIC, m_FilePathDefaultTextures + L"default_metallic.dds");
+	matTextures[E_TEXTURE2D_TYPE::METALLIC]	= LoadTexture2D(E_TEXTURE2D_TYPE::METALLIC, m_FilePathDefaultTextures + L"default_metallic.dds");
 	matTextures[E_TEXTURE2D_TYPE::NORMAL]		= LoadTexture2D(E_TEXTURE2D_TYPE::NORMAL,	m_FilePathDefaultTextures + L"default_normal.dds");
-	matTextures[E_TEXTURE2D_TYPE::EMISSIVE]		= LoadTexture2D(E_TEXTURE2D_TYPE::EMISSIVE, m_FilePathDefaultTextures + L"default_emissive.dds");
+	matTextures[E_TEXTURE2D_TYPE::EMISSIVE]	= LoadTexture2D(E_TEXTURE2D_TYPE::EMISSIVE, m_FilePathDefaultTextures + L"default_emissive.dds");
 	matTextures[E_TEXTURE2D_TYPE::OPACITY]		= LoadTexture2D(E_TEXTURE2D_TYPE::OPACITY,	m_FilePathDefaultTextures + L"default_opacity.dds");
 
 	std::wstring matName = L"DefaultMaterial";
