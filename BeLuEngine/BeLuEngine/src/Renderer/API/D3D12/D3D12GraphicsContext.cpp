@@ -29,7 +29,7 @@ D3D12GraphicsContext::D3D12GraphicsContext(const std::wstring& name)
 #endif
 	
 	HRESULT hr;
-#pragma region CreateCommandInterface
+#pragma region CreateMainCommandInterface
 	for (unsigned int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
 		hr = device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_pCommandAllocators[i]));
@@ -67,6 +67,45 @@ D3D12GraphicsContext::D3D12GraphicsContext(const std::wstring& name)
 	}
 
 #pragma endregion
+
+#pragma region CreateTransitionCommandInterface
+	for (unsigned int i = 0; i < NUM_SWAP_BUFFERS; i++)
+	{
+		hr = device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_pTransitionCommandAllocators[i]));
+
+		if (!D3D12GraphicsManager::CHECK_HRESULT(hr))
+		{
+			BL_LOG_CRITICAL("Failed to Create TransitionCommandAllocator: %S\n", name);
+		}
+
+		std::wstring counter = std::to_wstring(i);
+		hr = m_pTransitionCommandAllocators[i]->SetName((name + L"_TransitionCmdAlloc_" + counter).c_str());
+
+		if (!D3D12GraphicsManager::CHECK_HRESULT(hr))
+		{
+			BL_LOG_CRITICAL("Failed to SetName on TransitionCommandAllocator: %S\n", name);
+		}
+	}
+
+	hr = device->CreateCommandList(0,
+		D3D12_COMMAND_LIST_TYPE_DIRECT,
+		m_pTransitionCommandAllocators[0],
+		nullptr,
+		IID_PPV_ARGS(&m_pTransitionCommandList));
+
+	hr = m_pTransitionCommandList->SetName((name + L"_TransitionCmdList").c_str());
+	if (!D3D12GraphicsManager::CHECK_HRESULT(hr))
+	{
+		BL_LOG_CRITICAL("Failed to Create TransitionCommandList: %S\n", name);
+	}
+
+	hr = m_pTransitionCommandList->Close();
+	if (!D3D12GraphicsManager::CHECK_HRESULT(hr))
+	{
+		BL_LOG_CRITICAL("Failed to SetName on TransitionCommandList: %S\n", name);
+	}
+
+#pragma endregion
 }
 
 D3D12GraphicsContext::~D3D12GraphicsContext()
@@ -75,8 +114,10 @@ D3D12GraphicsContext::~D3D12GraphicsContext()
 	for (unsigned int i = 0; i < NUM_SWAP_BUFFERS; i++)
 	{
 		graphicsManager->AddIUknownForDefferedDeletion(m_pCommandAllocators[i]);
+		graphicsManager->AddIUknownForDefferedDeletion(m_pTransitionCommandAllocators[i]);
 	}
 	graphicsManager->AddIUknownForDefferedDeletion(m_pCommandList);
+	graphicsManager->AddIUknownForDefferedDeletion(m_pTransitionCommandList);
 }
 
 void D3D12GraphicsContext::Begin()
@@ -84,7 +125,7 @@ void D3D12GraphicsContext::Begin()
 	D3D12GraphicsManager* graphicsManager = D3D12GraphicsManager::GetInstance();
 	unsigned int index = graphicsManager->GetCommandInterfaceIndex();
 
-	// Reset commandinterface
+	// Reset Commandinterface
 	D3D12GraphicsManager::CHECK_HRESULT(m_pCommandAllocators[index]->Reset());
 	D3D12GraphicsManager::CHECK_HRESULT(m_pCommandList->Reset(m_pCommandAllocators[index], NULL));
 }
@@ -538,4 +579,24 @@ void D3D12GraphicsContext::SetRayTracingPipelineState(IRayTracingPipelineState* 
 
 	D3D12RayTracingPipelineState* d3d12rtState = static_cast<D3D12RayTracingPipelineState*>(rtPipelineState);
 	m_pCommandList->SetPipelineState1(d3d12rtState->m_pRayTracingStateObject);
+}
+
+void D3D12GraphicsContext::resolvePendingTransitionBarriers()
+{
+	// This function has to be called on mainThread
+
+	D3D12GraphicsManager* graphicsManager = D3D12GraphicsManager::GetInstance();
+	unsigned int index = graphicsManager->GetCommandInterfaceIndex();
+
+	// Reset TransitionCommandinterface (they are closed by the mainThread when the transitions have been added)
+	D3D12GraphicsManager::CHECK_HRESULT(m_pTransitionCommandAllocators[index]->Reset());
+	D3D12GraphicsManager::CHECK_HRESULT(m_pTransitionCommandList->Reset(m_pTransitionCommandAllocators[index], NULL));
+
+	TODO("Resolve pending barriers");
+	{
+
+	}
+
+	// End
+	D3D12GraphicsManager::CHECK_HRESULT(m_pTransitionCommandList->Close());
 }

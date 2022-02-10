@@ -68,6 +68,12 @@ private:
 	ID3D12GraphicsCommandList5* m_pCommandList{ nullptr };
 	ID3D12CommandAllocator* m_pCommandAllocators[NUM_SWAP_BUFFERS]{ nullptr };
 
+    ID3D12GraphicsCommandList5* m_pTransitionCommandList{ nullptr };
+    ID3D12CommandAllocator* m_pTransitionCommandAllocators[NUM_SWAP_BUFFERS]{ nullptr };
+
+    // Has to be called on the mainThread
+    void resolvePendingTransitionBarriers();
+
 	// Useful for debugging
 #ifdef DEBUG
 	std::wstring m_Name = L"GraphicsContextDefault";

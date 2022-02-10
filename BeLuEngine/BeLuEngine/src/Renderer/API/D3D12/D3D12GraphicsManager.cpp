@@ -786,15 +786,21 @@ void D3D12GraphicsManager::End()
 
 void D3D12GraphicsManager::ExecuteGraphicsContexts(const std::vector<IGraphicsContext*>& graphicsContexts, unsigned int numGraphicsContexts)
 {
-	std::vector<ID3D12CommandList*> cList;
-	cList.reserve(numGraphicsContexts);
+	unsigned int commandListsToExecute = numGraphicsContexts * 2;
+	std::vector<ID3D12CommandList*> cLists;
+	cLists.reserve(commandListsToExecute);
 	
 	for (IGraphicsContext* graphicsContext : graphicsContexts)
 	{
-		cList.push_back(static_cast<D3D12GraphicsContext*>(graphicsContext)->m_pCommandList);
+		// Resolve transitionBarriers
+		TODO("Fix transitionBarriers");
+		static_cast<D3D12GraphicsContext*>(graphicsContext)->resolvePendingTransitionBarriers();
+
+		cLists.push_back(static_cast<D3D12GraphicsContext*>(graphicsContext)->m_pTransitionCommandList);
+		cLists.push_back(static_cast<D3D12GraphicsContext*>(graphicsContext)->m_pCommandList);
 	}
 
-	m_pGraphicsCommandQueue->ExecuteCommandLists(numGraphicsContexts, cList.data());
+	m_pGraphicsCommandQueue->ExecuteCommandLists(commandListsToExecute, cLists.data());
 }
 
 void D3D12GraphicsManager::SyncAndPresent(IGraphicsTexture* finalColorTexture)
