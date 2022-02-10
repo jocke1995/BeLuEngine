@@ -44,8 +44,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
     /*------ AssetLoader to load models / textures ------*/
    AssetLoader* al = AssetLoader::Get();
    
-   //Scene* scene = SponzaScene(sceneManager);
-   Scene* scene = PBRScene(sceneManager);
+   Scene* scene = SponzaScene(sceneManager);
+   //Scene* scene = PBRScene(sceneManager);
 
    // Set scene
    sceneManager->SetScene(scene);
@@ -346,7 +346,7 @@ Scene* SponzaScene(SceneManager* sm)
 
     // Get the models needed
     Model* sponza = al->LoadModel(L"../Vendor/Resources/Scenes/Sponza/textures_pbr/sponza.obj");
-    Model* sphereModel = al->LoadModel(L"../Vendor/Resources/Models/SpherePBR/sphere.obj");
+    Model* steelSphere = al->LoadModel(L"../Vendor/Resources/Models/SteelSphere/sphere.obj");
     Model* boxModel = al->LoadModel(L"../Vendor/Resources/Models/CubePBR/cube.obj");
     Model* mirror = al->LoadModel(L"../Vendor/Resources/Models/Mirror/Mirror.obj");
 
@@ -405,14 +405,14 @@ Scene* SponzaScene(SceneManager* sm)
     /* ---------------------- Sponza ---------------------- */
 
     /* ------------------------ EmissiveSphere --------------------------------- */
-    auto createEmissiveSphere = [&scene, sphereModel](std::string name, float4 emissiveColor, float3 position)
+    auto createEmissiveSphere = [&scene, steelSphere](std::string name, float4 emissiveColor, float3 position)
     {
         Entity* entity = scene->AddEntity(name);
         component::ModelComponent* mc = entity->AddComponent<component::ModelComponent>();
         component::TransformComponent* tc = entity->AddComponent<component::TransformComponent>();
         component::PointLightComponent* plc = entity->AddComponent<component::PointLightComponent>(F_LIGHT_FLAGS::USE_TRANSFORM_POSITION);
 
-        mc->SetModel(sphereModel);
+        mc->SetModel(steelSphere);
         mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE);
 
         static int index = 0;
