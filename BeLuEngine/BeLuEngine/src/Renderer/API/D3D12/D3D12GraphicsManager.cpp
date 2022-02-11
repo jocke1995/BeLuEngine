@@ -793,7 +793,6 @@ void D3D12GraphicsManager::ExecuteGraphicsContexts(const std::vector<IGraphicsCo
 	for (IGraphicsContext* graphicsContext : graphicsContexts)
 	{
 		// Resolve transitionBarriers
-		TODO("Fix transitionBarriers");
 		static_cast<D3D12GraphicsContext*>(graphicsContext)->resolvePendingTransitionBarriers();
 
 		cLists.push_back(static_cast<D3D12GraphicsContext*>(graphicsContext)->m_pTransitionCommandList);

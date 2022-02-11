@@ -76,12 +76,12 @@ private:
 	#define BL_LOG_WARNING(...)	 Log::PrintSeverity(__FILE__, std::to_string(__LINE__), Severity::WARNING , __VA_ARGS__)
 	#define BL_LOG_CRITICAL(...) Log::PrintSeverity(__FILE__, std::to_string(__LINE__), Severity::CRITICAL, __VA_ARGS__)
 
-	#define BL_ASSERT(expression)				if((expression) == false)																							\
+	#define BL_ASSERT(expression)				if((expression) == false)																						\
 												{																												\
 													Log::PrintSeverity(__FILE__, std::to_string(__LINE__), Severity::CRITICAL,  "Expression: %s", #expression);	\
 													DebugBreak();																								\
 												}
-	#define BL_ASSERT_MESSAGE(expression, ...)	if((expression) == false)																							\
+	#define BL_ASSERT_MESSAGE(expression, ...)	if((expression) == false)																						\
 												{																												\
 													Log::PrintSeverity(__FILE__, std::to_string(__LINE__), Severity::CRITICAL, "Expression: %s", #expression);	\
 													Log::PrintSeverity(__FILE__, std::to_string(__LINE__), Severity::CRITICAL, __VA_ARGS__);					\

@@ -5,6 +5,13 @@
 
 #include "D3D12ResourceStateTracker.h"
 
+struct PendingTransitionBarrier
+{
+    D3D12LocalStateTracker* localStateTracker = nullptr;
+    unsigned int subResource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+    D3D12_RESOURCE_STATES afterState = (D3D12_RESOURCE_STATES)-1;
+};
+
 class D3D12GraphicsContext: public IGraphicsContext
 {
 public:
@@ -65,6 +72,7 @@ public:
 
 private:
     friend class D3D12GraphicsManager;
+    friend class D3D12LocalStateTracker;
     friend class ScopedPIXEvent;
 
 	ID3D12GraphicsCommandList5* m_pCommandList{ nullptr };
@@ -75,8 +83,10 @@ private:
     ID3D12GraphicsCommandList5* m_pTransitionCommandList{ nullptr };
     ID3D12CommandAllocator* m_pTransitionCommandAllocators[NUM_SWAP_BUFFERS]{ nullptr };
 
+    // Each local state can have multiple pending barriers, 1 for each subResource in the worst case scenario
     std::vector<PendingTransitionBarrier> m_PendingResourceBarriers = {};
 
+    // For easy mapping between the unique globalStateTracker and the per-context localStateTracker
     std::map<D3D12GlobalStateTracker*, D3D12LocalStateTracker*> m_GlobalToLocalMap = {};
 
     // This function has to be called on the mainThread AFTER all renderPasses have been recorded

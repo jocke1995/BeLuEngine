@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "D3D12ResourceStateTracker.h"
 
+#include "D3D12GraphicsContext.h"
 D3D12GlobalStateTracker::D3D12GlobalStateTracker(ID3D12Resource1* resource, unsigned int numSubResources)
 {
 	BL_ASSERT(resource);
@@ -19,7 +20,7 @@ D3D12GlobalStateTracker::~D3D12GlobalStateTracker()
 {
 }
 
-void D3D12GlobalStateTracker::SetState(D3D12_RESOURCE_STATES state, unsigned int subResource)
+void D3D12GlobalStateTracker::SetState(D3D12_RESOURCE_STATES resourceState, unsigned int subResource)
 {
 	unsigned int numSubResources = m_ResourceStates.size();
 
@@ -27,21 +28,40 @@ void D3D12GlobalStateTracker::SetState(D3D12_RESOURCE_STATES state, unsigned int
 	{
 		for (unsigned int i = 0; i < numSubResources; i++)
 		{
-			m_ResourceStates[i] = state;
+			m_ResourceStates[i] = resourceState;
 		}
 	}
 	else
 	{
-		m_ResourceStates[subResource] = state;
+		m_ResourceStates[subResource] = resourceState;
 	}
 }
 
-D3D12LocalStateTracker::D3D12LocalStateTracker(ID3D12Resource1* resource, unsigned int numSubResources)
+D3D12_RESOURCE_STATES D3D12GlobalStateTracker::GetState(unsigned int subResource) const
 {
+	BL_ASSERT(subResource >= 0);
+	return m_ResourceStates[subResource];
+}
+
+ID3D12Resource1* D3D12GlobalStateTracker::GetNativeResource() const
+{
+	BL_ASSERT(m_pResource);
+	return m_pResource;
+}
+
+D3D12LocalStateTracker::D3D12LocalStateTracker(D3D12GraphicsContext* pContextOwner, D3D12GlobalStateTracker* globalStateTracker, ID3D12Resource1* resource, unsigned int numSubResources)
+{
+	BL_ASSERT(pContextOwner);
+	m_pOwner = pContextOwner;
+
 	BL_ASSERT(resource);
 	m_pResource = resource;
 
+	BL_ASSERT(numSubResources);
 	m_ResourceStates.resize(numSubResources);
+
+	BL_ASSERT(globalStateTracker);
+	m_pGlobalStateTracker = globalStateTracker;
 
 	// Init to unknownState
 	for (unsigned int i = 0; i < numSubResources; i++)
@@ -54,11 +74,13 @@ D3D12LocalStateTracker::~D3D12LocalStateTracker()
 {
 }
 
-void D3D12LocalStateTracker::ResolveLocalResourceState(
-	D3D12_RESOURCE_STATES desiredState,
-	std::vector<PendingTransitionBarrier>& m_PendingResourceBarriers,
-	ID3D12GraphicsCommandList* commandList,
-	unsigned int subResource)
+D3D12GlobalStateTracker* D3D12LocalStateTracker::GetGlobalStateTracker() const
+{
+	BL_ASSERT(m_pGlobalStateTracker);
+	return m_pGlobalStateTracker;
+}
+
+void D3D12LocalStateTracker::ResolveLocalResourceState(D3D12_RESOURCE_STATES desiredState, unsigned int subResource)
 {
 	unsigned int numSubResources = m_ResourceStates.size();
 
@@ -85,7 +107,7 @@ void D3D12LocalStateTracker::ResolveLocalResourceState(
 			pendingBarrier.subResource = subResource;
 			pendingBarrier.afterState = desiredState;
 
-			m_PendingResourceBarriers.push_back(pendingBarrier);
+			m_pOwner->m_PendingResourceBarriers.push_back(pendingBarrier);
 		}
 		else
 		{
@@ -115,5 +137,5 @@ void D3D12LocalStateTracker::ResolveLocalResourceState(
 		manageTransition(subResource);
 	}
 
-	commandList->ResourceBarrier(actualNumberOfTransitionBarriers, resourceBarriers);
+	m_pOwner->m_pCommandList->ResourceBarrier(actualNumberOfTransitionBarriers, resourceBarriers);
 }
