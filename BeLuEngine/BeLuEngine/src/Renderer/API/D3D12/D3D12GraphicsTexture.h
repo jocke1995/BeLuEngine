@@ -4,6 +4,7 @@
 #include "../Interface/IGraphicsTexture.h"
 
 class D3D12DescriptorHeap;
+class D3D12GlobalStateTracker;
 
 class D3D12GraphicsTexture : public IGraphicsTexture
 {
@@ -26,8 +27,6 @@ private:
 	friend class D3D12GraphicsManager;
 	friend class D3D12GraphicsContext;
 
-	friend class TonemapComputeTask;	// Temporary
-
 	ID3D12Resource1* m_pResource = nullptr;
 	unsigned int m_ShaderResourceDescriptorHeapIndices[g_MAX_TEXTURE_MIPS]	= { UINT32_MAX };
 	unsigned int m_UnorderedAccessDescriptorHeapIndices[g_MAX_TEXTURE_MIPS] = { UINT32_MAX };
@@ -37,11 +36,13 @@ private:
 	D3D12DescriptorHeap* m_CPUDescriptorHeap = nullptr;
 
 	unsigned __int64 m_Size = 0;
+	unsigned int m_NumMipLevels = 0;
 	unsigned char* m_pTextureData = nullptr;
 
-	unsigned int m_NumMipLevels = 0;
-
 	std::vector<D3D12_SUBRESOURCE_DATA> m_Subresources;
+
+	// Resource Tracker
+	D3D12GlobalStateTracker* m_GlobalStateTracker = nullptr;
 };
 
 #endif

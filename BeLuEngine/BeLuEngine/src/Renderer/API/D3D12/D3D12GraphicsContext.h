@@ -3,6 +3,8 @@
 
 #include "../Interface/IGraphicsContext.h"
 
+#include "D3D12ResourceStateTracker.h"
+
 class D3D12GraphicsContext: public IGraphicsContext
 {
 public:
@@ -68,11 +70,16 @@ private:
 	ID3D12GraphicsCommandList5* m_pCommandList{ nullptr };
 	ID3D12CommandAllocator* m_pCommandAllocators[NUM_SWAP_BUFFERS]{ nullptr };
 
+
+    /* ---------------------------------- Automatic ResourceBarrier Management ----------------------------------------------- */
     ID3D12GraphicsCommandList5* m_pTransitionCommandList{ nullptr };
     ID3D12CommandAllocator* m_pTransitionCommandAllocators[NUM_SWAP_BUFFERS]{ nullptr };
 
-    // Has to be called on the mainThread
+    std::vector<PendingTransitionBarrier> m_PendingResourceBarriers = {};
+
+    std::map<D3D12GlobalStateTracker*, D3D12LocalStateTracker*> m_GlobalToLocalMap = {};
     void resolvePendingTransitionBarriers();
+    /* ---------------------------------- Automatic ResourceBarrier Management ----------------------------------------------- */
 
 	// Useful for debugging
 #ifdef DEBUG

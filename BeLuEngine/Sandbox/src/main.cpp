@@ -65,25 +65,26 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
            component::CameraComponent* cc = scene->GetEntity("player")->GetComponent<component::CameraComponent>();
            DirectX::XMFLOAT3 position = cc->GetCamera()->GetPosition();
            DirectX::XMFLOAT3 lookAt = cc->GetCamera()->GetDirection();
-           DirectX::XMFLOAT3 lightPos = position + (lookAt * 20);
+           DirectX::XMFLOAT3 lightPos = position + (lookAt * 10);
    
            static unsigned int counter = 1;
            std::string name = "pointLight" + std::to_string(counter);
            /* ---------------------- PointLightDynamic ---------------------- */
-           Model* sphereModel = al->LoadModel(L"../Vendor/Resources/Models/SpherePBR/sphere.obj");
+           Model* steelSphere = al->LoadModel(L"../Vendor/Resources/Models/SteelSphere/sphere.obj");
            Entity* entity = scene->AddEntity(name);
            component::ModelComponent* mc = entity->AddComponent<component::ModelComponent>();
            component::TransformComponent* tc = entity->AddComponent<component::TransformComponent>();
            component::PointLightComponent* plc = entity->AddComponent<component::PointLightComponent>(F_LIGHT_FLAGS::USE_TRANSFORM_POSITION);
            component::BoundingBoxComponent* bbc = entity->AddComponent<component::BoundingBoxComponent>(F_BOUNDING_BOX_FLAGS::PICKING);
    
-           mc->SetModel(sphereModel);
+           mc->SetModel(steelSphere);
            mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
            tc->GetTransform()->SetScale(0.3f);
            tc->GetTransform()->SetPosition(lightPos);
            bbc->Init();
    
-           plc->SetColor({ 0.5f, 0.25f, 0.25f });
+           plc->SetColor({ 0.5f, 0.5f, 0.5f });
+           plc->SetIntensity(5.0f);
            entity->Update(0);
 
            counter++;

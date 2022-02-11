@@ -5,6 +5,7 @@
 
 #include "D3D12GraphicsManager.h"
 #include "D3D12DescriptorHeap.h"
+#include "D3D12ResourceStateTracker.h"
 
 DXGI_FORMAT ConvertFormatToSRGB(DXGI_FORMAT format)
 {
@@ -40,6 +41,8 @@ D3D12GraphicsTexture::~D3D12GraphicsTexture()
 
 	TODO("Fix this properly");
 	BL_SAFE_DELETE(m_pTextureData);
+
+	BL_SAFE_DELETE(m_GlobalStateTracker);
 }
 
 bool D3D12GraphicsTexture::LoadTextureDDS(E_TEXTURE2D_TYPE textureType, const std::wstring& filePath)
@@ -274,6 +277,10 @@ bool D3D12GraphicsTexture::CreateTexture2D(unsigned int width, unsigned int heig
 
 #pragma endregion
 
+#pragma region CreateResourceStateTracker
+	m_GlobalStateTracker = new D3D12GlobalStateTracker(m_pResource, m_NumMipLevels);
+	m_GlobalStateTracker->SetState(startStateTemp);
+#pragma endregion
 	return true;
 }
 

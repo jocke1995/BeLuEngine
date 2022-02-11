@@ -27,6 +27,8 @@ namespace component
 
 	void ModelComponent::SetModel(Model* model)
 	{
+		BL_ASSERT(model);
+
 		m_pModel = model;
 
 		unsigned int numMeshes = m_pModel->GetSize();
@@ -103,11 +105,13 @@ namespace component
 
 	Material* ModelComponent::GetMaterialAt(unsigned int index)
 	{
+		BL_ASSERT(index >= 0);
 		return m_Materials[index];
 	}
 
 	MaterialData* ModelComponent::GetUniqueMaterialDataAt(unsigned int index)
 	{
+		BL_ASSERT(index >= 0);
 		return &m_MaterialDataRawBuffer[index];
 	}
 
@@ -118,6 +122,7 @@ namespace component
 
 	const SlotInfo* ModelComponent::GetSlotInfoAt(unsigned int index) const
 	{
+		BL_ASSERT(index >= 0);
 		return &m_SlotInfos[index];
 	}
 
@@ -197,6 +202,4 @@ namespace component
 	{
 		return m_pModel;
 	}
-
-
 }
