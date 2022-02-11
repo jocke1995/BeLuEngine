@@ -3,6 +3,7 @@
 
 #include "D3D12GraphicsManager.h"
 #include "D3D12DescriptorHeap.h"
+#include "D3D12ResourceStateTracker.h"
 
 D3D12GraphicsBuffer::D3D12GraphicsBuffer(E_GRAPHICSBUFFER_TYPE type, unsigned int sizeOfSingleItem, unsigned int numItems, DXGI_FORMAT format, std::wstring name)
 	:IGraphicsBuffer()
@@ -159,6 +160,9 @@ D3D12GraphicsBuffer::D3D12GraphicsBuffer(E_GRAPHICSBUFFER_TYPE type, unsigned in
 		}
 	}
 #pragma endregion
+
+	m_GlobalStateTracker = new D3D12GlobalStateTracker(m_pResource, 1);
+	m_GlobalStateTracker->SetState(startState);
 }
 
 D3D12GraphicsBuffer::~D3D12GraphicsBuffer()
@@ -167,6 +171,8 @@ D3D12GraphicsBuffer::~D3D12GraphicsBuffer()
 
 	BL_ASSERT(m_pResource);
 	graphicsManager->AddIUknownForDefferedDeletion(m_pResource);
+
+	BL_SAFE_DELETE(m_GlobalStateTracker);
 }
 
 bool D3D12GraphicsBuffer::SetData(unsigned int size, const void* data)

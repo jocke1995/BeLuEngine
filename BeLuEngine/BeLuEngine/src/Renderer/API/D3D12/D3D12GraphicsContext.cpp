@@ -212,18 +212,18 @@ void D3D12GraphicsContext::SetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY primTop)
 	m_pCommandList->IASetPrimitiveTopology(primTop);
 }
 
-void D3D12GraphicsContext::ResourceBarrier(IGraphicsTexture* graphicsTexture, D3D12_RESOURCE_STATES stateBefore, D3D12_RESOURCE_STATES stateAfter)
+void D3D12GraphicsContext::ResourceBarrier(IGraphicsTexture* graphicsTexture, D3D12_RESOURCE_STATES desiredState, unsigned int subResource)
 {
+	// Cache some objects and do some sanity checks
 	BL_ASSERT(graphicsTexture);
-
 	D3D12GraphicsTexture* d3d12Texture = static_cast<D3D12GraphicsTexture*>(graphicsTexture);
 
-	// Do we already exist locally?
 	D3D12GlobalStateTracker* globalStateTracker = d3d12Texture->m_GlobalStateTracker;
 	BL_ASSERT(globalStateTracker);
 
 	ID3D12Resource1* resource = d3d12Texture->m_pResource;
-	
+	BL_ASSERT(resource);
+
 	// If this resource doesn't have a local state, create one
 	D3D12LocalStateTracker* localStateTracker = m_GlobalToLocalMap[globalStateTracker];
 	if (localStateTracker == nullptr)
@@ -234,22 +234,32 @@ void D3D12GraphicsContext::ResourceBarrier(IGraphicsTexture* graphicsTexture, D3
 
 	// Add resourceBarrier to be resolved later by the transitionCList if current state is unknown
 	// If we know the currentState, we can do the transition immediatly on the mainCommandList
-	localStateTracker->ResolveLocalResourceState(stateAfter, m_PendingResourceBarriers, m_pCommandList);
+	localStateTracker->ResolveLocalResourceState(desiredState, m_PendingResourceBarriers, m_pCommandList, subResource);
 }
 
-void D3D12GraphicsContext::ResourceBarrier(IGraphicsBuffer* graphicsBuffer, D3D12_RESOURCE_STATES stateBefore, D3D12_RESOURCE_STATES stateAfter)
+void D3D12GraphicsContext::ResourceBarrier(IGraphicsBuffer* graphicsBuffer, D3D12_RESOURCE_STATES desiredState, unsigned int subResource)
 {
+	// Cache some objects and do some sanity checks
 	BL_ASSERT(graphicsBuffer);
+	D3D12GraphicsBuffer* d3d12Buffer = static_cast<D3D12GraphicsBuffer*>(graphicsBuffer);
+	
+	D3D12GlobalStateTracker* globalStateTracker = d3d12Buffer->m_GlobalStateTracker;
+	BL_ASSERT(globalStateTracker);
 
-	D3D12_RESOURCE_BARRIER barrier{};
-	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-	barrier.Transition.pResource = static_cast<D3D12GraphicsBuffer*>(graphicsBuffer)->m_pResource;
-	barrier.Transition.StateBefore = stateBefore;
-	barrier.Transition.StateAfter = stateAfter;
+	ID3D12Resource1* resource = d3d12Buffer->m_pResource;
+	BL_ASSERT(resource);
 
-	m_pCommandList->ResourceBarrier(1, &barrier);
+	// If this resource doesn't have a local state, create one
+	D3D12LocalStateTracker* localStateTracker = m_GlobalToLocalMap[globalStateTracker];
+	if (localStateTracker == nullptr)
+	{
+		D3D12LocalStateTracker* localStateTracker = new D3D12LocalStateTracker(resource, 1);
+		m_GlobalToLocalMap[globalStateTracker] = localStateTracker;
+	}
+
+	// Add resourceBarrier to be resolved later by the transitionCList if current state is unknown
+	// If we know the currentState, we can do the transition immediatly on the mainCommandList
+	localStateTracker->ResolveLocalResourceState(desiredState, m_PendingResourceBarriers, m_pCommandList, subResource);
 }
 
 void D3D12GraphicsContext::UAVBarrier(IGraphicsTexture* graphicsTexture)

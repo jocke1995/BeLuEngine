@@ -29,8 +29,8 @@ public:
     virtual void SetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY primTop) = 0;
 
     TODO("Fix Interfaces for the parameters");
-    virtual void ResourceBarrier(IGraphicsTexture* graphicsTexture, D3D12_RESOURCE_STATES stateBefore, D3D12_RESOURCE_STATES stateAfter) = 0;
-    virtual void ResourceBarrier(IGraphicsBuffer* graphicsBuffer, D3D12_RESOURCE_STATES stateBefore, D3D12_RESOURCE_STATES stateAfter) = 0;
+    virtual void ResourceBarrier(IGraphicsTexture* graphicsTexture, D3D12_RESOURCE_STATES desiredState, unsigned int subResource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES) = 0;
+    virtual void ResourceBarrier(IGraphicsBuffer* graphicsBuffer, D3D12_RESOURCE_STATES desiredState, unsigned int subResource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES) = 0;
     virtual void UAVBarrier(IGraphicsTexture* graphicsTexture) = 0;
     virtual void UAVBarrier(IGraphicsBuffer* graphicsBuffer) = 0;
 
@@ -61,7 +61,6 @@ public:
 
     virtual void DrawImGui() = 0;
 
-    TODO("Wrapper");
     // Raytracing
     virtual void BuildTLAS(ITopLevelAS* pTlas) = 0;
     virtual void BuildBLAS(IBottomLevelAS* pBlas) = 0;

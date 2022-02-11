@@ -3,6 +3,8 @@
 
 #include "../Interface/IGraphicsBuffer.h"
 
+class D3D12GlobalStateTracker;
+
 class D3D12GraphicsBuffer : public IGraphicsBuffer
 {
 public:
@@ -29,6 +31,9 @@ private:
 	unsigned int m_ShaderResourceDescriptorHeapIndex = -1;
 
 	E_GRAPHICSBUFFER_TYPE m_BufferType = E_GRAPHICSBUFFER_TYPE::None;
+
+	// Resource Tracker
+	D3D12GlobalStateTracker* m_GlobalStateTracker = nullptr;
 };
 
 #endif

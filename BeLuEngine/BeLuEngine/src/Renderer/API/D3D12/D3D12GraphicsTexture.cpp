@@ -277,10 +277,8 @@ bool D3D12GraphicsTexture::CreateTexture2D(unsigned int width, unsigned int heig
 
 #pragma endregion
 
-#pragma region CreateResourceStateTracker
 	m_GlobalStateTracker = new D3D12GlobalStateTracker(m_pResource, m_NumMipLevels);
 	m_GlobalStateTracker->SetState(startStateTemp);
-#pragma endregion
 	return true;
 }
 

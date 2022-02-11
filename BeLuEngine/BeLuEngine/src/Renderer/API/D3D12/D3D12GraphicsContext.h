@@ -25,8 +25,8 @@ public:
     virtual void SetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY primTop) override final;
 
     TODO("Fix Interfaces for the parameters");
-    virtual void ResourceBarrier(IGraphicsTexture* graphicsTexture, D3D12_RESOURCE_STATES stateBefore, D3D12_RESOURCE_STATES stateAfter) override final;
-    virtual void ResourceBarrier(IGraphicsBuffer* graphicsBuffer, D3D12_RESOURCE_STATES stateBefore, D3D12_RESOURCE_STATES stateAfter) override final;
+    virtual void ResourceBarrier(IGraphicsTexture* graphicsTexture, D3D12_RESOURCE_STATES desiredState, unsigned int subResource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES) override final;
+    virtual void ResourceBarrier(IGraphicsBuffer* graphicsBuffer, D3D12_RESOURCE_STATES desiredState, unsigned int subResource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES) override final;
     virtual void UAVBarrier(IGraphicsTexture* graphicsTexture) override final;
     virtual void UAVBarrier(IGraphicsBuffer* graphicsBuffer) override final;
 
@@ -78,6 +78,8 @@ private:
     std::vector<PendingTransitionBarrier> m_PendingResourceBarriers = {};
 
     std::map<D3D12GlobalStateTracker*, D3D12LocalStateTracker*> m_GlobalToLocalMap = {};
+
+    // This function has to be called on the mainThread AFTER all renderPasses have been recorded
     void resolvePendingTransitionBarriers();
     /* ---------------------------------- Automatic ResourceBarrier Management ----------------------------------------------- */
 
