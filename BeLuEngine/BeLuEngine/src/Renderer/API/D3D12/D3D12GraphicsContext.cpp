@@ -228,7 +228,7 @@ void D3D12GraphicsContext::ResourceBarrier(IGraphicsTexture* graphicsTexture, D3
 	D3D12LocalStateTracker* localStateTracker = m_GlobalToLocalMap[globalStateTracker];
 	if (localStateTracker == nullptr)
 	{
-		D3D12LocalStateTracker* localStateTracker = new D3D12LocalStateTracker(this, globalStateTracker, resource, d3d12Texture->m_NumMipLevels);
+		localStateTracker = new D3D12LocalStateTracker(this, globalStateTracker, resource, d3d12Texture->m_NumMipLevels);
 		m_GlobalToLocalMap[globalStateTracker] = localStateTracker;
 	}
 
@@ -253,7 +253,7 @@ void D3D12GraphicsContext::ResourceBarrier(IGraphicsBuffer* graphicsBuffer, D3D1
 	D3D12LocalStateTracker* localStateTracker = m_GlobalToLocalMap[globalStateTracker];
 	if (localStateTracker == nullptr)
 	{
-		D3D12LocalStateTracker* localStateTracker = new D3D12LocalStateTracker(this, globalStateTracker, resource, 1);
+		localStateTracker = new D3D12LocalStateTracker(this, globalStateTracker, resource, 1);
 		m_GlobalToLocalMap[globalStateTracker] = localStateTracker;
 	}
 
@@ -601,9 +601,13 @@ void D3D12GraphicsContext::SetRayTracingPipelineState(IRayTracingPipelineState* 
 	m_pCommandList->SetPipelineState1(d3d12rtState->m_pRayTracingStateObject);
 }
 
-void D3D12GraphicsContext::resolvePendingTransitionBarriers()
+bool D3D12GraphicsContext::resolvePendingTransitionBarriers()
 {
 	// This function has to be called on mainThread
+
+	unsigned int maxNumResourceBarriers = m_PendingResourceBarriers.size();
+	if (maxNumResourceBarriers == 0)
+		return false;
 
 	D3D12GraphicsManager* graphicsManager = D3D12GraphicsManager::GetInstance();
 	unsigned int index = graphicsManager->GetCommandInterfaceIndex();
@@ -612,34 +616,50 @@ void D3D12GraphicsContext::resolvePendingTransitionBarriers()
 	D3D12GraphicsManager::CHECK_HRESULT(m_pTransitionCommandAllocators[index]->Reset());
 	D3D12GraphicsManager::CHECK_HRESULT(m_pTransitionCommandList->Reset(m_pTransitionCommandAllocators[index], NULL));
 
+	// Batch the Barriers and record the command
 	{
-		unsigned int numResourceBarrers = m_PendingResourceBarriers.size();
 		std::vector<D3D12_RESOURCE_BARRIER> resourceBarriers;
-		resourceBarriers.reserve(numResourceBarrers);
+		resourceBarriers.reserve(maxNumResourceBarriers);
+
+		unsigned int actualNumResourceBarriers = 0;
 
 		// Batch resourceBarriers
-		for (const PendingTransitionBarrier& pendingBarrier : m_PendingResourceBarriers)
+		for (PendingTransitionBarrier& pendingBarrier : m_PendingResourceBarriers)
 		{
 			// Find the globalState of this localResource so we can know what state it was before
 			D3D12GlobalStateTracker* globalStateTracker = pendingBarrier.localStateTracker->GetGlobalStateTracker();
 
 			unsigned int subResource = pendingBarrier.subResource;
+			D3D12_RESOURCE_STATES beforeState = globalStateTracker->GetState(subResource);
 
+			// Do nothing if we're already in the desired state
+			if (beforeState == pendingBarrier.afterState)
+				continue;
+
+			// Setup and barrier
 			D3D12_RESOURCE_BARRIER barrier = {};
 			barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 			barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
 			barrier.Transition.pResource	= globalStateTracker->GetNativeResource();
 			barrier.Transition.Subresource	= subResource;
-			barrier.Transition.StateBefore	= globalStateTracker->GetState(subResource);
+			barrier.Transition.StateBefore	= beforeState;
 			barrier.Transition.StateAfter	= pendingBarrier.afterState;
 
+			// Cache it for later submission
 			resourceBarriers.push_back(barrier);
+			actualNumResourceBarriers++;
+
+			// Save the new globalState
+			globalStateTracker->SetState(pendingBarrier.afterState, subResource);
 		}
 
-		// Submit all resourceBarriers in one go
-		m_pTransitionCommandList->ResourceBarrier(numResourceBarrers, resourceBarriers.data());
+		// Submit all resourceBarriers in one go if there are any
+		if(actualNumResourceBarriers > 0)
+			m_pTransitionCommandList->ResourceBarrier(actualNumResourceBarriers, resourceBarriers.data());
 	}
 
 	// End
 	D3D12GraphicsManager::CHECK_HRESULT(m_pTransitionCommandList->Close());
+
+	return true;
 }

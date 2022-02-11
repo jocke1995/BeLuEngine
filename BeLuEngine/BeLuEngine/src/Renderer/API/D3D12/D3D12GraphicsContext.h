@@ -90,7 +90,8 @@ private:
     std::map<D3D12GlobalStateTracker*, D3D12LocalStateTracker*> m_GlobalToLocalMap = {};
 
     // This function has to be called on the mainThread AFTER all renderPasses have been recorded
-    void resolvePendingTransitionBarriers();
+    // Returns false if no transitionBarriers were needed, in that case, we can skip to execute it
+    bool resolvePendingTransitionBarriers();
     /* ---------------------------------- Automatic ResourceBarrier Management ----------------------------------------------- */
 
 	// Useful for debugging

@@ -49,7 +49,7 @@ void TonemapComputeTask::Execute()
 
 		m_pGraphicsContext->UAVBarrier(finalColorTexture);
 
-		m_pGraphicsContext->ResourceBarrier(finalColorTexture, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_RENDER_TARGET);
+		m_pGraphicsContext->ResourceBarrier(finalColorTexture, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	}
 	m_pGraphicsContext->End();
 }

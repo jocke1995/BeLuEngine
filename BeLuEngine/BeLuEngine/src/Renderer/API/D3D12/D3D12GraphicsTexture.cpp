@@ -109,6 +109,9 @@ bool D3D12GraphicsTexture::LoadTextureDDS(E_TEXTURE2D_TYPE textureType, const st
 
 	CoInitialize(NULL);
 
+	m_GlobalStateTracker = new D3D12GlobalStateTracker(m_pResource, m_NumMipLevels);
+	m_GlobalStateTracker->SetState(D3D12_RESOURCE_STATE_COMMON);
+
 	return true;
 }
 
@@ -312,4 +315,10 @@ unsigned __int64 D3D12GraphicsTexture::GetSize() const
 {
 	BL_ASSERT(m_Size);
 	return m_Size;
+}
+
+D3D12GlobalStateTracker* D3D12GraphicsTexture::GetGlobalStateTracker() const
+{
+	BL_ASSERT(m_GlobalStateTracker);
+	return m_GlobalStateTracker;
 }

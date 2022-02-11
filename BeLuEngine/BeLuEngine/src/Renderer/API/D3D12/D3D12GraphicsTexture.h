@@ -22,6 +22,7 @@ public:
 
 	virtual unsigned __int64 GetSize() const override;
 
+	D3D12GlobalStateTracker* GetGlobalStateTracker() const;
 	std::vector<D3D12_SUBRESOURCE_DATA>* GetTempSubresources() { return &m_Subresources; }
 private:
 	friend class D3D12GraphicsManager;

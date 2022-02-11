@@ -786,20 +786,28 @@ void D3D12GraphicsManager::End()
 
 void D3D12GraphicsManager::ExecuteGraphicsContexts(const std::vector<IGraphicsContext*>& graphicsContexts, unsigned int numGraphicsContexts)
 {
-	unsigned int commandListsToExecute = numGraphicsContexts * 2;
+	unsigned int maxNumberOfCommandListsToExecute = numGraphicsContexts * 2;
 	std::vector<ID3D12CommandList*> cLists;
-	cLists.reserve(commandListsToExecute);
+	cLists.reserve(maxNumberOfCommandListsToExecute);
 	
+	unsigned int actualNumCommandListsToExecute = 0;
 	for (IGraphicsContext* graphicsContext : graphicsContexts)
 	{
 		// Resolve transitionBarriers
-		static_cast<D3D12GraphicsContext*>(graphicsContext)->resolvePendingTransitionBarriers();
+		bool needTransitionCList = static_cast<D3D12GraphicsContext*>(graphicsContext)->resolvePendingTransitionBarriers();
 
-		cLists.push_back(static_cast<D3D12GraphicsContext*>(graphicsContext)->m_pTransitionCommandList);
+		// Only include this commandList if there are any barriers to transition
+		if (needTransitionCList)
+		{
+			cLists.push_back(static_cast<D3D12GraphicsContext*>(graphicsContext)->m_pTransitionCommandList);
+			actualNumCommandListsToExecute++;
+		}
+
 		cLists.push_back(static_cast<D3D12GraphicsContext*>(graphicsContext)->m_pCommandList);
+		actualNumCommandListsToExecute++;
 	}
 
-	m_pGraphicsCommandQueue->ExecuteCommandLists(commandListsToExecute, cLists.data());
+	m_pGraphicsCommandQueue->ExecuteCommandLists(actualNumCommandListsToExecute, cLists.data());
 }
 
 void D3D12GraphicsManager::SyncAndPresent(IGraphicsTexture* finalColorTexture)
@@ -824,6 +832,8 @@ void D3D12GraphicsManager::SyncAndPresent(IGraphicsTexture* finalColorTexture)
 		ScopedPixEvent(CopyToSwapchain, m_pGraphicsContext);
 
 		D3D12GraphicsTexture* d3d12FinalColorTexture = static_cast<D3D12GraphicsTexture*>(finalColorTexture);
+		D3D12GlobalStateTracker* globalStateTracker = d3d12FinalColorTexture->GetGlobalStateTracker();
+		D3D12_RESOURCE_STATES finalColorTextureResourceStateBefore = globalStateTracker->GetState(0);
 
 		D3D12_TEXTURE_COPY_LOCATION copyDst = {};
 		copyDst.pResource = m_SwapchainResources[m_CommandInterfaceIndex];
@@ -835,13 +845,13 @@ void D3D12GraphicsManager::SyncAndPresent(IGraphicsTexture* finalColorTexture)
 		copySrc.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
 		copySrc.SubresourceIndex = 0;
 
-		TransferResourceState(d3d12FinalColorTexture->m_pResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COPY_SOURCE);
+		TransferResourceState(d3d12FinalColorTexture->m_pResource, finalColorTextureResourceStateBefore, D3D12_RESOURCE_STATE_COPY_SOURCE);
 		TransferResourceState(m_SwapchainResources[m_CommandInterfaceIndex], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
 
 		m_pGraphicsContext->m_pCommandList->CopyTextureRegion(&copyDst, 0, 0, 0, &copySrc, nullptr);
 
 		TransferResourceState(m_SwapchainResources[m_CommandInterfaceIndex], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PRESENT);
-		TransferResourceState(d3d12FinalColorTexture->m_pResource, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+		TransferResourceState(d3d12FinalColorTexture->m_pResource, D3D12_RESOURCE_STATE_COPY_SOURCE, finalColorTextureResourceStateBefore);
 	}
 	m_pGraphicsContext->End();
 
@@ -903,6 +913,7 @@ void D3D12GraphicsManager::AddIUknownForDefferedDeletion(IUnknown* object)
 
 DynamicDataParams D3D12GraphicsManager::SetDynamicData(unsigned int size, const void* data)
 {
+	unsigned int alignedSize = (size + 15) & ~15;
 	// Makes this function threadsafe
 	long offset = InterlockedAdd(&m_pIntermediateUploadHeapAtomicCurrentOffset, size);
 

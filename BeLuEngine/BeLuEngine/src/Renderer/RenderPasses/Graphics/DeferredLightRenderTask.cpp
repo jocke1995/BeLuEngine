@@ -58,7 +58,7 @@ void DeferredLightRenderTask::Execute()
 		m_pGraphicsContext->SetConstantBuffer(RootParam_CBV_B4, m_GraphicBuffers["cbPerScene"], false);
 		m_pGraphicsContext->SetShaderResourceView(RootParam_SRV_T0, m_GraphicBuffers["rawBufferLights"], false);
 
-		m_pGraphicsContext->ResourceBarrier(m_GraphicTextures["mainDepthStencilBuffer"], D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		m_pGraphicsContext->ResourceBarrier(m_GraphicTextures["mainDepthStencilBuffer"], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 		// Draw a fullscreen quad 
 		SlotInfo slotInfo = {};
@@ -69,7 +69,7 @@ void DeferredLightRenderTask::Execute()
 
 		m_pGraphicsContext->DrawIndexedInstanced(m_pFullScreenQuadMesh->GetNumIndices(), 1, 0, 0, 0);
 
-		m_pGraphicsContext->ResourceBarrier(m_GraphicTextures["mainDepthStencilBuffer"], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+		m_pGraphicsContext->ResourceBarrier(m_GraphicTextures["mainDepthStencilBuffer"], D3D12_RESOURCE_STATE_DEPTH_WRITE);
 	}
 	m_pGraphicsContext->End();
 }

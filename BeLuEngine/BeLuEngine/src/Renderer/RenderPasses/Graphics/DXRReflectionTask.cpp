@@ -89,8 +89,8 @@ void DXRReflectionTask::Execute()
 		m_pGraphicsContext->SetShaderResourceView(RootParam_SRV_T0, m_GraphicBuffers["rawBufferLights"], true);
 
 		// Transitions
-		m_pGraphicsContext->ResourceBarrier(depthTexture, D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-		m_pGraphicsContext->ResourceBarrier(finalColorBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+		m_pGraphicsContext->ResourceBarrier(depthTexture, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+		m_pGraphicsContext->ResourceBarrier(finalColorBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
 		// Bind the raytracing pipeline
 		m_pGraphicsContext->SetRayTracingPipelineState(m_pRayTracingState);
@@ -106,8 +106,8 @@ void DXRReflectionTask::Execute()
 		m_pGraphicsContext->UAVBarrier(finalColorBuffer);
 
 		// Transitions
-		m_pGraphicsContext->ResourceBarrier(depthTexture, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
-		m_pGraphicsContext->ResourceBarrier(finalColorBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_RENDER_TARGET);
+		m_pGraphicsContext->ResourceBarrier(depthTexture, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+		m_pGraphicsContext->ResourceBarrier(finalColorBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	}
 	m_pGraphicsContext->End();
 }

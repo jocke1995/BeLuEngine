@@ -96,7 +96,9 @@ void D3D12LocalStateTracker::ResolveLocalResourceState(D3D12_RESOURCE_STATES des
 		// If we crash here, increase the maxTransitionBarriers integer
 		BL_ASSERT(subResource < maxResourceBarriers);
 
-		TODO("Do nothing if we're already in the correct state");
+		// Do nothing if we're already in the desired state
+		if (m_ResourceStates[subResource] == desiredState)
+			return;
 
 		// If we are in unknown state, we add this barrier to be resolved later
 		if (m_ResourceStates[subResource] == (D3D12_RESOURCE_STATES)-1)
@@ -113,6 +115,7 @@ void D3D12LocalStateTracker::ResolveLocalResourceState(D3D12_RESOURCE_STATES des
 		{
 			// We know the beforeState, so we can batch it for later recording in this function
 			resourceBarriers[actualNumberOfTransitionBarriers].Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+			resourceBarriers[actualNumberOfTransitionBarriers].Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
 			resourceBarriers[actualNumberOfTransitionBarriers].Transition.pResource = m_pResource;
 			resourceBarriers[actualNumberOfTransitionBarriers].Transition.Subresource = subResource;
 			resourceBarriers[actualNumberOfTransitionBarriers].Transition.StateBefore = m_ResourceStates[subResource];
@@ -137,5 +140,10 @@ void D3D12LocalStateTracker::ResolveLocalResourceState(D3D12_RESOURCE_STATES des
 		manageTransition(subResource);
 	}
 
-	m_pOwner->m_pCommandList->ResourceBarrier(actualNumberOfTransitionBarriers, resourceBarriers);
+	// Do immediate batched transitions if we know the before state of this subResource
+	// This can happen the second (and forth) time a subResource is accessed in this context
+	if (actualNumberOfTransitionBarriers > 0)
+	{
+		m_pOwner->m_pCommandList->ResourceBarrier(actualNumberOfTransitionBarriers, resourceBarriers);
+	}
 }
