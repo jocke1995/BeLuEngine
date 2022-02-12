@@ -80,6 +80,9 @@ Renderer::Renderer()
 	{
 		BL_LOG_CRITICAL("Failed to create handle to process\n");
 	}
+
+	// Subscribe to events
+	EventBus::GetInstance().Subscribe(this, &Renderer::advanceTextureToVisualize);
 }
 
 Renderer& Renderer::GetInstance()
@@ -90,6 +93,8 @@ Renderer& Renderer::GetInstance()
 
 Renderer::~Renderer()
 {
+	// Unsubscrive to events
+	EventBus::GetInstance().Unsubscribe(this, &Renderer::advanceTextureToVisualize);
 }
 
 void Renderer::deleteRenderer()
@@ -139,6 +144,7 @@ void Renderer::InitD3D12(HWND hwnd, unsigned int width, unsigned int height, HIN
 		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget | F_TEXTURE_USAGE::UnorderedAccess,
 		L"FinalColorbuffer",
 		D3D12_RESOURCE_STATE_RENDER_TARGET);
+	m_CurrentTextureToVisualize = m_GraphicsResources.finalColorBuffer;
 
 	// GBufferAlbedo
 	m_GraphicsResources.gBufferAlbedo = IGraphicsTexture::Create();
@@ -430,7 +436,7 @@ void Renderer::ExecuteMT()
 	graphicsManager->ExecuteGraphicsContexts(m_ImGuiGraphicsContext, m_ImGuiGraphicsContext.size());
 
 	/*------------------- Present -------------------*/
-	graphicsManager->SyncAndPresent(m_GraphicsResources.finalColorBuffer);
+	graphicsManager->SyncAndPresent(m_CurrentTextureToVisualize);
 	
 	// Check to end ImGui if its active
 	ImGuiHandler::GetInstance().EndFrame();
@@ -514,7 +520,7 @@ void Renderer::ExecuteST()
 	graphicsManager->ExecuteGraphicsContexts(m_ImGuiGraphicsContext, m_ImGuiGraphicsContext.size());
 
 	/*------------------- Present -------------------*/
-	graphicsManager->SyncAndPresent(m_GraphicsResources.finalColorBuffer);
+	graphicsManager->SyncAndPresent(m_CurrentTextureToVisualize);
 
 	// Check to end ImGui if its active
 	ImGuiHandler::GetInstance().EndFrame();
@@ -1052,4 +1058,31 @@ void Renderer::submitCbPerSceneData(ITopLevelAS* pTLAS)
 	BL_ASSERT(codt);
 	BL_ASSERT(m_GraphicsResources.cbPerScene && m_pCbPerSceneData);
 	codt->SubmitBuffer(m_GraphicsResources.cbPerScene, m_pCbPerSceneData);
+}
+
+void Renderer::advanceTextureToVisualize(VisualizeTexture* event)
+{
+	static unsigned int moduloCounter = 0;
+
+	switch (moduloCounter)
+	{
+		case 0:
+			m_CurrentTextureToVisualize = m_GraphicsResources.gBufferAlbedo;
+			break;
+		case 1:
+			m_CurrentTextureToVisualize = m_GraphicsResources.gBufferNormal;
+			break;
+		case 2:
+			m_CurrentTextureToVisualize = m_GraphicsResources.gBufferMaterialProperties;
+			break;
+		case 3:
+			m_CurrentTextureToVisualize = m_GraphicsResources.gBufferEmissive;
+			break;
+		case 4:
+			m_CurrentTextureToVisualize = m_GraphicsResources.finalColorBuffer;
+			break;
+	}
+
+	moduloCounter++;
+	moduloCounter %= 5;
 }

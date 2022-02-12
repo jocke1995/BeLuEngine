@@ -49,7 +49,7 @@ struct RenderComponent;
 
 // Events
 struct WindowChange;
-struct WindowSettingChange;
+struct VisualizeTexture;
 
 class Renderer
 {
@@ -162,6 +162,11 @@ private:
 
 	unsigned int m_CurrentRenderingWidth = 0;
 	unsigned int m_CurrentRenderingHeight = 0;
+
+	/* ------------------------------ Events ------------------------------ */
+	// Advances through the buffers to visualize on pressing g-key
+	void advanceTextureToVisualize(VisualizeTexture* event);
+	IGraphicsTexture* m_CurrentTextureToVisualize = nullptr;
 };
 
 #endif

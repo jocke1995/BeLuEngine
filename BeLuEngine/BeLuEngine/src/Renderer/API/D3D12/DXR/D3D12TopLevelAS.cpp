@@ -78,7 +78,7 @@ bool D3D12TopLevelAS::reAllocateInstanceDescBuffers(unsigned int newSizeInBytes)
 	BL_ASSERT(newSizeInBytes);
 
 	// Making it larger then it has to, to avoid allocating over and over again if we just add 1 object at a time.
-	unsigned int actualNewSizeInBytes = newSizeInBytes;
+	unsigned int actualNewSizeInBytes = newSizeInBytes * 2;
 
 	D3D12GraphicsManager* graphicsManager = D3D12GraphicsManager::GetInstance();
 	ID3D12Device5* device5 = graphicsManager->GetDevice();

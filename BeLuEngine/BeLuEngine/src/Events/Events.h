@@ -54,4 +54,9 @@ struct WindowChange : public Event
 	WindowChange() {};
 };
 
+struct VisualizeTexture : public Event
+{
+	VisualizeTexture() {};
+};
+
 #endif

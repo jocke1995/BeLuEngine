@@ -16,7 +16,7 @@ public:
 	template<class T, class EventType>
 	void Subscribe(T* classInstance, void (T::* memberFunction)(EventType*));
 
-	//Singleton of the eventbus
+	// Singleton of the eventbus
 	static EventBus& GetInstance();
 
 	template<class T, class EventType>
@@ -59,10 +59,10 @@ inline void EventBus::Publish(EventType* event)
 template<class T, class EventType>
 inline void EventBus::Subscribe(T* classInstance, void(T::* memberFunction)(EventType*))
 {
-	//Get all subscribed handlers associated with the current event
+	// Get all subscribed handlers associated with the current event
 	HandlerList* handlers = m_Subscribers[typeid(EventType)];
 
-	//If there are no handlers for the current EventType, create one
+	// If there are no handlers for the current EventType, create one
 	if (handlers == nullptr)
 	{
 		handlers = new HandlerList();
@@ -71,7 +71,7 @@ inline void EventBus::Subscribe(T* classInstance, void(T::* memberFunction)(Even
 
 	HandlerFunctionBase* temp = new MemberFunctionHandler<T, EventType>(classInstance, memberFunction);
 	temp->SetId(getID<T, EventType>(classInstance));
-	//Push function into list of handlers
+	// Push function into list of handlers
 	handlers->push_back(temp);
 }
 

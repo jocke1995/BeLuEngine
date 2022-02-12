@@ -63,7 +63,6 @@ void Input::SetKeyState(SCAN_CODES key, bool pressed)
 			EventBus::GetInstance().Publish(&MovementInput(key, false));
 		}
 	}
-#ifdef DEBUG
 	else if (key == SCAN_CODES::ALT)
 	{
 		static bool enabled = true;
@@ -88,7 +87,13 @@ void Input::SetKeyState(SCAN_CODES key, bool pressed)
 			}
 		}
 	}
-#endif
+	else if (key == SCAN_CODES::G)
+	{
+		if (justPressed == true)
+		{
+			EventBus::GetInstance().Publish(&VisualizeTexture());
+		}
+	}
 }
 
 void Input::SetMouseButtonState(MOUSE_BUTTON button, bool pressed)
