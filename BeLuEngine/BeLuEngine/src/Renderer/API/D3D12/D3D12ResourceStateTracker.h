@@ -32,6 +32,8 @@ public:
 	virtual ~D3D12LocalStateTracker();
 
 	D3D12GlobalStateTracker* GetGlobalStateTracker() const;
+	D3D12_RESOURCE_STATES GetState(unsigned int subResource);
+
 	void ResolveLocalResourceState(D3D12_RESOURCE_STATES desiredState, unsigned int subResource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 
 private:

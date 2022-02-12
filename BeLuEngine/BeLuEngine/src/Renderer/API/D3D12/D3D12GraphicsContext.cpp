@@ -626,9 +626,11 @@ bool D3D12GraphicsContext::resolvePendingTransitionBarriers()
 		// Batch resourceBarriers
 		for (PendingTransitionBarrier& pendingBarrier : m_PendingResourceBarriers)
 		{
-			// Find the globalState of this localResource so we can know what state it was before
-			D3D12GlobalStateTracker* globalStateTracker = pendingBarrier.localStateTracker->GetGlobalStateTracker();
+			// Get global and local state trackers
+			D3D12LocalStateTracker* localStateTracker = pendingBarrier.localStateTracker;
+			D3D12GlobalStateTracker* globalStateTracker = localStateTracker->GetGlobalStateTracker();
 
+			// Find the globalState of this localResource so we can know what state it was before
 			unsigned int subResource = pendingBarrier.subResource;
 			D3D12_RESOURCE_STATES beforeState = globalStateTracker->GetState(subResource);
 
@@ -649,13 +651,21 @@ bool D3D12GraphicsContext::resolvePendingTransitionBarriers()
 			resourceBarriers.push_back(barrier);
 			actualNumResourceBarriers++;
 
-			// Save the new globalState
-			globalStateTracker->SetState(pendingBarrier.afterState, subResource);
+			// Update the globalState from the localState so the next context knows what the new globalState is
+			globalStateTracker->SetState(localStateTracker->GetState(subResource), subResource);
 		}
 
 		// Submit all resourceBarriers in one go if there are any
 		if(actualNumResourceBarriers > 0)
 			m_pTransitionCommandList->ResourceBarrier(actualNumResourceBarriers, resourceBarriers.data());
+
+		// Cleanup for the next frame
+		for (auto& it : m_GlobalToLocalMap)
+		{
+			BL_SAFE_DELETE(it.second);
+		}
+		m_GlobalToLocalMap.clear();
+		m_PendingResourceBarriers.clear();
 	}
 
 	// End

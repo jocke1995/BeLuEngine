@@ -78,7 +78,6 @@ private:
 	ID3D12GraphicsCommandList5* m_pCommandList{ nullptr };
 	ID3D12CommandAllocator* m_pCommandAllocators[NUM_SWAP_BUFFERS]{ nullptr };
 
-
     /* ---------------------------------- Automatic ResourceBarrier Management ----------------------------------------------- */
     ID3D12GraphicsCommandList5* m_pTransitionCommandList{ nullptr };
     ID3D12CommandAllocator* m_pTransitionCommandAllocators[NUM_SWAP_BUFFERS]{ nullptr };
@@ -87,7 +86,7 @@ private:
     std::vector<PendingTransitionBarrier> m_PendingResourceBarriers = {};
 
     // For easy mapping between the unique globalStateTracker and the per-context localStateTracker
-    std::map<D3D12GlobalStateTracker*, D3D12LocalStateTracker*> m_GlobalToLocalMap = {};
+    std::unordered_map<D3D12GlobalStateTracker*, D3D12LocalStateTracker*> m_GlobalToLocalMap = {};
 
     // This function has to be called on the mainThread AFTER all renderPasses have been recorded
     // Returns false if no transitionBarriers were needed, in that case, we can skip to execute it

@@ -800,14 +800,20 @@ void D3D12GraphicsManager::ExecuteGraphicsContexts(const std::vector<IGraphicsCo
 		if (needTransitionCList)
 		{
 			cLists.push_back(static_cast<D3D12GraphicsContext*>(graphicsContext)->m_pTransitionCommandList);
+
+			ID3D12CommandList* cLists1[] = { static_cast<D3D12GraphicsContext*>(graphicsContext)->m_pTransitionCommandList };
+			m_pGraphicsCommandQueue->ExecuteCommandLists(1, cLists1);
 			actualNumCommandListsToExecute++;
 		}
 
 		cLists.push_back(static_cast<D3D12GraphicsContext*>(graphicsContext)->m_pCommandList);
 		actualNumCommandListsToExecute++;
+
+		ID3D12CommandList* cLists2[] = { static_cast<D3D12GraphicsContext*>(graphicsContext)->m_pCommandList };
+		m_pGraphicsCommandQueue->ExecuteCommandLists(1, cLists2);
 	}
 
-	m_pGraphicsCommandQueue->ExecuteCommandLists(actualNumCommandListsToExecute, cLists.data());
+	//m_pGraphicsCommandQueue->ExecuteCommandLists(actualNumCommandListsToExecute, cLists.data());
 }
 
 void D3D12GraphicsManager::SyncAndPresent(IGraphicsTexture* finalColorTexture)

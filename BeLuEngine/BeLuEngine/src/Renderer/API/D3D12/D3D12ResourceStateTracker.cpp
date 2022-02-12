@@ -80,6 +80,12 @@ D3D12GlobalStateTracker* D3D12LocalStateTracker::GetGlobalStateTracker() const
 	return m_pGlobalStateTracker;
 }
 
+D3D12_RESOURCE_STATES D3D12LocalStateTracker::GetState(unsigned int subResource)
+{
+	BL_ASSERT(subResource >= 0);
+	return m_ResourceStates[subResource];
+}
+
 void D3D12LocalStateTracker::ResolveLocalResourceState(D3D12_RESOURCE_STATES desiredState, unsigned int subResource)
 {
 	unsigned int numSubResources = m_ResourceStates.size();
