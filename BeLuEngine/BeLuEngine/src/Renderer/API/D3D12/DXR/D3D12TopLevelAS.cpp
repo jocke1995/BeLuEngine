@@ -105,7 +105,6 @@ void D3D12TopLevelAS::MapResultBuffer()
 
 	unsigned int numInstances = m_Instances.size();
 
-	TODO("Don't do this on the heap every frame.. Create a stack allocator!");
 	unsigned int maxSizeInBytes = numInstances * sizeof(D3D12_RAYTRACING_INSTANCE_DESC);
 	unsigned int alignedMaxSizeInBytes = (maxSizeInBytes + 255) & ~255; // Align with 256 bytes
 
@@ -115,6 +114,7 @@ void D3D12TopLevelAS::MapResultBuffer()
 
 	TODO("Don't do this on the heap every frame.. Create a stack allocator!");
 	unsigned char* dataToMap = new unsigned char[alignedMaxSizeInBytes];
+	memset(dataToMap, 0, alignedMaxSizeInBytes);
 	D3D12_RAYTRACING_INSTANCE_DESC* instanceDescs = reinterpret_cast<D3D12_RAYTRACING_INSTANCE_DESC*>(dataToMap);
 
 	// Create the description for each instance
