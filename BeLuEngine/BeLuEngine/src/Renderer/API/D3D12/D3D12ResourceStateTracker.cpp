@@ -97,22 +97,22 @@ void D3D12LocalStateTracker::ResolveLocalResourceState(D3D12_RESOURCE_STATES des
 
 	unsigned int actualNumberOfTransitionBarriers = 0;
 
-	auto manageTransition = [&](unsigned int subResource)
+	auto manageTransition = [&](unsigned int subResourceIndex)
 	{
 		// If we crash here, increase the maxTransitionBarriers integer
-		BL_ASSERT(subResource < maxResourceBarriers);
+		BL_ASSERT(subResourceIndex < maxResourceBarriers);
 
 		// Do nothing if we're already in the desired state
-		if (m_ResourceStates[subResource] == desiredState)
+		if (m_ResourceStates[subResourceIndex] == desiredState)
 			return;
 
 		// If we are in unknown state, we add this barrier to be resolved later
-		if (m_ResourceStates[subResource] == (D3D12_RESOURCE_STATES)-1)
+		if (m_ResourceStates[subResourceIndex] == (D3D12_RESOURCE_STATES)-1)
 		{
 			// Add to be resolved later
 			PendingTransitionBarrier pendingBarrier = {};
 			pendingBarrier.localStateTracker = this;
-			pendingBarrier.subResource = subResource;
+			pendingBarrier.subResource = subResourceIndex;
 			pendingBarrier.afterState = desiredState;
 
 			m_pOwner->m_PendingResourceBarriers.push_back(pendingBarrier);
@@ -123,22 +123,62 @@ void D3D12LocalStateTracker::ResolveLocalResourceState(D3D12_RESOURCE_STATES des
 			resourceBarriers[actualNumberOfTransitionBarriers].Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 			resourceBarriers[actualNumberOfTransitionBarriers].Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
 			resourceBarriers[actualNumberOfTransitionBarriers].Transition.pResource = m_pResource;
-			resourceBarriers[actualNumberOfTransitionBarriers].Transition.Subresource = subResource;
-			resourceBarriers[actualNumberOfTransitionBarriers].Transition.StateBefore = m_ResourceStates[subResource];
+			resourceBarriers[actualNumberOfTransitionBarriers].Transition.Subresource = subResourceIndex;
+			resourceBarriers[actualNumberOfTransitionBarriers].Transition.StateBefore = m_ResourceStates[subResourceIndex];
 			resourceBarriers[actualNumberOfTransitionBarriers].Transition.StateAfter = desiredState;
 
 			actualNumberOfTransitionBarriers++;
 		}
 
 		// Update current state if we use this resource again on the same context
-		m_ResourceStates[subResource] = desiredState;
+		m_ResourceStates[subResourceIndex] = desiredState;
 	};
 
 	if (subResource == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES)
 	{
+		// Check if the subresources are identical, if they are, they might be able to be batched
+		m_SubResourcesIdentical = true;
 		for (unsigned int i = 0; i < numSubResources; i++)
 		{
-			manageTransition(i);
+			// Can't batch them anyways if we don't know the beforeState yet.
+			if (m_ResourceStates[i] == (D3D12_RESOURCE_STATES)-1)
+			{
+				m_SubResourcesIdentical = false;
+				break;
+			}
+			else
+			{
+				if (m_ResourceStates[0] != m_ResourceStates[i])
+				{
+					// Found a missmatch, all subresources are not identical
+					m_SubResourcesIdentical = false;
+					break;
+				}
+			}
+		}
+
+		// Check if we can do them all in one batch
+		if (m_SubResourcesIdentical == true)
+		{
+			// Do nothing if we're already in the desired state
+			if (m_ResourceStates[0] == desiredState)
+				return;
+
+			resourceBarriers[actualNumberOfTransitionBarriers].Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+			resourceBarriers[actualNumberOfTransitionBarriers].Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+			resourceBarriers[actualNumberOfTransitionBarriers].Transition.pResource = m_pResource;
+			resourceBarriers[actualNumberOfTransitionBarriers].Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+			resourceBarriers[actualNumberOfTransitionBarriers].Transition.StateBefore = m_ResourceStates[0];
+			resourceBarriers[actualNumberOfTransitionBarriers].Transition.StateAfter = desiredState;
+
+			actualNumberOfTransitionBarriers++;
+		}
+		else
+		{
+			for (unsigned int i = 0; i < numSubResources; i++)
+			{
+				manageTransition(i);
+			}
 		}
 	}
 	else

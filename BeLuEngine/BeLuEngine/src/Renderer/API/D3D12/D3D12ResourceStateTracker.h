@@ -38,6 +38,7 @@ public:
 
 private:
 	std::vector<D3D12_RESOURCE_STATES> m_ResourceStates = {};
+	bool m_SubResourcesIdentical = false;
 
 	ID3D12Resource1* m_pResource = nullptr;
 
