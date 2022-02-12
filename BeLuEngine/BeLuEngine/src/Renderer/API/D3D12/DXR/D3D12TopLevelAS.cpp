@@ -18,6 +18,11 @@ D3D12TopLevelAS::D3D12TopLevelAS()
 
 D3D12TopLevelAS::~D3D12TopLevelAS()
 {
+	for (unsigned int i = 0; i < NUM_SWAP_BUFFERS; i++)
+	{
+		BL_SAFE_DELETE(m_pInstanceDescBuffers[i]);
+	}
+
 	BL_SAFE_DELETE(m_pScratchBuffer);
 	BL_SAFE_DELETE(m_pResultBuffer);
 }
@@ -68,6 +73,30 @@ IGraphicsBuffer* D3D12TopLevelAS::GetRayTracingResultBuffer() const
 	return m_pResultBuffer;
 }
 
+bool D3D12TopLevelAS::reAllocateInstanceDescBuffers(unsigned int newSizeInBytes)
+{
+	BL_ASSERT(newSizeInBytes);
+
+	// Making it larger then it has to, to avoid allocating over and over again if we just add 1 object at a time.
+	unsigned int actualNewSizeInBytes = newSizeInBytes * 2;
+
+	D3D12GraphicsManager* graphicsManager = D3D12GraphicsManager::GetInstance();
+	ID3D12Device5* device5 = graphicsManager->GetDevice();
+
+	for (int i = 0; i < NUM_SWAP_BUFFERS; i++)
+	{
+		// Delete the old one first
+		BL_SAFE_DELETE(m_pInstanceDescBuffers[i]);
+
+		std::wstring bufferName = L"TLAS_InstanceDescBuffer_UploadHeap" + std::to_wstring(i);
+		m_pInstanceDescBuffers[i] = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::CPUBuffer, actualNewSizeInBytes, 1, DXGI_FORMAT_UNKNOWN, bufferName);
+	}
+
+	m_CurrentMaxInstanceDescSize = actualNewSizeInBytes;
+
+	return true;
+}
+
 void D3D12TopLevelAS::MapResultBuffer()
 {
 	BL_ASSERT(m_pResultBuffer && m_pScratchBuffer);
@@ -78,6 +107,11 @@ void D3D12TopLevelAS::MapResultBuffer()
 
 	TODO("Don't do this on the heap every frame.. Create a stack allocator!");
 	unsigned int sizeInBytes = numInstances * sizeof(D3D12_RAYTRACING_INSTANCE_DESC);
+
+	// Check to see if we need new buffers for the sbt
+	if (m_CurrentMaxInstanceDescSize < sizeInBytes)
+		reAllocateInstanceDescBuffers(sizeInBytes);
+
 	D3D12_RAYTRACING_INSTANCE_DESC* instanceDescs = new D3D12_RAYTRACING_INSTANCE_DESC[numInstances];
 
 	// Create the description for each instance
@@ -99,14 +133,18 @@ void D3D12TopLevelAS::MapResultBuffer()
 		instanceDescs[i].InstanceMask |= INSTANCE_MASK_ENTIRE_SCENE;
 	}
 
-	DynamicDataParams dynamicDataParams = manager->SetDynamicData(sizeInBytes, instanceDescs);
+	// Set the data into the CPU Buffer
+	unsigned int backBufferIndex = D3D12GraphicsManager::GetInstance()->GetCommandInterfaceIndex();
+	m_pInstanceDescBuffers[backBufferIndex]->SetData(sizeInBytes, instanceDescs);
+
+	// Now it's safe to delete the data since it's mapped in the resource
 	delete[] instanceDescs;
 
 	// Create a descriptor of the requested builder work, to generate a TLAS
 	m_BuildDesc = {};
 	m_BuildDesc.Inputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
 	m_BuildDesc.Inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
-	m_BuildDesc.Inputs.InstanceDescs = dynamicDataParams.uploadResource->GetGPUVirtualAddress() + dynamicDataParams.offsetFromStart;
+	m_BuildDesc.Inputs.InstanceDescs = static_cast<D3D12GraphicsBuffer*>(m_pInstanceDescBuffers[backBufferIndex])->m_pResource->GetGPUVirtualAddress();
 	m_BuildDesc.Inputs.NumDescs = numInstances;
 	m_BuildDesc.Inputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
 

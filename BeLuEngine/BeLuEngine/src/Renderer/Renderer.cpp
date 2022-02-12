@@ -917,7 +917,7 @@ void Renderer::initGraphicsPasses()
 	reflectionPassDXR->AddGraphicsTexture("mainDSV", m_pMainDepthStencil);	// To transition from depthWrite to depthRead
 	reflectionPassDXR->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);	// Adds reflectionColor to this texture
 
-	// depthprePass
+	// DepthprePass
 	GraphicsPass* depthPrePass = new DepthRenderTask();
 	depthPrePass->AddGraphicsTexture("mainDepthStencilBuffer", m_pMainDepthStencil);
 

@@ -919,7 +919,6 @@ void D3D12GraphicsManager::AddIUknownForDefferedDeletion(IUnknown* object)
 
 DynamicDataParams D3D12GraphicsManager::SetDynamicData(unsigned int size, const void* data)
 {
-	unsigned int alignedSize = (size + 15) & ~15;
 	// Makes this function threadsafe
 	long offset = InterlockedAdd(&m_pIntermediateUploadHeapAtomicCurrentOffset, size);
 

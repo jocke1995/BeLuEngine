@@ -30,6 +30,9 @@ private:
     IGraphicsBuffer* m_pResultBuffer = nullptr;
     unsigned int m_ResultBufferMaxNumberOfInstances = 0;
 
+    bool reAllocateInstanceDescBuffers(unsigned int newSizeInBytes);
+    IGraphicsBuffer* m_pInstanceDescBuffers[NUM_SWAP_BUFFERS] = {};
+    unsigned int m_CurrentMaxInstanceDescSize = 0;
 };
 
 #endif
