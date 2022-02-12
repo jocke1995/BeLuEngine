@@ -79,6 +79,7 @@ enum E_LIGHT_TYPE
 	NUM_LIGHT_TYPES
 };
 
+// Currently not used
 enum class E_SHADOW_RESOLUTION
 {
 	LOW,
@@ -144,7 +145,7 @@ enum class E_CAMERA_TYPE
 // Debug
 #define SINGLE_THREADED_RENDERER false
 #define ENABLE_DEBUGLAYER true
-#define ENABLE_VALIDATIONGLAYER true
+#define ENABLE_VALIDATIONGLAYER false
 #define DEVELOPERMODE_DRAWBOUNDINGBOX false
 #define PROFILE
 //#define USE_NSIGHT_AFTERMATH
