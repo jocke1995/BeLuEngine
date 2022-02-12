@@ -96,27 +96,27 @@ void Renderer::deleteRenderer()
 {
 	Log::Print("----------------------------  Deleting Renderer  ----------------------------------\n");
 
-	// Delete Textures
 	BL_SAFE_DELETE(m_pFullScreenQuad);
-	BL_SAFE_DELETE(m_FinalColorBuffer);
-	BL_SAFE_DELETE(m_GBufferAlbedo);
-	BL_SAFE_DELETE(m_GBufferNormal);
-	BL_SAFE_DELETE(m_GBufferMaterialProperties);
-	BL_SAFE_DELETE(m_GBufferEmissive);
 
-	// Delete Depthbuffer
-	BL_SAFE_DELETE(m_pMainDepthStencil);
-
-	BL_SAFE_DELETE(m_pBloomWrapperTemp);
+	// Common Graphics Resources
+	BL_SAFE_DELETE(m_GraphicsResources.finalColorBuffer);
+	BL_SAFE_DELETE(m_GraphicsResources.gBufferAlbedo);
+	BL_SAFE_DELETE(m_GraphicsResources.gBufferNormal);
+	BL_SAFE_DELETE(m_GraphicsResources.gBufferMaterialProperties);
+	BL_SAFE_DELETE(m_GraphicsResources.gBufferEmissive);
+	BL_SAFE_DELETE(m_GraphicsResources.mainDepthStencil);
 
 	for (GraphicsPass* graphicsPass : m_GraphicsPasses)
 		BL_SAFE_DELETE(graphicsPass);
 
 	BL_SAFE_DELETE(m_pMousePicker);
 
-	BL_SAFE_DELETE(m_pCbPerScene);
+	// Constant Buffers
+	BL_SAFE_DELETE(m_GraphicsResources.cbPerScene);
+	BL_SAFE_DELETE(m_GraphicsResources.cbPerFrame);
+
+	// ConstantBufferDataHolders
 	BL_SAFE_DELETE(m_pCbPerSceneData);
-	BL_SAFE_DELETE(m_pCbPerFrame);
 	BL_SAFE_DELETE(m_pCbPerFrameData);
 
 	BL_SAFE_DELETE(Light::m_pLightsRawBuffer);
@@ -132,8 +132,8 @@ void Renderer::InitD3D12(HWND hwnd, unsigned int width, unsigned int height, HIN
 
 #pragma region RenderTargets
 	// Main color renderTarget (used until the swapchain RT is drawn to)
-	m_FinalColorBuffer = IGraphicsTexture::Create();
-	m_FinalColorBuffer->CreateTexture2D(
+	m_GraphicsResources.finalColorBuffer = IGraphicsTexture::Create();
+	m_GraphicsResources.finalColorBuffer->CreateTexture2D(
 		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
 		DXGI_FORMAT_R16G16B16A16_FLOAT,
 		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget | F_TEXTURE_USAGE::UnorderedAccess,
@@ -141,8 +141,8 @@ void Renderer::InitD3D12(HWND hwnd, unsigned int width, unsigned int height, HIN
 		D3D12_RESOURCE_STATE_RENDER_TARGET);
 
 	// GBufferAlbedo
-	m_GBufferAlbedo = IGraphicsTexture::Create();
-	m_GBufferAlbedo->CreateTexture2D(
+	m_GraphicsResources.gBufferAlbedo = IGraphicsTexture::Create();
+	m_GraphicsResources.gBufferAlbedo->CreateTexture2D(
 		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
 		DXGI_FORMAT_R16G16B16A16_FLOAT,
 		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget,
@@ -150,8 +150,8 @@ void Renderer::InitD3D12(HWND hwnd, unsigned int width, unsigned int height, HIN
 		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 	// Normal
-	m_GBufferNormal = IGraphicsTexture::Create();
-	m_GBufferNormal->CreateTexture2D(
+	m_GraphicsResources.gBufferNormal = IGraphicsTexture::Create();
+	m_GraphicsResources.gBufferNormal->CreateTexture2D(
 		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
 		DXGI_FORMAT_R16G16B16A16_FLOAT,
 		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget,
@@ -159,8 +159,8 @@ void Renderer::InitD3D12(HWND hwnd, unsigned int width, unsigned int height, HIN
 		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 	// Material Properties (Roughness, Metallic, glow..
-	m_GBufferMaterialProperties = IGraphicsTexture::Create();
-	m_GBufferMaterialProperties->CreateTexture2D(
+	m_GraphicsResources.gBufferMaterialProperties = IGraphicsTexture::Create();
+	m_GraphicsResources.gBufferMaterialProperties->CreateTexture2D(
 		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
 		DXGI_FORMAT_R16G16B16A16_FLOAT,
 		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget,
@@ -168,8 +168,8 @@ void Renderer::InitD3D12(HWND hwnd, unsigned int width, unsigned int height, HIN
 		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 	// Emissive Color
-	m_GBufferEmissive = IGraphicsTexture::Create();
-	m_GBufferEmissive->CreateTexture2D(
+	m_GraphicsResources.gBufferEmissive = IGraphicsTexture::Create();
+	m_GraphicsResources.gBufferEmissive->CreateTexture2D(
 		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
 		DXGI_FORMAT_R16G16B16A16_FLOAT,
 		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget,
@@ -177,8 +177,8 @@ void Renderer::InitD3D12(HWND hwnd, unsigned int width, unsigned int height, HIN
 		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 	// DepthBuffer
-	m_pMainDepthStencil = IGraphicsTexture::Create();
-	m_pMainDepthStencil->CreateTexture2D(
+	m_GraphicsResources.mainDepthStencil = IGraphicsTexture::Create();
+	m_GraphicsResources.mainDepthStencil->CreateTexture2D(
 		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
 		DXGI_FORMAT_D24_UNORM_S8_UINT,
 		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::DepthStencil,
@@ -202,11 +202,11 @@ void Renderer::InitD3D12(HWND hwnd, unsigned int width, unsigned int height, HIN
 	BoundingBoxPool::Get();
 
 	// Allocate memory for cbPerScene
-	m_pCbPerScene = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::ConstantBuffer, sizeof(CB_PER_SCENE_STRUCT), 1, DXGI_FORMAT_UNKNOWN, L"CB_PER_SCENE");
+	m_GraphicsResources.cbPerScene = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::ConstantBuffer, sizeof(CB_PER_SCENE_STRUCT), 1, DXGI_FORMAT_UNKNOWN, L"CB_PER_SCENE");
 	m_pCbPerSceneData = new CB_PER_SCENE_STRUCT();
 
 	// Allocate memory for cbPerFrame
-	m_pCbPerFrame = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::ConstantBuffer, sizeof(CB_PER_FRAME_STRUCT), 1, DXGI_FORMAT_UNKNOWN, L"CB_PER_FRAME");
+	m_GraphicsResources.cbPerFrame = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::ConstantBuffer, sizeof(CB_PER_FRAME_STRUCT), 1, DXGI_FORMAT_UNKNOWN, L"CB_PER_FRAME");
 	m_pCbPerFrameData = new CB_PER_FRAME_STRUCT();
 
 	createRawBufferForLights();
@@ -430,7 +430,7 @@ void Renderer::ExecuteMT()
 	graphicsManager->ExecuteGraphicsContexts(m_ImGuiGraphicsContext, m_ImGuiGraphicsContext.size());
 
 	/*------------------- Present -------------------*/
-	graphicsManager->SyncAndPresent(m_FinalColorBuffer);
+	graphicsManager->SyncAndPresent(m_GraphicsResources.finalColorBuffer);
 	
 	// Check to end ImGui if its active
 	ImGuiHandler::GetInstance().EndFrame();
@@ -514,7 +514,7 @@ void Renderer::ExecuteST()
 	graphicsManager->ExecuteGraphicsContexts(m_ImGuiGraphicsContext, m_ImGuiGraphicsContext.size());
 
 	/*------------------- Present -------------------*/
-	graphicsManager->SyncAndPresent(m_FinalColorBuffer);
+	graphicsManager->SyncAndPresent(m_GraphicsResources.finalColorBuffer);
 
 	// Check to end ImGui if its active
 	ImGuiHandler::GetInstance().EndFrame();
@@ -911,60 +911,35 @@ void Renderer::initGraphicsPasses()
 
 	// DXR
 	GraphicsPass* reflectionPassDXR = new DXRReflectionTask(m_CurrentRenderingWidth, m_CurrentRenderingHeight);
-	reflectionPassDXR->AddGraphicsBuffer("cbPerFrame", m_pCbPerFrame);
-	reflectionPassDXR->AddGraphicsBuffer("cbPerScene", m_pCbPerScene);
 	reflectionPassDXR->AddGraphicsBuffer("rawBufferLights", Light::m_pLightsRawBuffer);
-	reflectionPassDXR->AddGraphicsTexture("mainDSV", m_pMainDepthStencil);	// To transition from depthWrite to depthRead
-	reflectionPassDXR->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);	// Adds reflectionColor to this texture
 
-	// DepthprePass
+	// DepthPrePass
 	GraphicsPass* depthPrePass = new DepthRenderTask();
-	depthPrePass->AddGraphicsTexture("mainDepthStencilBuffer", m_pMainDepthStencil);
 
 	// Deferred Geometry Pass
 	GraphicsPass* deferredGeometryPass = new DeferredGeometryRenderTask();
-	deferredGeometryPass->AddGraphicsBuffer("cbPerScene", m_pCbPerScene);
-	deferredGeometryPass->AddGraphicsTexture("gBufferAlbedo", m_GBufferAlbedo);
-	deferredGeometryPass->AddGraphicsTexture("gBufferNormal", m_GBufferNormal);
-	deferredGeometryPass->AddGraphicsTexture("gBufferMaterialProperties", m_GBufferMaterialProperties);
-	deferredGeometryPass->AddGraphicsTexture("gBufferEmissive", m_GBufferEmissive);
-	deferredGeometryPass->AddGraphicsTexture("mainDepthStencilBuffer", m_pMainDepthStencil);
 
 	// Deferred Light Pass
 	GraphicsPass* deferredLightPass = new DeferredLightRenderTask(m_pFullScreenQuad);
-	deferredLightPass->AddGraphicsBuffer("cbPerFrame", m_pCbPerFrame);
-	deferredLightPass->AddGraphicsBuffer("cbPerScene", m_pCbPerScene);
 	deferredLightPass->AddGraphicsBuffer("rawBufferLights", Light::m_pLightsRawBuffer);
-	deferredLightPass->AddGraphicsTexture("mainDepthStencilBuffer", m_pMainDepthStencil);
-	deferredLightPass->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
 
 	GraphicsPass* outliningPass = new OutliningRenderTask();
-	outliningPass->AddGraphicsTexture("mainDepthStencilBuffer", m_pMainDepthStencil);
-	outliningPass->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
 
 	GraphicsPass* transparentPass = new TransparentRenderTask();
-	transparentPass->AddGraphicsBuffer("cbPerFrame", m_pCbPerFrame);
-	transparentPass->AddGraphicsBuffer("cbPerScene", m_pCbPerScene);
 	transparentPass->AddGraphicsBuffer("rawBufferLights", Light::m_pLightsRawBuffer);
-	transparentPass->AddGraphicsTexture("mainDepthStencilBuffer", m_pMainDepthStencil);
-	transparentPass->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
 
 	GraphicsPass* wireFramePass = new WireframeRenderTask();
-	wireFramePass->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
 
 	// Post Processing
 	GraphicsPass* bloomPass = new BloomComputePass(m_CurrentRenderingWidth, m_CurrentRenderingHeight);
-	bloomPass->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
 
 	GraphicsPass* tonemapPass = new TonemapComputeTask(m_CurrentRenderingWidth, m_CurrentRenderingHeight);
-	tonemapPass->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
 
 	// LazyCopy
 	GraphicsPass* copyOnDemandTask = new CopyOnDemandTask();
 
 	// UI
 	GraphicsPass* imGuiPass = new ImGuiRenderTask(m_CurrentRenderingWidth, m_CurrentRenderingHeight);
-	imGuiPass->AddGraphicsTexture("finalColorBuffer", m_FinalColorBuffer);
 
 	// Add the tasks to desired vectors so they can be used in m_pRenderer
 	/* -------------------------------------------------------------- */
@@ -1054,8 +1029,8 @@ void Renderer::submitUploadPerFrameData()
 	BL_ASSERT(codt);
 
 	// CB_PER_FRAME_STRUCT
-	BL_ASSERT(m_pCbPerFrame && m_pCbPerFrameData);
-	codt->SubmitBuffer(m_pCbPerFrame, m_pCbPerFrameData);
+	BL_ASSERT(m_GraphicsResources.cbPerFrame && m_pCbPerFrameData);
+	codt->SubmitBuffer(m_GraphicsResources.cbPerFrame, m_pCbPerFrameData);
 
 	// All lights (data and header with information)
 	// Sending entire buffer (4kb as of writing this code), every frame for simplicity. Even if some lights might be static.
@@ -1069,14 +1044,14 @@ void Renderer::submitCbPerSceneData(ITopLevelAS* pTLAS)
 
 	// PerSceneData 
 	m_pCbPerSceneData->rayTracingBVH = pTLAS->GetRayTracingResultBuffer()->GetShaderResourceHeapIndex();
-	m_pCbPerSceneData->gBufferAlbedo = m_GBufferAlbedo->GetShaderResourceHeapIndex();
-	m_pCbPerSceneData->gBufferNormal = m_GBufferNormal->GetShaderResourceHeapIndex();
-	m_pCbPerSceneData->gBufferMaterialProperties = m_GBufferMaterialProperties->GetShaderResourceHeapIndex();
-	m_pCbPerSceneData->gBufferEmissive = m_GBufferEmissive->GetShaderResourceHeapIndex();
-	m_pCbPerSceneData->depth = m_pMainDepthStencil->GetShaderResourceHeapIndex();
+	m_pCbPerSceneData->gBufferAlbedo = m_GraphicsResources.gBufferAlbedo->GetShaderResourceHeapIndex();
+	m_pCbPerSceneData->gBufferNormal = m_GraphicsResources.gBufferNormal->GetShaderResourceHeapIndex();
+	m_pCbPerSceneData->gBufferMaterialProperties = m_GraphicsResources.gBufferMaterialProperties->GetShaderResourceHeapIndex();
+	m_pCbPerSceneData->gBufferEmissive = m_GraphicsResources.gBufferEmissive->GetShaderResourceHeapIndex();
+	m_pCbPerSceneData->depth = m_GraphicsResources.mainDepthStencil->GetShaderResourceHeapIndex();
 
 	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_ON_DEMAND]);
 	BL_ASSERT(codt);
-	BL_ASSERT(m_pCbPerScene && m_pCbPerSceneData);
-	codt->SubmitBuffer(m_pCbPerScene, m_pCbPerSceneData);
+	BL_ASSERT(m_GraphicsResources.cbPerScene && m_pCbPerSceneData);
+	codt->SubmitBuffer(m_GraphicsResources.cbPerScene, m_pCbPerSceneData);
 }

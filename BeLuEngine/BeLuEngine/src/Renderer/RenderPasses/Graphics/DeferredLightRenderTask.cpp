@@ -33,7 +33,7 @@ DeferredLightRenderTask::~DeferredLightRenderTask()
 
 void DeferredLightRenderTask::Execute()
 {
-	BL_ASSERT(m_GraphicTextures["finalColorBuffer"]);
+	BL_ASSERT(m_CommonGraphicsResources->finalColorBuffer);
 
 	m_pGraphicsContext->Begin();
 	{
@@ -47,18 +47,19 @@ void DeferredLightRenderTask::Execute()
 		TODO("Don't hardcode the sizes");
 		m_pGraphicsContext->SetViewPort(1280, 720);
 		m_pGraphicsContext->SetScizzorRect(1280, 720);
-
+		
 		float clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-		m_pGraphicsContext->ClearRenderTarget(m_GraphicTextures["finalColorBuffer"], clearColor);
+		m_pGraphicsContext->ResourceBarrier(m_CommonGraphicsResources->finalColorBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET);
+		m_pGraphicsContext->ClearRenderTarget(m_CommonGraphicsResources->finalColorBuffer, clearColor);
 
-		m_pGraphicsContext->SetRenderTargets(1, &m_GraphicTextures["finalColorBuffer"], nullptr);
+		m_pGraphicsContext->SetRenderTargets(1, &m_CommonGraphicsResources->finalColorBuffer, nullptr);
 
 		// Set cbvs
-		m_pGraphicsContext->SetConstantBuffer(RootParam_CBV_B3, m_GraphicBuffers["cbPerFrame"], false);
-		m_pGraphicsContext->SetConstantBuffer(RootParam_CBV_B4, m_GraphicBuffers["cbPerScene"], false);
+		m_pGraphicsContext->SetConstantBuffer(RootParam_CBV_B3, m_CommonGraphicsResources->cbPerFrame, false);
+		m_pGraphicsContext->SetConstantBuffer(RootParam_CBV_B4, m_CommonGraphicsResources->cbPerScene, false);
 		m_pGraphicsContext->SetShaderResourceView(RootParam_SRV_T0, m_GraphicBuffers["rawBufferLights"], false);
 
-		m_pGraphicsContext->ResourceBarrier(m_GraphicTextures["mainDepthStencilBuffer"], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		m_pGraphicsContext->ResourceBarrier(m_CommonGraphicsResources->mainDepthStencil, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 		// Draw a fullscreen quad 
 		SlotInfo slotInfo = {};
@@ -68,8 +69,6 @@ void DeferredLightRenderTask::Execute()
 		m_pGraphicsContext->SetIndexBuffer(m_pFullScreenQuadMesh->GetIndexBuffer(), m_pFullScreenQuadMesh->GetSizeOfIndices());
 
 		m_pGraphicsContext->DrawIndexedInstanced(m_pFullScreenQuadMesh->GetNumIndices(), 1, 0, 0, 0);
-
-		m_pGraphicsContext->ResourceBarrier(m_GraphicTextures["mainDepthStencilBuffer"], D3D12_RESOURCE_STATE_DEPTH_WRITE);
 	}
 	m_pGraphicsContext->End();
 }

@@ -1,6 +1,8 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
+#include "RenderCore.h"
+
 // Misc
 class ThreadPool;
 
@@ -93,6 +95,7 @@ private:
 	friend class BeLuEngine;
 	friend class SceneManager;
 	friend class ImGuiHandler;
+	friend class GraphicsPass;
 	friend class Material;
 	friend class component::ModelComponent;
 
@@ -115,17 +118,7 @@ private:
 	HANDLE m_ProcessHandle = nullptr;
 
 	// -------------- Textures -------------- 
-	IGraphicsTexture* m_FinalColorBuffer;
-	IGraphicsTexture* m_GBufferAlbedo;
-	IGraphicsTexture* m_GBufferNormal;
-	IGraphicsTexture* m_GBufferMaterialProperties;
-	IGraphicsTexture* m_GBufferEmissive;
-	
-	// Depthbuffer
-	IGraphicsTexture* m_pMainDepthStencil = nullptr;
-
-	// Bloom
-	Bloom* m_pBloomWrapperTemp = nullptr;
+	CommonGraphicsResources m_GraphicsResources = {};
 
 	// Picking
 	MousePicker* m_pMousePicker = nullptr;
@@ -146,11 +139,9 @@ private:
 
 	// Update on demand
 	CB_PER_SCENE_STRUCT* m_pCbPerSceneData = nullptr;
-	IGraphicsBuffer* m_pCbPerScene = nullptr;
-
+	
 	// Update per frame
 	CB_PER_FRAME_STRUCT* m_pCbPerFrameData = nullptr;
-	IGraphicsBuffer* m_pCbPerFrame = nullptr;
 
 	void createFullScreenQuad();
 	void updateMousePicker();

@@ -105,7 +105,7 @@ BloomComputePass::~BloomComputePass()
 
 void BloomComputePass::Execute()
 {
-	IGraphicsTexture* finalColorTexture = m_GraphicTextures["finalColorBuffer"];
+	IGraphicsTexture* finalColorTexture = m_CommonGraphicsResources->finalColorBuffer;
 	BL_ASSERT(finalColorTexture);
 
 	m_pGraphicsContext->Begin();

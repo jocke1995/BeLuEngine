@@ -58,7 +58,7 @@ void OutliningRenderTask::Execute()
 		// Check if there is an object to outline
 		if (m_ObjectToOutline.first == nullptr)
 		{
-			m_pGraphicsContext->ClearDepthTexture(m_GraphicTextures["mainDepthStencilBuffer"], false, 0.0f, true, 0); 
+			m_pGraphicsContext->ClearDepthTexture(m_CommonGraphicsResources->mainDepthStencil, false, 0.0f, true, 0); 
 			goto End;	// Hack
 		}
 		// else continue as usual
@@ -70,7 +70,7 @@ void OutliningRenderTask::Execute()
 		m_pGraphicsContext->SetViewPort(1280, 720);
 		m_pGraphicsContext->SetScizzorRect(1280, 720);
 
-		m_pGraphicsContext->SetRenderTargets(1, &m_GraphicTextures["finalColorBuffer"], m_GraphicTextures["mainDepthStencilBuffer"]);
+		m_pGraphicsContext->SetRenderTargets(1, &m_CommonGraphicsResources->finalColorBuffer, m_CommonGraphicsResources->mainDepthStencil);
 
 		const DirectX::XMMATRIX* viewProjMatTrans = m_pCamera->GetViewProjectionTranposed();
 		// Draw for every mesh in the model

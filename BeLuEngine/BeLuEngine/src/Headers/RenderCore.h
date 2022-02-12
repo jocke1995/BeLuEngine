@@ -2,6 +2,21 @@
 #define RENDERCORE_H
 
 class IGraphicsContext;
+class IGraphicsTexture;
+class IGraphicsBuffer;
+
+// Forward declare some dx stuff
+enum DXGI_FORMAT;
+enum D3D12_BLEND;
+enum D3D12_BLEND_OP;
+enum D3D12_LOGIC_OP;
+enum D3D12_STENCIL_OP;
+enum D3D12_COMPARISON_FUNC;
+enum D3D12_CULL_MODE;
+enum D3D12_FILL_MODE;
+enum D3D_PRIMITIVE_TOPOLOGY;
+enum D3D12_PRIMITIVE_TOPOLOGY_TYPE;
+enum D3D12_ROOT_PARAMETER_TYPE;
 
 // Dont create this class immediatly, use the #define below
 class ScopedPIXEvent
@@ -19,6 +34,24 @@ private:
 #else
 	#define ScopedPixEvent(name, commandList);
 #endif
+
+// Wrapper of common resources (Textures, Buffers etc..) to make it easier to pass these into functions
+struct CommonGraphicsResources
+{
+    // FinalColorBuffer and gBuffers
+    IGraphicsTexture* finalColorBuffer = nullptr;
+    IGraphicsTexture* gBufferAlbedo = nullptr;
+    IGraphicsTexture* gBufferNormal = nullptr;
+    IGraphicsTexture* gBufferMaterialProperties = nullptr;
+    IGraphicsTexture* gBufferEmissive = nullptr;
+
+    // DepthTexture
+    IGraphicsTexture* mainDepthStencil = nullptr;
+
+    // Buffers
+    IGraphicsBuffer* cbPerScene = nullptr;
+    IGraphicsBuffer* cbPerFrame = nullptr;
+};
 
 enum BL_FORMAT
 {

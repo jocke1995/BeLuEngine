@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "GraphicsPass.h"
 
+#include "../Renderer/Renderer.h"
+
 // API Generic
 #include "../Renderer/API/Interface/IGraphicsManager.h"
 #include "../Renderer/API/Interface/IGraphicsBuffer.h"
@@ -13,8 +15,11 @@
 GraphicsPass::GraphicsPass(const std::wstring& passName)
 	:MultiThreadedTask(F_THREAD_FLAGS::GRAPHICS)
 {
-    E_GRAPHICS_API graphicsApi = IGraphicsManager::GetGraphicsApiType();
+    // Setup access to common resources
+    m_CommonGraphicsResources = &Renderer::GetInstance().m_GraphicsResources;
 
+    // Create Context
+    E_GRAPHICS_API graphicsApi = IGraphicsManager::GetGraphicsApiType();
     if (graphicsApi == E_GRAPHICS_API::D3D12)
     {
         m_pGraphicsContext = new D3D12GraphicsContext(passName);

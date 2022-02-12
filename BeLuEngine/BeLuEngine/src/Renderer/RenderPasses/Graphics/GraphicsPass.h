@@ -8,6 +8,8 @@
 class IGraphicsContext;
 class IGraphicsPipelineState;
 
+struct CommonGraphicsResources;
+
 // These passes will execute on the graphics commandQueue
 enum E_GRAPHICS_PASS_TYPE
 {
@@ -57,8 +59,11 @@ public:
 
 	IGraphicsContext* const GetGraphicsContext() const;
 protected:
-	std::map<std::string, IGraphicsBuffer*> m_GraphicBuffers;
-	std::map<std::string, IGraphicsTexture*> m_GraphicTextures;
+	std::unordered_map<std::string, IGraphicsBuffer*> m_GraphicBuffers;
+	std::unordered_map<std::string, IGraphicsTexture*> m_GraphicTextures;
+
+	// This is automatically set in the constructor for each graphicsPass
+	CommonGraphicsResources* m_CommonGraphicsResources = nullptr;
 
 	IGraphicsContext* m_pGraphicsContext = nullptr;
 

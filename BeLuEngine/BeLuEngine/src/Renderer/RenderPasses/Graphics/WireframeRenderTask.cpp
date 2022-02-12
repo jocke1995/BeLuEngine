@@ -42,7 +42,7 @@ void WireframeRenderTask::Execute()
 
 		m_pGraphicsContext->SetupBindings(false);
 
-		m_pGraphicsContext->SetRenderTargets(1, &m_GraphicTextures["finalColorBuffer"], nullptr);
+		m_pGraphicsContext->SetRenderTargets(1, &m_CommonGraphicsResources->finalColorBuffer, nullptr);
 
 		m_pGraphicsContext->SetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		m_pGraphicsContext->SetPipelineState(m_PipelineStates[0]);

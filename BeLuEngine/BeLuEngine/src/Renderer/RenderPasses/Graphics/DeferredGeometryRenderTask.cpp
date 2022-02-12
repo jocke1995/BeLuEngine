@@ -44,17 +44,12 @@ DeferredGeometryRenderTask::~DeferredGeometryRenderTask()
 
 void DeferredGeometryRenderTask::Execute()
 {
-	BL_ASSERT(	m_GraphicTextures["gBufferAlbedo"] && 
-				m_GraphicTextures["gBufferNormal"] && 
-				m_GraphicTextures["gBufferMaterialProperties"] && 
-				m_GraphicTextures["gBufferEmissive"]);
-
 	IGraphicsTexture* renderTargets[4] =
 	{
-		m_GraphicTextures["gBufferAlbedo"],
-		m_GraphicTextures["gBufferNormal"],
-		m_GraphicTextures["gBufferMaterialProperties"],
-		m_GraphicTextures["gBufferEmissive"]
+		m_CommonGraphicsResources->gBufferAlbedo,
+		m_CommonGraphicsResources->gBufferNormal,
+		m_CommonGraphicsResources->gBufferMaterialProperties,
+		m_CommonGraphicsResources->gBufferEmissive
 	};
 
 	m_pGraphicsContext->Begin();
@@ -75,15 +70,17 @@ void DeferredGeometryRenderTask::Execute()
 		m_pGraphicsContext->ResourceBarrier(renderTargets[2], D3D12_RESOURCE_STATE_RENDER_TARGET);
 		m_pGraphicsContext->ResourceBarrier(renderTargets[3], D3D12_RESOURCE_STATE_RENDER_TARGET);
 
+		m_pGraphicsContext->ResourceBarrier(m_CommonGraphicsResources->mainDepthStencil, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+
 		float clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 		m_pGraphicsContext->ClearRenderTarget(renderTargets[0], clearColor);
 		m_pGraphicsContext->ClearRenderTarget(renderTargets[1], clearColor);
 		m_pGraphicsContext->ClearRenderTarget(renderTargets[2], clearColor);
 		m_pGraphicsContext->ClearRenderTarget(renderTargets[3], clearColor);
 		
-		m_pGraphicsContext->SetRenderTargets(4, renderTargets, m_GraphicTextures["mainDepthStencilBuffer"]);
+		m_pGraphicsContext->SetRenderTargets(4, renderTargets, m_CommonGraphicsResources->mainDepthStencil);
 
-		m_pGraphicsContext->SetConstantBuffer(RootParam_CBV_B4, m_GraphicBuffers["cbPerScene"], false);
+		m_pGraphicsContext->SetConstantBuffer(RootParam_CBV_B4, m_CommonGraphicsResources->cbPerScene, false);
 
 		// Draw for every Rendercomponent
 		for (int i = 0; i < m_RenderComponents.size(); i++)
@@ -94,11 +91,6 @@ void DeferredGeometryRenderTask::Execute()
 			// Draws all entities
 			drawRenderComponent(mc, tc, m_pGraphicsContext);
 		}
-
-		m_pGraphicsContext->ResourceBarrier(renderTargets[0], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-		m_pGraphicsContext->ResourceBarrier(renderTargets[1], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-		m_pGraphicsContext->ResourceBarrier(renderTargets[2], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-		m_pGraphicsContext->ResourceBarrier(renderTargets[3], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	}
 	m_pGraphicsContext->End();
 }

@@ -16,6 +16,7 @@ CopyOnDemandTask::~CopyOnDemandTask()
 {
 }
 
+TODO("Re-visit the entire lazy-copy situation that's going on here...")
 void CopyOnDemandTask::Execute()
 {
 	m_pGraphicsContext->Begin();
@@ -46,7 +47,7 @@ void CopyOnDemandTask::Execute()
 	}
 	m_pGraphicsContext->End();
 
-	// Reset the buffers and textures, resubmit next frame if you want to update
+	// Reset the buffers and textures, re-submit next frame if you want to update
 	this->Clear();
 }
 

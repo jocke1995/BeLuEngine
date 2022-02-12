@@ -47,8 +47,8 @@ void DepthRenderTask::Execute()
 		m_pGraphicsContext->SetViewPort(1280, 720);
 		m_pGraphicsContext->SetScizzorRect(1280, 720);
 
-		m_pGraphicsContext->ClearDepthTexture(m_GraphicTextures["mainDepthStencilBuffer"], true, 1.0f, true, 0);
-		m_pGraphicsContext->SetRenderTargets(0, nullptr, m_GraphicTextures["mainDepthStencilBuffer"]);
+		m_pGraphicsContext->ClearDepthTexture(m_CommonGraphicsResources->mainDepthStencil, true, 1.0f, true, 0);
+		m_pGraphicsContext->SetRenderTargets(0, nullptr, m_CommonGraphicsResources->mainDepthStencil);
 
 		// Draw for every Rendercomponent
 		for (int i = 0; i < m_RenderComponents.size(); i++)

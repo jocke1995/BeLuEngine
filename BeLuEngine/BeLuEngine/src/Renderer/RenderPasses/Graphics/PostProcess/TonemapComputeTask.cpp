@@ -27,7 +27,7 @@ TonemapComputeTask::~TonemapComputeTask()
 
 void TonemapComputeTask::Execute()
 {
-	IGraphicsTexture* finalColorTexture = m_GraphicTextures["finalColorBuffer"];
+	IGraphicsTexture* finalColorTexture = m_CommonGraphicsResources->finalColorBuffer;
 	BL_ASSERT(finalColorTexture);
 
 	unsigned int threadGroupsX = static_cast<unsigned int>(ceilf(static_cast<float>(m_ScreenWidth) / g_ThreadGroups));
@@ -49,8 +49,6 @@ void TonemapComputeTask::Execute()
 		m_pGraphicsContext->Dispatch(threadGroupsX, threadGroupsY, 1);
 
 		m_pGraphicsContext->UAVBarrier(finalColorTexture);
-
-		m_pGraphicsContext->ResourceBarrier(finalColorTexture, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	}
 	m_pGraphicsContext->End();
 }

@@ -76,16 +76,17 @@ void DXRReflectionTask::Execute()
 	BL_ASSERT(m_RenderComponents.size());
 	createShaderBindingTable();
 
-	IGraphicsTexture* finalColorBuffer = m_GraphicTextures["finalColorBuffer"];
-	IGraphicsTexture* depthTexture = m_GraphicTextures["mainDSV"];
+	IGraphicsTexture* finalColorBuffer = m_CommonGraphicsResources->finalColorBuffer;
+	IGraphicsTexture* depthTexture = m_CommonGraphicsResources->mainDepthStencil;
+
 	m_pGraphicsContext->Begin();
 	{
 		ScopedPixEvent(RaytracedReflections, m_pGraphicsContext);
 
 		m_pGraphicsContext->SetupBindings(true);
 
-		m_pGraphicsContext->SetConstantBuffer(RootParam_CBV_B3, m_GraphicBuffers["cbPerFrame"], true);
-		m_pGraphicsContext->SetConstantBuffer(RootParam_CBV_B4, m_GraphicBuffers["cbPerScene"], true);
+		m_pGraphicsContext->SetConstantBuffer(RootParam_CBV_B3, m_CommonGraphicsResources->cbPerFrame, true);
+		m_pGraphicsContext->SetConstantBuffer(RootParam_CBV_B4, m_CommonGraphicsResources->cbPerScene, true);
 		m_pGraphicsContext->SetShaderResourceView(RootParam_SRV_T0, m_GraphicBuffers["rawBufferLights"], true);
 
 		// Transitions
