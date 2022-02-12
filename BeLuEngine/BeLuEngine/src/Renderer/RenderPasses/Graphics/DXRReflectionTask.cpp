@@ -97,18 +97,14 @@ void DXRReflectionTask::Execute()
 		m_pGraphicsContext->SetRayTracingPipelineState(m_pRayTracingState);
 
 		RootConstantUints rootConstantUints = {};
-		rootConstantUints.index0 = finalColorBuffer->GetShaderResourceHeapIndex();	// Read from this texture with this index
-		rootConstantUints.index1 = finalColorBuffer->GetUnorderedAccessIndex();		// Write to this texture with this index
+		rootConstantUints.index0 = finalColorBuffer->GetShaderResourceHeapIndex();	// Read
+		rootConstantUints.index1 = finalColorBuffer->GetUnorderedAccessIndex();		// Write
 		m_pGraphicsContext->Set32BitConstants(Constants_DH_Indices_B1, sizeof(RootConstantUints) / 4, &rootConstantUints, 0, true);
 
 		// Dispatch the rays and write to the raytracing output
 		m_pGraphicsContext->DispatchRays(m_pShaderBindingTable, m_DispatchWidth, m_DispatchHeight);
 
 		m_pGraphicsContext->UAVBarrier(finalColorBuffer);
-
-		// Transitions
-		m_pGraphicsContext->ResourceBarrier(depthTexture, D3D12_RESOURCE_STATE_DEPTH_WRITE);
-		m_pGraphicsContext->ResourceBarrier(finalColorBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	}
 	m_pGraphicsContext->End();
 }

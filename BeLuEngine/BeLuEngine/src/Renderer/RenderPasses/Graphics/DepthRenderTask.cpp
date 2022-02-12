@@ -47,6 +47,7 @@ void DepthRenderTask::Execute()
 		m_pGraphicsContext->SetViewPort(1280, 720);
 		m_pGraphicsContext->SetScizzorRect(1280, 720);
 
+		m_pGraphicsContext->ResourceBarrier(m_CommonGraphicsResources->mainDepthStencil, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 		m_pGraphicsContext->ClearDepthTexture(m_CommonGraphicsResources->mainDepthStencil, true, 1.0f, true, 0);
 		m_pGraphicsContext->SetRenderTargets(0, nullptr, m_CommonGraphicsResources->mainDepthStencil);
 

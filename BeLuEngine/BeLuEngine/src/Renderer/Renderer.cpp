@@ -697,17 +697,17 @@ void Renderer::UnInitModelComponent(component::ModelComponent* mc)
 
 void Renderer::UnInitDirectionalLightComponent(component::DirectionalLightComponent* component)
 {
-	// TODO: Remove from rawBuffer
+	TODO("Remove from rawBuffer");
 }
 
 void Renderer::UnInitPointLightComponent(component::PointLightComponent* component)
 {
-	// TODO: Remove from rawBuffer
+	TODO("Remove from rawBuffer");
 }
 
 void Renderer::UnInitSpotLightComponent(component::SpotLightComponent* component)
 {
-	// TODO: Remove from rawBuffer
+	TODO("Remove from rawBuffer");
 }
 
 void Renderer::UnInitCameraComponent(component::CameraComponent* component)
@@ -770,7 +770,6 @@ void Renderer::submitModelToGPU(Model* model)
 
 	AssetLoader::Get()->m_LoadedModels.at(model->GetPath()).first = true;
 
-	// TODO: Better structure instead of hardcoding here
 	// Submit model to BLAS
 	static_cast<BottomLevelRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::BLAS])->SubmitBLAS(model->m_pBLAS);
 }
@@ -932,7 +931,6 @@ void Renderer::initGraphicsPasses()
 
 	// Post Processing
 	GraphicsPass* bloomPass = new BloomComputePass(m_CurrentRenderingWidth, m_CurrentRenderingHeight);
-
 	GraphicsPass* tonemapPass = new TonemapComputeTask(m_CurrentRenderingWidth, m_CurrentRenderingHeight);
 
 	// LazyCopy

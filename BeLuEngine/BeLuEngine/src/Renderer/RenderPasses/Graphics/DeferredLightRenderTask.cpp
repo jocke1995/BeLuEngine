@@ -33,7 +33,13 @@ DeferredLightRenderTask::~DeferredLightRenderTask()
 
 void DeferredLightRenderTask::Execute()
 {
-	BL_ASSERT(m_CommonGraphicsResources->finalColorBuffer);
+	IGraphicsTexture* renderTargets[4] =
+	{
+		m_CommonGraphicsResources->gBufferAlbedo,
+		m_CommonGraphicsResources->gBufferNormal,
+		m_CommonGraphicsResources->gBufferMaterialProperties,
+		m_CommonGraphicsResources->gBufferEmissive
+	};
 
 	m_pGraphicsContext->Begin();
 	{
@@ -59,6 +65,11 @@ void DeferredLightRenderTask::Execute()
 		m_pGraphicsContext->SetConstantBuffer(RootParam_CBV_B4, m_CommonGraphicsResources->cbPerScene, false);
 		m_pGraphicsContext->SetShaderResourceView(RootParam_SRV_T0, m_GraphicBuffers["rawBufferLights"], false);
 
+		// Set States
+		m_pGraphicsContext->ResourceBarrier(renderTargets[0], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		m_pGraphicsContext->ResourceBarrier(renderTargets[1], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		m_pGraphicsContext->ResourceBarrier(renderTargets[2], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		m_pGraphicsContext->ResourceBarrier(renderTargets[3], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 		m_pGraphicsContext->ResourceBarrier(m_CommonGraphicsResources->mainDepthStencil, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 		// Draw a fullscreen quad 
