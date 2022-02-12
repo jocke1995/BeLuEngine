@@ -52,14 +52,13 @@ float4 TonemapACES(float4 inputColor)
 [numthreads(g_NumThreads, 1, 1)]
 void CS_main(uint3 dispatchThreadID : SV_DispatchThreadID, int3 groupThreadID : SV_GroupThreadID)
 {
-	unsigned int finalColorReadIndex = rootConstantUints.index0;
-	unsigned int finalColorWriteIndex = rootConstantUints.index1;
-	float4 finalColor = textures[finalColorReadIndex][dispatchThreadID.xy];
+	unsigned int uavIndex = rootConstantUints.index0;
+	float4 finalColor = texturesUAV[uavIndex][dispatchThreadID.xy];
 
 	// Tonemap
 	finalColor = TonemapACES(finalColor);
 	//finalColor = TonemapReinhard(finalColor);
 
 	finalColor = GammaCorrect(finalColor);
-	texturesUAV[finalColorWriteIndex][dispatchThreadID.xy] = saturate(finalColor);
+	texturesUAV[uavIndex][dispatchThreadID.xy] = saturate(finalColor);
 }

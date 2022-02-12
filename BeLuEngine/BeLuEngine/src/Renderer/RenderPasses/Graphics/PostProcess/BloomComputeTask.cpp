@@ -142,6 +142,7 @@ void BloomComputePass::Execute()
 			rootConstantUints.index1 = m_PingPongTextures[0]->GetUnorderedAccessIndex(1);	// Write bright areas into this texture
 
 			m_pGraphicsContext->ResourceBarrier(finalColorTexture, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+			m_pGraphicsContext->ResourceBarrier(m_PingPongTextures[0], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, 1);
 
 			m_pGraphicsContext->SetPipelineState(m_PipelineStates[Bloom_FilterAndDownSampleState]);
 			m_pGraphicsContext->Set32BitConstants(Constants_DH_Indices_B1, sizeof(RootConstantUints) / 4, &rootConstantUints, 0, true);
@@ -152,9 +153,6 @@ void BloomComputePass::Execute()
 
 			// Make sure it's completed before reading from it in the following passes!
 			m_pGraphicsContext->UAVBarrier(m_PingPongTextures[0]);
-
-			// The resource to read
-			m_pGraphicsContext->ResourceBarrier(m_PingPongTextures[0], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 		}
 
 		// DownFilter and Blur
@@ -174,6 +172,10 @@ void BloomComputePass::Execute()
 				rootConstantUints.index1 = m_PingPongTextures[1]->GetUnorderedAccessIndex(mipLevel + 1);	// Write
 				rootConstantUints.index2 = mipLevel + 1; // Mip to write to
 
+				// Set states
+				m_pGraphicsContext->ResourceBarrier(m_PingPongTextures[0], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, mipLevel);
+				m_pGraphicsContext->ResourceBarrier(m_PingPongTextures[1], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, mipLevel + 1);
+
 				// Blur horizontal
 				m_pGraphicsContext->SetPipelineState(m_PipelineStates[Bloom_DownSampleAndBlurHorizontalState]);
 				m_pGraphicsContext->Set32BitConstants(Constants_DH_Indices_B1, sizeof(RootConstantUints) / 4, &rootConstantUints, 0, true);
@@ -183,9 +185,6 @@ void BloomComputePass::Execute()
 				m_pGraphicsContext->Dispatch(threadGroupsX, threadGroupsY, 1);
 
 				m_pGraphicsContext->UAVBarrier(m_PingPongTextures[1]);
-
-				// The resource to read (Resource Barrier)
-				m_pGraphicsContext->ResourceBarrier(m_PingPongTextures[1], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 			}
 
 
@@ -198,8 +197,9 @@ void BloomComputePass::Execute()
 				rootConstantUints.index1 = m_PingPongTextures[0]->GetUnorderedAccessIndex(mipLevel + 1);	// Write
 				rootConstantUints.index2 = mipLevel + 1; // Mip to write to
 
-				// The resource to write (Resource Barrier)
-				m_pGraphicsContext->ResourceBarrier(m_PingPongTextures[0], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+				// Set States
+				m_pGraphicsContext->ResourceBarrier(m_PingPongTextures[0], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, mipLevel + 1);
+				m_pGraphicsContext->ResourceBarrier(m_PingPongTextures[1], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, mipLevel + 1);
 
 				m_pGraphicsContext->SetPipelineState(m_PipelineStates[Bloom_BlurVerticalState]);
 				m_pGraphicsContext->Set32BitConstants(Constants_DH_Indices_B1, sizeof(RootConstantUints) / 4, &rootConstantUints, 0, true);
@@ -208,12 +208,6 @@ void BloomComputePass::Execute()
 				unsigned int threadGroupsY = static_cast<unsigned int>(ceilf(static_cast<float>(blurHeight) / m_ThreadsPerGroup));
 				m_pGraphicsContext->Dispatch(threadGroupsX, threadGroupsY, 1);
 				m_pGraphicsContext->UAVBarrier(m_PingPongTextures[0]);
-
-				// The resource to read (Resource Barrier)
-				m_pGraphicsContext->ResourceBarrier(m_PingPongTextures[0], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-
-				// The resource to write (Resource Barrier)
-				m_pGraphicsContext->ResourceBarrier(m_PingPongTextures[1], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 			}
 		}
 
@@ -237,6 +231,11 @@ void BloomComputePass::Execute()
 			rootConstantUints1.index2 = m_PingPongTextures[1]->GetUnorderedAccessIndex(mipToWriteTo);	// Write (Current Size)
 			rootConstantUints1.index3 = mipToWriteTo;
 
+			// Set States
+			m_pGraphicsContext->ResourceBarrier(inputTexture, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, mipLevel);
+			m_pGraphicsContext->ResourceBarrier(m_PingPongTextures[0], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, mipToWriteTo);
+			m_pGraphicsContext->ResourceBarrier(m_PingPongTextures[1], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, mipToWriteTo);
+
 			m_pGraphicsContext->SetPipelineState(m_PipelineStates[Bloom_UpSampleAndCombineState]);
 			m_pGraphicsContext->Set32BitConstants(Constants_DH_Indices_B1, sizeof(RootConstantUints) / 4, &rootConstantUints1, 0, true);
 			m_pGraphicsContext->Dispatch(threadGroupsX, threadGroupsY, 1);
@@ -252,24 +251,18 @@ void BloomComputePass::Execute()
 
 			RootConstantUints rootConstantUints2 = {};
 			rootConstantUints2.index0 = m_PingPongTextures[1]->GetShaderResourceHeapIndex(0);	// Read
-			rootConstantUints2.index1 = finalColorTexture->GetShaderResourceHeapIndex(0);		// Read
-			rootConstantUints2.index2 = finalColorTexture->GetUnorderedAccessIndex(0);			// Write
-			rootConstantUints2.index3 = g_NumMips;		// MipTemp
+			rootConstantUints2.index1 = finalColorTexture->GetUnorderedAccessIndex(0);			// Read + Write
+			rootConstantUints2.index2 = g_NumMips;		// MipTemp
 
-			m_pGraphicsContext->ResourceBarrier(m_PingPongTextures[1], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-			m_pGraphicsContext->ResourceBarrier(finalColorTexture, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+			m_pGraphicsContext->ResourceBarrier(m_PingPongTextures[1], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, 0);
+			m_pGraphicsContext->ResourceBarrier(finalColorTexture, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, 0);
 
 			m_pGraphicsContext->SetPipelineState(m_PipelineStates[Bloom_CompositeState]);
 			m_pGraphicsContext->Set32BitConstants(Constants_DH_Indices_B1, sizeof(RootConstantUints) / 4, &rootConstantUints2, 0, true);
 			m_pGraphicsContext->Dispatch(m_HorizontalThreadGroupsX, m_HorizontalThreadGroupsY, 1);
 
 			m_pGraphicsContext->UAVBarrier(finalColorTexture);
-
-			// Begin next frame as UAV, because the first thing that happens is that they get cleared
-			m_pGraphicsContext->ResourceBarrier(m_PingPongTextures[0], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-			m_pGraphicsContext->ResourceBarrier(m_PingPongTextures[1], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 		}
-
 	}
 	m_pGraphicsContext->End();
 }

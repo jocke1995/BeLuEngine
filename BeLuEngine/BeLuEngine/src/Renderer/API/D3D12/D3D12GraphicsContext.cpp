@@ -634,6 +634,9 @@ bool D3D12GraphicsContext::resolvePendingTransitionBarriers()
 			unsigned int subResource = pendingBarrier.subResource;
 			D3D12_RESOURCE_STATES beforeState = globalStateTracker->GetState(subResource);
 
+			// Update the globalState from the localState so the next context knows what the new globalState is
+			globalStateTracker->SetState(localStateTracker->GetState(subResource), subResource);
+
 			// Do nothing if we're already in the desired state
 			if (beforeState == pendingBarrier.afterState)
 				continue;
@@ -650,9 +653,6 @@ bool D3D12GraphicsContext::resolvePendingTransitionBarriers()
 			// Cache it for later submission
 			resourceBarriers.push_back(barrier);
 			actualNumResourceBarriers++;
-
-			// Update the globalState from the localState so the next context knows what the new globalState is
-			globalStateTracker->SetState(localStateTracker->GetState(subResource), subResource);
 		}
 
 		// Submit all resourceBarriers in one go if there are any

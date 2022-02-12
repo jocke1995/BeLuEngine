@@ -142,7 +142,7 @@ enum class E_CAMERA_TYPE
 #define TODO() //DebugBreak();
 
 // Debug
-#define SINGLE_THREADED_RENDERER false
+#define SINGLE_THREADED_RENDERER true
 #define ENABLE_DEBUGLAYER true
 #define ENABLE_VALIDATIONGLAYER true
 #define DEVELOPERMODE_DRAWBOUNDINGBOX false
