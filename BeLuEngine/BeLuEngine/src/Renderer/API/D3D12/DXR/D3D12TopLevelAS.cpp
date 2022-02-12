@@ -106,39 +106,44 @@ void D3D12TopLevelAS::MapResultBuffer()
 	unsigned int numInstances = m_Instances.size();
 
 	TODO("Don't do this on the heap every frame.. Create a stack allocator!");
-	unsigned int sizeInBytes = numInstances * sizeof(D3D12_RAYTRACING_INSTANCE_DESC);
+	unsigned int maxSizeInBytes = numInstances * sizeof(D3D12_RAYTRACING_INSTANCE_DESC);
+	unsigned int alignedMaxSizeInBytes = (maxSizeInBytes + 255) & ~255; // Align with 256 bytes
 
 	// Check to see if we need new buffers for the sbt
-	if (m_CurrentMaxInstanceDescSize < sizeInBytes)
-		reAllocateInstanceDescBuffers(sizeInBytes);
+	if (m_CurrentMaxInstanceDescSize < alignedMaxSizeInBytes)
+		reAllocateInstanceDescBuffers(alignedMaxSizeInBytes);
 
-	D3D12_RAYTRACING_INSTANCE_DESC* instanceDescs = new D3D12_RAYTRACING_INSTANCE_DESC[numInstances];
+	TODO("Don't do this on the heap every frame.. Create a stack allocator!");
+	unsigned char* dataToMap = new unsigned char[alignedMaxSizeInBytes];
+	D3D12_RAYTRACING_INSTANCE_DESC* instanceDescs = reinterpret_cast<D3D12_RAYTRACING_INSTANCE_DESC*>(dataToMap);
 
 	// Create the description for each instance
 	for (unsigned int i = 0; i < numInstances; i++)
 	{
-		instanceDescs[i].InstanceID = m_Instances[i].m_ID;
-		instanceDescs[i].InstanceContributionToHitGroupIndex = m_Instances[i].m_ID;
-		instanceDescs[i].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
+		instanceDescs->InstanceID = m_Instances[i].m_ID;
+		instanceDescs->InstanceContributionToHitGroupIndex = m_Instances[i].m_ID;
+		instanceDescs->Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
 		DirectX::XMMATRIX m = XMMatrixTranspose(m_Instances[i].m_Transform);
-		memcpy(instanceDescs[i].Transform, &m, sizeof(instanceDescs[i].Transform));
-		instanceDescs[i].AccelerationStructure = static_cast<D3D12GraphicsBuffer*>(m_Instances[i].m_pBLAS)->m_pResource->GetGPUVirtualAddress();
+		memcpy(instanceDescs->Transform, &m, sizeof(instanceDescs->Transform));
+		instanceDescs->AccelerationStructure = static_cast<D3D12GraphicsBuffer*>(m_Instances[i].m_pBLAS)->m_pResource->GetGPUVirtualAddress();
 
 		// Objects who doesn't give shadows doesn't get this maskFlag added to them.
 		if (m_Instances[i].m_GiveShadows)
 		{
-			instanceDescs[i].InstanceMask = INSTANCE_MASK_SCENE_MINUS_NOSHADOWOBJECTS;
+			instanceDescs->InstanceMask = INSTANCE_MASK_SCENE_MINUS_NOSHADOWOBJECTS;
 		}
+		instanceDescs->InstanceMask |= INSTANCE_MASK_ENTIRE_SCENE;
 
-		instanceDescs[i].InstanceMask |= INSTANCE_MASK_ENTIRE_SCENE;
+		// Move to next object
+		instanceDescs++;
 	}
 
 	// Set the data into the CPU Buffer
 	unsigned int backBufferIndex = D3D12GraphicsManager::GetInstance()->GetCommandInterfaceIndex();
-	m_pInstanceDescBuffers[backBufferIndex]->SetData(sizeInBytes, instanceDescs);
+	m_pInstanceDescBuffers[backBufferIndex]->SetData(alignedMaxSizeInBytes, dataToMap);
 
 	// Now it's safe to delete the data since it's mapped in the resource
-	delete[] instanceDescs;
+	delete[] dataToMap;
 
 	// Create a descriptor of the requested builder work, to generate a TLAS
 	m_BuildDesc = {};

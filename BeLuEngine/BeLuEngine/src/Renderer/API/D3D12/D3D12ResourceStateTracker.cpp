@@ -2,6 +2,7 @@
 #include "D3D12ResourceStateTracker.h"
 
 #include "D3D12GraphicsContext.h"
+
 D3D12GlobalStateTracker::D3D12GlobalStateTracker(ID3D12Resource1* resource, unsigned int numSubResources)
 {
 	BL_ASSERT(resource);
@@ -95,7 +96,7 @@ void D3D12LocalStateTracker::ResolveLocalResourceState(D3D12_RESOURCE_STATES des
 	const unsigned int maxResourceBarriers = 12;
 	D3D12_RESOURCE_BARRIER resourceBarriers[maxResourceBarriers];
 
-	unsigned int actualNumberOfTransitionBarriers = 0;
+	unsigned int actualNumberOfResourceBarriers = 0;
 
 	auto manageTransition = [&](unsigned int subResourceIndex)
 	{
@@ -120,14 +121,14 @@ void D3D12LocalStateTracker::ResolveLocalResourceState(D3D12_RESOURCE_STATES des
 		else
 		{
 			// We know the beforeState, so we can batch it for later recording in this function
-			resourceBarriers[actualNumberOfTransitionBarriers].Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-			resourceBarriers[actualNumberOfTransitionBarriers].Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-			resourceBarriers[actualNumberOfTransitionBarriers].Transition.pResource = m_pResource;
-			resourceBarriers[actualNumberOfTransitionBarriers].Transition.Subresource = subResourceIndex;
-			resourceBarriers[actualNumberOfTransitionBarriers].Transition.StateBefore = m_ResourceStates[subResourceIndex];
-			resourceBarriers[actualNumberOfTransitionBarriers].Transition.StateAfter = desiredState;
+			resourceBarriers[actualNumberOfResourceBarriers].Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+			resourceBarriers[actualNumberOfResourceBarriers].Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+			resourceBarriers[actualNumberOfResourceBarriers].Transition.pResource = m_pResource;
+			resourceBarriers[actualNumberOfResourceBarriers].Transition.Subresource = subResourceIndex;
+			resourceBarriers[actualNumberOfResourceBarriers].Transition.StateBefore = m_ResourceStates[subResourceIndex];
+			resourceBarriers[actualNumberOfResourceBarriers].Transition.StateAfter = desiredState;
 
-			actualNumberOfTransitionBarriers++;
+			actualNumberOfResourceBarriers++;
 		}
 
 		// Update current state if we use this resource again on the same context
@@ -164,14 +165,14 @@ void D3D12LocalStateTracker::ResolveLocalResourceState(D3D12_RESOURCE_STATES des
 			if (m_ResourceStates[0] == desiredState)
 				return;
 
-			resourceBarriers[actualNumberOfTransitionBarriers].Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-			resourceBarriers[actualNumberOfTransitionBarriers].Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-			resourceBarriers[actualNumberOfTransitionBarriers].Transition.pResource = m_pResource;
-			resourceBarriers[actualNumberOfTransitionBarriers].Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-			resourceBarriers[actualNumberOfTransitionBarriers].Transition.StateBefore = m_ResourceStates[0];
-			resourceBarriers[actualNumberOfTransitionBarriers].Transition.StateAfter = desiredState;
+			resourceBarriers[actualNumberOfResourceBarriers].Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+			resourceBarriers[actualNumberOfResourceBarriers].Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+			resourceBarriers[actualNumberOfResourceBarriers].Transition.pResource = m_pResource;
+			resourceBarriers[actualNumberOfResourceBarriers].Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+			resourceBarriers[actualNumberOfResourceBarriers].Transition.StateBefore = m_ResourceStates[0];
+			resourceBarriers[actualNumberOfResourceBarriers].Transition.StateAfter = desiredState;
 
-			actualNumberOfTransitionBarriers++;
+			actualNumberOfResourceBarriers++;
 		}
 		else
 		{
@@ -188,8 +189,8 @@ void D3D12LocalStateTracker::ResolveLocalResourceState(D3D12_RESOURCE_STATES des
 
 	// Do immediate batched transitions if we know the before state of this subResource
 	// This can happen the second (and forth) time a subResource is accessed in this context
-	if (actualNumberOfTransitionBarriers > 0)
+	if (actualNumberOfResourceBarriers > 0)
 	{
-		m_pOwner->m_pCommandList->ResourceBarrier(actualNumberOfTransitionBarriers, resourceBarriers);
+		m_pOwner->m_pCommandList->ResourceBarrier(actualNumberOfResourceBarriers, resourceBarriers);
 	}
 }
