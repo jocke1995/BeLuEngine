@@ -140,6 +140,12 @@ private:
 	// Current scene to be drawn
 	Scene* m_pCurrActiveScene = nullptr;
 
+	// Update on demand
+	CB_PER_SCENE_STRUCT* m_pCbPerSceneData = nullptr;
+	
+	// Update per frame
+	CB_PER_FRAME_STRUCT* m_pCbPerFrameData = nullptr;
+
 	void createFullScreenQuad();
 	void updateMousePicker();
 	void initGraphicsPasses();

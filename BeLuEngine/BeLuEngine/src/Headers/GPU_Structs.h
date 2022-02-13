@@ -93,7 +93,6 @@ struct CB_PER_FRAME_STRUCT
 	float4x4 projection;
 	float4x4 viewI;
 	float4x4 projectionI;
-	float4x4 viewProjTransposed;
 
 	// deltaTime ..
 	// etc ..

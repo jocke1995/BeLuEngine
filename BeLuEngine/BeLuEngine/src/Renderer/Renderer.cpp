@@ -125,8 +125,8 @@ void Renderer::deleteRenderer()
 	BL_SAFE_DELETE(m_GraphicsResources.cbPerFrame);
 
 	// ConstantBufferDataHolders
-	BL_SAFE_DELETE(m_GraphicsResources.cbPerSceneData);
-	BL_SAFE_DELETE(m_GraphicsResources.cbPerFrameData);
+	BL_SAFE_DELETE(m_pCbPerSceneData);
+	BL_SAFE_DELETE(m_pCbPerFrameData);
 
 	BL_SAFE_DELETE(Light::m_pLightsRawBuffer);
 	free(Light::m_pRawData);
@@ -213,11 +213,11 @@ void Renderer::InitD3D12(HWND hwnd, unsigned int width, unsigned int height, HIN
 
 	// Allocate memory for cbPerScene
 	m_GraphicsResources.cbPerScene = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::ConstantBuffer, sizeof(CB_PER_SCENE_STRUCT), 1, DXGI_FORMAT_UNKNOWN, L"CB_PER_SCENE");
-	m_GraphicsResources.cbPerSceneData = new CB_PER_SCENE_STRUCT();
+	m_pCbPerSceneData = new CB_PER_SCENE_STRUCT();
 
 	// Allocate memory for cbPerFrame
 	m_GraphicsResources.cbPerFrame = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::ConstantBuffer, sizeof(CB_PER_FRAME_STRUCT), 1, DXGI_FORMAT_UNKNOWN, L"CB_PER_FRAME");
-	m_GraphicsResources.cbPerFrameData = new CB_PER_FRAME_STRUCT();
+	m_pCbPerFrameData = new CB_PER_FRAME_STRUCT();
 
 	createRawBufferForLights();
 
@@ -242,17 +242,15 @@ void Renderer::Update(double dt)
 	up.normalize();
 
 	// Update CB_PER_FRAME data
-	m_GraphicsResources.cbPerFrameData->camPos = reinterpret_cast<float3&>(m_pScenePrimaryCamera->GetPosition());
-	m_GraphicsResources.cbPerFrameData->camRight = right;
-	m_GraphicsResources.cbPerFrameData->camUp = up;
-	m_GraphicsResources.cbPerFrameData->camForward = forward;
+	m_pCbPerFrameData->camPos = reinterpret_cast<float3&>(m_pScenePrimaryCamera->GetPosition());
+	m_pCbPerFrameData->camRight = right;
+	m_pCbPerFrameData->camUp = up;
+	m_pCbPerFrameData->camForward = forward;
 
-	m_GraphicsResources.cbPerFrameData->projection	= *m_pScenePrimaryCamera->GetProjMatrix();
-	m_GraphicsResources.cbPerFrameData->projectionI	= *m_pScenePrimaryCamera->GetProjMatrixInverse();
-	m_GraphicsResources.cbPerFrameData->view		= *m_pScenePrimaryCamera->GetViewMatrix();
-	m_GraphicsResources.cbPerFrameData->viewI		= *m_pScenePrimaryCamera->GetViewMatrixInverse();
-
-	m_GraphicsResources.cbPerFrameData->viewProjTransposed	= *m_pScenePrimaryCamera->GetViewProjectionTranposed();
+	m_pCbPerFrameData->projection	= *m_pScenePrimaryCamera->GetProjMatrix();
+	m_pCbPerFrameData->projectionI	= *m_pScenePrimaryCamera->GetProjMatrixInverse();
+	m_pCbPerFrameData->view			= *m_pScenePrimaryCamera->GetViewMatrix();
+	m_pCbPerFrameData->viewI		= *m_pScenePrimaryCamera->GetViewMatrixInverse();
 
 	submitUploadPerFrameData();
 
@@ -646,11 +644,6 @@ void Renderer::InitCameraComponent(component::CameraComponent* component)
 	if (component->IsPrimary() == true)
 	{
 		m_pScenePrimaryCamera = component->GetCamera();
-
-		// Give the camera to the renderPasses that needs it
-		static_cast<SkyboxPass*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::SKYBOX])->SetCamera(m_pScenePrimaryCamera);
-
-		TODO("Set outlining camera");
 	}
 }
 
@@ -692,22 +685,10 @@ void Renderer::InitSkyboxComponent(component::SkyboxComponent* component)
 {
 	static_cast<SkyboxPass*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::SKYBOX])->SetSkybox(component);
 
-	IGraphicsTexture* skyboxTexture = component->GetSkyboxTexture();
-	m_GraphicsResources.cbPerSceneData->skybox = skyboxTexture->GetShaderResourceHeapIndex();
+	m_pCbPerSceneData->skybox = component->GetSkyboxTexture()->GetShaderResourceHeapIndex();
 
 	TODO("Use the internal MeshFactory to create simple meshes and just get it from there.");
 	component->m_pCube = AssetLoader::Get()->LoadModel(L"../Vendor/Assets/Models/CubePBR/cube.obj");;
-
-	// Submit the cubeMapTexture if needed
-	if (AssetLoader::Get()->IsTextureLoadedOnGpu(skyboxTexture) == true)
-	{
-		return;
-	}
-
-	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_ON_DEMAND]);
-	codt->SubmitTexture(skyboxTexture);
-
-	AssetLoader::Get()->m_LoadedTextures.at(skyboxTexture->GetPath()).first = true;
 }
 
 void Renderer::UnInitModelComponent(component::ModelComponent* mc)
@@ -793,7 +774,7 @@ void Renderer::UnInitSkyboxComponent(component::SkyboxComponent* component)
 {
 	static_cast<SkyboxPass*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::SKYBOX])->SetSkybox(nullptr);
 
-	m_GraphicsResources.cbPerSceneData->skybox = -1;
+	m_pCbPerSceneData->skybox = -1;
 }
 
 void Renderer::OnResetScene()
@@ -1088,8 +1069,8 @@ void Renderer::submitUploadPerFrameData()
 	BL_ASSERT(codt);
 
 	// CB_PER_FRAME_STRUCT
-	BL_ASSERT(m_GraphicsResources.cbPerFrame && m_GraphicsResources.cbPerFrameData);
-	codt->SubmitBuffer(m_GraphicsResources.cbPerFrame, m_GraphicsResources.cbPerFrameData);
+	BL_ASSERT(m_GraphicsResources.cbPerFrame && m_pCbPerFrameData);
+	codt->SubmitBuffer(m_GraphicsResources.cbPerFrame, m_pCbPerFrameData);
 
 	// All lights (data and header with information)
 	// Sending entire buffer (4kb as of writing this code), every frame for simplicity. Even if some lights might be static.
@@ -1102,17 +1083,17 @@ void Renderer::submitCbPerSceneData(ITopLevelAS* pTLAS)
 	BL_ASSERT(pTLAS);
 
 	// PerSceneData 
-	m_GraphicsResources.cbPerSceneData->rayTracingBVH = pTLAS->GetRayTracingResultBuffer()->GetShaderResourceHeapIndex();
-	m_GraphicsResources.cbPerSceneData->gBufferAlbedo = m_GraphicsResources.gBufferAlbedo->GetShaderResourceHeapIndex();
-	m_GraphicsResources.cbPerSceneData->gBufferNormal = m_GraphicsResources.gBufferNormal->GetShaderResourceHeapIndex();
-	m_GraphicsResources.cbPerSceneData->gBufferMaterialProperties = m_GraphicsResources.gBufferMaterialProperties->GetShaderResourceHeapIndex();
-	m_GraphicsResources.cbPerSceneData->gBufferEmissive = m_GraphicsResources.gBufferEmissive->GetShaderResourceHeapIndex();
-	m_GraphicsResources.cbPerSceneData->depth = m_GraphicsResources.mainDepthStencil->GetShaderResourceHeapIndex();
+	m_pCbPerSceneData->rayTracingBVH = pTLAS->GetRayTracingResultBuffer()->GetShaderResourceHeapIndex();
+	m_pCbPerSceneData->gBufferAlbedo = m_GraphicsResources.gBufferAlbedo->GetShaderResourceHeapIndex();
+	m_pCbPerSceneData->gBufferNormal = m_GraphicsResources.gBufferNormal->GetShaderResourceHeapIndex();
+	m_pCbPerSceneData->gBufferMaterialProperties = m_GraphicsResources.gBufferMaterialProperties->GetShaderResourceHeapIndex();
+	m_pCbPerSceneData->gBufferEmissive = m_GraphicsResources.gBufferEmissive->GetShaderResourceHeapIndex();
+	m_pCbPerSceneData->depth = m_GraphicsResources.mainDepthStencil->GetShaderResourceHeapIndex();
 
 	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_ON_DEMAND]);
 	BL_ASSERT(codt);
-	BL_ASSERT(m_GraphicsResources.cbPerScene && m_GraphicsResources.cbPerSceneData);
-	codt->SubmitBuffer(m_GraphicsResources.cbPerScene, m_GraphicsResources.cbPerSceneData);
+	BL_ASSERT(m_GraphicsResources.cbPerScene && m_pCbPerSceneData);
+	codt->SubmitBuffer(m_GraphicsResources.cbPerScene, m_pCbPerSceneData);
 }
 
 void Renderer::advanceTextureToVisualize(VisualizeTexture* event)

@@ -4,8 +4,6 @@
 #include "../ECS/Entity.h"
 #include "../Renderer/Renderer.h"
 
-#include "../Renderer/API/Interface/IGraphicsBuffer.h"
-
 namespace component
 {
 	SkyboxComponent::SkyboxComponent(Entity* parent)
