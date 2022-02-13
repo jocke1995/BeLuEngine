@@ -107,7 +107,7 @@ struct CB_PER_SCENE_STRUCT
 
 	unsigned int gBufferEmissive;
 	unsigned int depth;
-	unsigned int pad1;
+	unsigned int skybox;
 	unsigned int pad2;
 };
 

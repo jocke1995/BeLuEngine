@@ -353,7 +353,7 @@ Scene* SponzaScene(SceneManager* sm)
     Model* mirror = al->LoadModel(L"../Vendor/Assets/Models/Mirror/Mirror.obj");
 
     // Load a skybox
-    IGraphicsTexture* skyBoxTexture = al->LoadTexture3D(L"../Vendor/Assets/Models/Mirror/Mirror.obj");
+    IGraphicsTexture* skyBoxTexture = al->LoadTextureCube(L"../Vendor/Assets/Skyboxes/Skybox_Lava.dds");
 
     /* ---------------------- Player ---------------------- */
     Entity* entity = (scene->AddEntity("player"));

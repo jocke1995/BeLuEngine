@@ -197,7 +197,7 @@ IGraphicsTexture* AssetLoader::LoadTexture2D(E_TEXTURE2D_TYPE textureType, const
 	BL_ASSERT(fileEnding == "dds");	// Currently only supporting dds..
 
 	IGraphicsTexture* texture = IGraphicsTexture::Create();
-	bool loaded = texture->LoadTextureDDS(textureType, path);
+	bool loaded = texture->LoadTexture2D_DDS(textureType, path);
 	BL_ASSERT(loaded);
 
 	m_LoadedTextures[path].first = false;
@@ -206,9 +206,26 @@ IGraphicsTexture* AssetLoader::LoadTexture2D(E_TEXTURE2D_TYPE textureType, const
 	return texture;
 }
 
-IGraphicsTexture* AssetLoader::LoadTexture3D(const std::wstring& path)
+IGraphicsTexture* AssetLoader::LoadTextureCube(const std::wstring& path)
 {
-	return nullptr;
+	// Check if the texture already exists
+	if (m_LoadedTextures.count(path) != 0)
+	{
+		return m_LoadedTextures[path].second;
+	}
+
+	// Check if the texture is DDS or of other commonType
+	std::string fileEnding = GetFileExtension(to_string(path));
+	BL_ASSERT(fileEnding == "dds");	// Currently only supporting dds..
+
+	IGraphicsTexture* texture = IGraphicsTexture::Create();
+	bool loaded = texture->LoadTexture3D_DDS(path);
+	BL_ASSERT(loaded);
+
+	m_LoadedTextures[path].first = false;
+	m_LoadedTextures[path].second = texture;
+
+	return texture;
 }
 
 Shader* AssetLoader::loadShader(const std::wstring& fileName, E_SHADER_TYPE type)

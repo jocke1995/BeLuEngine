@@ -43,6 +43,7 @@ namespace component
 	class DirectionalLightComponent;
 	class PointLightComponent;
 	class SpotLightComponent;
+	class SkyboxComponent;
 }
 
 struct RenderComponent;

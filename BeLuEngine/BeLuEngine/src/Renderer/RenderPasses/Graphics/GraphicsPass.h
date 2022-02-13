@@ -1,5 +1,5 @@
-#ifndef DX12TASK_H
-#define DX12TASK_H
+#ifndef GRAPHICSPASS_H
+#define GRAPHICSPASS_H
 
 #include "Core.h"
 #include "RenderCore.h"
@@ -25,6 +25,7 @@ enum E_GRAPHICS_PASS_TYPE
 	OUTLINE,
 	POSTPROCESS_BLOOM,
 	POSTPROCESS_TONEMAP,
+	SKYBOX,
 	IMGUI,
 	NR_OF_GRAPHICS_PASSES
 };

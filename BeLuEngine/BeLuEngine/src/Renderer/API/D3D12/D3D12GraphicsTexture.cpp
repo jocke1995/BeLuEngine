@@ -45,7 +45,7 @@ D3D12GraphicsTexture::~D3D12GraphicsTexture()
 	BL_SAFE_DELETE(m_GlobalStateTracker);
 }
 
-bool D3D12GraphicsTexture::LoadTextureDDS(E_TEXTURE2D_TYPE textureType, const std::wstring& filePath)
+bool D3D12GraphicsTexture::LoadTexture2D_DDS(E_TEXTURE2D_TYPE textureType, const std::wstring& filePath)
 {
 	D3D12GraphicsManager* graphicsManager = D3D12GraphicsManager::GetInstance();
 	ID3D12Device5* device5 = graphicsManager->GetDevice();
@@ -99,6 +99,78 @@ bool D3D12GraphicsTexture::LoadTextureDDS(E_TEXTURE2D_TYPE textureType, const st
 	desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	desc.Format = textureFormat;
 	desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	desc.Texture2D.MipLevels = m_NumMipLevels;
+	desc.Texture2D.MostDetailedMip = 0;
+	desc.Texture2D.ResourceMinLODClamp = 0.0f;
+
+	m_ShaderResourceDescriptorHeapIndices[0] = mainDHeap->GetNextDescriptorHeapIndex(1);
+	device5->CreateShaderResourceView(m_pResource, &desc, mainDHeap->GetCPUHeapAt(m_ShaderResourceDescriptorHeapIndices[0]));
+#pragma endregion
+
+	CoInitialize(NULL);
+
+	m_GlobalStateTracker = new D3D12GlobalStateTracker(m_pResource, m_NumMipLevels);
+	m_GlobalStateTracker->SetState(D3D12_RESOURCE_STATE_COMMON);
+
+	return true;
+}
+
+bool D3D12GraphicsTexture::LoadTexture3D_DDS(const std::wstring& filePath)
+{
+	D3D12GraphicsManager* graphicsManager = D3D12GraphicsManager::GetInstance();
+	ID3D12Device5* device5 = graphicsManager->GetDevice();
+	D3D12DescriptorHeap* mainDHeap = graphicsManager->GetMainDescriptorHeap();
+
+	HRESULT hr;
+
+	m_Path = filePath;
+#pragma region ReadFromFile
+	// DDSLoader uses this data type to load the image data
+	// converts this to m_pImageData when it is used.
+
+	std::unique_ptr<uint8_t[]> m_DdsData;
+	bool isCubeMap = true;
+
+	// Loads the texture and creates a default resource;
+	hr = DirectX::LoadDDSTextureFromFile(device5, m_Path.c_str(), reinterpret_cast<ID3D12Resource**>(&m_pResource), m_DdsData, m_Subresources, 0, nullptr, &isCubeMap);
+
+	if (!D3D12GraphicsManager::CHECK_HRESULT(hr))
+	{
+		BL_LOG_CRITICAL("Failed to create texture: \'%s\'.\n", to_string(filePath).c_str());
+		BL_SAFE_RELEASE(&m_pResource);
+		return false;
+	}
+
+	std::wstring resourceName = m_Path + L"_DEFAULT_RESOURCE";
+	graphicsManager->CHECK_HRESULT(m_pResource->SetName(resourceName.c_str()));
+
+	// Set resource desc created in LoadDDSTextureFromFile
+	D3D12_RESOURCE_DESC resourceDesc = m_pResource->GetDesc();
+	unsigned int rowPitch = m_Subresources[0].RowPitch;
+
+	m_NumMipLevels = resourceDesc.MipLevels;
+
+	// copy m_DdsData to our BYTE* format
+	m_pTextureData = static_cast<BYTE*>(m_DdsData.get());
+	m_DdsData.release(); // lose the pointer, let m_pTextureData delete the data.
+
+	device5->GetCopyableFootprints(
+		&resourceDesc,
+		0, m_NumMipLevels, 0,
+		nullptr, nullptr, nullptr,
+		&m_Size);
+
+#pragma endregion
+
+	DXGI_FORMAT textureFormat = resourceDesc.Format;
+	//textureFormat = ConvertFormatToSRGB(textureFormat);
+
+#pragma region CreateDescriptors
+	// Create srv
+	D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
+	desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	desc.Format = textureFormat;
+	desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
 	desc.Texture2D.MipLevels = m_NumMipLevels;
 	desc.Texture2D.MostDetailedMip = 0;
 	desc.Texture2D.ResourceMinLODClamp = 0.0f;

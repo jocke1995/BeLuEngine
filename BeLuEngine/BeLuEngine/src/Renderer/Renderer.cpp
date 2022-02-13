@@ -39,7 +39,7 @@
 #include "Techniques/MousePicker.h"
 #include "Techniques/BoundingBoxPool.h"
 
-// RenderPasses
+/* ------------------------------ RenderPasses ------------------------------ */
 #include "RenderPasses/Graphics/UI/ImGuiRenderTask.h"
 #include "RenderPasses/Graphics/DepthRenderTask.h"
 #include "RenderPasses/Graphics/WireframeRenderTask.h"
@@ -48,7 +48,9 @@
 #include "RenderPasses/Graphics/DeferredLightRenderTask.h"
 #include "RenderPasses/Graphics/TransparentRenderTask.h"
 #include "RenderPasses/Graphics/CopyOnDemandTask.h"
-// RenderPasses (DXR)
+#include "RenderPasses/Graphics/SkyboxPass.h"
+
+// Ray tracing
 #include "RenderPasses/Graphics/BottomLevelRenderTask.h"
 #include "RenderPasses/Graphics/TopLevelRenderTask.h"
 #include "RenderPasses/Graphics/DXRReflectionTask.h"
@@ -56,6 +58,7 @@
 // PostProcess
 #include "RenderPasses/Graphics/PostProcess/BloomComputeTask.h"
 #include "RenderPasses/Graphics/PostProcess/TonemapComputeTask.h"
+/* ------------------------------ RenderPasses ------------------------------ */
 
 // Generic API
 #include "API/Interface/IGraphicsManager.h"
@@ -939,6 +942,9 @@ void Renderer::initGraphicsPasses()
 	GraphicsPass* bloomPass = new BloomComputePass(m_CurrentRenderingWidth, m_CurrentRenderingHeight);
 	GraphicsPass* tonemapPass = new TonemapComputeTask(m_CurrentRenderingWidth, m_CurrentRenderingHeight);
 
+	// Skybox
+	GraphicsPass* skyboxPass = new SkyboxPass();
+
 	// LazyCopy
 	GraphicsPass* copyOnDemandTask = new CopyOnDemandTask();
 
@@ -961,6 +967,7 @@ void Renderer::initGraphicsPasses()
 	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::OPACITY] = transparentPass;
 	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::POSTPROCESS_BLOOM] = bloomPass;
 	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::POSTPROCESS_TONEMAP] = tonemapPass;
+	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::SKYBOX] = skyboxPass;
 	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::IMGUI] = imGuiPass;
 
 	// Pushback in the order of execution
@@ -983,6 +990,9 @@ void Renderer::initGraphicsPasses()
 	m_MainGraphicsContexts.push_back(bloomPass->GetGraphicsContext());
 	m_MainGraphicsContexts.push_back(tonemapPass->GetGraphicsContext());
 
+	// Skybox
+	m_MainGraphicsContexts.push_back(skyboxPass->GetGraphicsContext());
+	
 	// -------------------------------------- GUI -------------------------------------------------
 	// Debug/ImGui
 	m_ImGuiGraphicsContext.push_back(imGuiPass->GetGraphicsContext());
