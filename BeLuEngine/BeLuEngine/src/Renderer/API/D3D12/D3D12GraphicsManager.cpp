@@ -499,12 +499,12 @@ void D3D12GraphicsManager::Init(HWND hwnd, unsigned int width, unsigned int heig
 	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV_B4].Descriptor.RegisterSpace = 0;
 	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV_B4].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
+	// The following 3 shaderRegisters are free to use for custom constantBuffers
 	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV_B5].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV_B5].Descriptor.ShaderRegister = 5;
 	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV_B5].Descriptor.RegisterSpace = 0;
 	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV_B5].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	// The following 2 shaderRegisters are free to use for custom constantBuffers
 	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV_B6].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV_B6].Descriptor.ShaderRegister = 6;
 	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_CBV_B6].Descriptor.RegisterSpace = 0;
@@ -913,8 +913,10 @@ void D3D12GraphicsManager::AddIUknownForDefferedDeletion(IUnknown* object)
 
 DynamicDataParams D3D12GraphicsManager::SetDynamicData(unsigned int size, const void* data)
 {
+	unsigned int sizeAligned = (size + 255) & ~255;
+
 	// Makes this function threadsafe
-	long offset = InterlockedAdd(&m_pIntermediateUploadHeapAtomicCurrentOffset, size);
+	long offset = InterlockedAdd(&m_pIntermediateUploadHeapAtomicCurrentOffset, sizeAligned);
 
 	if (offset > m_IntermediateUploadHeapSize)
 	{
@@ -924,7 +926,7 @@ DynamicDataParams D3D12GraphicsManager::SetDynamicData(unsigned int size, const 
 		return emptyParam;
 	}
 
-	long currentOffset = offset - size;
+	long currentOffset = offset - sizeAligned;
 
 	// Copy to CPU address
 	void* cpuAddress = (char*)m_pIntermediateUploadHeapBegin[m_CommandInterfaceIndex] + currentOffset;

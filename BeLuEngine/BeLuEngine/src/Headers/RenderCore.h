@@ -5,6 +5,9 @@ class IGraphicsContext;
 class IGraphicsTexture;
 class IGraphicsBuffer;
 
+struct CB_PER_FRAME_STRUCT;
+struct CB_PER_SCENE_STRUCT;
+
 // Forward declare some dx stuff
 enum DXGI_FORMAT;
 enum D3D12_BLEND;
@@ -51,6 +54,10 @@ struct CommonGraphicsResources
     // Buffers
     IGraphicsBuffer* cbPerScene = nullptr;
     IGraphicsBuffer* cbPerFrame = nullptr;
+
+    // Data that can be useful
+    CB_PER_FRAME_STRUCT* cbPerFrameData;
+    CB_PER_SCENE_STRUCT* cbPerSceneData;
 };
 
 enum BL_FORMAT

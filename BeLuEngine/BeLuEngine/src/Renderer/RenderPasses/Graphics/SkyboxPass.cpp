@@ -6,6 +6,8 @@
 #include "../Renderer/Geometry/Model.h"
 #include "../Renderer/Geometry/Mesh.h"
 
+#include "../Renderer/Camera/PerspectiveCamera.h"
+
 // Generic API
 #include "../../API/Interface/IGraphicsManager.h"
 #include "../../API/Interface/IGraphicsBuffer.h"
@@ -42,6 +44,7 @@ void SkyboxPass::Execute()
 	// Just check if we have a skybox set for now.
 	// Handle this better in the future..
 	BL_ASSERT(m_pSkyboxComponent);
+	BL_ASSERT(m_pMainCamera);
 
 	m_pGraphicsContext->Begin();
 	{
@@ -56,6 +59,21 @@ void SkyboxPass::Execute()
 		m_pGraphicsContext->SetViewPort(1280, 720);
 		m_pGraphicsContext->SetScizzorRect(1280, 720);
 
+#if 0
+		// Fill in translation data and set the buffer
+		DirectX::XMMATRIX viewMatWithoutTranslation = *m_pMainCamera->GetViewMatrix();
+		viewMatWithoutTranslation.r[3].m128_f32[0] = 0;
+		viewMatWithoutTranslation.r[3].m128_f32[1] = 0;
+		viewMatWithoutTranslation.r[3].m128_f32[2] = 0;
+
+		DirectX::XMMATRIX viewMatTransposed = DirectX::XMMatrixTranspose(viewMatWithoutTranslation);
+		DirectX::XMMATRIX projMatTransposed = DirectX::XMMatrixTranspose(*m_pMainCamera->GetProjMatrix());
+
+		MATRICES_PER_OBJECT_STRUCT matricesPerObjectStruct = {};
+		matricesPerObjectStruct.worldMatrix = projMatTransposed * viewMatTransposed;
+
+		m_pGraphicsContext->SetConstantBufferDynamicData(RootParam_CBV_B2, sizeof(MATRICES_PER_OBJECT_STRUCT), &matricesPerObjectStruct, false);
+#endif
 		m_pGraphicsContext->SetConstantBuffer(RootParam_CBV_B3, m_CommonGraphicsResources->cbPerFrame, false);
 		m_pGraphicsContext->SetConstantBuffer(RootParam_CBV_B4, m_CommonGraphicsResources->cbPerScene, false);
 
@@ -82,4 +100,9 @@ void SkyboxPass::Execute()
 void SkyboxPass::SetSkybox(component::SkyboxComponent* skyboxComponent)
 {
 	m_pSkyboxComponent = skyboxComponent;
+}
+
+void SkyboxPass::SetCamera(BaseCamera* camera)
+{
+	m_pMainCamera = camera;
 }

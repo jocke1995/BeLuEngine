@@ -26,7 +26,7 @@ namespace component
         friend class SkyboxPass;
         Model* m_pCube = nullptr;
 
-        IGraphicsTexture* m_pSkyBoxTexture;
+        IGraphicsTexture* m_pSkyBoxTexture = nullptr;;
     };
 }
 

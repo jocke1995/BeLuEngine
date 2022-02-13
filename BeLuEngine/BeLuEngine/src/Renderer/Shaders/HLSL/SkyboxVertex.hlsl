@@ -2,7 +2,7 @@
 
 struct VS_OUT
 {
-	float4 pos  : SV_Position;
+	float4 pos		: SV_Position;
 	float3 texCoord : TEXCOORD;
 };
 
@@ -19,6 +19,7 @@ VS_OUT VS_main(uint vID : SV_VertexID)
 
 	//Set Pos to xyww instead of xyzw, so that z will always be 1 (furthest from camera)
 	output.pos = mul(float4(vertexPosition.xyz, 1.0f), vp).xyww;
+	//output.pos = mul(float4(vertexPosition.xyz, 1.0f), matricesPerObject.worldMatrix).xyww;
 
 	// Treat the position as a vector, to use when sampling the texture
 	output.texCoord = vertexPosition.xyz;
