@@ -3,6 +3,7 @@
 
 #include "Component.h"
 class IGraphicsTexture;
+class Model;
 
 namespace component
 {
@@ -21,6 +22,10 @@ namespace component
         void SetSkyboxTexture(IGraphicsTexture* texture);
         IGraphicsTexture* GetSkyboxTexture() const;
     private:
+        friend class Renderer;
+        friend class SkyboxPass;
+        Model* m_pCube = nullptr;
+
         IGraphicsTexture* m_pSkyBoxTexture;
     };
 }

@@ -26,6 +26,7 @@
 #include "../ECS/Components/Lights/DirectionalLightComponent.h"
 #include "../ECS/Components/Lights/PointLightComponent.h"
 #include "../ECS/Components/Lights/SpotLightComponent.h"
+#include "../ECS/Components/SkyboxComponent.h"
 
 // Renderer-Engine 
 #include "Geometry/Transform.h"
@@ -401,17 +402,21 @@ void Renderer::ExecuteMT()
 	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::OPACITY];
 	m_pThreadPool->AddTask(graphicsPass);
 
-	// Blurring for bloom
-	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::POSTPROCESS_BLOOM];
-	m_pThreadPool->AddTask(graphicsPass);
-
 	// Outlining, if an object is picked
 	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::OUTLINE];
 	static_cast<OutliningRenderTask*>(graphicsPass)->SetCamera(m_pScenePrimaryCamera);
 	m_pThreadPool->AddTask(graphicsPass);
 
+	// Blurring for bloom
+	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::POSTPROCESS_BLOOM];
+	m_pThreadPool->AddTask(graphicsPass);
+
 	// Merge 
 	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::POSTPROCESS_TONEMAP];
+	m_pThreadPool->AddTask(graphicsPass);
+
+	// Skybox 
+	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::SKYBOX];
 	m_pThreadPool->AddTask(graphicsPass);
 	
 	/* ----------------------------- DEVELOPERMODE CommandLists ----------------------------- */
@@ -487,17 +492,21 @@ void Renderer::ExecuteST()
 	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::OPACITY];
 	graphicsPass->Execute();
 
-	// Blurring for bloom
-	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::POSTPROCESS_BLOOM];
-	graphicsPass->Execute();
-
 	// Outlining, if an object is picked
 	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::OUTLINE];
 	static_cast<OutliningRenderTask*>(graphicsPass)->SetCamera(m_pScenePrimaryCamera);
 	graphicsPass->Execute();
 
+	// Blurring for bloom
+	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::POSTPROCESS_BLOOM];
+	graphicsPass->Execute();
+
 	// Merge 
 	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::POSTPROCESS_TONEMAP];
+	graphicsPass->Execute();
+
+	// Skybox 
+	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::SKYBOX];
 	graphicsPass->Execute();
 
 	/* ----------------------------- DEVELOPERMODE CommandLists ----------------------------- */
@@ -672,6 +681,16 @@ void Renderer::InitBoundingBoxComponent(component::BoundingBoxComponent* compone
 	}
 }
 
+void Renderer::InitSkyboxComponent(component::SkyboxComponent* component)
+{
+	static_cast<SkyboxPass*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::SKYBOX])->SetSkybox(component);
+
+	m_pCbPerSceneData->skybox = component->GetSkyboxTexture()->GetShaderResourceHeapIndex();
+
+	TODO("Use the internal MeshFactory to create simple meshes and just get it from there.");
+	component->m_pCube = AssetLoader::Get()->LoadModel(L"../Vendor/Assets/Models/CubePBR/cube.obj");;
+}
+
 void Renderer::UnInitModelComponent(component::ModelComponent* mc)
 {
 	// Remove component from renderComponents
@@ -749,6 +768,13 @@ void Renderer::UnInitBoundingBoxComponent(component::BoundingBoxComponent* compo
 			}
 		}
 	}
+}
+
+void Renderer::UnInitSkyboxComponent(component::SkyboxComponent* component)
+{
+	static_cast<SkyboxPass*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::SKYBOX])->SetSkybox(nullptr);
+
+	m_pCbPerSceneData->skybox = -1;
 }
 
 void Renderer::OnResetScene()

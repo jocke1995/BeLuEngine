@@ -14,11 +14,11 @@ VS_OUT VS_main(uint vID : SV_VertexID)
 	float4 vertexPosition = float4(mesh.pos.xyz, 1.0f);
 
 	float4x4 viewMat = cbPerFrame.view;
-	float4x4 projMat = cbPerFrame.proj;
+	float4x4 projMat = cbPerFrame.projection;
 	float4x4 vp = mul(viewMat, projMat);
 
 	//Set Pos to xyww instead of xyzw, so that z will always be 1 (furthest from camera)
-	output.pos = mul(float4(vertexPosition.xyz, 1.0f), vp);
+	output.pos = mul(float4(vertexPosition.xyz, 1.0f), vp).xyww;
 
 	// Treat the position as a vector, to use when sampling the texture
 	output.texCoord = vertexPosition.xyz;

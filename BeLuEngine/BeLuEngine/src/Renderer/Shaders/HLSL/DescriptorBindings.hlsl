@@ -14,11 +14,11 @@ SamplerState BilinearClamp				: register (s6);
 SamplerState TrilinearWrap				: register (s7);
 
 // SRV table with 4 ranges, all starting at 0 in the dHeap
-Texture2D						textures[]	: register(t0, space1);
-StructuredBuffer<vertex>		meshes[]	: register(t0, space2);
-StructuredBuffer<unsigned int>	indices[]	: register(t0, space3);
-RaytracingAccelerationStructure sceneBVH[]	: register(t0, space4);
-TextureCube						cubeTextures: register(t0, space5);
+Texture2D						textures[]		: register(t0, space1);
+StructuredBuffer<vertex>		meshes[]		: register(t0, space2);
+StructuredBuffer<unsigned int>	indices[]		: register(t0, space3);
+RaytracingAccelerationStructure sceneBVH[]		: register(t0, space4);
+TextureCube						cubeTextures[]	: register(t0, space5);
 
 
 // UAV table with 3 ranges, all starting at 0 in the dHeap

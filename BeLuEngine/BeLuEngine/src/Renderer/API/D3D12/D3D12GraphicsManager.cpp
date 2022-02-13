@@ -391,7 +391,7 @@ void D3D12GraphicsManager::Init(HWND hwnd, unsigned int width, unsigned int heig
 #pragma region SRVTABLE
 	std::vector<D3D12_DESCRIPTOR_RANGE> dtRangesSRV;
 
-	const unsigned int numSRVDescriptorRanges = 4;
+	const unsigned int numSRVDescriptorRanges = 5;
 	for (unsigned int i = 0; i < numSRVDescriptorRanges; i++)
 	{
 		D3D12_DESCRIPTOR_RANGE descriptorRange = {};

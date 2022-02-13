@@ -1,7 +1,8 @@
 #include "stdafx.h"
+#include "SkyboxComponent.h"
 
 #include "../ECS/Entity.h"
-#include "SkyboxComponent.h"
+#include "../Renderer/Renderer.h"
 
 namespace component
 {
@@ -20,10 +21,12 @@ namespace component
 
 	void SkyboxComponent::OnInitScene()
 	{
+		Renderer::GetInstance().InitSkyboxComponent(this);
 	}
 
 	void SkyboxComponent::OnUnInitScene()
 	{
+		Renderer::GetInstance().UnInitSkyboxComponent(this);
 	}
 
 	void SkyboxComponent::Reset()

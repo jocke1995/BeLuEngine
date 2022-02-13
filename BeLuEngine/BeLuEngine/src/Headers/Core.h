@@ -144,7 +144,7 @@ enum class E_CAMERA_TYPE
 
 // Debug
 #define SINGLE_THREADED_RENDERER true
-#define ENABLE_DEBUGLAYER false
+#define ENABLE_DEBUGLAYER true
 #define ENABLE_VALIDATIONGLAYER false
 #define DEVELOPERMODE_DRAWBOUNDINGBOX false
 #define PROFILE

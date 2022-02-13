@@ -82,6 +82,7 @@ public:
 	void InitSpotLightComponent(component::SpotLightComponent* component);
 	void InitCameraComponent(component::CameraComponent* component);
 	void InitBoundingBoxComponent(component::BoundingBoxComponent* component);
+	void InitSkyboxComponent(component::SkyboxComponent* component);
 
 	void UnInitModelComponent(component::ModelComponent* component);
 	void UnInitDirectionalLightComponent(component::DirectionalLightComponent* component);
@@ -89,6 +90,7 @@ public:
 	void UnInitSpotLightComponent(component::SpotLightComponent* component);
 	void UnInitCameraComponent(component::CameraComponent* component);
 	void UnInitBoundingBoxComponent(component::BoundingBoxComponent* component);
+	void UnInitSkyboxComponent(component::SkyboxComponent* component);
 
 	void OnResetScene();
 
