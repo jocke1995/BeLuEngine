@@ -206,6 +206,11 @@ IGraphicsTexture* AssetLoader::LoadTexture2D(E_TEXTURE2D_TYPE textureType, const
 	return texture;
 }
 
+IGraphicsTexture* AssetLoader::LoadTexture3D(const std::wstring& path)
+{
+	return nullptr;
+}
+
 Shader* AssetLoader::loadShader(const std::wstring& fileName, E_SHADER_TYPE type)
 {
 	// Check if the shader already exists

@@ -34,8 +34,10 @@ public:
     /* Load Functions */
     // Model ---------------
     Model* LoadModel(const std::wstring& path);
+
     // Textures ------------
     IGraphicsTexture* LoadTexture2D(E_TEXTURE2D_TYPE textureType, const std::wstring& path);
+    IGraphicsTexture* LoadTexture3D(const std::wstring& path);
 
     // Creates material from parameter.
     // If no parameter is specified, a default material is created.

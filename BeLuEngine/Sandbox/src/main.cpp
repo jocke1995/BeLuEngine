@@ -342,6 +342,7 @@ Scene* SponzaScene(SceneManager* sm)
     component::PointLightComponent* plc = nullptr;
     component::DirectionalLightComponent* dlc = nullptr;
     component::SpotLightComponent* slc = nullptr;
+    component::SkyboxComponent* sbc = nullptr;
 
     AssetLoader* al = AssetLoader::Get();
 
@@ -351,11 +352,17 @@ Scene* SponzaScene(SceneManager* sm)
     Model* boxModel = al->LoadModel(L"../Vendor/Assets/Models/CubePBR/cube.obj");
     Model* mirror = al->LoadModel(L"../Vendor/Assets/Models/Mirror/Mirror.obj");
 
+    // Load a skybox
+    IGraphicsTexture* skyBoxTexture = al->LoadTexture3D(L"../Vendor/Assets/Models/Mirror/Mirror.obj");
+
     /* ---------------------- Player ---------------------- */
     Entity* entity = (scene->AddEntity("player"));
     cc = entity->AddComponent<component::CameraComponent>(E_CAMERA_TYPE::PERSPECTIVE, true);
     ic = entity->AddComponent<component::InputComponent>();
     scene->SetPrimaryCamera(cc->GetCamera());
+
+    sbc = entity->AddComponent<component::SkyboxComponent>();
+    sbc->SetSkyboxTexture(skyBoxTexture);
     /* ---------------------- Player ---------------------- */
 
     /* ---------------------- Mirror1 ---------------------- */
