@@ -63,7 +63,7 @@ private:
     void loadDefaultMaterial();
 
     const std::wstring m_FilePathShaders = L"../BeLuEngine/src/Renderer/Shaders/HLSL/";
-    const std::wstring m_FilePathDefaultTextures = L"../Vendor/Resources/Textures/Default/";
+    const std::wstring m_FilePathDefaultTextures = L"../Vendor/Assets/Textures/Default/";
 
     // Every model & texture also has a bool which indicates if its data is on the GPU or not
     // name, pair<isOnGpu, Model*>

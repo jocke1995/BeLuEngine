@@ -168,8 +168,8 @@ enum F_THREAD_FLAGS
 {
 	GRAPHICS = BIT(1),
 	TEST = BIT(2),
-	ASYNC_BLAS = BIT(3),	// TODO
-	// CopyTextures
+	// AsyncPostProcess ..
+	// CopyTextures ..
 	// PrepareNextScene ..
 	// etc
 	ALL = BIT(4)

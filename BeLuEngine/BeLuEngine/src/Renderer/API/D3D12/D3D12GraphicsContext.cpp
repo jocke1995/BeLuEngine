@@ -205,11 +205,11 @@ void D3D12GraphicsContext::SetPipelineState(IGraphicsPipelineState* pso)
 	m_pCommandList->SetPipelineState(d3d12Pso->m_pPSO);
 }
 
-void D3D12GraphicsContext::SetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY primTop)
+void D3D12GraphicsContext::SetPrimitiveTopology(BL_PRIMITIVE_TOPOLOGY primTop)
 {
-	BL_ASSERT(primTop != D3D_PRIMITIVE_TOPOLOGY_UNDEFINED);
+	BL_ASSERT(primTop != BL_PRIMITIVE_TOPOLOGY_UNDEFINED);
 
-	m_pCommandList->IASetPrimitiveTopology(primTop);
+	m_pCommandList->IASetPrimitiveTopology(ConvertBLPrimTopToD3D12PrimTop(primTop));
 }
 
 void D3D12GraphicsContext::ResourceBarrier(IGraphicsTexture* graphicsTexture, D3D12_RESOURCE_STATES desiredState, unsigned int subResource)

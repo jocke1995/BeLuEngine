@@ -1,8 +1,0 @@
-# Blender MTL File: 'None'
-# Material Count: 0
-
-newmtl goldenMat
-map_Ka metal_metallic.dds
-map_Kd metal_albedo.dds
-map_Ks metal_roughness.dds
-map_Kn metal_normal.dds

@@ -9,7 +9,6 @@
 #include "../Renderer/Renderer.h"
 #include "../Entity.h"
 
-// TODO ABSTRACTION
 #include "../Renderer/API/Interface/IGraphicsBuffer.h"
 
 namespace component

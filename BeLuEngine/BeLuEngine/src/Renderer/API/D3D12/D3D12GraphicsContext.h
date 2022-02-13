@@ -28,8 +28,7 @@ public:
 
     virtual void SetPipelineState(IGraphicsPipelineState* pso) override final;
 
-    TODO("Fix Interfaces for the parameters");
-    virtual void SetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY primTop) override final;
+    virtual void SetPrimitiveTopology(BL_PRIMITIVE_TOPOLOGY primTop) override final;
 
     TODO("Fix Interfaces for the parameters");
     virtual void ResourceBarrier(IGraphicsTexture* graphicsTexture, D3D12_RESOURCE_STATES desiredState, unsigned int subResource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES) override final;

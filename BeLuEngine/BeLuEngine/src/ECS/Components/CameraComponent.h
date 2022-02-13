@@ -27,7 +27,7 @@ namespace component
 		E_CAMERA_TYPE m_CamType = E_CAMERA_TYPE::UNDEFINED;
 		bool m_PrimaryCamera = false;
 
-		// Todo: add and calculate m_pMesh to be able to draw frustrum in wireframe
+		TODO("Add and calculate a mesh to be able to draw frustrum in wireframe");
 
 		BaseCamera* createPerspective(
 			DirectX::XMVECTOR position = { 0.0, 4.0, -10.0 },

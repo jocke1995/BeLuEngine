@@ -61,10 +61,10 @@ Scene* TestScene(SceneManager* sm)
     AssetLoader* al = AssetLoader::Get();
 
     // Get the models needed
-    Model* floorModel = al->LoadModel(L"../Vendor/Resources/Models/FloorPBR/floor.obj");
-    Model* sphereModel = al->LoadModel(L"../Vendor/Resources/Models/SpherePBR/ball.obj");
-    Model* cubeModel = al->LoadModel(L"../Vendor/Resources/Models/CubePBR/cube.obj");
-    Model* posterModel = al->LoadModel(L"../Vendor/Resources/Models/Poster/Poster.obj");
+    Model* floorModel   = al->LoadModel(L"../Vendor/Assets/Models/FloorPBR/floor.obj");
+    Model* sphereModel  = al->LoadModel(L"../Vendor/Assets/Models/SpherePBR/ball.obj");
+    Model* cubeModel    = al->LoadModel(L"../Vendor/Assets/Models/CubePBR/cube.obj");
+    Model* posterModel  = al->LoadModel(L"../Vendor/Assets/Models/Poster/Poster.obj");
 
     /* ---------------------- Player ---------------------- */
     Entity* entity = (scene->AddEntity("player"));

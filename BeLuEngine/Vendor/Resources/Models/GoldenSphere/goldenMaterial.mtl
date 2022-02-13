@@ -1,9 +1,0 @@
-# Blender MTL File: 'sphere.blend'
-# Material Count: 1
-
-newmtl goldMaterial
-
-map_Kd gold_albedoBoosted.dds
-map_Ks gold_roughness.dds
-map_Kn gold_normal.dds
-map_Ka gold_metallic.dds

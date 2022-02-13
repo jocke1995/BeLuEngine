@@ -1,6 +1,8 @@
 #ifndef IGRAPHICSCONTEXT_H
 #define IGRAPHICSCONTEXT_H
 
+#include "RenderCore.h"
+
 class IGraphicsTexture;
 class IGraphicsBuffer;
 class IGraphicsPipelineState;
@@ -25,8 +27,7 @@ public:
 
     virtual void SetPipelineState(IGraphicsPipelineState* pso) = 0;
 
-    TODO("Fix Interfaces for the parameters");
-    virtual void SetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY primTop) = 0;
+    virtual void SetPrimitiveTopology(BL_PRIMITIVE_TOPOLOGY primTop) = 0;
 
     TODO("Fix Interfaces for the parameters");
     virtual void ResourceBarrier(IGraphicsTexture* graphicsTexture, D3D12_RESOURCE_STATES desiredState, unsigned int subResource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES) = 0;

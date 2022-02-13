@@ -70,7 +70,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
            static unsigned int counter = 1;
            std::string name = "pointLight" + std::to_string(counter);
            /* ---------------------- PointLightDynamic ---------------------- */
-           Model* steelSphere = al->LoadModel(L"../Vendor/Resources/Models/SteelSphere/sphere.obj");
+           Model* steelSphere = al->LoadModel(L"../Vendor/Assets/Models/SteelSphere/sphere.obj");
            Entity* entity = scene->AddEntity(name);
            component::ModelComponent* mc = entity->AddComponent<component::ModelComponent>();
            component::TransformComponent* tc = entity->AddComponent<component::TransformComponent>();
@@ -139,11 +139,11 @@ Scene* PBRScene(SceneManager* sm)
     AssetLoader* al = AssetLoader::Get();
 
     // Get the models needed
-    Model* floorModel   = al->LoadModel(L"../Vendor/Resources/Models/FloorPBR/floor.obj");
-    Model* boxModel     = al->LoadModel(L"../Vendor/Resources/Models/CubePBR/cube.obj");
-    Model* goldenSphere = al->LoadModel(L"../Vendor/Resources/Models/GoldenSphere/sphere.obj");
-    Model* steelSphere  = al->LoadModel(L"../Vendor/Resources/Models/SteelSphere/sphere.obj");
-    Model* funnyModel   = al->LoadModel(L"../Vendor/Resources/Models/Private/FunnyModel/funnyModel.obj");
+    Model* floorModel   = al->LoadModel(L"../Vendor/Assets/Models/FloorPBR/floor.obj");
+    Model* boxModel     = al->LoadModel(L"../Vendor/Assets/Models/CubePBR/cube.obj");
+    Model* goldenSphere = al->LoadModel(L"../Vendor/Assets/Models/GoldenSphere/sphere.obj");
+    Model* steelSphere  = al->LoadModel(L"../Vendor/Assets/Models/SteelSphere/sphere.obj");
+    Model* funnyModel   = al->LoadModel(L"../Vendor/Assets/Models/Private/FunnyModel/funnyModel.obj");
 
     /* ---------------------- Player ---------------------- */
     Entity* entity = (scene->AddEntity("player"));
@@ -346,10 +346,10 @@ Scene* SponzaScene(SceneManager* sm)
     AssetLoader* al = AssetLoader::Get();
 
     // Get the models needed
-    Model* sponza = al->LoadModel(L"../Vendor/Resources/Scenes/Sponza/textures_pbr/sponza.obj");
-    Model* steelSphere = al->LoadModel(L"../Vendor/Resources/Models/SteelSphere/sphere.obj");
-    Model* boxModel = al->LoadModel(L"../Vendor/Resources/Models/CubePBR/cube.obj");
-    Model* mirror = al->LoadModel(L"../Vendor/Resources/Models/Mirror/Mirror.obj");
+    Model* sponza = al->LoadModel(L"../Vendor/Assets/Scenes/Sponza/textures_pbr/sponza.obj");
+    Model* steelSphere = al->LoadModel(L"../Vendor/Assets/Models/SteelSphere/sphere.obj");
+    Model* boxModel = al->LoadModel(L"../Vendor/Assets/Models/CubePBR/cube.obj");
+    Model* mirror = al->LoadModel(L"../Vendor/Assets/Models/Mirror/Mirror.obj");
 
     /* ---------------------- Player ---------------------- */
     Entity* entity = (scene->AddEntity("player"));

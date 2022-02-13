@@ -41,7 +41,7 @@ void DepthRenderTask::Execute()
 		m_pGraphicsContext->SetupBindings(false);
 
 		m_pGraphicsContext->SetPipelineState(m_PipelineStates[0]);
-		m_pGraphicsContext->SetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		m_pGraphicsContext->SetPrimitiveTopology(BL_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		TODO("Don't hardcode the sizes");
 		m_pGraphicsContext->SetViewPort(1280, 720);

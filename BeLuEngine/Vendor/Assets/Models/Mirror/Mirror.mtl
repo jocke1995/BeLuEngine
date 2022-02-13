@@ -1,0 +1,8 @@
+# Blender MTL File: 'None'
+# Material Count: 0
+
+newmtl mirrorMat
+map_Ka mirror_metallic.dds
+map_Kd mirror_albedo.dds
+map_Ks mirror_roughness.dds
+map_Kn mirror_normal.dds
