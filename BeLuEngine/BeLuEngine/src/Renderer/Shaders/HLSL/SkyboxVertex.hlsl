@@ -14,6 +14,11 @@ VS_OUT VS_main(uint vID : SV_VertexID)
 	float4 vertexPosition = float4(mesh.pos.xyz, 1.0f);
 
 	float4x4 viewMat = cbPerFrame.view;
+
+	viewMat[0][3] = 0;
+	viewMat[1][3] = 0;
+	viewMat[2][3] = 0;
+
 	float4x4 projMat = cbPerFrame.projection;
 	float4x4 vp = mul(viewMat, projMat);
 

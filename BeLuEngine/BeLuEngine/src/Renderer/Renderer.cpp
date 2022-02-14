@@ -644,6 +644,8 @@ void Renderer::InitCameraComponent(component::CameraComponent* component)
 	if (component->IsPrimary() == true)
 	{
 		m_pScenePrimaryCamera = component->GetCamera();
+
+		static_cast<SkyboxPass*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::SKYBOX])->SetCamera(m_pScenePrimaryCamera);
 	}
 }
 
@@ -688,16 +690,30 @@ void Renderer::InitSkyboxComponent(component::SkyboxComponent* component)
 	IGraphicsTexture* skyboxTexture = component->GetSkyboxTexture();
 	m_pCbPerSceneData->skybox = skyboxTexture->GetShaderResourceHeapIndex();
 
-
+	// Submit cube
 	TODO("Use the internal MeshFactory to create simple meshes and just get it from there.");
 	component->m_pCube = AssetLoader::Get()->LoadModel(L"../Vendor/Assets/Models/CubePBR/cube.obj");
 
+	Mesh* mesh = component->m_pCube->GetMeshAt(0);
+
+	// Submit Mesh
+	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_ON_DEMAND]);
+	codt->SubmitBuffer(mesh->GetVertexBuffer(), mesh->GetVertices()->data());
+	codt->SubmitBuffer(mesh->GetIndexBuffer(), mesh->GetIndices()->data());
+
+	AssetLoader::Get()->m_LoadedModels.at(component->m_pCube->GetPath()).first = true;
+
+	// Submit model to BLAS
+	static_cast<BottomLevelRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::BLAS])->SubmitBLAS(component->m_pCube->m_pBLAS);
+
+
+	// Submit SkyboxTexture
 	if (AssetLoader::Get()->IsTextureLoadedOnGpu(skyboxTexture) == true)
 	{
 		return;
 	}
 
-	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_ON_DEMAND]);
+	codt = static_cast<CopyOnDemandTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_ON_DEMAND]);
 	codt->SubmitTexture(skyboxTexture);
 
 	AssetLoader::Get()->m_LoadedTextures.at(skyboxTexture->GetPath()).first = true;

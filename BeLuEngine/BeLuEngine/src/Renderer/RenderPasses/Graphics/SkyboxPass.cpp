@@ -6,6 +6,8 @@
 #include "../Renderer/Geometry/Model.h"
 #include "../Renderer/Geometry/Mesh.h"
 
+#include "../Renderer/Camera/PerspectiveCamera.h"
+
 // Generic API
 #include "../../API/Interface/IGraphicsManager.h"
 #include "../../API/Interface/IGraphicsBuffer.h"
@@ -24,7 +26,6 @@ SkyboxPass::SkyboxPass()
 
 	psoDesc.SetDepthStencilFormat(BL_FORMAT_D24_UNORM_S8_UINT);
 	psoDesc.SetDepthDesc(BL_DEPTH_WRITE_MASK_ALL, BL_COMPARISON_FUNC_LESS_EQUAL);
-
 
 	psoDesc.AddShader(L"SkyboxVertex.hlsl", E_SHADER_TYPE::VS);
 	psoDesc.AddShader(L"SkyboxPixel.hlsl", E_SHADER_TYPE::PS);
@@ -82,4 +83,10 @@ void SkyboxPass::Execute()
 void SkyboxPass::SetSkybox(component::SkyboxComponent* skyboxComponent)
 {
 	m_pSkyboxComponent = skyboxComponent;
+}
+
+void SkyboxPass::SetCamera(BaseCamera* camera)
+{
+	BL_ASSERT(camera);
+	m_pBaseCamera = camera;
 }
