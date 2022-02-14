@@ -156,7 +156,7 @@ bool D3D12GraphicsTexture::LoadTexture3D_DDS(const std::wstring& filePath)
 
 	device5->GetCopyableFootprints(
 		&resourceDesc,
-		0, m_NumMipLevels, 0,
+		0, resourceDesc.DepthOrArraySize, 0,
 		nullptr, nullptr, nullptr,
 		&m_Size);
 
@@ -171,9 +171,9 @@ bool D3D12GraphicsTexture::LoadTexture3D_DDS(const std::wstring& filePath)
 	desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	desc.Format = textureFormat;
 	desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
-	desc.Texture2D.MipLevels = m_NumMipLevels;
-	desc.Texture2D.MostDetailedMip = 0;
-	desc.Texture2D.ResourceMinLODClamp = 0.0f;
+	desc.TextureCube.MipLevels = m_NumMipLevels;
+	desc.TextureCube.MostDetailedMip = 0;
+	desc.TextureCube.ResourceMinLODClamp = 0.0f;
 
 	m_ShaderResourceDescriptorHeapIndices[0] = mainDHeap->GetNextDescriptorHeapIndex(1);
 	device5->CreateShaderResourceView(m_pResource, &desc, mainDHeap->GetCPUHeapAt(m_ShaderResourceDescriptorHeapIndices[0]));

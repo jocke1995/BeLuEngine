@@ -44,8 +44,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
     /*------ AssetLoader to load models / textures ------*/
    AssetLoader* al = AssetLoader::Get();
    
-   Scene* scene = SponzaScene(sceneManager);
-   //Scene* scene = PBRScene(sceneManager);
+   //Scene* scene = SponzaScene(sceneManager);
+   Scene* scene = PBRScene(sceneManager);
 
    // Set scene
    sceneManager->SetScene(scene);
@@ -135,6 +135,7 @@ Scene* PBRScene(SceneManager* sm)
     component::PointLightComponent* plc = nullptr;
     component::DirectionalLightComponent* dlc = nullptr;
     component::SpotLightComponent* slc = nullptr;
+    component::SkyboxComponent* sbc = nullptr;
 
     AssetLoader* al = AssetLoader::Get();
 
@@ -145,11 +146,17 @@ Scene* PBRScene(SceneManager* sm)
     Model* steelSphere  = al->LoadModel(L"../Vendor/Assets/Models/SteelSphere/sphere.obj");
     Model* funnyModel   = al->LoadModel(L"../Vendor/Assets/Models/Private/FunnyModel/funnyModel.obj");
 
+    // Load a skybox
+    IGraphicsTexture* skyBoxTexture = al->LoadTextureCube(L"../Vendor/Assets/Skyboxes/Skybox_Heaven.dds");
+
     /* ---------------------- Player ---------------------- */
     Entity* entity = (scene->AddEntity("player"));
     cc = entity->AddComponent<component::CameraComponent>(E_CAMERA_TYPE::PERSPECTIVE, true);
     ic = entity->AddComponent<component::InputComponent>();
     scene->SetPrimaryCamera(cc->GetCamera());
+
+    sbc = entity->AddComponent<component::SkyboxComponent>();
+    sbc->SetSkyboxTexture(skyBoxTexture);
     /* ---------------------- Player ---------------------- */
 
     /* ---------------------- FunnyObject ---------------------- */
@@ -353,7 +360,7 @@ Scene* SponzaScene(SceneManager* sm)
     Model* mirror = al->LoadModel(L"../Vendor/Assets/Models/Mirror/Mirror.obj");
 
     // Load a skybox
-    IGraphicsTexture* skyBoxTexture = al->LoadTextureCube(L"../Vendor/Assets/Skyboxes/Skybox_Lava.dds");
+    IGraphicsTexture* skyBoxTexture = al->LoadTextureCube(L"../Vendor/Assets/Skyboxes/Skybox_Heaven.dds");
 
     /* ---------------------- Player ---------------------- */
     Entity* entity = (scene->AddEntity("player"));

@@ -685,10 +685,22 @@ void Renderer::InitSkyboxComponent(component::SkyboxComponent* component)
 {
 	static_cast<SkyboxPass*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::SKYBOX])->SetSkybox(component);
 
-	m_pCbPerSceneData->skybox = component->GetSkyboxTexture()->GetShaderResourceHeapIndex();
+	IGraphicsTexture* skyboxTexture = component->GetSkyboxTexture();
+	m_pCbPerSceneData->skybox = skyboxTexture->GetShaderResourceHeapIndex();
+
 
 	TODO("Use the internal MeshFactory to create simple meshes and just get it from there.");
-	component->m_pCube = AssetLoader::Get()->LoadModel(L"../Vendor/Assets/Models/CubePBR/cube.obj");;
+	component->m_pCube = AssetLoader::Get()->LoadModel(L"../Vendor/Assets/Models/CubePBR/cube.obj");
+
+	if (AssetLoader::Get()->IsTextureLoadedOnGpu(skyboxTexture) == true)
+	{
+		return;
+	}
+
+	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_ON_DEMAND]);
+	codt->SubmitTexture(skyboxTexture);
+
+	AssetLoader::Get()->m_LoadedTextures.at(skyboxTexture->GetPath()).first = true;
 }
 
 void Renderer::UnInitModelComponent(component::ModelComponent* mc)
