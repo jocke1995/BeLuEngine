@@ -59,18 +59,19 @@ void SkyboxPass::Execute()
 		m_pGraphicsContext->SetViewPort(1280, 720);
 		m_pGraphicsContext->SetScizzorRect(1280, 720);
 
-		DirectX::XMVECTOR pos = DirectX::XMLoadFloat3(&m_pBaseCamera->GetPosition());
-		DirectX::XMMATRIX WTransposed = DirectX::XMMatrixTranslationFromVector(pos);
-		WTransposed = DirectX::XMMatrixTranspose(WTransposed);
-
 		// Fill in translation data and set the buffer 
 		DirectX::XMMATRIX viewMatTransposed = DirectX::XMMatrixTranspose(*m_pBaseCamera->GetViewMatrix());
+
+		viewMatTransposed.r[0].m128_f32[3] = 0;
+		viewMatTransposed.r[1].m128_f32[3] = 0;
+		viewMatTransposed.r[2].m128_f32[3] = 0;
+
 		DirectX::XMMATRIX projMatTransposed = DirectX::XMMatrixTranspose(*m_pBaseCamera->GetProjMatrix());
 		DirectX::XMMATRIX viewProjCombined = *m_pBaseCamera->GetViewProjectionTranposed();
 
+		// No need for the world matrix here, I zero-out the viewMatrix instead, making the final result equivalent.
 		MATRICES_PER_OBJECT_STRUCT matricesPerObjectStruct = {};
-		matricesPerObjectStruct.worldMatrix = WTransposed;
-		matricesPerObjectStruct.WVP = viewProjCombined * WTransposed;
+		matricesPerObjectStruct.WVP = projMatTransposed * viewMatTransposed;
 
 		m_pGraphicsContext->SetConstantBufferDynamicData(RootParam_CBV_B2, sizeof(MATRICES_PER_OBJECT_STRUCT), &matricesPerObjectStruct, false);
 
