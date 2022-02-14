@@ -27,6 +27,8 @@ SkyboxPass::SkyboxPass()
 	psoDesc.SetDepthStencilFormat(BL_FORMAT_D24_UNORM_S8_UINT);
 	psoDesc.SetDepthDesc(BL_DEPTH_WRITE_MASK_ALL, BL_COMPARISON_FUNC_LESS_EQUAL);
 
+	psoDesc.SetCullMode(BL_CULL_MODE_NONE);
+
 	psoDesc.AddShader(L"SkyboxVertex.hlsl", E_SHADER_TYPE::VS);
 	psoDesc.AddShader(L"SkyboxPixel.hlsl", E_SHADER_TYPE::PS);
 	
@@ -56,6 +58,21 @@ void SkyboxPass::Execute()
 		TODO("Don't hardcode the sizes");
 		m_pGraphicsContext->SetViewPort(1280, 720);
 		m_pGraphicsContext->SetScizzorRect(1280, 720);
+
+		DirectX::XMVECTOR pos = DirectX::XMLoadFloat3(&m_pBaseCamera->GetPosition());
+		DirectX::XMMATRIX WTransposed = DirectX::XMMatrixTranslationFromVector(pos);
+		WTransposed = DirectX::XMMatrixTranspose(WTransposed);
+
+		// Fill in translation data and set the buffer 
+		DirectX::XMMATRIX viewMatTransposed = DirectX::XMMatrixTranspose(*m_pBaseCamera->GetViewMatrix());
+		DirectX::XMMATRIX projMatTransposed = DirectX::XMMatrixTranspose(*m_pBaseCamera->GetProjMatrix());
+		DirectX::XMMATRIX viewProjCombined = *m_pBaseCamera->GetViewProjectionTranposed();
+
+		MATRICES_PER_OBJECT_STRUCT matricesPerObjectStruct = {};
+		matricesPerObjectStruct.worldMatrix = WTransposed;
+		matricesPerObjectStruct.WVP = viewProjCombined * WTransposed;
+
+		m_pGraphicsContext->SetConstantBufferDynamicData(RootParam_CBV_B2, sizeof(MATRICES_PER_OBJECT_STRUCT), &matricesPerObjectStruct, false);
 
 		m_pGraphicsContext->SetConstantBuffer(RootParam_CBV_B3, m_CommonGraphicsResources->cbPerFrame, false);
 		m_pGraphicsContext->SetConstantBuffer(RootParam_CBV_B4, m_CommonGraphicsResources->cbPerScene, false);

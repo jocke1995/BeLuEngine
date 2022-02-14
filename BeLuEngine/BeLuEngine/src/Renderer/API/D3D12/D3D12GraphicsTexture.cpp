@@ -163,7 +163,7 @@ bool D3D12GraphicsTexture::LoadTexture3D_DDS(const std::wstring& filePath)
 #pragma endregion
 
 	DXGI_FORMAT textureFormat = resourceDesc.Format;
-	//textureFormat = ConvertFormatToSRGB(textureFormat);
+	textureFormat = ConvertFormatToSRGB(textureFormat);
 
 #pragma region CreateDescriptors
 	// Create srv
