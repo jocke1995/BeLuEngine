@@ -115,7 +115,7 @@ bool D3D12GraphicsTexture::LoadTexture2D_DDS(E_TEXTURE2D_TYPE textureType, const
 	return true;
 }
 
-bool D3D12GraphicsTexture::LoadTexture3D_DDS(const std::wstring& filePath)
+bool D3D12GraphicsTexture::LoadTextureCube_DDS(const std::wstring& filePath)
 {
 	D3D12GraphicsManager* graphicsManager = D3D12GraphicsManager::GetInstance();
 	ID3D12Device5* device5 = graphicsManager->GetDevice();
@@ -154,9 +154,11 @@ bool D3D12GraphicsTexture::LoadTexture3D_DDS(const std::wstring& filePath)
 	m_pTextureData = static_cast<BYTE*>(m_DdsData.get());
 	m_DdsData.release(); // lose the pointer, let m_pTextureData delete the data.
 
+	BL_ASSERT_MESSAGE(resourceDesc.DepthOrArraySize == 6, "Invalid CubeTexture!");
+
 	device5->GetCopyableFootprints(
 		&resourceDesc,
-		0, resourceDesc.DepthOrArraySize, 0,
+		0, 6, 0,
 		nullptr, nullptr, nullptr,
 		&m_Size);
 

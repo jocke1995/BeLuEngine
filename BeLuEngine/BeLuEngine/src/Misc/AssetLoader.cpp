@@ -219,7 +219,7 @@ IGraphicsTexture* AssetLoader::LoadTextureCube(const std::wstring& path)
 	BL_ASSERT(fileEnding == "dds");	// Currently only supporting dds..
 
 	IGraphicsTexture* texture = IGraphicsTexture::Create();
-	bool loaded = texture->LoadTexture3D_DDS(path);
+	bool loaded = texture->LoadTextureCube_DDS(path);
 	BL_ASSERT(loaded);
 
 	m_LoadedTextures[path].first = false;

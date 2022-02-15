@@ -21,10 +21,7 @@ private:
 	friend class D3D12GraphicsContext;
 	friend class D3D12TopLevelAS;
 	friend class D3D12ShaderBindingTable;
-
-	TODO("These are temporary until dxr is abstracted away");
 	friend class D3D12BottomLevelAS;
-	friend class DXRReflectionTask;
 
 	ID3D12Resource1* m_pResource = nullptr;
 	unsigned int m_ConstantBufferDescriptorHeapIndex = -1;

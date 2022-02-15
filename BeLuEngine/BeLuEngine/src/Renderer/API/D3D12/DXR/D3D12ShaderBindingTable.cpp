@@ -88,8 +88,7 @@ unsigned int D3D12ShaderBindingTable::calculateShaderBindingTableSize()
 		mMaxRayGenerationSize * m_RayGenerationRecords.size() +	// Raygen Sizes
 		mMaxMissRecordSize * m_MissRecords.size() +				// Miss Sizes
 		mMaxHitGroupSize * m_HitGroupRecords.size();			// Hitgroup Sizes
-	;
-	TODO("Wrong byte alignment? Maybe should be (256 - 1)?")
+
 	unsigned int sbtSizePadded = (sbtSizeUnPadded + D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT) & ~D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT;
 
 	return sbtSizePadded;

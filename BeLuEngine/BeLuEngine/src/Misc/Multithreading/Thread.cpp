@@ -76,7 +76,7 @@ Thread::Thread(
 	m_pMainThreadCV = mainThreadCV;
 	m_ThreadId = threadId;
 
-	TODO("Wrap this in a debug or other macro to not use it in Dist-builds")
+	TODO("Wrap this in a EditorConfig")
 	m_pStatistics = new IM_ThreadStats();
 
 	// Create and start the thread function
