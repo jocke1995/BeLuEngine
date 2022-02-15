@@ -62,6 +62,7 @@ void SkyboxPass::Execute()
 		// Fill in translation data and set the buffer 
 		DirectX::XMMATRIX viewMatTransposed = DirectX::XMMatrixTranspose(*m_pBaseCamera->GetViewMatrix());
 
+		// Set the translation-Vector to be 0, to make the cubeMap be drawn at the same location as the camera
 		viewMatTransposed.r[0].m128_f32[3] = 0;
 		viewMatTransposed.r[1].m128_f32[3] = 0;
 		viewMatTransposed.r[2].m128_f32[3] = 0;
