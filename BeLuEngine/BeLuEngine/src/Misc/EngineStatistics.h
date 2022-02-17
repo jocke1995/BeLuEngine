@@ -2,6 +2,7 @@
 #define ENGINESTATISTICS_H
 #include "Core.h"
 
+TODO("Wrap all of this in editorMode?");
 struct IM_CommonStats
 {
 	std::string m_Build = "";
@@ -47,14 +48,64 @@ struct IM_ThreadStats
 //	unsigned int m_NumDrawCalls = 0;
 //	unsigned int m_NumVertices = 0;
 //};
-//
-//struct IM_DirectX12Stats
-//{
-//	unsigned int m_NumUniqueCommandLists = 0;
-//	unsigned int m_NumUniqueCommandAllocators = 0;
-//
-//	unsigned int m_NumExecuteCommandListsDirect = 0;
-//};
+
+struct D3D12ContextStats
+{
+	friend class D3D12GraphicsContext;
+
+	D3D12ContextStats operator+(const D3D12ContextStats& other) const;
+
+	// Set DescriptorHeap
+	unsigned int m_NumSetDescriptorHeaps = 0;
+	unsigned int m_NumSetComputeRootSignature = 0;
+	unsigned int m_NumSetComputeRootDescriptorTable = 0;
+	unsigned int m_NumSetGraphicsRootSignature = 0;
+	unsigned int m_NumSetGraphicsRootDescriptorTable = 0;
+
+	// Copy
+	unsigned int m_NumCopyBufferRegion = 0;
+	unsigned int m_NumCopyTextureRegion = 0;
+
+	// Misc
+	unsigned int m_NumSetPipelineState = 0;
+	unsigned int m_NumIASetPrimitiveTopology = 0;
+	unsigned int m_NumResourceBarriers = 0;
+	unsigned int m_NumRSSetViewports = 0;
+	unsigned int m_NumRSSetScissorRects = 0;
+	unsigned int m_NumOMSetStencilRef = 0;
+
+	// RenderTarget and Clears
+	unsigned int m_NumOMSetRenderTargets = 0;
+	unsigned int m_NumClearDepthStencilView = 0;
+	unsigned int m_NumClearRenderTargetView = 0;
+	unsigned int m_NumClearUnorderedAccessViewFloat = 0;
+	unsigned int m_NumClearUnorderedAccessViewUint = 0;
+
+	// Views
+	unsigned int m_NumSetComputeRootShaderResourceView = 0;
+	unsigned int m_NumSetGraphicsRootShaderResourceView = 0;
+	unsigned int m_NumSetComputeRootConstantBufferView = 0;
+	unsigned int m_NumSetGraphicsRootConstantBufferView = 0;
+	unsigned int m_NumSetComputeRoot32BitConstants = 0;
+	unsigned int m_NumSetGraphicsRoot32BitConstants = 0;
+
+	// Draw and Dispatch
+	unsigned int m_NumDrawIndexedInstanced = 0;
+	unsigned int m_NumDispatch = 0;
+
+	// Raytracing
+	unsigned int m_NumBuildTLAS = 0;
+	unsigned int m_NumBuildBLAS = 0;
+	unsigned int m_NumDispatchRays = 0;
+	unsigned int m_NumSetRayTracingPipelineState = 0;
+
+	// Updated by mainThread when resolving
+	// Not touched by the overloaded operator+
+	unsigned int m_NumExecuteCommandListsDirect = 0;
+};
+
+TODO("Wrap in a EditorMode define");
+#define BL_EDITOR_MODE_APPEND(container, value) container += 3;
 
 // Singleton to hold all debug info
 class EngineStatistics

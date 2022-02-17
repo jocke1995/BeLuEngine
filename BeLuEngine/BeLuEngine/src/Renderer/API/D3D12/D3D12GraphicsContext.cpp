@@ -128,6 +128,8 @@ void D3D12GraphicsContext::Begin()
 	// Reset Commandinterface
 	D3D12GraphicsManager::CHECK_HRESULT(m_pCommandAllocators[index]->Reset());
 	D3D12GraphicsManager::CHECK_HRESULT(m_pCommandList->Reset(m_pCommandAllocators[index], NULL));
+
+	m_ContextStats = {};
 }
 
 void D3D12GraphicsContext::SetupBindings(bool isComputePipeline)
@@ -138,6 +140,8 @@ void D3D12GraphicsContext::SetupBindings(bool isComputePipeline)
 	ID3D12DescriptorHeap* d3d12DescriptorHeap = graphicsManager->GetMainDescriptorHeap()->GetID3D12DescriptorHeap();
 	m_pCommandList->SetDescriptorHeaps(1, &d3d12DescriptorHeap);
 
+	BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumSetDescriptorHeaps, 1);
+
 	// Rootsignature and DescriptorTables
 	if (isComputePipeline)
 	{
@@ -146,6 +150,9 @@ void D3D12GraphicsContext::SetupBindings(bool isComputePipeline)
 		m_pCommandList->SetComputeRootDescriptorTable(dtSRV, d3d12DescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 		m_pCommandList->SetComputeRootDescriptorTable(dtCBV, d3d12DescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 		m_pCommandList->SetComputeRootDescriptorTable(dtUAV, d3d12DescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+
+		BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumSetComputeRootSignature, 1);
+		BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumSetComputeRootDescriptorTable, 3);
 	}
 	else
 	{
@@ -154,6 +161,9 @@ void D3D12GraphicsContext::SetupBindings(bool isComputePipeline)
 		m_pCommandList->SetGraphicsRootDescriptorTable(dtSRV, d3d12DescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 		m_pCommandList->SetGraphicsRootDescriptorTable(dtCBV, d3d12DescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 		m_pCommandList->SetGraphicsRootDescriptorTable(dtUAV, d3d12DescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+
+		BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumSetGraphicsRootSignature, 1);
+		BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumSetGraphicsRootDescriptorTable, 3);
 	}
 }
 

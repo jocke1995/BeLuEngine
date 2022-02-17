@@ -5,6 +5,9 @@
 
 #include "D3D12ResourceStateTracker.h"
 
+TODO("Wrap in EditorMode");
+#include "../Misc/EngineStatistics.h"
+
 struct PendingTransitionBarrier
 {
     D3D12LocalStateTracker* localStateTracker = nullptr;
@@ -91,6 +94,8 @@ private:
     bool resolvePendingTransitionBarriers();
     /* ---------------------------------- Automatic ResourceBarrier Management ----------------------------------------------- */
 
+    TODO("Wrap in EditorMode");
+    D3D12ContextStats m_ContextStats = {};
 	// Useful for debugging
 #ifdef DEBUG
 	std::wstring m_Name = L"GraphicsContextDefault";
