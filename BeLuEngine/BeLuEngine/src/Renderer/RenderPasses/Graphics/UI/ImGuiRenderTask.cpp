@@ -6,6 +6,8 @@
 #include "../ImGUI/imgui_impl_win32.h"
 #include "../ImGUI/imgui_impl_dx12.h"
 
+#include "../ImGui/ImGuiHandler.h"
+
 #include "../Misc/Window.h"
 
 // API specific.. ImGui Requires stuff from manager
@@ -74,16 +76,30 @@ void ImGuiRenderTask::Execute()
 	IGraphicsTexture* finalColorTexture = m_CommonGraphicsResources->finalColorBuffer;
 	BL_ASSERT(finalColorTexture);
 
-	m_pGraphicsContext->Begin();
+	ImGuiHandler& imGuiHandler = ImGuiHandler::GetInstance();
+
+	// Start the new frame
+	imGuiHandler.NewFrame();
+
+	// Update ImGui here to get all information that happens inside rendering
+	imGuiHandler.UpdateFrame();
+
+	// Context-recording
 	{
-		ScopedPixEvent(ImGuiPass, m_pGraphicsContext);
+		m_pGraphicsContext->Begin();
+		{
+			ScopedPixEvent(ImGuiPass, m_pGraphicsContext);
 
-		m_pGraphicsContext->SetupBindings(false);
+			m_pGraphicsContext->SetupBindings(false);
 
-		m_pGraphicsContext->ResourceBarrier(finalColorTexture, D3D12_RESOURCE_STATE_RENDER_TARGET);
-		m_pGraphicsContext->SetRenderTargets(1, &finalColorTexture, nullptr);
+			m_pGraphicsContext->ResourceBarrier(finalColorTexture, D3D12_RESOURCE_STATE_RENDER_TARGET);
+			m_pGraphicsContext->SetRenderTargets(1, &finalColorTexture, nullptr);
 
-		m_pGraphicsContext->DrawImGui();
+			m_pGraphicsContext->DrawImGui();
+		}
+		m_pGraphicsContext->End();
 	}
-	m_pGraphicsContext->End();
+
+	// End the frame
+	imGuiHandler.EndFrame();
 }

@@ -37,6 +37,7 @@ private:
 	bool m_IsExiting = false;
 	unsigned int m_ThreadId = 0;
 
+	TODO("Wrap into editorMode");
 	// Used for debug statistics
 	IM_ThreadStats* m_pStatistics = nullptr;
 };

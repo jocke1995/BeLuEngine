@@ -46,8 +46,6 @@ void ImGuiHandler::NewFrame()
 		EventBus::GetInstance().Subscribe(this, &ImGuiHandler::onEntityClicked);
 	a = false;
 
-	this->resetThreadInfos();
-
 	ImGui_ImplDX12_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
@@ -55,7 +53,7 @@ void ImGuiHandler::NewFrame()
 
 void ImGuiHandler::EndFrame()
 {
-	
+	this->resetThreadInfos();
 }
 
 void ImGuiHandler::UpdateFrame()

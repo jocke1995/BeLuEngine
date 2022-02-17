@@ -769,7 +769,8 @@ void D3D12GraphicsManager::Init(HWND hwnd, unsigned int width, unsigned int heig
 
 void D3D12GraphicsManager::Begin()
 {
-
+	// Nothing here now.. but could be convenient to have this function incase something is needed to be done from here in the future.
+	// Also may be good for other API's in the future, were some things might have to be hacked in here
 }
 
 void D3D12GraphicsManager::End()
@@ -777,6 +778,7 @@ void D3D12GraphicsManager::End()
 	// Delete D3D12 resources that are guaranteed not used anymore
 	deleteDefferedDeletionObjects(false);
 
+	// Update the frameIndex for next frame
 	mFrameIndex++;
 	m_CommandInterfaceIndex = (m_CommandInterfaceIndex + 1) % NUM_SWAP_BUFFERS;
 

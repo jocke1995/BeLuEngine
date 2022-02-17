@@ -9,6 +9,7 @@ unsigned int __stdcall Thread::threadFunc(void* threadParam)
 	Thread* t = static_cast<Thread*>(threadParam);
 
 // Statistics info
+	TODO("Wrap this in a EditorConfig");
 #ifdef DEBUG
 	{
 		std::unique_lock<std::mutex> lock(*(t->m_Mutex));
@@ -48,6 +49,8 @@ unsigned int __stdcall Thread::threadFunc(void* threadParam)
 		{
 			// Run thread task
 			t->m_pActiveTask->Execute();
+
+			TODO("Wrap this in a EditorConfig");
 			t->m_pStatistics->m_TasksCompleted++;
 
 			// Lock
@@ -76,7 +79,7 @@ Thread::Thread(
 	m_pMainThreadCV = mainThreadCV;
 	m_ThreadId = threadId;
 
-	TODO("Wrap this in a EditorConfig")
+	TODO("Wrap this in a EditorConfig");
 	m_pStatistics = new IM_ThreadStats();
 
 	// Create and start the thread function
@@ -88,7 +91,7 @@ Thread::Thread(
 		BL_LOG_CRITICAL("Failed to 'SetThreadPriority' belonging to a thread with id: %d\n", m_ThreadId);
 	}
 
-
+	TODO("Wrap this in a EditorConfig");
 	EngineStatistics::GetIM_ThreadStats().push_back(m_pStatistics);
 }
 
@@ -99,5 +102,6 @@ Thread::~Thread()
 		BL_LOG_WARNING("Failed to 'CloseHandle' belonging to a thread with id: %d\n", m_ThreadId);
 	}
 
+	TODO("Wrap this in a EditorConfig");
 	delete m_pStatistics;
 }

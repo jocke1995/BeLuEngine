@@ -273,9 +273,6 @@ void Renderer::Update(double dt)
 	// Picking
 	updateMousePicker();
 
-	// ImGui
-	ImGuiHandler::GetInstance().NewFrame();
-
 	// Update the resultBuffer of DXR if needed
 	ITopLevelAS* pTLAS = static_cast<TopLevelRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::TLAS])->GetTopLevelAS();
 	pTLAS->Reset();
@@ -295,7 +292,7 @@ void Renderer::Update(double dt)
 		submitCbPerSceneData(pTLAS);
 	}
 
-	setRenderTasksRenderComponents();
+	setDataForRendering();
 }
 
 void Renderer::SortObjects()
@@ -359,183 +356,101 @@ void Renderer::SortObjects()
 	}
 
 	// Update the entity-arrays inside the rendertasks
-	setRenderTasksRenderComponents();
+	setDataForRendering();
 }
 
-void Renderer::ExecuteMT()
+void Renderer::Execute()
 {
 	IGraphicsManager* graphicsManager = IGraphicsManager::GetBaseInstance();
 	graphicsManager->Begin();
+	
+	auto executeGraphicsPassLambda = [this](E_GRAPHICS_PASS_TYPE graphicsPass)
+	{
+		// For easier debugging purposes
+		if (SINGLE_THREADED_RENDERER == true)
+		{
+			m_GraphicsPasses[graphicsPass]->Execute();
+		}
+		else
+		{
+			m_pThreadPool->AddTask(m_GraphicsPasses[graphicsPass]);
+		}
+	};
 
-	GraphicsPass* graphicsPass = nullptr;
+	auto waitForCompletionLambda = [this](F_THREAD_FLAGS threadFlag)
+	{
+		// For easier debugging purposes
+		if (SINGLE_THREADED_RENDERER == true)
+		{
+			// Do nothing, everything is allready completed if we reach this point using a single threaded commandList recording
+		}
+		else
+		{
+			m_pThreadPool->WaitForThreads(threadFlag);
+		}
+	};
+
 	/* --------------------- Record command lists --------------------- */
 
 	// Copy on demand
-	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_ON_DEMAND];
-	m_pThreadPool->AddTask(graphicsPass);
+	executeGraphicsPassLambda(E_GRAPHICS_PASS_TYPE::COPY_ON_DEMAND);
 
 	// Update BLASes if any...
-	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::BLAS];
-	m_pThreadPool->AddTask(graphicsPass);
+	executeGraphicsPassLambda(E_GRAPHICS_PASS_TYPE::BLAS);
 
 	// Depth pre-pass
-	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DEPTH_PRE_PASS];
-	m_pThreadPool->AddTask(graphicsPass);
+	executeGraphicsPassLambda(E_GRAPHICS_PASS_TYPE::DEPTH_PRE_PASS);
 
 	// Update TLAS
-	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::TLAS];
-	m_pThreadPool->AddTask(graphicsPass);
+	executeGraphicsPassLambda(E_GRAPHICS_PASS_TYPE::TLAS);
 
 	// Geometry pass
-	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DEFERRED_GEOMETRY];
-	m_pThreadPool->AddTask(graphicsPass);
+	executeGraphicsPassLambda(E_GRAPHICS_PASS_TYPE::DEFERRED_GEOMETRY);
 
 	// Light pass
-	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DEFERRED_LIGHT];
-	m_pThreadPool->AddTask(graphicsPass);
+	executeGraphicsPassLambda(E_GRAPHICS_PASS_TYPE::DEFERRED_LIGHT);
 
 	// DXR Reflections
-	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::REFLECTIONS];
-	m_pThreadPool->AddTask(graphicsPass);
+	executeGraphicsPassLambda(E_GRAPHICS_PASS_TYPE::REFLECTIONS);
 
 	// Blend
-	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::OPACITY];
-	m_pThreadPool->AddTask(graphicsPass);
+	executeGraphicsPassLambda(E_GRAPHICS_PASS_TYPE::OPACITY);
 
 	// Outlining, if an object is picked
-	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::OUTLINE];
-	static_cast<OutliningRenderTask*>(graphicsPass)->SetCamera(m_pScenePrimaryCamera);
-	m_pThreadPool->AddTask(graphicsPass);
+	executeGraphicsPassLambda(E_GRAPHICS_PASS_TYPE::OUTLINE);
 
 	// Blurring for bloom
-	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::POSTPROCESS_BLOOM];
-	m_pThreadPool->AddTask(graphicsPass);
+	executeGraphicsPassLambda(E_GRAPHICS_PASS_TYPE::POSTPROCESS_BLOOM);
 
 	// Merge 
-	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::POSTPROCESS_TONEMAP];
-	m_pThreadPool->AddTask(graphicsPass);
+	executeGraphicsPassLambda(E_GRAPHICS_PASS_TYPE::POSTPROCESS_TONEMAP);
 
 	// Skybox 
-	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::SKYBOX];
-	m_pThreadPool->AddTask(graphicsPass);
+	executeGraphicsPassLambda(E_GRAPHICS_PASS_TYPE::SKYBOX);
 	
+	TODO("This will be moved into an editor-Mode only")
 	/* ----------------------------- DEVELOPERMODE CommandLists ----------------------------- */
 	if (DEVELOPERMODE_DRAWBOUNDINGBOX == true)
 	{
-		graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::WIREFRAME];
-		m_pThreadPool->AddTask(graphicsPass);
+		executeGraphicsPassLambda(E_GRAPHICS_PASS_TYPE::WIREFRAME);
 	}
 
 	/* ----------------------------- DEVELOPERMODE CommandLists ----------------------------- */
 
-	// Wait for the threads which records the commandlists to complete
-	m_pThreadPool->WaitForThreads(F_THREAD_FLAGS::GRAPHICS);
-
+	// Waits for context-Threads to complete if we're using multithreaded recording of contexts
+	waitForCompletionLambda(F_THREAD_FLAGS::GRAPHICS);
 
 	graphicsManager->ExecuteGraphicsContexts(m_MainGraphicsContexts, m_MainGraphicsContexts.size());
 	/* --------------------------------------------------------------- */
 
-	// Have to update ImGui here to get all information that happens inside rendering
-	ImGuiHandler::GetInstance().UpdateFrame();
-
-	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::IMGUI];
-	graphicsPass->Execute();
+	TODO("Wrap this in an editor-Mode only. This task has to be run on the mainthread!");
+	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::IMGUI]->Execute();
 
 	graphicsManager->ExecuteGraphicsContexts(m_ImGuiGraphicsContext, m_ImGuiGraphicsContext.size());
 
 	/*------------------- Present -------------------*/
+	TODO("This overrides the editorStuff.. this texture should be copied to the finalColorTexture instead before we draw the editor, so it isn't removed");
 	graphicsManager->SyncAndPresent(m_CurrentTextureToVisualize);
-	
-	// Check to end ImGui if its active
-	ImGuiHandler::GetInstance().EndFrame();
-
-	graphicsManager->End();
-}
-
-void Renderer::ExecuteST()
-{
-	IGraphicsManager* graphicsManager = IGraphicsManager::GetBaseInstance();
-	graphicsManager->Begin();
-
-	GraphicsPass* graphicsPass = nullptr;
-	
-	/* --------------------- Record command lists --------------------- */
-	// Copy on demand
-	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_ON_DEMAND];
-	graphicsPass->Execute();
-
-	// Update BLASes if any...
-	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::BLAS];
-	graphicsPass->Execute();
-
-	// Depth pre-pass
-	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DEPTH_PRE_PASS];
-	graphicsPass->Execute();
-
-	// Update TLAS
-	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::TLAS];
-	graphicsPass->Execute();
-
-	// Geometry pass
-	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DEFERRED_GEOMETRY];
-	graphicsPass->Execute();
-
-	// Light pass
-	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DEFERRED_LIGHT];
-	graphicsPass->Execute();
-
-	// DXR Reflections
-	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::REFLECTIONS];
-	graphicsPass->Execute();
-
-	// Blend
-	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::OPACITY];
-	graphicsPass->Execute();
-
-	// Outlining, if an object is picked
-	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::OUTLINE];
-	static_cast<OutliningRenderTask*>(graphicsPass)->SetCamera(m_pScenePrimaryCamera);
-	graphicsPass->Execute();
-
-	// Blurring for bloom
-	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::POSTPROCESS_BLOOM];
-	graphicsPass->Execute();
-
-	// Merge 
-	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::POSTPROCESS_TONEMAP];
-	graphicsPass->Execute();
-
-	// Skybox 
-	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::SKYBOX];
-	graphicsPass->Execute();
-
-	/* ----------------------------- DEVELOPERMODE CommandLists ----------------------------- */
-	if (DEVELOPERMODE_DRAWBOUNDINGBOX == true)
-	{
-		graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::WIREFRAME];
-		graphicsPass->Execute();
-	}
-
-	/* ----------------------------- DEVELOPERMODE CommandLists ----------------------------- */
-	graphicsManager->ExecuteGraphicsContexts(m_MainGraphicsContexts, m_MainGraphicsContexts.size());
-
-	/* --------------------------------------------------------------- */
-
-	/*------------------- Post draw stuff -------------------*/
-
-	// Have to update ImGui here to get all information that happens inside rendering
-	ImGuiHandler::GetInstance().UpdateFrame();
-
-	graphicsPass = m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::IMGUI];
-	graphicsPass->Execute();
-
-	graphicsManager->ExecuteGraphicsContexts(m_ImGuiGraphicsContext, m_ImGuiGraphicsContext.size());
-
-	/*------------------- Present -------------------*/
-	graphicsManager->SyncAndPresent(m_CurrentTextureToVisualize);
-
-	// Check to end ImGui if its active
-	ImGuiHandler::GetInstance().EndFrame();
 
 	graphicsManager->End();
 }
@@ -748,7 +663,7 @@ void Renderer::UnInitModelComponent(component::ModelComponent* mc)
 	}
 
 	// Update Render Tasks components (forward the change in renderComponents)
-	setRenderTasksRenderComponents();
+	setDataForRendering();
 }
 
 void Renderer::UnInitDirectionalLightComponent(component::DirectionalLightComponent* component)
@@ -1068,17 +983,20 @@ void Renderer::createRawBufferForLights()
 	memset(Light::m_pRawData, 0, rawBufferSize);
 }
 
-void Renderer::setRenderTasksRenderComponents()
+void Renderer::setDataForRendering()
 {
+	// --------------------------- RenderComponents --------------------------- //
 	static_cast<DepthRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DEPTH_PRE_PASS])->SetRenderComponents(m_RenderComponents[F_DRAW_FLAGS::NO_DEPTH]);
 	static_cast<DeferredGeometryRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DEFERRED_GEOMETRY])->SetRenderComponents(m_RenderComponents[F_DRAW_FLAGS::DRAW_OPAQUE]);
 	static_cast<TransparentRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::OPACITY])->SetRenderComponents(m_RenderComponents[F_DRAW_FLAGS::DRAW_TRANSPARENT]);
 
 	// DXR
-	TopLevelRenderTask* pTLAS = static_cast<TopLevelRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::TLAS]);
-	DXRReflectionTask* pReflectionTask = static_cast<DXRReflectionTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::REFLECTIONS]);
-	pTLAS->SetRenderComponents(m_RayTracedRenderComponents);
-	pReflectionTask->SetRenderComponents(m_RayTracedRenderComponents);
+	static_cast<TopLevelRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::TLAS])->SetRenderComponents(m_RayTracedRenderComponents);
+	static_cast<DXRReflectionTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::REFLECTIONS])->SetRenderComponents(m_RayTracedRenderComponents);
+	// --------------------------- RenderComponents --------------------------- //
+
+	// Camera
+	static_cast<OutliningRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::OUTLINE])->SetCamera(m_pScenePrimaryCamera);
 }
 
 void Renderer::setupNewScene(Scene* activeScene)

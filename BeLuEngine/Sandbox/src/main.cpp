@@ -109,14 +109,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
    
        
        /* ------ Sort ------ */
-       //renderer->SortObjects();
+       renderer->SortObjects();
    
-       /* ------ Draw ------ */
-       // For easier debugging purposes
-       if (SINGLE_THREADED_RENDERER == true)    
-           renderer->ExecuteST();
-       else
-           renderer->ExecuteMT();
+       /* ------ Render ------ */
+       renderer->Execute();
    }
     
     return EXIT_SUCCESS;

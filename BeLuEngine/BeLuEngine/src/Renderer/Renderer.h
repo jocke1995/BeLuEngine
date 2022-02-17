@@ -71,9 +71,8 @@ public:
 	void Update(double dt);
 	void SortObjects();
 
-	// Call one of these (Single threaded-version is most used for debugging purposes)
-	void ExecuteMT();
-	void ExecuteST();
+	// Call each frame to start the rendering
+	void Execute();
 
 	// Render inits, these functions are called by respective components through SetScene to prepare for drawing
 	void InitModelComponent(component::ModelComponent* component);
@@ -150,7 +149,7 @@ private:
 	void updateMousePicker();
 	void initGraphicsPasses();
 	void createRawBufferForLights();
-	void setRenderTasksRenderComponents();
+	void setDataForRendering();
 
 	// Setup the whole scene
 	void setupNewScene(Scene* activeScene);
