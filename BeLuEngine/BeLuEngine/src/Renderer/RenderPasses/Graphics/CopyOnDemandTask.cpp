@@ -28,9 +28,9 @@ void CopyOnDemandTask::Execute()
 			ScopedPixEvent(Buffers, m_pGraphicsContext);
 			for (std::pair<IGraphicsBuffer*, const void*> bufData : m_GraphicBuffersToUpload)
 			{
-				m_pGraphicsContext->ResourceBarrier(bufData.first, D3D12_RESOURCE_STATE_COPY_DEST);
+				m_pGraphicsContext->ResourceBarrier(bufData.first, BL_RESOURCE_STATE_COPY_DEST);
 				m_pGraphicsContext->UploadBuffer(bufData.first, bufData.second);
-				m_pGraphicsContext->ResourceBarrier(bufData.first, D3D12_RESOURCE_STATE_COMMON);
+				m_pGraphicsContext->ResourceBarrier(bufData.first, BL_RESOURCE_STATE_COMMON);
 			}
 		}
 		
@@ -39,9 +39,9 @@ void CopyOnDemandTask::Execute()
 			ScopedPixEvent(Textures, m_pGraphicsContext);
 			for (IGraphicsTexture* graphicsTexture : m_GraphicTexturesToUpload)
 			{
-				m_pGraphicsContext->ResourceBarrier(graphicsTexture, D3D12_RESOURCE_STATE_COPY_DEST);
+				m_pGraphicsContext->ResourceBarrier(graphicsTexture, BL_RESOURCE_STATE_COPY_DEST);
 				m_pGraphicsContext->UploadTexture(graphicsTexture);
-				m_pGraphicsContext->ResourceBarrier(graphicsTexture, D3D12_RESOURCE_STATE_COMMON);
+				m_pGraphicsContext->ResourceBarrier(graphicsTexture, BL_RESOURCE_STATE_COMMON);
 			}
 		}
 	}

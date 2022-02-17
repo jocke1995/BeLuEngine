@@ -92,7 +92,7 @@ void ImGuiRenderTask::Execute()
 
 			m_pGraphicsContext->SetupBindings(false);
 
-			m_pGraphicsContext->ResourceBarrier(finalColorTexture, D3D12_RESOURCE_STATE_RENDER_TARGET);
+			m_pGraphicsContext->ResourceBarrier(finalColorTexture, BL_RESOURCE_STATE_RENDER_TARGET);
 			m_pGraphicsContext->SetRenderTargets(1, &finalColorTexture, nullptr);
 
 			m_pGraphicsContext->DrawImGui();

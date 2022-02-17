@@ -30,9 +30,8 @@ public:
 
     virtual void SetPrimitiveTopology(BL_PRIMITIVE_TOPOLOGY primTop) override final;
 
-    TODO("Fix Interfaces for the parameters");
-    virtual void ResourceBarrier(IGraphicsTexture* graphicsTexture, D3D12_RESOURCE_STATES desiredState, unsigned int subResource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES) override final;
-    virtual void ResourceBarrier(IGraphicsBuffer* graphicsBuffer, D3D12_RESOURCE_STATES desiredState, unsigned int subResource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES) override final;
+    virtual void ResourceBarrier(IGraphicsTexture* graphicsTexture, BL_RESOURCE_STATES desiredState, unsigned int subResource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES) override final;
+    virtual void ResourceBarrier(IGraphicsBuffer* graphicsBuffer, BL_RESOURCE_STATES desiredState, unsigned int subResource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES) override final;
     virtual void UAVBarrier(IGraphicsTexture* graphicsTexture) override final;
     virtual void UAVBarrier(IGraphicsBuffer* graphicsBuffer) override final;
 
@@ -45,8 +44,8 @@ public:
     virtual void ClearRenderTarget(IGraphicsTexture* renderTargetTexture, float clearColor[4]) override final;
     virtual void ClearUAVTextureFloat(IGraphicsTexture* uavTexture, float clearValues[4], unsigned int mipLevel = 0) override final;
     virtual void ClearUAVTextureUINT(IGraphicsTexture* uavTexture, unsigned int clearValues[4], unsigned int mipLevel = 0) override final;
-    virtual void SetRenderTargets(unsigned int numRenderTargets, IGraphicsTexture* renderTargetTextures[], IGraphicsTexture* depthTexture) override final;
 
+    virtual void SetRenderTargets(unsigned int numRenderTargets, IGraphicsTexture* renderTargetTextures[], IGraphicsTexture* depthTexture) override final;
     virtual void SetShaderResourceView(unsigned int rootParamSlot, IGraphicsTexture* graphicsTexture, bool isComputePipeline) override final;
     virtual void SetShaderResourceView(unsigned int rootParamSlot, IGraphicsBuffer* graphicsBuffer, bool isComputePipeline) override final;
     virtual void SetConstantBuffer(unsigned int rootParamSlot, IGraphicsBuffer* graphicsBuffer, bool isComputePipeline) override final;
@@ -63,7 +62,7 @@ public:
 
     virtual void DrawImGui() override final;
 
-    // Raytracing
+    // DXR
     virtual void BuildTLAS(ITopLevelAS* pTlas) override;
     virtual void BuildBLAS(IBottomLevelAS* pBlas) override;
     virtual void DispatchRays(IShaderBindingTable* sbt, unsigned int dispatchWidth, unsigned int dispatchHeight, unsigned int dispatchDepth = 1) override final;

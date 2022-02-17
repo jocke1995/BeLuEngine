@@ -65,12 +65,12 @@ void DeferredGeometryRenderTask::Execute()
 		m_pGraphicsContext->SetViewPort(1280, 720);
 		m_pGraphicsContext->SetScizzorRect(1280, 720);
 
-		m_pGraphicsContext->ResourceBarrier(renderTargets[0], D3D12_RESOURCE_STATE_RENDER_TARGET);
-		m_pGraphicsContext->ResourceBarrier(renderTargets[1], D3D12_RESOURCE_STATE_RENDER_TARGET);
-		m_pGraphicsContext->ResourceBarrier(renderTargets[2], D3D12_RESOURCE_STATE_RENDER_TARGET);
-		m_pGraphicsContext->ResourceBarrier(renderTargets[3], D3D12_RESOURCE_STATE_RENDER_TARGET);
+		m_pGraphicsContext->ResourceBarrier(renderTargets[0], BL_RESOURCE_STATE_RENDER_TARGET);
+		m_pGraphicsContext->ResourceBarrier(renderTargets[1], BL_RESOURCE_STATE_RENDER_TARGET);
+		m_pGraphicsContext->ResourceBarrier(renderTargets[2], BL_RESOURCE_STATE_RENDER_TARGET);
+		m_pGraphicsContext->ResourceBarrier(renderTargets[3], BL_RESOURCE_STATE_RENDER_TARGET);
 
-		m_pGraphicsContext->ResourceBarrier(m_CommonGraphicsResources->mainDepthStencil, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+		m_pGraphicsContext->ResourceBarrier(m_CommonGraphicsResources->mainDepthStencil, BL_RESOURCE_STATE_DEPTH_WRITE);
 
 		float clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 		m_pGraphicsContext->ClearRenderTarget(renderTargets[0], clearColor);

@@ -55,7 +55,7 @@ void DeferredLightRenderTask::Execute()
 		m_pGraphicsContext->SetScizzorRect(1280, 720);
 		
 		float clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-		m_pGraphicsContext->ResourceBarrier(m_CommonGraphicsResources->finalColorBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET);
+		m_pGraphicsContext->ResourceBarrier(m_CommonGraphicsResources->finalColorBuffer, BL_RESOURCE_STATE_RENDER_TARGET);
 		m_pGraphicsContext->ClearRenderTarget(m_CommonGraphicsResources->finalColorBuffer, clearColor);
 
 		m_pGraphicsContext->SetRenderTargets(1, &m_CommonGraphicsResources->finalColorBuffer, nullptr);
@@ -66,11 +66,11 @@ void DeferredLightRenderTask::Execute()
 		m_pGraphicsContext->SetShaderResourceView(RootParam_SRV_T0, m_GraphicBuffers["rawBufferLights"], false);
 
 		// Set States
-		m_pGraphicsContext->ResourceBarrier(renderTargets[0], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-		m_pGraphicsContext->ResourceBarrier(renderTargets[1], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-		m_pGraphicsContext->ResourceBarrier(renderTargets[2], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-		m_pGraphicsContext->ResourceBarrier(renderTargets[3], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-		m_pGraphicsContext->ResourceBarrier(m_CommonGraphicsResources->mainDepthStencil, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		m_pGraphicsContext->ResourceBarrier(renderTargets[0], BL_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		m_pGraphicsContext->ResourceBarrier(renderTargets[1], BL_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		m_pGraphicsContext->ResourceBarrier(renderTargets[2], BL_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		m_pGraphicsContext->ResourceBarrier(renderTargets[3], BL_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		m_pGraphicsContext->ResourceBarrier(m_CommonGraphicsResources->mainDepthStencil, BL_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 		// Draw a fullscreen quad 
 		SlotInfo slotInfo = {};

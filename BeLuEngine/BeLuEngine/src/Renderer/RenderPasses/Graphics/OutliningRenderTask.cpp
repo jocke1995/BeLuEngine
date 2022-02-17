@@ -70,8 +70,8 @@ void OutliningRenderTask::Execute()
 		m_pGraphicsContext->SetViewPort(1280, 720);
 		m_pGraphicsContext->SetScizzorRect(1280, 720);
 
-		m_pGraphicsContext->ResourceBarrier(m_CommonGraphicsResources->finalColorBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET);
-		m_pGraphicsContext->ResourceBarrier(m_CommonGraphicsResources->mainDepthStencil, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+		m_pGraphicsContext->ResourceBarrier(m_CommonGraphicsResources->finalColorBuffer, BL_RESOURCE_STATE_RENDER_TARGET);
+		m_pGraphicsContext->ResourceBarrier(m_CommonGraphicsResources->mainDepthStencil, BL_RESOURCE_STATE_DEPTH_WRITE);
 
 		m_pGraphicsContext->SetRenderTargets(1, &m_CommonGraphicsResources->finalColorBuffer, m_CommonGraphicsResources->mainDepthStencil);
 

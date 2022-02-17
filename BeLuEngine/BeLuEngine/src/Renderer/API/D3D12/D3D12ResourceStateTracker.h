@@ -6,7 +6,7 @@
 // They work in similar manner, but there is only 1 GlobalStateTracker for each resource that needs it
 // But there can be 1 local state tracker for each context that uses that specific resource.
 
-class ID3D12Resource1;
+struct ID3D12Resource1;
 class D3D12GraphicsContext;
 
 class D3D12GlobalStateTracker

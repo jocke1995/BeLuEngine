@@ -5,7 +5,7 @@ class IGraphicsContext;
 class IGraphicsTexture;
 class IGraphicsBuffer;
 
-// Forward declare some dx stuff
+// Forward declare some DirectX12 stuff
 enum DXGI_FORMAT;
 enum D3D12_BLEND;
 enum D3D12_BLEND_OP;
@@ -17,6 +17,7 @@ enum D3D12_FILL_MODE;
 enum D3D_PRIMITIVE_TOPOLOGY;
 enum D3D12_PRIMITIVE_TOPOLOGY_TYPE;
 enum D3D12_ROOT_PARAMETER_TYPE;
+enum D3D12_RESOURCE_STATES;
 
 // Dont create this class immediatly, use the #define below
 class ScopedPIXEvent
@@ -51,6 +52,8 @@ struct CommonGraphicsResources
     // Buffers
     IGraphicsBuffer* cbPerScene = nullptr;
     IGraphicsBuffer* cbPerFrame = nullptr;
+
+    TODO("Think about adding the primaryCamera to this buffer!");
 };
 
 enum BL_FORMAT
@@ -398,4 +401,27 @@ enum BL_ROOT_PARAMETER_TYPE
 };
 
 D3D12_ROOT_PARAMETER_TYPE ConvertBLRootParameterTypeToD3D12RootParameterType(BL_ROOT_PARAMETER_TYPE rootParamType);
+
+// Resource States
+enum BL_RESOURCE_STATES
+{
+    BL_RESOURCE_STATE_COMMON,
+    BL_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
+    BL_RESOURCE_STATE_INDEX_BUFFER,
+    BL_RESOURCE_STATE_RENDER_TARGET,
+    BL_RESOURCE_STATE_UNORDERED_ACCESS,
+    BL_RESOURCE_STATE_DEPTH_WRITE,
+    BL_RESOURCE_STATE_DEPTH_READ,
+    BL_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+    BL_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+    BL_RESOURCE_STATE_INDIRECT_ARGUMENT,
+    BL_RESOURCE_STATE_COPY_DEST,
+    BL_RESOURCE_STATE_COPY_SOURCE,
+    BL_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
+    BL_RESOURCE_STATE_SHADING_RATE_SOURCE,
+    BL_RESOURCE_STATE_GENERIC_READ,
+    BL_RESOURCE_STATE_PRESENT,
+};
+
+D3D12_RESOURCE_STATES Convert_BLResourceState_To_D3D12ResourceState(BL_RESOURCE_STATES resourceState);
 #endif

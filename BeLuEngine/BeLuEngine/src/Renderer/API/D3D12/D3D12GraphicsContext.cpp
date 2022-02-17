@@ -212,7 +212,7 @@ void D3D12GraphicsContext::SetPrimitiveTopology(BL_PRIMITIVE_TOPOLOGY primTop)
 	m_pCommandList->IASetPrimitiveTopology(ConvertBLPrimTopToD3D12PrimTop(primTop));
 }
 
-void D3D12GraphicsContext::ResourceBarrier(IGraphicsTexture* graphicsTexture, D3D12_RESOURCE_STATES desiredState, unsigned int subResource)
+void D3D12GraphicsContext::ResourceBarrier(IGraphicsTexture* graphicsTexture, BL_RESOURCE_STATES desiredState, unsigned int subResource)
 {
 	// Cache some objects and do some sanity checks
 	BL_ASSERT(graphicsTexture);
@@ -232,12 +232,15 @@ void D3D12GraphicsContext::ResourceBarrier(IGraphicsTexture* graphicsTexture, D3
 		m_GlobalToLocalMap[globalStateTracker] = localStateTracker;
 	}
 
+	// Convert to DirectX 12 Format
+	D3D12_RESOURCE_STATES d3d12DesiredState = Convert_BLResourceState_To_D3D12ResourceState(desiredState);
+
 	// Add resourceBarrier to be resolved later by the transitionCList if current state is unknown
 	// If we know the currentState, we can do the transition immediatly on the mainCommandList
-	localStateTracker->ResolveLocalResourceState(desiredState, subResource);
+	localStateTracker->ResolveLocalResourceState(d3d12DesiredState, subResource);
 }
 
-void D3D12GraphicsContext::ResourceBarrier(IGraphicsBuffer* graphicsBuffer, D3D12_RESOURCE_STATES desiredState, unsigned int subResource)
+void D3D12GraphicsContext::ResourceBarrier(IGraphicsBuffer* graphicsBuffer, BL_RESOURCE_STATES desiredState, unsigned int subResource)
 {
 	// Cache some objects and do some sanity checks
 	BL_ASSERT(graphicsBuffer);
@@ -257,9 +260,12 @@ void D3D12GraphicsContext::ResourceBarrier(IGraphicsBuffer* graphicsBuffer, D3D1
 		m_GlobalToLocalMap[globalStateTracker] = localStateTracker;
 	}
 
+	// Convert to DirectX 12 Format
+	D3D12_RESOURCE_STATES d3d12DesiredState = Convert_BLResourceState_To_D3D12ResourceState(desiredState);
+
 	// Add resourceBarrier to be resolved later by the transitionCList if current state is unknown
 	// If we know the currentState, we can do the transition immediatly on the mainCommandList
-	localStateTracker->ResolveLocalResourceState(desiredState, subResource);
+	localStateTracker->ResolveLocalResourceState(d3d12DesiredState, subResource);
 }
 
 void D3D12GraphicsContext::UAVBarrier(IGraphicsTexture* graphicsTexture)
@@ -357,6 +363,7 @@ void D3D12GraphicsContext::ClearUAVTextureFloat(IGraphicsTexture* uavTexture, fl
 {
 	BL_ASSERT(uavTexture);
 	D3D12GraphicsTexture* d3d12Texture = static_cast<D3D12GraphicsTexture*>(uavTexture);
+
 	BL_ASSERT_MESSAGE(d3d12Texture->m_CPUDescriptorHeap, "Trying to clear a texture which doesn't have UAV properties!\n");
 
 	D3D12GraphicsManager* graphicsManager = D3D12GraphicsManager::GetInstance();

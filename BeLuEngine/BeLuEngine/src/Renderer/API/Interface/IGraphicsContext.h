@@ -3,10 +3,12 @@
 
 #include "RenderCore.h"
 
+// Basic
 class IGraphicsTexture;
 class IGraphicsBuffer;
 class IGraphicsPipelineState;
 
+// DXR
 class ITopLevelAS;
 class IBottomLevelAS;
 class IRayTracingPipelineState;
@@ -29,9 +31,8 @@ public:
 
     virtual void SetPrimitiveTopology(BL_PRIMITIVE_TOPOLOGY primTop) = 0;
 
-    TODO("Fix Interfaces for the parameters");
-    virtual void ResourceBarrier(IGraphicsTexture* graphicsTexture, D3D12_RESOURCE_STATES desiredState, unsigned int subResource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES) = 0;
-    virtual void ResourceBarrier(IGraphicsBuffer* graphicsBuffer, D3D12_RESOURCE_STATES desiredState, unsigned int subResource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES) = 0;
+    virtual void ResourceBarrier(IGraphicsTexture* graphicsTexture, BL_RESOURCE_STATES desiredState, unsigned int subResource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES) = 0;
+    virtual void ResourceBarrier(IGraphicsBuffer* graphicsBuffer, BL_RESOURCE_STATES desiredState, unsigned int subResource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES) = 0;
     virtual void UAVBarrier(IGraphicsTexture* graphicsTexture) = 0;
     virtual void UAVBarrier(IGraphicsBuffer* graphicsBuffer) = 0;
 
@@ -44,8 +45,8 @@ public:
     virtual void ClearRenderTarget(IGraphicsTexture* renderTargetTexture, float clearColor[4]) = 0;
     virtual void ClearUAVTextureFloat(IGraphicsTexture* uavTexture, float clearValues[4], unsigned int mipLevel = 0) = 0;
     virtual void ClearUAVTextureUINT(IGraphicsTexture* uavTexture, unsigned int clearValues[4], unsigned int mipLevel = 0) = 0;
-    virtual void SetRenderTargets(unsigned int numRenderTargets, IGraphicsTexture* renderTargetTextures[], IGraphicsTexture* depthTexture) = 0;
 
+    virtual void SetRenderTargets(unsigned int numRenderTargets, IGraphicsTexture* renderTargetTextures[], IGraphicsTexture* depthTexture) = 0;
     virtual void SetShaderResourceView(unsigned int rootParamSlot, IGraphicsTexture* graphicsTexture, bool isComputePipeline) = 0;
     virtual void SetShaderResourceView(unsigned int rootParamSlot, IGraphicsBuffer* graphicsBuffer, bool isComputePipeline) = 0;
     virtual void SetConstantBuffer(unsigned int rootParamSlot, IGraphicsBuffer* graphicsBuffer, bool isComputePipeline) = 0;
@@ -62,7 +63,7 @@ public:
 
     virtual void DrawImGui() = 0;
 
-    // Raytracing
+    // Ray Tracing
     virtual void BuildTLAS(ITopLevelAS* pTlas) = 0;
     virtual void BuildBLAS(IBottomLevelAS* pBlas) = 0;
     virtual void DispatchRays(IShaderBindingTable* sbt, unsigned int dispatchWidth, unsigned int dispatchHeight, unsigned int dispatchDepth = 1) = 0;

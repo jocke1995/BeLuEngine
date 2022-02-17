@@ -42,7 +42,7 @@ void TonemapComputeTask::Execute()
 		RootConstantUints rootConstantUints = {};
 		rootConstantUints.index0 = finalColorTexture->GetUnorderedAccessIndex(0);
 
-		m_pGraphicsContext->ResourceBarrier(finalColorTexture, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, 0);
+		m_pGraphicsContext->ResourceBarrier(finalColorTexture, BL_RESOURCE_STATE_UNORDERED_ACCESS, 0);
 
 		m_pGraphicsContext->SetPipelineState(m_PipelineStates[0]);
 		m_pGraphicsContext->Set32BitConstants(Constants_DH_Indices_B1, sizeof(RootConstantUints) / 4, &rootConstantUints, 0, true);
