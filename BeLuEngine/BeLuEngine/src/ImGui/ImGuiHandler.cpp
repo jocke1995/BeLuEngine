@@ -32,10 +32,7 @@
 
 ImGuiHandler& ImGuiHandler::GetInstance()
 {
-	// Init
-	EngineStatistics::GetInstance();
 	static ImGuiHandler instance;
-
 	return instance;
 }
 
@@ -127,6 +124,11 @@ void ImGuiHandler::UpdateFrame()
 
 ImGuiHandler::ImGuiHandler()
 {
+	// Init the engineStatistics here, to make sure it exists...
+	EngineStatistics::GetInstance();
+
+	EventBus::GetInstance().Subscribe(this, &ImGuiHandler::onEntityClicked);
+
 #ifdef _DEBUG
 	EngineStatistics::GetIM_CommonStats().m_Build = "Debug";
 #elif DIST
