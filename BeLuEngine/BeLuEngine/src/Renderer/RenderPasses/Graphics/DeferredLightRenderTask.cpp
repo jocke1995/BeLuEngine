@@ -17,8 +17,7 @@ DeferredLightRenderTask::DeferredLightRenderTask(Mesh* fullscreenQuad)
 	m_pFullScreenQuadMesh = fullscreenQuad;
 
 	PSODesc psoDesc = {};
-	psoDesc.AddRenderTargetFormat(BL_FORMAT_R16G16B16A16_FLOAT);
-	psoDesc.AddRenderTargetFormat(BL_FORMAT_R16G16B16A16_FLOAT);
+	psoDesc.AddRenderTargetFormat(BL_FORMAT_R16G16B16A16_FLOAT);	// sceneColor (HDR-range)
 
 	psoDesc.AddShader(L"DeferredLightVertex.hlsl", E_SHADER_TYPE::VS);
 	psoDesc.AddShader(L"DeferredLightPixel.hlsl", E_SHADER_TYPE::PS);

@@ -144,7 +144,7 @@ void Renderer::InitD3D12(HWND hwnd, unsigned int width, unsigned int height, HIN
 	m_GraphicsResources.finalColorBuffer = IGraphicsTexture::Create();
 	m_GraphicsResources.finalColorBuffer->CreateTexture2D(
 		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
-		DXGI_FORMAT_R16G16B16A16_FLOAT,
+		BL_FORMAT_R16G16B16A16_FLOAT,
 		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget | F_TEXTURE_USAGE::UnorderedAccess,
 		L"FinalColorbuffer",
 		D3D12_RESOURCE_STATE_RENDER_TARGET);
@@ -154,7 +154,7 @@ void Renderer::InitD3D12(HWND hwnd, unsigned int width, unsigned int height, HIN
 	m_GraphicsResources.gBufferAlbedo = IGraphicsTexture::Create();
 	m_GraphicsResources.gBufferAlbedo->CreateTexture2D(
 		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
-		DXGI_FORMAT_R16G16B16A16_FLOAT,
+		BL_FORMAT_R8G8B8A8_UNORM,
 		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget,
 		L"gBufferAlbedo",
 		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
@@ -163,7 +163,7 @@ void Renderer::InitD3D12(HWND hwnd, unsigned int width, unsigned int height, HIN
 	m_GraphicsResources.gBufferNormal = IGraphicsTexture::Create();
 	m_GraphicsResources.gBufferNormal->CreateTexture2D(
 		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
-		DXGI_FORMAT_R16G16B16A16_FLOAT,
+		BL_FORMAT_R16G16B16A16_FLOAT, // TODO: Does it needs to be this high..?
 		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget,
 		L"gBufferNormal",
 		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
@@ -172,7 +172,7 @@ void Renderer::InitD3D12(HWND hwnd, unsigned int width, unsigned int height, HIN
 	m_GraphicsResources.gBufferMaterialProperties = IGraphicsTexture::Create();
 	m_GraphicsResources.gBufferMaterialProperties->CreateTexture2D(
 		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
-		DXGI_FORMAT_R16G16B16A16_FLOAT,
+		BL_FORMAT_R8G8B8A8_UNORM,
 		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget,
 		L"gBufferMaterials",
 		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
@@ -181,7 +181,7 @@ void Renderer::InitD3D12(HWND hwnd, unsigned int width, unsigned int height, HIN
 	m_GraphicsResources.gBufferEmissive = IGraphicsTexture::Create();
 	m_GraphicsResources.gBufferEmissive->CreateTexture2D(
 		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
-		DXGI_FORMAT_R16G16B16A16_FLOAT,
+		BL_FORMAT_R16G16B16A16_FLOAT,
 		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget,
 		L"gBufferEmissive",
 		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
@@ -190,7 +190,7 @@ void Renderer::InitD3D12(HWND hwnd, unsigned int width, unsigned int height, HIN
 	m_GraphicsResources.mainDepthStencil = IGraphicsTexture::Create();
 	m_GraphicsResources.mainDepthStencil->CreateTexture2D(
 		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
-		DXGI_FORMAT_D24_UNORM_S8_UINT,
+		BL_FORMAT_D24_UNORM_S8_UINT,
 		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::DepthStencil,
 		L"MainDepthStencilBuffer",
 		D3D12_RESOURCE_STATE_DEPTH_WRITE);
@@ -1048,23 +1048,23 @@ void Renderer::advanceTextureToVisualize(VisualizeTexture* event)
 
 	switch (moduloCounter)
 	{
+		//case 0:
+		//	m_CurrentTextureToVisualize = m_GraphicsResources.gBufferAlbedo;
+		//	break;
 		case 0:
-			m_CurrentTextureToVisualize = m_GraphicsResources.gBufferAlbedo;
-			break;
-		case 1:
 			m_CurrentTextureToVisualize = m_GraphicsResources.gBufferNormal;
 			break;
-		case 2:
-			m_CurrentTextureToVisualize = m_GraphicsResources.gBufferMaterialProperties;
-			break;
-		case 3:
+		//case 2:
+		//	m_CurrentTextureToVisualize = m_GraphicsResources.gBufferMaterialProperties;
+		//	break;
+		case 1:
 			m_CurrentTextureToVisualize = m_GraphicsResources.gBufferEmissive;
 			break;
-		case 4:
+		case 2:
 			m_CurrentTextureToVisualize = m_GraphicsResources.finalColorBuffer;
 			break;
 	}
 
 	moduloCounter++;
-	moduloCounter %= 5;
+	moduloCounter %= 3;
 }

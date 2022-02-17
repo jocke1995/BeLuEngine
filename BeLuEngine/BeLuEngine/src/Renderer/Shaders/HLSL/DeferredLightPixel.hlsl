@@ -15,11 +15,11 @@ PS_OUTPUT PS_main(VS_OUT input)
 {
 	// Sample from textures
 	float2 uvScaled = float2(input.uv.x, input.uv.y);
-	float4 albedo   = textures[cbPerScene.gBufferAlbedo].Sample(Anisotropic16_Wrap, uvScaled);
+	float3 albedo   = textures[cbPerScene.gBufferAlbedo].Sample(Anisotropic16_Wrap, uvScaled);
 	float roughness = textures[cbPerScene.gBufferMaterialProperties].Sample(Anisotropic16_Wrap, uvScaled).r;
 	float metallic  = textures[cbPerScene.gBufferMaterialProperties].Sample(Anisotropic16_Wrap, uvScaled).g;
-	float4 normal	= textures[cbPerScene.gBufferNormal].Sample(Anisotropic16_Wrap, uvScaled);
-	float4 emissive = textures[cbPerScene.gBufferEmissive].Sample(Anisotropic16_Wrap, uvScaled);
+	float3 normal	= textures[cbPerScene.gBufferNormal].Sample(Anisotropic16_Wrap, uvScaled);
+	float3 emissive = textures[cbPerScene.gBufferEmissive].Sample(Anisotropic16_Wrap, uvScaled);
 
 	float depthVal = textures[cbPerScene.depth].Sample(Anisotropic16_Wrap, uvScaled).r;
 	float4 worldPos = float4(WorldPosFromDepth(depthVal, uvScaled, cbPerFrame.projectionI, cbPerFrame.viewI).xyz, 0.0f);
@@ -28,7 +28,7 @@ PS_OUTPUT PS_main(VS_OUT input)
 	float3 viewDir = normalize(camPos - worldPos.xyz);
 	
 	// Linear interpolation
-	float3 baseReflectivity = lerp(float3(0.04f, 0.04f, 0.04f), albedo.rgb, metallic);
+	float3 baseReflectivity = lerp(float3(0.04f, 0.04f, 0.04f), albedo, metallic);
 
 	LightHeader lHeader = rawBufferLights.Load<LightHeader>(0);
 	// DirectionalLight contributions
@@ -42,9 +42,9 @@ PS_OUTPUT PS_main(VS_OUT input)
 			viewDir,
 			worldPos,
 			metallic,
-			albedo.rgb,
+			albedo,
 			roughness,
-			normal.rgb,
+			normal,
 			baseReflectivity);
 
 		float3 position = float3(-dirLight.direction.xyz * 500);
@@ -65,9 +65,9 @@ PS_OUTPUT PS_main(VS_OUT input)
 			viewDir,
 			worldPos,
 			metallic,
-			albedo.rgb,
+			albedo,
 			roughness,
-			normal.rgb,
+			normal,
 			baseReflectivity);
 
 		float3 lightDir = normalize(pointLight.position.xyz - worldPos.xyz);
@@ -87,9 +87,9 @@ PS_OUTPUT PS_main(VS_OUT input)
 			viewDir,
 			worldPos,
 			metallic,
-			albedo.rgb,
+			albedo,
 			roughness,
-			normal.rgb,
+			normal,
 			baseReflectivity);
 	}
 	
@@ -97,8 +97,7 @@ PS_OUTPUT PS_main(VS_OUT input)
 	finalColor += ambient;
 
 	PS_OUTPUT output = (PS_OUTPUT)0;
-
-	output.sceneColor = float4(finalColor.rgb, 1.0f) + emissive;
+	output.sceneColor = float4(finalColor.rgb, 1.0f) + float4(emissive.rgb, 1.0f);
 
 	return output;
 }

@@ -25,9 +25,9 @@ PS_OUTPUT PS_main(VS_OUT input)
 
 	// Sample from textures
 	float2 uvScaled = float2(input.uv.x, input.uv.y);
-	float4 albedo = matData.hasAlbedoTexture ? textures[matData.textureAlbedo].Sample(Anisotropic16_Wrap, uvScaled) : matData.albedoValue;
+	float3 albedo	= matData.hasAlbedoTexture ? textures[matData.textureAlbedo].Sample(Anisotropic16_Wrap, uvScaled) : matData.albedoValue;
 	float roughness = matData.hasRoughnessTexture ? textures[matData.textureRoughness].Sample(Anisotropic16_Wrap, uvScaled).r : matData.roughnessValue;
-	float metallic = matData.hasMetallicTexture ? textures[matData.textureMetallic].Sample(Anisotropic16_Wrap, uvScaled).r : matData.metallicValue;
+	float metallic	= matData.hasMetallicTexture ? textures[matData.textureMetallic].Sample(Anisotropic16_Wrap, uvScaled).r : matData.metallicValue;
 	float4 emissive = matData.hasEmissiveTexture ? textures[matData.textureEmissive].Sample(Anisotropic16_Wrap, uvScaled) : matData.emissiveValue;
 	
 	float3 normal = float3(0.0f, 0.0f, 0.0f);
@@ -42,10 +42,10 @@ PS_OUTPUT PS_main(VS_OUT input)
 		normal = input.norm.xyz;
 	}
 
-	output.AlbedoColor	 = albedo;
+	output.AlbedoColor	 = float4(albedo, 1.0f);
 	output.NormalColor	 = float4(normal, 1.0f);
 	output.MatColor		 = float4(roughness, metallic, 0.0f, 0.0f);
-	output.EmissiveColor = float4(emissive.rgb * emissive.a, 1.0f);
+	output.EmissiveColor = float4(emissive.rgb * emissive.a, 0.0f);
 
 	return output;
 }

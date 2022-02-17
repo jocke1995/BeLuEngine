@@ -20,11 +20,11 @@ DeferredGeometryRenderTask::DeferredGeometryRenderTask()
 	: GraphicsPass(L"GeometryPass")
 {
 	PSODesc psoDesc = {};
-	// RenderTarget (TODO: Formats are way to big atm)
-	psoDesc.AddRenderTargetFormat(BL_FORMAT_R16G16B16A16_FLOAT);
-	psoDesc.AddRenderTargetFormat(BL_FORMAT_R16G16B16A16_FLOAT);
-	psoDesc.AddRenderTargetFormat(BL_FORMAT_R16G16B16A16_FLOAT);
-	psoDesc.AddRenderTargetFormat(BL_FORMAT_R16G16B16A16_FLOAT);
+
+	psoDesc.AddRenderTargetFormat(BL_FORMAT_R8G8B8A8_UNORM);		// Albedo
+	psoDesc.AddRenderTargetFormat(BL_FORMAT_R16G16B16A16_FLOAT);	// Normal
+	psoDesc.AddRenderTargetFormat(BL_FORMAT_R8G8B8A8_UNORM);		// MatierialProperties (Roughness, Metallic, CurrentlyEmpty, CurrentlyEmpty)
+	psoDesc.AddRenderTargetFormat(BL_FORMAT_R16G16B16A16_FLOAT);	// EmissiveColor
 
 	psoDesc.SetDepthStencilFormat(BL_FORMAT_D24_UNORM_S8_UINT);
 	psoDesc.SetDepthDesc(BL_DEPTH_WRITE_MASK_ZERO, BL_COMPARISON_FUNC_LESS_EQUAL);

@@ -189,7 +189,7 @@ bool D3D12GraphicsTexture::LoadTextureCube_DDS(const std::wstring& filePath)
 	return true;
 }
 
-bool D3D12GraphicsTexture::CreateTexture2D(unsigned int width, unsigned int height, DXGI_FORMAT dxgiFormat, unsigned int textureUsage /* F_TEXTURE_USAGE */, const std::wstring name, D3D12_RESOURCE_STATES startStateTemp, unsigned int mipLevels)
+bool D3D12GraphicsTexture::CreateTexture2D(unsigned int width, unsigned int height, BL_FORMAT blTextureFormat, unsigned int textureUsage /* F_TEXTURE_USAGE */, const std::wstring name, D3D12_RESOURCE_STATES startStateTemp, unsigned int mipLevels)
 {
 	D3D12GraphicsManager* graphicsManager = D3D12GraphicsManager::GetInstance();
 	ID3D12Device5* device5 = graphicsManager->GetDevice();
@@ -212,6 +212,9 @@ bool D3D12GraphicsTexture::CreateTexture2D(unsigned int width, unsigned int heig
 
 	if (textureUsage & F_TEXTURE_USAGE::DepthStencil)
 		flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+
+	// Convert to DirectX 12 format
+	DXGI_FORMAT dxgiFormat = ConvertBLFormatToD3D12Format(blTextureFormat);
 
 	D3D12_RESOURCE_DESC resourceDesc = {};
 	resourceDesc.Format = dxgiFormat;
