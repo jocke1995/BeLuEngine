@@ -139,31 +139,31 @@ void D3D12GraphicsContext::SetupBindings(bool isComputePipeline)
 	// DescriptorHeap
 	ID3D12DescriptorHeap* d3d12DescriptorHeap = graphicsManager->GetMainDescriptorHeap()->GetID3D12DescriptorHeap();
 	m_pCommandList->SetDescriptorHeaps(1, &d3d12DescriptorHeap);
-
 	BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumSetDescriptorHeaps, 1);
+
 
 	// Rootsignature and DescriptorTables
 	if (isComputePipeline)
 	{
 		m_pCommandList->SetComputeRootSignature(graphicsManager->GetGlobalRootSignature());
+		BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumSetComputeRootSignature, 1);
 
 		m_pCommandList->SetComputeRootDescriptorTable(dtSRV, d3d12DescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 		m_pCommandList->SetComputeRootDescriptorTable(dtCBV, d3d12DescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 		m_pCommandList->SetComputeRootDescriptorTable(dtUAV, d3d12DescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-
-		BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumSetComputeRootSignature, 1);
 		BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumSetComputeRootDescriptorTable, 3);
+
 	}
 	else
 	{
 		m_pCommandList->SetGraphicsRootSignature(graphicsManager->GetGlobalRootSignature());
+		BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumSetGraphicsRootDescriptorTable, 3);
 
 		m_pCommandList->SetGraphicsRootDescriptorTable(dtSRV, d3d12DescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 		m_pCommandList->SetGraphicsRootDescriptorTable(dtCBV, d3d12DescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 		m_pCommandList->SetGraphicsRootDescriptorTable(dtUAV, d3d12DescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-
 		BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumSetGraphicsRootSignature, 1);
-		BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumSetGraphicsRootDescriptorTable, 3);
+
 	}
 }
 
@@ -177,15 +177,17 @@ void D3D12GraphicsContext::End()
 void D3D12GraphicsContext::UploadTexture(IGraphicsTexture* graphicsTexture)
 {
 	IGraphicsBuffer* tempUploadBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::CPUBuffer, graphicsTexture->GetSize(), 1, DXGI_FORMAT_UNKNOWN, L"TempUploadResource");
-
 	ID3D12Resource* uploadHeap = static_cast<D3D12GraphicsBuffer*>(tempUploadBuffer)->m_pResource;
-	ID3D12Resource* defaultHeap = static_cast<D3D12GraphicsTexture*>(graphicsTexture)->m_pResource;
+
+	D3D12GraphicsTexture* d3d12GraphicsTexture = static_cast<D3D12GraphicsTexture*>(graphicsTexture);
+	ID3D12Resource* defaultHeap = d3d12GraphicsTexture->m_pResource;
 
 	// Transfer the data
 	UpdateSubresources(m_pCommandList,
 		defaultHeap, uploadHeap,
-		0, 0, static_cast<D3D12GraphicsTexture*>(graphicsTexture)->GetTempSubresources()->size(),
-		static_cast<D3D12GraphicsTexture*>(graphicsTexture)->GetTempSubresources()->data());
+		0, 0, d3d12GraphicsTexture->GetTempSubresources()->size(),
+		d3d12GraphicsTexture->GetTempSubresources()->data());
+	BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumCopyTextureRegion, d3d12GraphicsTexture->m_NumMipLevels);
 
 	// Deferred deletion of the buffer, it stays alive up until NUM_SWAP_BUFFERS-frames ahead so the copy will be guaranteed to be completed by then.
 	BL_SAFE_DELETE(tempUploadBuffer);
@@ -204,6 +206,7 @@ void D3D12GraphicsContext::UploadBuffer(IGraphicsBuffer* graphicsBuffer, const v
 
 	//BL_LOG_INFO("%d\n", dynamicDataParams.offsetFromStart);
 	m_pCommandList->CopyBufferRegion(defaultHeap, 0, dynamicDataParams.uploadResource, dynamicDataParams.offsetFromStart, sizeInBytes);
+	BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumCopyBufferRegion, 1);
 }
 
 void D3D12GraphicsContext::SetPipelineState(IGraphicsPipelineState* pso)
@@ -213,6 +216,7 @@ void D3D12GraphicsContext::SetPipelineState(IGraphicsPipelineState* pso)
 	D3D12GraphicsPipelineState* d3d12Pso = static_cast<D3D12GraphicsPipelineState*>(pso);
 
 	m_pCommandList->SetPipelineState(d3d12Pso->m_pPSO);
+	BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumSetPipelineState, 1);
 }
 
 void D3D12GraphicsContext::SetPrimitiveTopology(BL_PRIMITIVE_TOPOLOGY primTop)
@@ -220,6 +224,7 @@ void D3D12GraphicsContext::SetPrimitiveTopology(BL_PRIMITIVE_TOPOLOGY primTop)
 	BL_ASSERT(primTop != BL_PRIMITIVE_TOPOLOGY_UNDEFINED);
 
 	m_pCommandList->IASetPrimitiveTopology(ConvertBLPrimTopToD3D12PrimTop(primTop));
+	BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumIASetPrimitiveTopology, 1);
 }
 
 void D3D12GraphicsContext::ResourceBarrier(IGraphicsTexture* graphicsTexture, BL_RESOURCE_STATES desiredState, unsigned int subResource)
@@ -286,7 +291,9 @@ void D3D12GraphicsContext::UAVBarrier(IGraphicsTexture* graphicsTexture)
 	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
 	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
 	barrier.UAV.pResource = static_cast<D3D12GraphicsTexture*>(graphicsTexture)->m_pResource;
+
 	m_pCommandList->ResourceBarrier(1, &barrier);
+	BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumUAVBarriers, 1);
 }
 
 void D3D12GraphicsContext::UAVBarrier(IGraphicsBuffer* graphicsBuffer)
@@ -297,7 +304,9 @@ void D3D12GraphicsContext::UAVBarrier(IGraphicsBuffer* graphicsBuffer)
 	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
 	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
 	barrier.UAV.pResource = static_cast<D3D12GraphicsBuffer*>(graphicsBuffer)->m_pResource;
+
 	m_pCommandList->ResourceBarrier(1, &barrier);
+	BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumUAVBarriers, 1);
 }
 
 void D3D12GraphicsContext::SetViewPort(unsigned int width, unsigned int height, float topLeftX, float topLeftY, float minDepth, float maxDepth)
@@ -311,6 +320,7 @@ void D3D12GraphicsContext::SetViewPort(unsigned int width, unsigned int height, 
 	viewPort.MaxDepth = maxDepth;
 
 	m_pCommandList->RSSetViewports(1, &viewPort);
+	BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumRSSetViewports, 1);
 }
 
 void D3D12GraphicsContext::SetScizzorRect(unsigned int right, unsigned int bottom, float left, unsigned int top)
@@ -322,6 +332,7 @@ void D3D12GraphicsContext::SetScizzorRect(unsigned int right, unsigned int botto
 	rect.top = top;
 
 	m_pCommandList->RSSetScissorRects(1, &rect);
+	BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumRSSetScissorRects, 1);
 }
 
 void D3D12GraphicsContext::CopyTextureRegion(IGraphicsTexture* dst, IGraphicsTexture* src, unsigned int xStart, unsigned int yStart)
@@ -340,6 +351,7 @@ void D3D12GraphicsContext::CopyTextureRegion(IGraphicsTexture* dst, IGraphicsTex
 	copySrc.SubresourceIndex = 0;
 
 	m_pCommandList->CopyTextureRegion(&copyDst, xStart, yStart, 0, &copySrc, nullptr);
+	BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumCopyTextureRegion, 1);
 }
 
 void D3D12GraphicsContext::ClearDepthTexture(IGraphicsTexture* depthTexture, bool clearDepth, float depthValue, bool clearStencil, unsigned int stencilValue)
@@ -356,6 +368,7 @@ void D3D12GraphicsContext::ClearDepthTexture(IGraphicsTexture* depthTexture, boo
 	clearFlags |= clearStencil ? D3D12_CLEAR_FLAG_STENCIL : (D3D12_CLEAR_FLAGS)0;
 
 	m_pCommandList->ClearDepthStencilView(cpuHandle, clearFlags, depthValue, stencilValue, 0, nullptr);
+	BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumClearDepthStencilView, 1);
 }
 
 void D3D12GraphicsContext::ClearRenderTarget(IGraphicsTexture* renderTargetTexture, float clearColor[4])
@@ -367,6 +380,7 @@ void D3D12GraphicsContext::ClearRenderTarget(IGraphicsTexture* renderTargetTextu
 
 	D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = graphicsManager->GetRTVDescriptorHeap()->GetCPUHeapAt(d3d12RenderTargetTexture->GetRenderTargetHeapIndex());
 	m_pCommandList->ClearRenderTargetView(cpuHandle, clearColor, 0, nullptr);
+	BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumClearRenderTargetView, 1);
 }
 
 void D3D12GraphicsContext::ClearUAVTextureFloat(IGraphicsTexture* uavTexture, float clearValues[4], unsigned int mipLevel)
@@ -381,7 +395,9 @@ void D3D12GraphicsContext::ClearUAVTextureFloat(IGraphicsTexture* uavTexture, fl
 
 	D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = mainDHeap->GetGPUHeapAt(uavTexture->GetUnorderedAccessIndex(mipLevel));
 	D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = d3d12Texture->m_CPUDescriptorHeap->GetCPUHeapAt(mipLevel);
+
 	m_pCommandList->ClearUnorderedAccessViewFloat(gpuHandle, cpuHandle, d3d12Texture->m_pResource, clearValues, 0, nullptr);
+	BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumClearUnorderedAccessViewFloat, 1);
 }
 
 void D3D12GraphicsContext::ClearUAVTextureUINT(IGraphicsTexture* uavTexture, unsigned int clearValues[4], unsigned int mipLevel)
@@ -395,7 +411,9 @@ void D3D12GraphicsContext::ClearUAVTextureUINT(IGraphicsTexture* uavTexture, uns
 
 	D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = mainDHeap->GetGPUHeapAt(uavTexture->GetUnorderedAccessIndex(mipLevel));
 	D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = d3d12Texture->m_CPUDescriptorHeap->GetCPUHeapAt(mipLevel);
+
 	m_pCommandList->ClearUnorderedAccessViewUint(gpuHandle, cpuHandle, d3d12Texture->m_pResource, clearValues, 0, nullptr);
+	BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumClearUnorderedAccessViewUint, 1);
 }
 
 void D3D12GraphicsContext::SetRenderTargets(unsigned int numRenderTargets, IGraphicsTexture* renderTargetTextures[], IGraphicsTexture* depthTexture)
@@ -419,6 +437,7 @@ void D3D12GraphicsContext::SetRenderTargets(unsigned int numRenderTargets, IGrap
 	}
 
 	m_pCommandList->OMSetRenderTargets(numRenderTargets, cpuRTVHandles, false, pcpuDSVHandle);
+	BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumOMSetRenderTargets, 1);
 }
 
 void D3D12GraphicsContext::SetShaderResourceView(unsigned int rootParamSlot, IGraphicsTexture* graphicsTexture, bool isComputePipeline)
@@ -430,10 +449,12 @@ void D3D12GraphicsContext::SetShaderResourceView(unsigned int rootParamSlot, IGr
 	if (isComputePipeline)
 	{
 		m_pCommandList->SetComputeRootShaderResourceView(rootParamSlot, d3d12GraphicsTexture->m_pResource->GetGPUVirtualAddress());
+		BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumSetComputeRootShaderResourceView, 1);
 	}
 	else
 	{
 		m_pCommandList->SetGraphicsRootShaderResourceView(rootParamSlot, d3d12GraphicsTexture->m_pResource->GetGPUVirtualAddress());
+		BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumSetGraphicsRootShaderResourceView, 1);
 	}
 }
 
@@ -446,10 +467,12 @@ void D3D12GraphicsContext::SetShaderResourceView(unsigned int rootParamSlot, IGr
 	if (isComputePipeline)
 	{
 		m_pCommandList->SetComputeRootShaderResourceView(rootParamSlot, d3d12GraphicsBuffer->m_pResource->GetGPUVirtualAddress());
+		BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumSetComputeRootShaderResourceView, 1);
 	}
 	else
 	{
 		m_pCommandList->SetGraphicsRootShaderResourceView(rootParamSlot, d3d12GraphicsBuffer->m_pResource->GetGPUVirtualAddress());
+		BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumSetGraphicsRootShaderResourceView, 1);
 	}
 }
 
@@ -462,10 +485,12 @@ void D3D12GraphicsContext::SetConstantBuffer(unsigned int rootParamSlot, IGraphi
 	if (isComputePipeline)
 	{
 		m_pCommandList->SetComputeRootConstantBufferView(rootParamSlot, d3d12GraphicsBuffer->m_pResource->GetGPUVirtualAddress());
+		BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumSetComputeRootConstantBufferView, 1);
 	}
 	else
 	{
 		m_pCommandList->SetGraphicsRootConstantBufferView(rootParamSlot, d3d12GraphicsBuffer->m_pResource->GetGPUVirtualAddress());
+		BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumSetGraphicsRootConstantBufferView, 1);
 	}
 }
 
@@ -479,10 +504,12 @@ void D3D12GraphicsContext::SetConstantBufferDynamicData(unsigned int rootParamSl
 	if (isComputePipeline)
 	{
 		m_pCommandList->SetComputeRootConstantBufferView(rootParamSlot, params.vAddr);
+		BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumSetComputeRootConstantBufferView, 1);
 	}
 	else
 	{
 		m_pCommandList->SetGraphicsRootConstantBufferView(rootParamSlot, params.vAddr);
+		BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumSetGraphicsRootConstantBufferView, 1);
 	}
 }
 
@@ -493,16 +520,19 @@ void D3D12GraphicsContext::Set32BitConstants(unsigned int rootParamSlot, unsigne
 	if (isComputePipeline)
 	{
 		m_pCommandList->SetComputeRoot32BitConstants(rootParamSlot, num32BitValuesToSet, pSrcData, offsetIn32BitValues);
+		BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumSetComputeRoot32BitConstants, 1);
 	}
 	else
 	{
 		m_pCommandList->SetGraphicsRoot32BitConstants(rootParamSlot, num32BitValuesToSet, pSrcData, offsetIn32BitValues);
+		BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumSetGraphicsRoot32BitConstants, 1);
 	}
 }
 
 void D3D12GraphicsContext::SetStencilRef(unsigned int stencilRef)
 {
 	m_pCommandList->OMSetStencilRef(stencilRef);
+	BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumOMSetStencilRef, 1);
 }
 
 void D3D12GraphicsContext::SetIndexBuffer(IGraphicsBuffer* indexBuffer, unsigned int sizeInBytes)
@@ -518,6 +548,7 @@ void D3D12GraphicsContext::SetIndexBuffer(IGraphicsBuffer* indexBuffer, unsigned
 	indexBufferView.SizeInBytes = sizeInBytes;
 
 	m_pCommandList->IASetIndexBuffer(&indexBufferView);
+	BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumIASetIndexBuffer, 1);
 }
 
 void D3D12GraphicsContext::DrawIndexedInstanced(unsigned int indexCountPerInstance, unsigned int instanceCount, unsigned int startIndexLocation, int baseVertexLocation, unsigned int startInstanceLocation)
@@ -526,6 +557,7 @@ void D3D12GraphicsContext::DrawIndexedInstanced(unsigned int indexCountPerInstan
 	BL_ASSERT(instanceCount);
 
 	m_pCommandList->DrawIndexedInstanced(indexCountPerInstance, instanceCount, startIndexLocation, baseVertexLocation, startInstanceLocation);
+	BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumDrawIndexedInstanced, 1);
 }
 
 void D3D12GraphicsContext::Dispatch(unsigned int threadGroupsX, unsigned int threadGroupsY, unsigned int threadGroupsZ)
@@ -533,6 +565,7 @@ void D3D12GraphicsContext::Dispatch(unsigned int threadGroupsX, unsigned int thr
 	BL_ASSERT(threadGroupsX != 0 || threadGroupsY != 0 || threadGroupsZ != 0);
 
 	m_pCommandList->Dispatch(threadGroupsX, threadGroupsY, threadGroupsZ);
+	BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumDispatch, 1);
 }
 
 void D3D12GraphicsContext::DrawImGui()
@@ -554,6 +587,7 @@ void D3D12GraphicsContext::BuildTLAS(ITopLevelAS* pTlas)
 
 	D3D12TopLevelAS* d3d12Tlas = static_cast<D3D12TopLevelAS*>(pTlas);
 	m_pCommandList->BuildRaytracingAccelerationStructure(&d3d12Tlas->m_BuildDesc, 0, nullptr);
+	BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumBuildTLAS, 1);
 
 	this->UAVBarrier(d3d12Tlas->m_pResultBuffer);
 }
@@ -564,6 +598,7 @@ void D3D12GraphicsContext::BuildBLAS(IBottomLevelAS* pBlas)
 
 	D3D12BottomLevelAS* d3d12Blas = static_cast<D3D12BottomLevelAS*>(pBlas);
 	m_pCommandList->BuildRaytracingAccelerationStructure(&d3d12Blas->m_BuildDesc, 0, nullptr);
+	BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumBuildBLAS, 1);
 
 	this->UAVBarrier(d3d12Blas->m_pResultBuffer);
 }
@@ -608,6 +643,7 @@ void D3D12GraphicsContext::DispatchRays(IShaderBindingTable* sbt, unsigned int d
 	desc.Depth	= dispatchDepth;
 
 	m_pCommandList->DispatchRays(&desc);
+	BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumDispatchRays, 1);
 }
 
 void D3D12GraphicsContext::SetRayTracingPipelineState(IRayTracingPipelineState* rtPipelineState)
@@ -615,7 +651,9 @@ void D3D12GraphicsContext::SetRayTracingPipelineState(IRayTracingPipelineState* 
 	BL_ASSERT(rtPipelineState);
 
 	D3D12RayTracingPipelineState* d3d12rtState = static_cast<D3D12RayTracingPipelineState*>(rtPipelineState);
+
 	m_pCommandList->SetPipelineState1(d3d12rtState->m_pRayTracingStateObject);
+	BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumSetRayTracingPipelineState, 1);
 }
 
 bool D3D12GraphicsContext::resolvePendingTransitionBarriers()
@@ -673,8 +711,11 @@ bool D3D12GraphicsContext::resolvePendingTransitionBarriers()
 		}
 
 		// Submit all resourceBarriers in one go if there are any
-		if(actualNumResourceBarriers > 0)
+		if (actualNumResourceBarriers > 0)
+		{
 			m_pTransitionCommandList->ResourceBarrier(actualNumResourceBarriers, resourceBarriers.data());
+			BL_EDITOR_MODE_APPEND(m_ContextStats.m_NumGlobalTransitionBarriers, 1);
+		}
 
 		// Cleanup for the next frame
 		for (auto& it : m_GlobalToLocalMap)

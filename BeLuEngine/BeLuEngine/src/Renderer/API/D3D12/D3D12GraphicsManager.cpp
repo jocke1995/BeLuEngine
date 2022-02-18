@@ -769,8 +769,9 @@ void D3D12GraphicsManager::Init(HWND hwnd, unsigned int width, unsigned int heig
 
 void D3D12GraphicsManager::Begin()
 {
-	// Nothing here now.. but could be convenient to have this function incase something is needed to be done from here in the future.
-	// Also may be good for other API's in the future, were some things might have to be hacked in here
+	TODO("Wrap in EditorMode only");
+	// Reset the data (that is displayed in the editor) for this frame
+	EngineStatistics::BeginFrame();
 }
 
 void D3D12GraphicsManager::End()
@@ -789,26 +790,37 @@ void D3D12GraphicsManager::End()
 void D3D12GraphicsManager::ExecuteGraphicsContexts(const std::vector<IGraphicsContext*>& graphicsContexts, unsigned int numGraphicsContexts)
 {
 	unsigned int maxNumberOfCommandListsToExecute = numGraphicsContexts * 2;
+	unsigned int actualNumCommandListsToExecute = 0;
+
 	std::vector<ID3D12CommandList*> cLists;
 	cLists.reserve(maxNumberOfCommandListsToExecute);
-	
-	unsigned int actualNumCommandListsToExecute = 0;
+
+	TODO("Wrap in EditorMode only");
+	static D3D12ContextStats& contextStats = EngineStatistics::GetD3D12ContextStats();
+
 	for (IGraphicsContext* graphicsContext : graphicsContexts)
 	{
+		D3D12GraphicsContext* currentContext = static_cast<D3D12GraphicsContext*>(graphicsContext);
 		// Resolve transitionBarriers
-		bool needTransitionCList = static_cast<D3D12GraphicsContext*>(graphicsContext)->resolvePendingTransitionBarriers();
+		bool needTransitionCList = currentContext->resolvePendingTransitionBarriers();
 
 		// Only include this commandList if there are any barriers to transition
 		if (needTransitionCList)
 		{
-			cLists.push_back(static_cast<D3D12GraphicsContext*>(graphicsContext)->m_pTransitionCommandList);
+			cLists.push_back(currentContext->m_pTransitionCommandList);
 			actualNumCommandListsToExecute++;
 		}
 
-		cLists.push_back(static_cast<D3D12GraphicsContext*>(graphicsContext)->m_pCommandList);
+		cLists.push_back(currentContext->m_pCommandList);
 		actualNumCommandListsToExecute++;
+
+		// Add up the data for displaying the d3d12ContextStats
+		BL_EDITOR_MODE_APPEND(contextStats, currentContext->m_ContextStats);
 	}
 
+	BL_EDITOR_MODE_APPEND(contextStats.m_NumCommandListsExecuted, actualNumCommandListsToExecute);
+
+	D3D12ContextStats& asd = EngineStatistics::GetD3D12ContextStats();
 	m_pGraphicsCommandQueue->ExecuteCommandLists(actualNumCommandListsToExecute, cLists.data());
 }
 

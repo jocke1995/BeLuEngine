@@ -192,5 +192,6 @@ void D3D12LocalStateTracker::ResolveLocalResourceState(D3D12_RESOURCE_STATES des
 	if (actualNumberOfResourceBarriers > 0)
 	{
 		m_pOwner->m_pCommandList->ResourceBarrier(actualNumberOfResourceBarriers, resourceBarriers);
+		BL_EDITOR_MODE_APPEND(m_pOwner->m_ContextStats.m_NumLocalTransitionBarriers, 1);
 	}
 }

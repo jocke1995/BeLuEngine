@@ -53,7 +53,7 @@ struct D3D12ContextStats
 {
 	friend class D3D12GraphicsContext;
 
-	D3D12ContextStats operator+(const D3D12ContextStats& other) const;
+	void operator+=(const D3D12ContextStats& other);
 
 	// Set DescriptorHeap
 	unsigned int m_NumSetDescriptorHeaps = 0;
@@ -69,7 +69,9 @@ struct D3D12ContextStats
 	// Misc
 	unsigned int m_NumSetPipelineState = 0;
 	unsigned int m_NumIASetPrimitiveTopology = 0;
-	unsigned int m_NumResourceBarriers = 0;
+	unsigned int m_NumLocalTransitionBarriers = 0;
+	unsigned int m_NumGlobalTransitionBarriers = 0;
+	unsigned int m_NumUAVBarriers = 0;
 	unsigned int m_NumRSSetViewports = 0;
 	unsigned int m_NumRSSetScissorRects = 0;
 	unsigned int m_NumOMSetStencilRef = 0;
@@ -90,6 +92,7 @@ struct D3D12ContextStats
 	unsigned int m_NumSetGraphicsRoot32BitConstants = 0;
 
 	// Draw and Dispatch
+	unsigned int m_NumIASetIndexBuffer = 0;
 	unsigned int m_NumDrawIndexedInstanced = 0;
 	unsigned int m_NumDispatch = 0;
 
@@ -101,11 +104,11 @@ struct D3D12ContextStats
 
 	// Updated by mainThread when resolving
 	// Not touched by the overloaded operator+
-	unsigned int m_NumExecuteCommandListsDirect = 0;
+	unsigned int m_NumCommandListsExecuted = 0;
 };
 
 TODO("Wrap in a EditorMode define");
-#define BL_EDITOR_MODE_APPEND(container, value) container += 3;
+#define BL_EDITOR_MODE_APPEND(container, value) container += value;
 
 // Singleton to hold all debug info
 class EngineStatistics
@@ -114,9 +117,12 @@ public:
 	virtual ~EngineStatistics();
 	static EngineStatistics& GetInstance();
 
+	static void BeginFrame();
+
 	static IM_CommonStats& GetIM_CommonStats();
 	static IM_MemoryStats& GetIM_MemoryStats();
 	static std::vector<IM_ThreadStats*>& GetIM_ThreadStats();
+	static D3D12ContextStats& GetD3D12ContextStats();
 private:
 	EngineStatistics();
 
@@ -124,6 +130,7 @@ private:
 	static inline IM_CommonStats m_CommonInfo = {};
 	static inline IM_MemoryStats m_MemoryInfo = {};
 	static inline std::vector<IM_ThreadStats*> m_ThreadInfo = {};
+	static inline D3D12ContextStats m_D3D12ContextStats = {};
 };
 
 #endif
