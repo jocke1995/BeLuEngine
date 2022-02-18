@@ -143,10 +143,11 @@ enum class E_CAMERA_TYPE
 #define TODO() //DebugBreak();
 
 // Debug
-#define SINGLE_THREADED_RENDERER false
-#define ENABLE_DEBUGLAYER true
-#define ENABLE_VALIDATIONGLAYER false
-#define DEVELOPERMODE_DRAWBOUNDINGBOX false
+constexpr bool SINGLE_THREADED_RENDERER = false;
+constexpr bool ENABLE_DEBUGLAYER = true;
+constexpr bool ENABLE_VALIDATIONGLAYER = false;
+constexpr bool DEVELOPERMODE_DRAWBOUNDINGBOX = false;
+
 #define PROFILE
 //#define USE_NSIGHT_AFTERMATH
 
