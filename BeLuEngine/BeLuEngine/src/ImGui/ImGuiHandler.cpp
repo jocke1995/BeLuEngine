@@ -36,7 +36,7 @@ ImGuiHandler& ImGuiHandler::GetInstance()
 	return instance;
 }
 
-void ImGuiHandler::NewFrame()
+void ImGuiHandler::BeginFrame()
 {
 	ImGui_ImplDX12_NewFrame();
 	ImGui_ImplWin32_NewFrame();
@@ -45,7 +45,7 @@ void ImGuiHandler::NewFrame()
 
 void ImGuiHandler::EndFrame()
 {
-	this->resetThreadInfos();
+	// Nothing yet... 
 }
 
 void ImGuiHandler::UpdateFrame()
@@ -434,16 +434,5 @@ void ImGuiHandler::updateMemoryInfo()
 			mStats.m_ProcessVramUsage = info.CurrentUsage / DIV / DIV;
 			mStats.m_TotalVram = aDesc.DedicatedVideoMemory / DIV / DIV;
 		};
-	}
-}
-
-void ImGuiHandler::resetThreadInfos()
-{
-	std::vector<IM_ThreadStats*>& tStats = EngineStatistics::GetIM_ThreadStats();
-
-	for (IM_ThreadStats* threadStat : tStats)
-	{
-		// Only show the threads who completed a task this frame
-		threadStat->m_TasksCompleted = 0;
 	}
 }

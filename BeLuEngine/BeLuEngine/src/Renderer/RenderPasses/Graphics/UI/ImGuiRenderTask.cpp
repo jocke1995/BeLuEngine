@@ -79,7 +79,7 @@ void ImGuiRenderTask::Execute()
 	ImGuiHandler& imGuiHandler = ImGuiHandler::GetInstance();
 
 	// Start the new frame
-	imGuiHandler.NewFrame();
+	imGuiHandler.BeginFrame();
 
 	// Update ImGui here to get all information that happens inside rendering
 	imGuiHandler.UpdateFrame();

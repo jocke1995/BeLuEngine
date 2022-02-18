@@ -21,9 +21,14 @@ EngineStatistics& EngineStatistics::GetInstance()
 
 void EngineStatistics::BeginFrame()
 {
+	// Clear the per-frame-statistics for this frame
 	m_CommonInfo = {};
 	m_MemoryInfo = {};
-	m_ThreadInfo = {};
+
+	for (unsigned int i = 0; i < m_ThreadInfo.size(); i++)
+	{
+		m_ThreadInfo[i]->m_TasksCompleted = 0;
+	}
 	m_D3D12ContextStats = {};
 }
 

@@ -390,7 +390,26 @@ void Renderer::Execute()
 		}
 	};
 
-	/* --------------------- Record command lists --------------------- */
+	/* --------------------- Record command lists (Heavy ones are added first!) --------------------- */
+	/* ----------------------- Note: NOT EXECUTED IN THE ORDER THEY ARE HERE! ----------------------- */
+
+	// Depth pre-pass
+	executeGraphicsPassLambda(E_GRAPHICS_PASS_TYPE::DEPTH_PRE_PASS);
+
+	// Geometry pass
+	executeGraphicsPassLambda(E_GRAPHICS_PASS_TYPE::DEFERRED_GEOMETRY);
+
+	// Blend
+	executeGraphicsPassLambda(E_GRAPHICS_PASS_TYPE::OPACITY);
+
+	// Blurring for bloom
+	executeGraphicsPassLambda(E_GRAPHICS_PASS_TYPE::POSTPROCESS_BLOOM);
+
+	// DXR Reflections
+	executeGraphicsPassLambda(E_GRAPHICS_PASS_TYPE::REFLECTIONS);
+
+	// Update TLAS
+	executeGraphicsPassLambda(E_GRAPHICS_PASS_TYPE::TLAS);
 
 	// Copy on demand
 	executeGraphicsPassLambda(E_GRAPHICS_PASS_TYPE::COPY_ON_DEMAND);
@@ -398,29 +417,11 @@ void Renderer::Execute()
 	// Update BLASes if any...
 	executeGraphicsPassLambda(E_GRAPHICS_PASS_TYPE::BLAS);
 
-	// Depth pre-pass
-	executeGraphicsPassLambda(E_GRAPHICS_PASS_TYPE::DEPTH_PRE_PASS);
-
-	// Update TLAS
-	executeGraphicsPassLambda(E_GRAPHICS_PASS_TYPE::TLAS);
-
-	// Geometry pass
-	executeGraphicsPassLambda(E_GRAPHICS_PASS_TYPE::DEFERRED_GEOMETRY);
-
 	// Light pass
 	executeGraphicsPassLambda(E_GRAPHICS_PASS_TYPE::DEFERRED_LIGHT);
 
-	// DXR Reflections
-	executeGraphicsPassLambda(E_GRAPHICS_PASS_TYPE::REFLECTIONS);
-
-	// Blend
-	executeGraphicsPassLambda(E_GRAPHICS_PASS_TYPE::OPACITY);
-
 	// Outlining, if an object is picked
 	executeGraphicsPassLambda(E_GRAPHICS_PASS_TYPE::OUTLINE);
-
-	// Blurring for bloom
-	executeGraphicsPassLambda(E_GRAPHICS_PASS_TYPE::POSTPROCESS_BLOOM);
 
 	// Merge 
 	executeGraphicsPassLambda(E_GRAPHICS_PASS_TYPE::POSTPROCESS_TONEMAP);

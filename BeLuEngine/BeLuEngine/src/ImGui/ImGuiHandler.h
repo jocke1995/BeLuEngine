@@ -9,7 +9,7 @@ class ImGuiHandler
 public:
 	static ImGuiHandler& GetInstance();
 
-	void NewFrame();
+	void BeginFrame();
 	void EndFrame();
 	void UpdateFrame();
 
@@ -23,7 +23,6 @@ private:
 	void drawSceneHierarchy();
 
 	void updateMemoryInfo();
-	void resetThreadInfos();
 };
 
 #endif
