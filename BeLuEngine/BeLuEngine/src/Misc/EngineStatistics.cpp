@@ -42,12 +42,12 @@ std::vector<IM_ThreadStats*>& EngineStatistics::GetIM_ThreadStats()
 	return m_ThreadInfo;
 }
 
-D3D12ContextStats& EngineStatistics::GetD3D12ContextStats()
+D3D12Stats& EngineStatistics::GetD3D12ContextStats()
 {
 	return m_D3D12ContextStats;
 }
 
-void D3D12ContextStats::operator+=(const D3D12ContextStats& other)
+void D3D12Stats::operator+=(const D3D12Stats& other)
 {
 	// Set DescriptorHeap
 	this->m_NumSetDescriptorHeaps				+= other.m_NumSetDescriptorHeaps;

@@ -38,11 +38,6 @@ ImGuiHandler& ImGuiHandler::GetInstance()
 
 void ImGuiHandler::NewFrame()
 {
-	static bool a = true;
-	if(a)
-		EventBus::GetInstance().Subscribe(this, &ImGuiHandler::onEntityClicked);
-	a = false;
-
 	ImGui_ImplDX12_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
@@ -63,6 +58,7 @@ void ImGuiHandler::UpdateFrame()
 	IM_CommonStats& cStats = EngineStatistics::GetIM_CommonStats();
 	IM_MemoryStats& mStats = EngineStatistics::GetIM_MemoryStats();
 	std::vector<IM_ThreadStats*>& tStats = EngineStatistics::GetIM_ThreadStats();
+	D3D12Stats& d3d12Stats = EngineStatistics::GetD3D12ContextStats();
 
 	cStats.m_TotalFPS = ImGui::GetIO().Framerate;
 	cStats.m_TotalMS = 1000.0f / ImGui::GetIO().Framerate;
@@ -93,6 +89,62 @@ void ImGuiHandler::UpdateFrame()
 			ImGui::Text("VRAM (MiB)");
 			ImGui::Text("Process usage: %d", mStats.m_ProcessVramUsage);
 			ImGui::Text("Installed: %d", mStats.m_TotalVram);
+		}
+		if (ImGui::CollapsingHeader("D3D12-Interactions"))
+		{
+			ImGui::Text("Unique CommandLists: %d", d3d12Stats.m_NumUniqueCommandLists);
+			ImGui::Text("ExecuteCommandLists: %d", d3d12Stats.m_NumExecuteCommandLists);
+			ImGui::Text("----------------------");
+
+			ImGui::Text("SetDescriptorHeaps: %d",				d3d12Stats.m_NumSetDescriptorHeaps);
+			ImGui::Text("SetComputeRootSignature: %d",			d3d12Stats.m_NumSetComputeRootSignature);
+			ImGui::Text("SetComputeRootDescriptorTable: %d",	d3d12Stats.m_NumSetComputeRootDescriptorTable);
+			ImGui::Text("SetGraphicsRootSignature: %d",			d3d12Stats.m_NumSetGraphicsRootSignature);
+			ImGui::Text("SetGraphicsRootDescriptorTable: %d",	d3d12Stats.m_NumSetGraphicsRootDescriptorTable);
+			ImGui::Text("----------------------");
+
+			ImGui::Text("CopyBufferRegion: %d",		d3d12Stats.m_NumCopyBufferRegion);
+			ImGui::Text("CopyTextureRegion: %d",	d3d12Stats.m_NumCopyTextureRegion);
+			ImGui::Text("----------------------");
+
+			ImGui::Text("SetPipelineState: %d",			d3d12Stats.m_NumSetPipelineState);
+			ImGui::Text("IASetPrimitiveTopology: %d",	d3d12Stats.m_NumIASetPrimitiveTopology);
+			ImGui::Text("RSSetViewports: %d",			d3d12Stats.m_NumRSSetViewports);
+			ImGui::Text("RSSetScissorRects: %d",		d3d12Stats.m_NumRSSetScissorRects);
+			ImGui::Text("OMSetStencilRef: %d",			d3d12Stats.m_NumOMSetStencilRef);
+			ImGui::Text("----------------------");
+
+			ImGui::Text("Resource Barriers:");
+			ImGui::Text("LocalResourceTransitions: %d",		d3d12Stats.m_NumLocalTransitionBarriers);
+			ImGui::Text("GlobalResourceTransitions: %d",	d3d12Stats.m_NumGlobalTransitionBarriers);
+			ImGui::Text("UAVBarriers: %d",					d3d12Stats.m_NumUAVBarriers);
+			ImGui::Text("----------------------");
+
+			ImGui::Text("OMSetRenderTargets: %d",				d3d12Stats.m_NumOMSetRenderTargets);
+			ImGui::Text("ClearDepthStencilView: %d",			d3d12Stats.m_NumClearDepthStencilView);
+			ImGui::Text("ClearRenderTargetView: %d",			d3d12Stats.m_NumClearRenderTargetView);
+			ImGui::Text("ClearUnorderedAccessViewFloat: %d",	d3d12Stats.m_NumClearUnorderedAccessViewFloat);
+			ImGui::Text("ClearUnorderedAccessViewUint: %d",		d3d12Stats.m_NumClearUnorderedAccessViewUint);
+			ImGui::Text("----------------------");
+
+			ImGui::Text("SetComputeRootShaderResourceView: %d",		d3d12Stats.m_NumSetComputeRootShaderResourceView);
+			ImGui::Text("SetGraphicsRootShaderResourceView: %d",	d3d12Stats.m_NumSetGraphicsRootShaderResourceView);
+			ImGui::Text("SetComputeRootConstantBufferView: %d",		d3d12Stats.m_NumSetComputeRootConstantBufferView);
+			ImGui::Text("SetGraphicsRootConstantBufferView: %d",	d3d12Stats.m_NumSetGraphicsRootConstantBufferView);
+			ImGui::Text("SetComputeRoot32BitConstants: %d",			d3d12Stats.m_NumSetComputeRoot32BitConstants);
+			ImGui::Text("SetGraphicsRoot32BitConstants: %d",		d3d12Stats.m_NumSetGraphicsRoot32BitConstants);
+			ImGui::Text("----------------------");
+
+			ImGui::Text("IASetIndexBuffer: %d",		d3d12Stats.m_NumIASetIndexBuffer);
+			ImGui::Text("DrawIndexedInstanced: %d",	d3d12Stats.m_NumDrawIndexedInstanced);
+			ImGui::Text("Dispatch: %d",				d3d12Stats.m_NumDispatch);
+			ImGui::Text("----------------------");
+
+			ImGui::Text("DirectX Raytracing:");
+			ImGui::Text("Build TLAS: %d",			d3d12Stats.m_NumBuildTLAS);
+			ImGui::Text("Build BLAS: %d",			d3d12Stats.m_NumBuildBLAS);
+			ImGui::Text("DispatchRays: %d",			d3d12Stats.m_NumDispatchRays);
+			ImGui::Text("SetPipelineState1: %d",	d3d12Stats.m_NumSetRayTracingPipelineState);
 		}
 		if (ImGui::CollapsingHeader("Threads"))
 		{

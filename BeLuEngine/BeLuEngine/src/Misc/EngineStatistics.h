@@ -49,11 +49,16 @@ struct IM_ThreadStats
 //	unsigned int m_NumVertices = 0;
 //};
 
-struct D3D12ContextStats
+struct D3D12Stats
 {
 	friend class D3D12GraphicsContext;
 
-	void operator+=(const D3D12ContextStats& other);
+	void operator+=(const D3D12Stats& other);
+
+	// Updated by mainThread when resolving
+	// Not touched by the overloaded operator+
+	unsigned int m_NumUniqueCommandLists = 0;
+	unsigned int m_NumExecuteCommandLists = 0;
 
 	// Set DescriptorHeap
 	unsigned int m_NumSetDescriptorHeaps = 0;
@@ -101,10 +106,6 @@ struct D3D12ContextStats
 	unsigned int m_NumBuildBLAS = 0;
 	unsigned int m_NumDispatchRays = 0;
 	unsigned int m_NumSetRayTracingPipelineState = 0;
-
-	// Updated by mainThread when resolving
-	// Not touched by the overloaded operator+
-	unsigned int m_NumCommandListsExecuted = 0;
 };
 
 TODO("Wrap in a EditorMode define");
@@ -122,7 +123,7 @@ public:
 	static IM_CommonStats& GetIM_CommonStats();
 	static IM_MemoryStats& GetIM_MemoryStats();
 	static std::vector<IM_ThreadStats*>& GetIM_ThreadStats();
-	static D3D12ContextStats& GetD3D12ContextStats();
+	static D3D12Stats& GetD3D12ContextStats();
 private:
 	EngineStatistics();
 
@@ -130,7 +131,7 @@ private:
 	static inline IM_CommonStats m_CommonInfo = {};
 	static inline IM_MemoryStats m_MemoryInfo = {};
 	static inline std::vector<IM_ThreadStats*> m_ThreadInfo = {};
-	static inline D3D12ContextStats m_D3D12ContextStats = {};
+	static inline D3D12Stats m_D3D12ContextStats = {};
 };
 
 #endif

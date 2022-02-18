@@ -796,7 +796,7 @@ void D3D12GraphicsManager::ExecuteGraphicsContexts(const std::vector<IGraphicsCo
 	cLists.reserve(maxNumberOfCommandListsToExecute);
 
 	TODO("Wrap in EditorMode only");
-	static D3D12ContextStats& contextStats = EngineStatistics::GetD3D12ContextStats();
+	static D3D12Stats& contextStats = EngineStatistics::GetD3D12ContextStats();
 
 	for (IGraphicsContext* graphicsContext : graphicsContexts)
 	{
@@ -815,13 +815,13 @@ void D3D12GraphicsManager::ExecuteGraphicsContexts(const std::vector<IGraphicsCo
 		actualNumCommandListsToExecute++;
 
 		// Add up the data for displaying the d3d12ContextStats
-		BL_EDITOR_MODE_APPEND(contextStats, currentContext->m_ContextStats);
+		BL_EDITOR_MODE_APPEND(contextStats, currentContext->m_D3D12Stats);
 	}
 
-	BL_EDITOR_MODE_APPEND(contextStats.m_NumCommandListsExecuted, actualNumCommandListsToExecute);
+	BL_EDITOR_MODE_APPEND(contextStats.m_NumUniqueCommandLists, actualNumCommandListsToExecute);
 
-	D3D12ContextStats& asd = EngineStatistics::GetD3D12ContextStats();
 	m_pGraphicsCommandQueue->ExecuteCommandLists(actualNumCommandListsToExecute, cLists.data());
+	BL_EDITOR_MODE_APPEND(contextStats.m_NumExecuteCommandLists, 1);
 }
 
 void D3D12GraphicsManager::SyncAndPresent(IGraphicsTexture* finalColorTexture)

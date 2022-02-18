@@ -95,7 +95,8 @@ private:
     /* ---------------------------------- Automatic ResourceBarrier Management ----------------------------------------------- */
 
     TODO("Wrap in EditorMode");
-    D3D12ContextStats m_ContextStats = {};
+    D3D12Stats m_D3D12Stats = {};
+
 	// Useful for debugging
 #ifdef DEBUG
 	std::wstring m_Name = L"GraphicsContextDefault";
