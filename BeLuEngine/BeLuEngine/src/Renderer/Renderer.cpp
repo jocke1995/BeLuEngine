@@ -113,6 +113,7 @@ void Renderer::deleteRenderer()
 	BL_SAFE_DELETE(m_GraphicsResources.gBufferNormal);
 	BL_SAFE_DELETE(m_GraphicsResources.gBufferMaterialProperties);
 	BL_SAFE_DELETE(m_GraphicsResources.gBufferEmissive);
+	BL_SAFE_DELETE(m_GraphicsResources.reflectionTexture);
 	BL_SAFE_DELETE(m_GraphicsResources.mainDepthStencil);
 
 	for (GraphicsPass* graphicsPass : m_GraphicsPasses)
@@ -139,7 +140,7 @@ void Renderer::Init(HWND hwnd, unsigned int width, unsigned int height, HINSTANC
 	m_CurrentRenderingWidth = width;
 	m_CurrentRenderingHeight = height;
 
-#pragma region RenderTargets
+#pragma region CommonTextures
 	// Main color renderTarget (used until the swapchain RT is drawn to)
 	m_GraphicsResources.finalColorBuffer = IGraphicsTexture::Create();
 	m_GraphicsResources.finalColorBuffer->CreateTexture2D(
@@ -181,6 +182,14 @@ void Renderer::Init(HWND hwnd, unsigned int width, unsigned int height, HINSTANC
 		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget,
 		L"gBufferEmissive");
 
+	// ReflectionTexture
+	m_GraphicsResources.reflectionTexture = IGraphicsTexture::Create();
+	m_GraphicsResources.reflectionTexture->CreateTexture2D(
+		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
+		BL_FORMAT_R16G16B16A16_FLOAT,
+		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::UnorderedAccess,
+		L"ReflectionTexture");
+
 	// DepthBuffer
 	m_GraphicsResources.mainDepthStencil = IGraphicsTexture::Create();
 	m_GraphicsResources.mainDepthStencil->CreateTexture2D(
@@ -189,7 +198,7 @@ void Renderer::Init(HWND hwnd, unsigned int width, unsigned int height, HINSTANC
 		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::DepthStencil,
 		L"MainDepthStencilBuffer");
 
-#pragma endregion RenderTargets
+#pragma endregion
 
 	// Picking
 	m_pMousePicker = new MousePicker();
@@ -1049,17 +1058,17 @@ void Renderer::advanceTextureToVisualize(VisualizeTexture* event)
 		case 0:
 			m_CurrentTextureToVisualize = m_GraphicsResources.gBufferNormal;
 			break;
-		//case 2:
-		//	m_CurrentTextureToVisualize = m_GraphicsResources.gBufferMaterialProperties;
-		//	break;
 		case 1:
-			m_CurrentTextureToVisualize = m_GraphicsResources.gBufferEmissive;
+			m_CurrentTextureToVisualize = m_GraphicsResources.reflectionTexture;
 			break;
 		case 2:
+			m_CurrentTextureToVisualize = m_GraphicsResources.gBufferEmissive;
+			break;
+		case 3:
 			m_CurrentTextureToVisualize = m_GraphicsResources.finalColorBuffer;
 			break;
 	}
 
 	moduloCounter++;
-	moduloCounter %= 3;
+	moduloCounter %= 4;
 }

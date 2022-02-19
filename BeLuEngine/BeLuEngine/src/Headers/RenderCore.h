@@ -45,6 +45,7 @@ struct CommonGraphicsResources
     IGraphicsTexture* gBufferNormal = nullptr;
     IGraphicsTexture* gBufferMaterialProperties = nullptr;
     IGraphicsTexture* gBufferEmissive = nullptr;
+    IGraphicsTexture* reflectionTexture = nullptr;
 
     // DepthTexture
     IGraphicsTexture* mainDepthStencil = nullptr;
