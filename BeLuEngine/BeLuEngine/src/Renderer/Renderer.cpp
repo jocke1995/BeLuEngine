@@ -146,8 +146,7 @@ void Renderer::Init(HWND hwnd, unsigned int width, unsigned int height, HINSTANC
 		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
 		BL_FORMAT_R16G16B16A16_FLOAT,
 		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget | F_TEXTURE_USAGE::UnorderedAccess,
-		L"FinalColorbuffer",
-		D3D12_RESOURCE_STATE_RENDER_TARGET);
+		L"FinalColorbuffer");
 	m_CurrentTextureToVisualize = m_GraphicsResources.finalColorBuffer;
 
 	// GBufferAlbedo
@@ -156,8 +155,7 @@ void Renderer::Init(HWND hwnd, unsigned int width, unsigned int height, HINSTANC
 		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
 		BL_FORMAT_R8G8B8A8_UNORM,
 		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget,
-		L"gBufferAlbedo",
-		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		L"gBufferAlbedo");
 
 	// Normal
 	m_GraphicsResources.gBufferNormal = IGraphicsTexture::Create();
@@ -165,8 +163,7 @@ void Renderer::Init(HWND hwnd, unsigned int width, unsigned int height, HINSTANC
 		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
 		BL_FORMAT_R16G16B16A16_FLOAT, // TODO: Does it needs to be this high..?
 		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget,
-		L"gBufferNormal",
-		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		L"gBufferNormal");
 
 	// Material Properties (Roughness, Metallic, glow..
 	m_GraphicsResources.gBufferMaterialProperties = IGraphicsTexture::Create();
@@ -174,8 +171,7 @@ void Renderer::Init(HWND hwnd, unsigned int width, unsigned int height, HINSTANC
 		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
 		BL_FORMAT_R8G8B8A8_UNORM,
 		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget,
-		L"gBufferMaterials",
-		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		L"gBufferMaterials");
 
 	// Emissive Color
 	m_GraphicsResources.gBufferEmissive = IGraphicsTexture::Create();
@@ -183,8 +179,7 @@ void Renderer::Init(HWND hwnd, unsigned int width, unsigned int height, HINSTANC
 		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
 		BL_FORMAT_R16G16B16A16_FLOAT,
 		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget,
-		L"gBufferEmissive",
-		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		L"gBufferEmissive");
 
 	// DepthBuffer
 	m_GraphicsResources.mainDepthStencil = IGraphicsTexture::Create();
@@ -192,8 +187,7 @@ void Renderer::Init(HWND hwnd, unsigned int width, unsigned int height, HINSTANC
 		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
 		BL_FORMAT_D24_UNORM_S8_UINT,
 		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::DepthStencil,
-		L"MainDepthStencilBuffer",
-		D3D12_RESOURCE_STATE_DEPTH_WRITE);
+		L"MainDepthStencilBuffer");
 
 #pragma endregion RenderTargets
 

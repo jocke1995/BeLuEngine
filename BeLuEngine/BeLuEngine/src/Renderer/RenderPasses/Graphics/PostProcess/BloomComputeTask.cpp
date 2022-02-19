@@ -73,7 +73,7 @@ BloomComputePass::BloomComputePass(unsigned int screenWidth, unsigned int screen
 		screenWidth, screenHeight,
 		BL_FORMAT_R16G16B16A16_FLOAT,
 		F_TEXTURE_USAGE::UnorderedAccess | F_TEXTURE_USAGE::ShaderResource,
-		L"PingPongTexture0", D3D12_RESOURCE_STATE_UNORDERED_ACCESS, g_NumMips);
+		L"PingPongTexture0", g_NumMips);
 
 
 	m_PingPongTextures[1] = IGraphicsTexture::Create();
@@ -81,7 +81,7 @@ BloomComputePass::BloomComputePass(unsigned int screenWidth, unsigned int screen
 		screenWidth, screenHeight,
 		BL_FORMAT_R16G16B16A16_FLOAT,
 		F_TEXTURE_USAGE::UnorderedAccess | F_TEXTURE_USAGE::ShaderResource,
-		L"PingPongTexture1", D3D12_RESOURCE_STATE_UNORDERED_ACCESS, g_NumMips);
+		L"PingPongTexture1", g_NumMips);
 
 #pragma endregion
 

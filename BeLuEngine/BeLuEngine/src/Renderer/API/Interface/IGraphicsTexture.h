@@ -22,7 +22,7 @@ public:
 
 	virtual bool LoadTexture2D_DDS(E_TEXTURE2D_TYPE textureType, const std::wstring& filePath) = 0;
 	virtual bool LoadTextureCube_DDS(const std::wstring& filePath) = 0;
-	virtual bool CreateTexture2D(unsigned int width, unsigned int height, BL_FORMAT blTextureFormat, unsigned int textureUsage /* F_TEXTURE_USAGE */, const std::wstring name, D3D12_RESOURCE_STATES startStateTemp, unsigned int mipLevels = 1) = 0;
+	virtual bool CreateTexture2D(unsigned int width, unsigned int height, BL_FORMAT blTextureFormat, unsigned int textureUsage /* F_TEXTURE_USAGE */, const std::wstring name, unsigned int mipLevels = 1) = 0;
 
 	virtual unsigned int GetShaderResourceHeapIndex(unsigned int mipLevel = 0) const = 0;
 	virtual unsigned int GetUnorderedAccessIndex(unsigned int mipLevel = 0) const = 0;

@@ -189,7 +189,7 @@ bool D3D12GraphicsTexture::LoadTextureCube_DDS(const std::wstring& filePath)
 	return true;
 }
 
-bool D3D12GraphicsTexture::CreateTexture2D(unsigned int width, unsigned int height, BL_FORMAT blTextureFormat, unsigned int textureUsage /* F_TEXTURE_USAGE */, const std::wstring name, D3D12_RESOURCE_STATES startStateTemp, unsigned int mipLevels)
+bool D3D12GraphicsTexture::CreateTexture2D(unsigned int width, unsigned int height, BL_FORMAT blTextureFormat, unsigned int textureUsage /* F_TEXTURE_USAGE */, const std::wstring name, unsigned int mipLevels)
 {
 	D3D12GraphicsManager* graphicsManager = D3D12GraphicsManager::GetInstance();
 	ID3D12Device5* device5 = graphicsManager->GetDevice();
@@ -199,19 +199,30 @@ bool D3D12GraphicsTexture::CreateTexture2D(unsigned int width, unsigned int heig
 
 	HRESULT hr;
 
+	// Doesn't really matter to much which start state it is in because the resourceStateTrackers will patch it up anyways
+	D3D12_RESOURCE_STATES startState = D3D12_RESOURCE_STATE_COMMON;
+
 	m_Path = name;
 	m_NumMipLevels = mipLevels;
 #pragma region CreateTextureBuffer
 	D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE;
 
 	if (textureUsage & F_TEXTURE_USAGE::RenderTarget)
+	{
 		flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+	}
 
 	if (textureUsage & F_TEXTURE_USAGE::UnorderedAccess)
+	{
 		flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+		startState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	}
 
 	if (textureUsage & F_TEXTURE_USAGE::DepthStencil)
+	{
 		flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+		startState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	}
 
 	// Convert to DirectX 12 format
 	DXGI_FORMAT dxgiFormat = ConvertBLFormatToD3D12Format(blTextureFormat);
@@ -240,6 +251,8 @@ bool D3D12GraphicsTexture::CreateTexture2D(unsigned int width, unsigned int heig
 
 	if (textureUsage & F_TEXTURE_USAGE::DepthStencil)
 	{
+		startState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+
 		clearValue.Format = resourceDesc.Format;
 		clearValue.DepthStencil.Depth = 1;
 		clearValue.DepthStencil.Stencil = 0;
@@ -249,6 +262,8 @@ bool D3D12GraphicsTexture::CreateTexture2D(unsigned int width, unsigned int heig
 
 	if (textureUsage & F_TEXTURE_USAGE::RenderTarget)
 	{
+		startState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+
 		clearValue.Format = resourceDesc.Format;
 		clearValue.Color[0] = 0.0f;
 		clearValue.Color[1] = 0.0f;
@@ -263,7 +278,7 @@ bool D3D12GraphicsTexture::CreateTexture2D(unsigned int width, unsigned int heig
 		&heapProps,
 		D3D12_HEAP_FLAG_NONE,
 		&resourceDesc,
-		startStateTemp,
+		startState,
 		pClearValue,
 		IID_PPV_ARGS(&m_pResource)
 	);
@@ -358,7 +373,7 @@ bool D3D12GraphicsTexture::CreateTexture2D(unsigned int width, unsigned int heig
 #pragma endregion
 
 	m_GlobalStateTracker = new D3D12GlobalStateTracker(m_pResource, m_NumMipLevels);
-	m_GlobalStateTracker->SetState(startStateTemp);
+	m_GlobalStateTracker->SetState(startState);
 	return true;
 }
 
