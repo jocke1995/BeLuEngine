@@ -106,8 +106,13 @@ struct CB_PER_SCENE_STRUCT
 	unsigned int gBufferMaterialProperties;
 
 	unsigned int gBufferEmissive;
+	unsigned int reflectionTextureSRV;
+	unsigned int reflectionTextureUAV;
 	unsigned int depth;
+
 	unsigned int skybox;
+	unsigned int pad0;
+	unsigned int pad1;
 	unsigned int pad2;
 };
 

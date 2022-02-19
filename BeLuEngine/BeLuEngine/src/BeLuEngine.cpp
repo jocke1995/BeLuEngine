@@ -53,11 +53,18 @@ void BeLuEngine::Init(HINSTANCE hInstance, int nCmdShow)
 	m_pThreadPool = &ThreadPool::GetInstance(numThreads * 2);
 
 	// Sub-engines
-	IGraphicsManager* graphicsManager = IGraphicsManager::Create(E_GRAPHICS_API::D3D12);
-	graphicsManager->Init(m_pWindow->GetHwnd(), windowWidth, windowHeight, DXGI_FORMAT_R16G16B16A16_FLOAT);
+	{
+		// Renderer
+		{
+			IGraphicsManager* graphicsManager = IGraphicsManager::Create(E_GRAPHICS_API::D3D12);
+			graphicsManager->Init(m_pWindow->GetHwnd(), windowWidth, windowHeight, DXGI_FORMAT_R16G16B16A16_FLOAT);
 
-	m_pRenderer = &Renderer::GetInstance();
-	m_pRenderer->Init(m_pWindow->GetHwnd(), windowWidth, windowHeight, hInstance, m_pThreadPool);
+			m_pRenderer = &Renderer::GetInstance();
+			m_pRenderer->Init(m_pWindow->GetHwnd(), windowWidth, windowHeight, hInstance, m_pThreadPool);
+		}
+
+		// Physics, sound etc..
+	}
 
 	// ECS
 	m_pSceneManager = &SceneManager::GetInstance();

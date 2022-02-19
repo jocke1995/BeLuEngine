@@ -5,9 +5,6 @@
 [shader("raygeneration")] 
 void RayGen()
 {
-    unsigned int readIndex = rootConstantUints.index0;
-    unsigned int writeIndex = rootConstantUints.index1;
-
 	// Get the location within the dispatched 2D grid of work items
 	// (often maps to pixels, so this could represent a pixel coordinate).
 	uint2 launchIndex = DispatchRaysIndex();
@@ -38,18 +35,6 @@ void RayGen()
     reflectionPayload.color = float3(0.0f, 0.0f, 0.0f);
     reflectionPayload.recursionDepth = 0;
 
-    // Trace the ray if it reflects anything
-    float3 rayTracedColor = float4(0.0f, 0.0f, 0.0f, 1.0f);
-    float3 finalColor = float3(0.0f, 0.0f, 0.0f);
-    if (metallic > 0.1f)
-    {
-        rayTracedColor = TraceRadianceRay(ray, 0, sceneBVH[cbPerScene.rayTracingBVH]);
-        finalColor = (textures[readIndex][launchIndex].rgb * (1 - metallic)) + (metallic * albedo * rayTracedColor);
-    }
-    else
-    {
-        finalColor = textures[readIndex][launchIndex].rgb;
-    }
-
-    texturesUAV[writeIndex][launchIndex] = float4(finalColor, 1.0f);
+    texturesUAV[cbPerScene.reflectionTextureUAV][launchIndex] = float4(TraceRadianceRay(ray, 0, sceneBVH[cbPerScene.rayTracingBVH]).rgb, 1.0f);
+    //finalColor = (textures[readIndex][launchIndex].rgb * (1 - metallic)) + (metallic * albedo * rayTracedColor);
 }

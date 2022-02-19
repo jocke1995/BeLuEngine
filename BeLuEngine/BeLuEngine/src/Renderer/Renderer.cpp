@@ -1038,6 +1038,8 @@ void Renderer::submitCbPerSceneData(ITopLevelAS* pTLAS)
 	m_pCbPerSceneData->gBufferNormal = m_GraphicsResources.gBufferNormal->GetShaderResourceHeapIndex();
 	m_pCbPerSceneData->gBufferMaterialProperties = m_GraphicsResources.gBufferMaterialProperties->GetShaderResourceHeapIndex();
 	m_pCbPerSceneData->gBufferEmissive = m_GraphicsResources.gBufferEmissive->GetShaderResourceHeapIndex();
+	m_pCbPerSceneData->reflectionTextureSRV = m_GraphicsResources.reflectionTexture->GetShaderResourceHeapIndex();
+	m_pCbPerSceneData->reflectionTextureUAV = m_GraphicsResources.reflectionTexture->GetUnorderedAccessIndex();
 	m_pCbPerSceneData->depth = m_GraphicsResources.mainDepthStencil->GetShaderResourceHeapIndex();
 
 	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_ON_DEMAND]);
@@ -1052,9 +1054,20 @@ void Renderer::advanceTextureToVisualize(VisualizeTexture* event)
 
 	switch (moduloCounter)
 	{
-		//case 0:
+		TODO("This won't work anymore because they are not the same format.. need to do a separate pass to visualize these!");
+		//case -1:
 		//	m_CurrentTextureToVisualize = m_GraphicsResources.gBufferAlbedo;
 		//	break;
+		//case -1:
+		//	m_CurrentTextureToVisualize = m_GraphicsResources.gBufferMaterialProperties;
+		//	break;
+		//case -1:
+		//	m_CurrentTextureToVisualize = m_GraphicsResources.depth...;
+		//	break;
+		//case -1:
+		//	m_CurrentTextureToVisualize = m_GraphicsResources.motionVectors;
+		//	break;
+
 		case 0:
 			m_CurrentTextureToVisualize = m_GraphicsResources.gBufferNormal;
 			break;

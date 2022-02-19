@@ -52,7 +52,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
    
    TestAsyncThread test1 = TestAsyncThread();
 
-   Log::Print("Entering Game-Loop ...\n\n");
+   BL_LOG_INFO("Entering Game-Loop ...\n\n");
    while (!window->ExitWindow())
    {
        // Hacky Async Test

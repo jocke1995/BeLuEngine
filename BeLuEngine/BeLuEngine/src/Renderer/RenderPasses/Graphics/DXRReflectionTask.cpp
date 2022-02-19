@@ -76,7 +76,7 @@ void DXRReflectionTask::Execute()
 	BL_ASSERT(m_RenderComponents.size());
 	createShaderBindingTable();
 
-	IGraphicsTexture* finalColorBuffer = m_CommonGraphicsResources->finalColorBuffer;
+	IGraphicsTexture* reflectionTexture = m_CommonGraphicsResources->reflectionTexture;
 	IGraphicsTexture* depthTexture = m_CommonGraphicsResources->mainDepthStencil;
 
 	m_pGraphicsContext->Begin();
@@ -91,20 +91,15 @@ void DXRReflectionTask::Execute()
 
 		// Transitions
 		m_pGraphicsContext->ResourceBarrier(depthTexture, BL_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-		m_pGraphicsContext->ResourceBarrier(finalColorBuffer, BL_RESOURCE_STATE_UNORDERED_ACCESS);
+		m_pGraphicsContext->ResourceBarrier(reflectionTexture, BL_RESOURCE_STATE_UNORDERED_ACCESS);
 
 		// Bind the raytracing pipeline
 		m_pGraphicsContext->SetRayTracingPipelineState(m_pRayTracingState);
 
-		RootConstantUints rootConstantUints = {};
-		rootConstantUints.index0 = finalColorBuffer->GetShaderResourceHeapIndex();	// Read
-		rootConstantUints.index1 = finalColorBuffer->GetUnorderedAccessIndex();		// Write
-		m_pGraphicsContext->Set32BitConstants(Constants_DH_Indices_B1, sizeof(RootConstantUints) / 4, &rootConstantUints, 0, true);
-
 		// Dispatch the rays and write to the raytracing output
 		m_pGraphicsContext->DispatchRays(m_pShaderBindingTable, m_DispatchWidth, m_DispatchHeight);
 
-		m_pGraphicsContext->UAVBarrier(finalColorBuffer);
+		m_pGraphicsContext->UAVBarrier(reflectionTexture);
 	}
 	m_pGraphicsContext->End();
 }

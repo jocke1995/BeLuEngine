@@ -22,7 +22,6 @@ EngineStatistics& EngineStatistics::GetInstance()
 void EngineStatistics::BeginFrame()
 {
 	// Clear the per-frame-statistics for this frame
-	m_CommonInfo = {};
 	m_MemoryInfo = {};
 
 	for (unsigned int i = 0; i < m_ThreadInfo.size(); i++)
