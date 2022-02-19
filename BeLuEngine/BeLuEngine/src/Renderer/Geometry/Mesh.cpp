@@ -34,8 +34,8 @@ void Mesh::Init()
 	modelPathName = modelPathName.substr(modelPathName.find_last_of("/\\") + 1);
 
 	// create vertices resource
-	m_pVertexBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::VertexBuffer, sizeof(Vertex), m_Vertices.size(), DXGI_FORMAT_UNKNOWN, to_wstring(modelPathName) + L"_VERTEXBUFFER");
-	m_pIndexBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::IndexBuffer, sizeof(unsigned int), m_Indices.size(), DXGI_FORMAT_UNKNOWN, to_wstring(modelPathName) + L"_INDEXBUFFER");
+	m_pVertexBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::VertexBuffer, sizeof(Vertex), m_Vertices.size(), BL_FORMAT_UNKNOWN, to_wstring(modelPathName) + L"_VERTEXBUFFER");
+	m_pIndexBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::IndexBuffer, sizeof(unsigned int), m_Indices.size(), BL_FORMAT_UNKNOWN, to_wstring(modelPathName) + L"_INDEXBUFFER");
 }
 
 const std::vector<Vertex>* Mesh::GetVertices() const

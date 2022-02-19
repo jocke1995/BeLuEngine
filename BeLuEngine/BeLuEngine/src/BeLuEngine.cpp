@@ -57,7 +57,7 @@ void BeLuEngine::Init(HINSTANCE hInstance, int nCmdShow)
 	graphicsManager->Init(m_pWindow->GetHwnd(), windowWidth, windowHeight, DXGI_FORMAT_R16G16B16A16_FLOAT);
 
 	m_pRenderer = &Renderer::GetInstance();
-	m_pRenderer->InitD3D12(m_pWindow->GetHwnd(), windowWidth, windowHeight, hInstance, m_pThreadPool);
+	m_pRenderer->Init(m_pWindow->GetHwnd(), windowWidth, windowHeight, hInstance, m_pThreadPool);
 
 	// ECS
 	m_pSceneManager = &SceneManager::GetInstance();

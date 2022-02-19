@@ -5,7 +5,7 @@
 #include "D3D12DescriptorHeap.h"
 #include "D3D12ResourceStateTracker.h"
 
-D3D12GraphicsBuffer::D3D12GraphicsBuffer(E_GRAPHICSBUFFER_TYPE type, unsigned int sizeOfSingleItem, unsigned int numItems, DXGI_FORMAT format, std::wstring name)
+D3D12GraphicsBuffer::D3D12GraphicsBuffer(E_GRAPHICSBUFFER_TYPE type, unsigned int sizeOfSingleItem, unsigned int numItems, BL_FORMAT format, std::wstring name)
 	:IGraphicsBuffer()
 {
 	BL_ASSERT_MESSAGE(sizeOfSingleItem, "Trying to create a buffer with a size of 0 bytes!\n");
@@ -14,6 +14,8 @@ D3D12GraphicsBuffer::D3D12GraphicsBuffer(E_GRAPHICSBUFFER_TYPE type, unsigned in
 #ifdef DEBUG
 	m_DebugName = name;
 #endif
+
+	DXGI_FORMAT dxgiFormat = ConvertBLFormatToD3D12Format(format);
 
 	D3D12GraphicsManager* graphicsManager = D3D12GraphicsManager::GetInstance();
 	ID3D12Device5* device5 = graphicsManager->GetDevice();
@@ -67,7 +69,7 @@ D3D12GraphicsBuffer::D3D12GraphicsBuffer(E_GRAPHICSBUFFER_TYPE type, unsigned in
 	resourceDesc.SampleDesc.Count = 1;
 	resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
 	resourceDesc.Flags = flags;
-	resourceDesc.Format = format;
+	resourceDesc.Format = dxgiFormat;
 
 	HRESULT hr = graphicsManager->GetDevice()->CreateCommittedResource(
 		&heapProps,
@@ -120,7 +122,7 @@ D3D12GraphicsBuffer::D3D12GraphicsBuffer(E_GRAPHICSBUFFER_TYPE type, unsigned in
 			D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 			srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
 			srvDesc.Buffer.FirstElement = 0;
-			srvDesc.Format = format;
+			srvDesc.Format = dxgiFormat;
 			srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 			srvDesc.Buffer.NumElements = numItems;
 			srvDesc.Buffer.StructureByteStride = sizeOfSingleItem;
@@ -135,7 +137,7 @@ D3D12GraphicsBuffer::D3D12GraphicsBuffer(E_GRAPHICSBUFFER_TYPE type, unsigned in
 			D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 			srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
 			srvDesc.Buffer.FirstElement = 0;
-			srvDesc.Format = format;
+			srvDesc.Format = dxgiFormat;
 			srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 			srvDesc.Buffer.NumElements = numItems;
 			srvDesc.Buffer.StructureByteStride = sizeOfSingleItem;

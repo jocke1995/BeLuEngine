@@ -65,7 +65,7 @@ public:
 	Scene* const GetActiveScene() const;
 
 	// Call once
-	void InitD3D12(HWND hwnd, unsigned int width, unsigned int height, HINSTANCE hInstance, ThreadPool* threadPool);
+	void Init(HWND hwnd, unsigned int width, unsigned int height, HINSTANCE hInstance, ThreadPool* threadPool);
 
 	// Call each frame
 	void Update(double dt);

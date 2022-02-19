@@ -71,8 +71,8 @@ void D3D12BottomLevelAS::GenerateBuffers()
 	unsigned int resultSizeInBytes  = (info.ResultDataMaxSizeInBytes + 255) & ~255;
 
 	static unsigned int idCounter = 0;
-	m_pScratchBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::UnorderedAccessBuffer, scratchSizeInBytes, 1, DXGI_FORMAT_UNKNOWN, L"SCRATCHBUFFER_BLAS");
-	m_pResultBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::RayTracingBuffer, resultSizeInBytes, 1, DXGI_FORMAT_UNKNOWN, L"RESULTBUFFER_BLAS");
+	m_pScratchBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::UnorderedAccessBuffer, scratchSizeInBytes, 1, BL_FORMAT_UNKNOWN, L"SCRATCHBUFFER_BLAS");
+	m_pResultBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::RayTracingBuffer, resultSizeInBytes, 1, BL_FORMAT_UNKNOWN, L"RESULTBUFFER_BLAS");
 
 	idCounter++;
 }

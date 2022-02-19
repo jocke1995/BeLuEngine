@@ -43,8 +43,8 @@ namespace component
 		updateSlotInfoBuffer();
 		
 		std::string fileName = std::filesystem::path(to_string(m_pModel->GetPath())).filename().string();
-		m_SlotInfoByteAdressBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::RawBuffer, sizeof(SlotInfo)	 , numMeshes, DXGI_FORMAT_UNKNOWN, to_wstring(fileName) + L"_RAWBUFFER_SLOTINFO");
-		m_MaterialByteAdressBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::RawBuffer, sizeof(MaterialData), numMeshes, DXGI_FORMAT_UNKNOWN, to_wstring(fileName) + L"_RAWBUFFER_MATERIALDATA");
+		m_SlotInfoByteAdressBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::RawBuffer, sizeof(SlotInfo)	 , numMeshes, BL_FORMAT_UNKNOWN, to_wstring(fileName) + L"_RAWBUFFER_SLOTINFO");
+		m_MaterialByteAdressBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::RawBuffer, sizeof(MaterialData), numMeshes, BL_FORMAT_UNKNOWN, to_wstring(fileName) + L"_RAWBUFFER_MATERIALDATA");
 	}
 
 	void ModelComponent::SetDrawFlag(unsigned int drawFlag)

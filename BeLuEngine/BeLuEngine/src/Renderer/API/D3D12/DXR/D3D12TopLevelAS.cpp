@@ -58,8 +58,8 @@ bool D3D12TopLevelAS::CreateResultBuffer()
 		BL_SAFE_DELETE(m_pResultBuffer);
 
 		// Create new buffers for scratch and result
-		m_pScratchBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::UnorderedAccessBuffer, scratchSizeInBytes, 1, DXGI_FORMAT_UNKNOWN, L"SCRATCHBUFFER_TLAS");
-		m_pResultBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::RayTracingBuffer, resultSizeInBytes, 1, DXGI_FORMAT_UNKNOWN, L"RESULTBUFFER_TLAS");
+		m_pScratchBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::UnorderedAccessBuffer, scratchSizeInBytes, 1, BL_FORMAT_UNKNOWN, L"SCRATCHBUFFER_TLAS");
+		m_pResultBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::RayTracingBuffer, resultSizeInBytes, 1, BL_FORMAT_UNKNOWN, L"RESULTBUFFER_TLAS");
 
 		return true;
 	}
@@ -89,7 +89,7 @@ bool D3D12TopLevelAS::reAllocateInstanceDescBuffers(unsigned int newSizeInBytes)
 		BL_SAFE_DELETE(m_pInstanceDescBuffers[i]);
 
 		std::wstring bufferName = L"TLAS_InstanceDescBuffer_UploadHeap" + std::to_wstring(i);
-		m_pInstanceDescBuffers[i] = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::CPUBuffer, actualNewSizeInBytes, 1, DXGI_FORMAT_UNKNOWN, bufferName);
+		m_pInstanceDescBuffers[i] = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::CPUBuffer, actualNewSizeInBytes, 1, BL_FORMAT_UNKNOWN, bufferName);
 	}
 
 	m_CurrentMaxInstanceDescSize = actualNewSizeInBytes;

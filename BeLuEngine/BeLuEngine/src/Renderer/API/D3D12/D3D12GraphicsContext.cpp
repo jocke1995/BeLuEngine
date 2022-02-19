@@ -176,7 +176,7 @@ void D3D12GraphicsContext::End()
 
 void D3D12GraphicsContext::UploadTexture(IGraphicsTexture* graphicsTexture)
 {
-	IGraphicsBuffer* tempUploadBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::CPUBuffer, graphicsTexture->GetSize(), 1, DXGI_FORMAT_UNKNOWN, L"TempUploadResource");
+	IGraphicsBuffer* tempUploadBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::CPUBuffer, graphicsTexture->GetSize(), 1, BL_FORMAT_UNKNOWN, L"TempUploadResource");
 	ID3D12Resource* uploadHeap = static_cast<D3D12GraphicsBuffer*>(tempUploadBuffer)->m_pResource;
 
 	D3D12GraphicsTexture* d3d12GraphicsTexture = static_cast<D3D12GraphicsTexture*>(graphicsTexture);

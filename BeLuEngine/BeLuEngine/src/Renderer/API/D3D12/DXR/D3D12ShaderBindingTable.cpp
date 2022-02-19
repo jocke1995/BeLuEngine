@@ -107,7 +107,7 @@ bool D3D12ShaderBindingTable::reAllocateHeaps(unsigned int sizeInBytes)
 		BL_SAFE_DELETE(m_pSBTBuffer[i]);
 
 		std::wstring bufferName = L"ShaderBindingTable_UploadHeap" + std::to_wstring(i);
-		m_pSBTBuffer[i] = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::CPUBuffer, sizeInBytes, 1, DXGI_FORMAT_UNKNOWN, bufferName);
+		m_pSBTBuffer[i] = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::CPUBuffer, sizeInBytes, 1, BL_FORMAT_UNKNOWN, bufferName);
 	}
 
 	m_CurrentMaxSBTSize = sizeInBytes;

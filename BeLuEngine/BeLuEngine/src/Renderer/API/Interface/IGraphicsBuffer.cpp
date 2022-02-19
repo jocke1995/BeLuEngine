@@ -10,7 +10,7 @@ IGraphicsBuffer::~IGraphicsBuffer()
 }
 
 
-IGraphicsBuffer* IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE type, unsigned int sizeOfSingleItem, unsigned int numItems, DXGI_FORMAT format, std::wstring name)
+IGraphicsBuffer* IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE type, unsigned int sizeOfSingleItem, unsigned int numItems, BL_FORMAT format, std::wstring name)
 {
     E_GRAPHICS_API graphicsApi = IGraphicsManager::GetGraphicsApiType();
 

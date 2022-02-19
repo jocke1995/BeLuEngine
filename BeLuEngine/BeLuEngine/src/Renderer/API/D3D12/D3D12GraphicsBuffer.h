@@ -8,7 +8,7 @@ class D3D12GlobalStateTracker;
 class D3D12GraphicsBuffer : public IGraphicsBuffer
 {
 public:
-	D3D12GraphicsBuffer(E_GRAPHICSBUFFER_TYPE type, unsigned int sizeOfSingleItem, unsigned int numItems, DXGI_FORMAT format, std::wstring name);
+	D3D12GraphicsBuffer(E_GRAPHICSBUFFER_TYPE type, unsigned int sizeOfSingleItem, unsigned int numItems, BL_FORMAT format, std::wstring name);
 	virtual ~D3D12GraphicsBuffer();
 
 	virtual bool SetData(unsigned int size, const void* data) override;

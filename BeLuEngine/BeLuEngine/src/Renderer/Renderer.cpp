@@ -132,7 +132,7 @@ void Renderer::deleteRenderer()
 	free(Light::m_pRawData);
 }
 
-void Renderer::InitD3D12(HWND hwnd, unsigned int width, unsigned int height, HINSTANCE hInstance, ThreadPool* threadPool)
+void Renderer::Init(HWND hwnd, unsigned int width, unsigned int height, HINSTANCE hInstance, ThreadPool* threadPool)
 {
 	m_pThreadPool = threadPool;
 
@@ -212,11 +212,11 @@ void Renderer::InitD3D12(HWND hwnd, unsigned int width, unsigned int height, HIN
 	BoundingBoxPool::Get();
 
 	// Allocate memory for cbPerScene
-	m_GraphicsResources.cbPerScene = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::ConstantBuffer, sizeof(CB_PER_SCENE_STRUCT), 1, DXGI_FORMAT_UNKNOWN, L"CB_PER_SCENE");
+	m_GraphicsResources.cbPerScene = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::ConstantBuffer, sizeof(CB_PER_SCENE_STRUCT), 1, BL_FORMAT_UNKNOWN, L"CB_PER_SCENE");
 	m_pCbPerSceneData = new CB_PER_SCENE_STRUCT();
 
 	// Allocate memory for cbPerFrame
-	m_GraphicsResources.cbPerFrame = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::ConstantBuffer, sizeof(CB_PER_FRAME_STRUCT), 1, DXGI_FORMAT_UNKNOWN, L"CB_PER_FRAME");
+	m_GraphicsResources.cbPerFrame = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::ConstantBuffer, sizeof(CB_PER_FRAME_STRUCT), 1, BL_FORMAT_UNKNOWN, L"CB_PER_FRAME");
 	m_pCbPerFrameData = new CB_PER_FRAME_STRUCT();
 
 	createRawBufferForLights();
@@ -470,7 +470,7 @@ void Renderer::InitModelComponent(component::ModelComponent* mc)
 	if (tc != nullptr)
 	{
 		Transform* t = tc->GetTransform();
-		t->m_pConstantBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::ConstantBuffer, sizeof(DirectX::XMMATRIX), 2, DXGI_FORMAT_UNKNOWN, L"Transform");
+		t->m_pConstantBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::ConstantBuffer, sizeof(DirectX::XMMATRIX), 2, BL_FORMAT_UNKNOWN, L"Transform");
 
 		// Finally store the object in the corresponding renderComponent vectors so it will be drawn
 		if (F_DRAW_FLAGS::DRAW_TRANSPARENT & mc->GetDrawFlag())
@@ -977,7 +977,7 @@ void Renderer::createRawBufferForLights()
 
 	// Memory on GPU
 	BL_ASSERT(Light::m_pLightsRawBuffer == nullptr);
-	Light::m_pLightsRawBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::RawBuffer, rawBufferSize, 1, DXGI_FORMAT_UNKNOWN, L"RAW_BUFFER_LIGHTS");
+	Light::m_pLightsRawBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::RawBuffer, rawBufferSize, 1, BL_FORMAT_UNKNOWN, L"RAW_BUFFER_LIGHTS");
 
 	// Memory on CPU
 	Light::m_pRawData = (unsigned char*)malloc(rawBufferSize);
