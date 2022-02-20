@@ -40,6 +40,34 @@ ScopedPIXEvent::~ScopedPIXEvent()
     }
 }
 
+Resolution_Width_Height GetWidthHeightResolution(const E_RESOLUTION_TYPES resolutionType)
+{
+    Resolution_Width_Height widthHeight = {};
+
+    switch (resolutionType)
+    {
+    case E_RESOLUTION_TYPES::Res_1280_720:
+
+        widthHeight.width = 1280;
+        widthHeight.height = 720;
+        break;
+    case E_RESOLUTION_TYPES::Res_1920_1080:
+        widthHeight.width = 1920;
+        widthHeight.height = 1080;
+        break;
+    default:
+        widthHeight.width = 1920;
+        widthHeight.height = 1080;
+        BL_ASSERT(false);
+        break;
+    }
+
+    EngineStatistics::GetIM_CommonStats().m_ResX = widthHeight.width;
+    EngineStatistics::GetIM_CommonStats().m_ResY = widthHeight.height;
+
+    return widthHeight;
+}
+
 DXGI_FORMAT ConvertBLFormatToD3D12Format(BL_FORMAT format)
 {
     switch (format)

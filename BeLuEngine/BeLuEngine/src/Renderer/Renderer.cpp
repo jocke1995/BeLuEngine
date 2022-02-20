@@ -108,13 +108,7 @@ void Renderer::deleteRenderer()
 	BL_SAFE_DELETE(m_pFullScreenQuad);
 
 	// Common Graphics Resources
-	BL_SAFE_DELETE(m_GraphicsResources.finalColorBuffer);
-	BL_SAFE_DELETE(m_GraphicsResources.gBufferAlbedo);
-	BL_SAFE_DELETE(m_GraphicsResources.gBufferNormal);
-	BL_SAFE_DELETE(m_GraphicsResources.gBufferMaterialProperties);
-	BL_SAFE_DELETE(m_GraphicsResources.gBufferEmissive);
-	BL_SAFE_DELETE(m_GraphicsResources.reflectionTexture);
-	BL_SAFE_DELETE(m_GraphicsResources.mainDepthStencil);
+	cleanupCommonBuffers();
 
 	for (GraphicsPass* graphicsPass : m_GraphicsPasses)
 		BL_SAFE_DELETE(graphicsPass);
@@ -133,72 +127,9 @@ void Renderer::deleteRenderer()
 	free(Light::m_pRawData);
 }
 
-void Renderer::Init(HWND hwnd, unsigned int width, unsigned int height, HINSTANCE hInstance, ThreadPool* threadPool)
+void Renderer::Init(E_RESOLUTION_TYPES resolution)
 {
-	m_pThreadPool = threadPool;
-
-	m_CurrentRenderingWidth = width;
-	m_CurrentRenderingHeight = height;
-
-#pragma region CommonTextures
-	// Main color renderTarget (used until the swapchain RT is drawn to)
-	m_GraphicsResources.finalColorBuffer = IGraphicsTexture::Create();
-	m_GraphicsResources.finalColorBuffer->CreateTexture2D(
-		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
-		BL_FORMAT_R16G16B16A16_FLOAT,
-		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget | F_TEXTURE_USAGE::UnorderedAccess,
-		L"FinalColorbuffer");
-	m_CurrentTextureToVisualize = m_GraphicsResources.finalColorBuffer;
-
-	// GBufferAlbedo
-	m_GraphicsResources.gBufferAlbedo = IGraphicsTexture::Create();
-	m_GraphicsResources.gBufferAlbedo->CreateTexture2D(
-		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
-		BL_FORMAT_R8G8B8A8_UNORM,
-		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget,
-		L"gBufferAlbedo");
-
-	// Normal
-	m_GraphicsResources.gBufferNormal = IGraphicsTexture::Create();
-	m_GraphicsResources.gBufferNormal->CreateTexture2D(
-		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
-		BL_FORMAT_R16G16B16A16_FLOAT, // TODO: Does it needs to be this high..?
-		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget,
-		L"gBufferNormal");
-
-	// Material Properties (Roughness, Metallic, glow..
-	m_GraphicsResources.gBufferMaterialProperties = IGraphicsTexture::Create();
-	m_GraphicsResources.gBufferMaterialProperties->CreateTexture2D(
-		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
-		BL_FORMAT_R8G8B8A8_UNORM,
-		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget,
-		L"gBufferMaterials");
-
-	// Emissive Color
-	m_GraphicsResources.gBufferEmissive = IGraphicsTexture::Create();
-	m_GraphicsResources.gBufferEmissive->CreateTexture2D(
-		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
-		BL_FORMAT_R16G16B16A16_FLOAT,
-		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget,
-		L"gBufferEmissive");
-
-	// ReflectionTexture
-	m_GraphicsResources.reflectionTexture = IGraphicsTexture::Create();
-	m_GraphicsResources.reflectionTexture->CreateTexture2D(
-		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
-		BL_FORMAT_R16G16B16A16_FLOAT,
-		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::UnorderedAccess,
-		L"ReflectionTexture");
-
-	// DepthBuffer
-	m_GraphicsResources.mainDepthStencil = IGraphicsTexture::Create();
-	m_GraphicsResources.mainDepthStencil->CreateTexture2D(
-		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
-		BL_FORMAT_D24_UNORM_S8_UINT,
-		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::DepthStencil,
-		L"MainDepthStencilBuffer");
-
-#pragma endregion
+	onResizedResolution(resolution);
 
 	// Picking
 	m_pMousePicker = new MousePicker();
@@ -367,7 +298,8 @@ void Renderer::Execute()
 	IGraphicsManager* graphicsManager = IGraphicsManager::GetBaseInstance();
 	graphicsManager->Begin();
 	
-	auto executeGraphicsPassLambda = [this](E_GRAPHICS_PASS_TYPE graphicsPass)
+	ThreadPool& threadPool = ThreadPool::GetInstance();
+	auto executeGraphicsPassLambda = [this, &threadPool](E_GRAPHICS_PASS_TYPE graphicsPass)
 	{
 		// For easier debugging purposes
 		if (SINGLE_THREADED_RENDERER == true)
@@ -376,11 +308,11 @@ void Renderer::Execute()
 		}
 		else
 		{
-			m_pThreadPool->AddTask(m_GraphicsPasses[graphicsPass]);
+			threadPool.AddTask(m_GraphicsPasses[graphicsPass]);
 		}
 	};
 
-	auto waitForCompletionLambda = [this](F_THREAD_FLAGS threadFlag)
+	auto waitForCompletionLambda = [this, &threadPool](F_THREAD_FLAGS threadFlag)
 	{
 		// For easier debugging purposes
 		if (SINGLE_THREADED_RENDERER == true)
@@ -389,7 +321,7 @@ void Renderer::Execute()
 		}
 		else
 		{
-			m_pThreadPool->WaitForThreads(threadFlag);
+			threadPool.WaitForThreads(threadFlag);
 		}
 	};
 
@@ -799,6 +731,76 @@ Scene* const Renderer::GetActiveScene() const
 	return m_pCurrActiveScene;
 }
 
+void Renderer::onResizedResolution(const E_RESOLUTION_TYPES newResolution)
+{
+	BL_ASSERT(m_CurrentResolutionType != newResolution);
+	m_CurrentResolutionType = newResolution;
+
+	Resolution_Width_Height res = GetWidthHeightResolution(newResolution);
+	m_CurrentRenderingWidth = res.width;
+	m_CurrentRenderingHeight = res.height;
+
+	// Delete the old buffers if they exist
+	cleanupCommonBuffers();
+
+	// Main color renderTarget (used until the swapchain RT is drawn to)
+	m_GraphicsResources.finalColorBuffer = IGraphicsTexture::Create();
+	m_GraphicsResources.finalColorBuffer->CreateTexture2D(
+		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
+		BL_FORMAT_R16G16B16A16_FLOAT,
+		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget | F_TEXTURE_USAGE::UnorderedAccess,
+		L"FinalColorbuffer");
+	m_CurrentTextureToVisualize = m_GraphicsResources.finalColorBuffer;
+
+	// GBufferAlbedo
+	m_GraphicsResources.gBufferAlbedo = IGraphicsTexture::Create();
+	m_GraphicsResources.gBufferAlbedo->CreateTexture2D(
+		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
+		BL_FORMAT_R8G8B8A8_UNORM,
+		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget,
+		L"gBufferAlbedo");
+
+	// Normal
+	m_GraphicsResources.gBufferNormal = IGraphicsTexture::Create();
+	m_GraphicsResources.gBufferNormal->CreateTexture2D(
+		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
+		BL_FORMAT_R16G16B16A16_FLOAT, // TODO: Does it needs to be this high..?
+		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget,
+		L"gBufferNormal");
+
+	// Material Properties (Roughness, Metallic, glow..
+	m_GraphicsResources.gBufferMaterialProperties = IGraphicsTexture::Create();
+	m_GraphicsResources.gBufferMaterialProperties->CreateTexture2D(
+		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
+		BL_FORMAT_R8G8B8A8_UNORM,
+		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget,
+		L"gBufferMaterials");
+
+	// Emissive Color
+	m_GraphicsResources.gBufferEmissive = IGraphicsTexture::Create();
+	m_GraphicsResources.gBufferEmissive->CreateTexture2D(
+		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
+		BL_FORMAT_R16G16B16A16_FLOAT,
+		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget,
+		L"gBufferEmissive");
+
+	// ReflectionTexture
+	m_GraphicsResources.reflectionTexture = IGraphicsTexture::Create();
+	m_GraphicsResources.reflectionTexture->CreateTexture2D(
+		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
+		BL_FORMAT_R16G16B16A16_FLOAT,
+		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::UnorderedAccess,
+		L"ReflectionTexture");
+
+	// DepthBuffer
+	m_GraphicsResources.mainDepthStencil = IGraphicsTexture::Create();
+	m_GraphicsResources.mainDepthStencil->CreateTexture2D(
+		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
+		BL_FORMAT_D24_UNORM_S8_UINT,
+		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::DepthStencil,
+		L"MainDepthStencilBuffer");
+}
+
 void Renderer::createFullScreenQuad()
 {
 	std::vector<Vertex> vertexVector;
@@ -1046,6 +1048,17 @@ void Renderer::submitCbPerSceneData(ITopLevelAS* pTLAS)
 	BL_ASSERT(codt);
 	BL_ASSERT(m_GraphicsResources.cbPerScene && m_pCbPerSceneData);
 	codt->SubmitBuffer(m_GraphicsResources.cbPerScene, m_pCbPerSceneData);
+}
+
+void Renderer::cleanupCommonBuffers()
+{
+	BL_SAFE_DELETE(m_GraphicsResources.finalColorBuffer);
+	BL_SAFE_DELETE(m_GraphicsResources.gBufferAlbedo);
+	BL_SAFE_DELETE(m_GraphicsResources.gBufferNormal);
+	BL_SAFE_DELETE(m_GraphicsResources.gBufferMaterialProperties);
+	BL_SAFE_DELETE(m_GraphicsResources.gBufferEmissive);
+	BL_SAFE_DELETE(m_GraphicsResources.reflectionTexture);
+	BL_SAFE_DELETE(m_GraphicsResources.mainDepthStencil);
 }
 
 void Renderer::advanceTextureToVisualize(VisualizeTexture* event)

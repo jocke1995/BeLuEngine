@@ -1,6 +1,8 @@
 #ifndef IGRAPHICSMANAGER_H
 #define IGRAPHICSMANAGER_H
 
+#include "RenderCore.h"
+
 class IGraphicsContext;
 class IGraphicsTexture;
 
@@ -50,7 +52,7 @@ public:
 	static IGraphicsManager* GetBaseInstance();
 	static E_GRAPHICS_API GetGraphicsApiType() { return m_sGraphicsAPI; }
 
-	virtual void Init(HWND hwnd, unsigned int width, unsigned int height, DXGI_FORMAT dxgiFormat) = 0;
+	virtual void Init(HWND hwnd, E_RESOLUTION_TYPES resolution, BL_FORMAT blTextureFormat) = 0;
 	void Destroy();
 
 	virtual void Begin() = 0;

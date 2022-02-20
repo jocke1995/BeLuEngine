@@ -65,7 +65,7 @@ public:
 	Scene* const GetActiveScene() const;
 
 	// Call once
-	void Init(HWND hwnd, unsigned int width, unsigned int height, HINSTANCE hInstance, ThreadPool* threadPool);
+	void Init(E_RESOLUTION_TYPES resolution);
 
 	// Call each frame
 	void Update(double dt);
@@ -109,8 +109,6 @@ private:
 	// SubmitToCodt functions
 	void submitModelToGPU(Model* model);
 	void submitMaterialToGPU(component::ModelComponent* mc);
-
-	ThreadPool* m_pThreadPool = nullptr;
 
 	// Camera
 	BaseCamera* m_pScenePrimaryCamera = nullptr;
@@ -162,8 +160,13 @@ private:
 	std::vector<IGraphicsContext*> m_MainGraphicsContexts;
 	std::vector<IGraphicsContext*> m_ImGuiGraphicsContext;
 
+	E_RESOLUTION_TYPES m_CurrentResolutionType = (E_RESOLUTION_TYPES)-1;
 	unsigned int m_CurrentRenderingWidth = 0;
 	unsigned int m_CurrentRenderingHeight = 0;
+	void cleanupCommonBuffers();
+
+	// Call when resizing the rendering resolution
+	void onResizedResolution(const E_RESOLUTION_TYPES newResolution);
 
 	/* ------------------------------ Events ------------------------------ */
 	// Advances through the buffers to visualize on pressing g-key

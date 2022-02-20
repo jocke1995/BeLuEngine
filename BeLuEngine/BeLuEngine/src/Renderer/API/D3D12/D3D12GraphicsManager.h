@@ -30,7 +30,7 @@ public:
 
 	static D3D12GraphicsManager* GetInstance();
 
-	void Init(HWND hwnd, unsigned int width, unsigned int height, DXGI_FORMAT dxgiFormat) override;
+	void Init(HWND hwnd, E_RESOLUTION_TYPES resolution, BL_FORMAT blTextureFormat) override;
 
 	// Call everyframe
 	void Begin() override final;

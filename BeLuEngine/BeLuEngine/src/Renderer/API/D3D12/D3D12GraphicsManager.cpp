@@ -70,7 +70,7 @@ D3D12GraphicsManager* D3D12GraphicsManager::GetInstance()
 	return static_cast<D3D12GraphicsManager*>(graphicsManager);
 }
 
-void D3D12GraphicsManager::Init(HWND hwnd, unsigned int width, unsigned int height, DXGI_FORMAT dxgiFormat)
+void D3D12GraphicsManager::Init(HWND hwnd, E_RESOLUTION_TYPES resolution, BL_FORMAT blTextureFormat)
 {
 	HRESULT hr;
 
@@ -291,6 +291,8 @@ void D3D12GraphicsManager::Init(HWND hwnd, unsigned int width, unsigned int heig
 		BL_LOG_CRITICAL("Failed to create DXGIFactory for SwapChain\n");
 	}
 
+	Resolution_Width_Height res = GetWidthHeightResolution(resolution);
+
 	//HMONITOR hmon = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
 	//MONITORINFO mi = { sizeof(mi) };
 	//GetMonitorInfo(hmon, &mi);
@@ -298,11 +300,13 @@ void D3D12GraphicsManager::Init(HWND hwnd, unsigned int width, unsigned int heig
 	//int m_ScreenWidth = mi.rcMonitor.right - mi.rcMonitor.left;
 	//int m_ScreenHeight = mi.rcMonitor.bottom - mi.rcMonitor.top;
 
+	DXGI_FORMAT startFormat = ConvertBLFormatToD3D12Format(blTextureFormat);
+
 	//Create descriptor
 	DXGI_SWAP_CHAIN_DESC1 scDesc = {};
-	scDesc.Width = width;
-	scDesc.Height = height;
-	scDesc.Format = dxgiFormat;
+	scDesc.Width = res.width;
+	scDesc.Height = res.height;
+	scDesc.Format = startFormat;
 	scDesc.Stereo = FALSE;
 	scDesc.SampleDesc.Count = 1;
 	scDesc.SampleDesc.Quality = 0;
@@ -355,7 +359,7 @@ void D3D12GraphicsManager::Init(HWND hwnd, unsigned int width, unsigned int heig
 	}
 
 	D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
-	rtvDesc.Format = dxgiFormat;
+	rtvDesc.Format = startFormat;
 	rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
 	rtvDesc.Texture2D.MipSlice = 0;
 	rtvDesc.Texture2D.PlaneSlice = 0;
@@ -371,7 +375,7 @@ void D3D12GraphicsManager::Init(HWND hwnd, unsigned int width, unsigned int heig
 	// Create SRVs
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	srvDesc.Format = dxgiFormat;
+	srvDesc.Format = startFormat;
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 	srvDesc.Texture2D.MipLevels = 1;
 

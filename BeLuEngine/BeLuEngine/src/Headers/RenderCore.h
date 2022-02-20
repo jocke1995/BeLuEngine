@@ -36,6 +36,22 @@ private:
 	#define ScopedPixEvent(name, commandList);
 #endif
 
+TODO("Add a few more");
+enum E_RESOLUTION_TYPES
+{
+    Res_1280_720,
+    Res_1920_1080,
+    NUM_RESOLUTION_TYPES
+};
+
+struct Resolution_Width_Height
+{
+    unsigned int width  = 0;
+    unsigned int height = 0;
+};
+
+Resolution_Width_Height GetWidthHeightResolution(const E_RESOLUTION_TYPES resolutionType);
+
 // Wrapper of common resources (Textures, Buffers etc..) to make it easier to pass these into functions
 struct CommonGraphicsResources
 {

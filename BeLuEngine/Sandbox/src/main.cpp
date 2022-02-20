@@ -35,9 +35,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
     engine.Init(hInstance, nCmdShow);
 
     /*  ------ Get references from engine  ------ */
+    ThreadPool& threadPool = ThreadPool::GetInstance();
     Window* const window = engine.GetWindow();
     Timer* const timer = engine.GetTimer();
-    ThreadPool* const threadPool = engine.GetThreadPool();
     SceneManager* const sceneManager = engine.GetSceneHandler();
     Renderer* const renderer = engine.GetRenderer();
 

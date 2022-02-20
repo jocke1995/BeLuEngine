@@ -33,9 +33,6 @@ void BeLuEngine::Init(HINSTANCE hInstance, int nCmdShow)
 	int windowWidth = 1280;
 	int windowHeight = 720;
 
-	EngineStatistics::GetIM_CommonStats().m_ResX = windowWidth;
-	EngineStatistics::GetIM_CommonStats().m_ResY = windowHeight;
-
 	// Misc
 	Window::Create(hInstance, nCmdShow, windowedFullscreen, windowWidth, windowHeight);
 	m_pWindow = Window::GetInstance();
@@ -50,17 +47,19 @@ void BeLuEngine::Init(HINSTANCE hInstance, int nCmdShow)
 	}
 	
 	EngineStatistics::GetIM_CommonStats().m_NumCpuCores = numThreads;
-	m_pThreadPool = &ThreadPool::GetInstance(numThreads * 2);
+	ThreadPool::GetInstance(numThreads * 2);
 
 	// Sub-engines
 	{
 		// Renderer
 		{
+			E_RESOLUTION_TYPES startResolution = E_RESOLUTION_TYPES::Res_1280_720;	// TODO: This could be saved to options and be read from file next time game starts...
+
 			IGraphicsManager* graphicsManager = IGraphicsManager::Create(E_GRAPHICS_API::D3D12);
-			graphicsManager->Init(m_pWindow->GetHwnd(), windowWidth, windowHeight, DXGI_FORMAT_R16G16B16A16_FLOAT);
+			graphicsManager->Init(m_pWindow->GetHwnd(), startResolution, BL_FORMAT_R16G16B16A16_FLOAT);
 
 			m_pRenderer = &Renderer::GetInstance();
-			m_pRenderer->Init(m_pWindow->GetHwnd(), windowWidth, windowHeight, hInstance, m_pThreadPool);
+			m_pRenderer->Init(startResolution);
 		}
 
 		// Physics, sound etc..
@@ -80,11 +79,6 @@ Window* const BeLuEngine::GetWindow() const
 Timer* const BeLuEngine::GetTimer() const
 {
 	return m_pTimer;
-}
-
-ThreadPool* const BeLuEngine::GetThreadPool() const
-{
-	return m_pThreadPool;
 }
 
 SceneManager* const BeLuEngine::GetSceneHandler() const

@@ -38,7 +38,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
         renderer->SortObjects();
 
         /* ------ Draw ------ */
-        renderer->ExecuteMT();
+        renderer->Execute();
     }
 
     return 0;
@@ -119,7 +119,6 @@ Scene* TestScene(SceneManager* sm)
     tc->GetTransform()->SetPosition(pos.x, pos.y, pos.z);
 
     slc->SetColor({ 5.0f, 0.0f, 0.0f });
-    slc->SetAttenuation({ 1.0, 0.09f, 0.032f });
     slc->SetPosition(pos);
     slc->SetDirection({ 1.0f, -1.0f, 1.0f });
     slc->SetOuterCutOff(50.0f);

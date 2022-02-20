@@ -45,7 +45,6 @@ public:
 
 	Window* const GetWindow() const;
 	Timer* const GetTimer() const;
-	ThreadPool* const GetThreadPool() const;
 
 	Renderer* const GetRenderer() const;
 	SceneManager* const GetSceneHandler() const;
@@ -53,7 +52,6 @@ public:
 private:
 	Window* m_pWindow = nullptr;
 	Timer* m_pTimer = nullptr;
-	ThreadPool* m_pThreadPool = nullptr;
 
 	Renderer* m_pRenderer = nullptr;
 	SceneManager* m_pSceneManager = nullptr;
