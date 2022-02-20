@@ -10,12 +10,12 @@ float3 CalculateFresnelEffect(float HdotV, float3 F0) // F0 == baseReflectivity
 }
 
 // Proportion of specular reflectance (used for IBL calculations)
-float3 CalculateFresnelEffect_Roughness(float HdotV, float3 F0, float roughness)
+float3 CalculateFresnelEffect_Roughness(float NdotV, float3 F0, float roughness)
 {
 	float3 iVec = float3(1.0f, 1.0f, 1.0f);
 
 	float temp = float3(1.0f, 1.0f, 1.0f) - float3(roughness, roughness, roughness);
-	return F0 + (max(temp, F0) - F0) * pow(saturate(iVec - HdotV), 5.0f);
+	return F0 + (max(temp, F0) - F0) * max(pow(saturate(iVec - NdotV), 5.0f), 1e-7);
 }
 
 // Approximate the specular reflectivity based on the roughness of the material

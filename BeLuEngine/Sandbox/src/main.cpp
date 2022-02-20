@@ -44,8 +44,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
     /*------ AssetLoader to load models / textures ------*/
    AssetLoader* al = AssetLoader::Get();
    
-   //Scene* scene = SponzaScene(sceneManager);
-   Scene* scene = PBRScene(sceneManager);
+   Scene* scene = SponzaScene(sceneManager);
+   //Scene* scene = PBRScene(sceneManager);
 
    // Set scene
    sceneManager->SetScene(scene);
@@ -482,7 +482,7 @@ Scene* SponzaScene(SceneManager* sm)
     dlc = entity->AddComponent<component::DirectionalLightComponent>(F_LIGHT_FLAGS::CAST_SHADOW);
     dlc->SetColor({ 1.0f, 1.0f, 1.0f });
     dlc->SetIntensity(2.0f);
-    dlc->SetDirection({ -0.6f, -1.0f, 0.05f});
+    dlc->SetDirection({ -0.6f, -1.0f, 0.25f});
     /* ---------------------- Sun ---------------------- */
 
     /* ---------------------- Update Function ---------------------- */

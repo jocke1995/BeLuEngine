@@ -28,7 +28,8 @@ PS_OUTPUT PS_main(VS_OUT input)
 	float3 camPos = cbPerFrame.camPos;
 	float3 finalColor = float3(0.0f, 0.0f, 0.0f);
 	float3 viewDir = normalize(camPos - worldPos.xyz);
-	
+	normal = normalize(normal);
+
 	// Linear interpolation
 	float3 baseReflectivity = lerp(float3(0.04f, 0.04f, 0.04f), albedo, metallic);
 
@@ -102,8 +103,8 @@ PS_OUTPUT PS_main(VS_OUT input)
 	finalColor += ambient;
 
 	PS_OUTPUT output = (PS_OUTPUT)0;
-	//output.sceneColor = float4(finalColor.rgb, 1.0f) + float4(emissive.rgb, 1.0f);
-	output.sceneColor = float4(indirectLight.rgb, 1.0f);
+	output.sceneColor = float4(finalColor.rgb, 1.0f) + float4(emissive.rgb, 1.0f);
+	//output.sceneColor = float4(indirectLight.rgb, 1.0f);
 
 	return output;
 }

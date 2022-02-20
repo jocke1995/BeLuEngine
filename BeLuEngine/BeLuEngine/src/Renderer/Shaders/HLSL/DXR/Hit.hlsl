@@ -121,7 +121,7 @@ void ClosestHit(inout ReflectionPayload reflectionPayload, in BuiltInTriangleInt
 		finalColor += float4(lightColor, 1.0f) * shadowFactor;
 	}
 
-	float4 ambient = float4(0.01f * albedo.rgb, 1.0f);
+	float4 ambient = float4(0.03f * albedo.rgb, 1.0f);
 	finalColor += ambient;
 
 	finalColor += float4(emissive.rgb * emissive.a, 1.0f);

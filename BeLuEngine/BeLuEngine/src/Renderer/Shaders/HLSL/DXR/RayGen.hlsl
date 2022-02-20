@@ -25,7 +25,7 @@ void RayGen()
     float3 cameraDir = normalize(worldPos - cbPerFrame.camPos);
 
     RayDesc ray;
-    ray.Origin = float4(worldPos.xyz, 1.0f) + float4(normal.xyz, 0.0f) * 0.5f;
+    ray.Origin = float4(worldPos.xyz, 1.0f) + float4(normal.xyz, 0.0f) * 0.01f;
     ray.Direction = normalize(reflect(cameraDir, float3(normal.xyz)));
     ray.TMin = 0.01f;
     ray.TMax = 10000;

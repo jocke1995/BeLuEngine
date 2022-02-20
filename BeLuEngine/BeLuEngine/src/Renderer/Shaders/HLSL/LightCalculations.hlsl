@@ -182,24 +182,27 @@ float3 CalcRayTracedIBL(
 	// Since the view and reflection directions are perpendicular, the halfwayDirection is equal to the Normal
 	float3 halfwayVector = normal;
 
-	float NdotV = max(dot(normal, viewDir), 0.0000001);
-	float NdotL = max(dot(normal, refl), 0.0000001);
-	float HdotV = max(dot(halfwayVector, viewDir), 0.0f);
-	float HdotN = max(dot(halfwayVector, normal), 0.0f);
+	float NdotV = max(dot(normal, viewDir), 1e-7);
+	float NdotL = max(dot(normal, refl), 1e-7);
+	float HdotV = max(dot(halfwayVector, viewDir), 1e-7);
+	float HdotN = max(dot(halfwayVector, normal), 1e-7);
 
 	float  D = NormalDistributionGGX(HdotN, roughness);
 	float  G = GeometrySmith_IBL(NdotV, NdotL, roughness);
 	float3 F = CalculateFresnelEffect_Roughness(HdotV, baseReflectivity, roughness);
 
-	float3 specularBRDF = D * G * F / (4.0f * NdotV * NdotL);
+	float3 specularBRDF = D * G * F / max((4.0f * NdotV * NdotL), 1e-7);
+	float specularPDF = D * HdotN / (4.0f * HdotV);
 
 	// Energy conservation
 	float3 kD = float3(1.0f, 1.0f, 1.0f) - F;
 	kD *= (1.0f - metallic);
 
-	float3 diffuseBRDF = (kD * albedo) / PI;
+	// This would be the equivalent of sampling the irradiance cubemap using convoluted cupemaps as IBL
+	float3 indirectDiffuseIrradiance = albedo;
+	float3 diffuseBRDF = (indirectDiffuseIrradiance* kD * albedo) / PI;
 
-	float3 specularContribution = reflection * specularBRDF * F;
+	float3 specularContribution = reflection * F * (specularBRDF / specularPDF);
 	float3 diffuseContribution	= reflection * diffuseBRDF;
 
 	return (diffuseContribution + specularContribution) * NdotL;
