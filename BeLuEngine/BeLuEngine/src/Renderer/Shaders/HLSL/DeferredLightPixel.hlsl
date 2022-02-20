@@ -24,12 +24,13 @@ PS_OUTPUT PS_main(VS_OUT input)
 	float3 reflection = textures[cbPerScene.reflectionTextureSRV].Sample(Anisotropic16_Wrap, uv).rgb;
 
 	float depthVal = textures[cbPerScene.depth].Sample(Anisotropic16_Wrap, uv).r;
-	float4 worldPos = float4(WorldPosFromDepth(depthVal, uv, cbPerFrame.projectionI, cbPerFrame.viewI).xyz, 0.0f);
+	float4 worldPos = float4(WorldPosFromDepth(depthVal, uv, cbPerFrame.projectionI, cbPerFrame.viewI).xyz, 1.0f);
 	float3 camPos = cbPerFrame.camPos;
 	float3 finalColor = float3(0.0f, 0.0f, 0.0f);
 	float3 viewDir = normalize(camPos - worldPos.xyz);
-	normal = normalize(normal);
 
+	normal = normalize(normal);
+	roughness = max(roughness, 0.05f);	// Roughness tends to look wierd at 0, clamping it so 0.05f is the minimum value regardless
 	// Linear interpolation
 	float3 baseReflectivity = lerp(float3(0.04f, 0.04f, 0.04f), albedo, metallic);
 

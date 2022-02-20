@@ -190,6 +190,7 @@ float3 CalcRayTracedIBL(
 	float  D = NormalDistributionGGX(HdotN, roughness);
 	float  G = GeometrySmith_IBL(NdotV, NdotL, roughness);
 	float3 F = CalculateFresnelEffect_Roughness(HdotV, baseReflectivity, roughness);
+	//float3 F = CalculateFresnelEffect(HdotV, baseReflectivity);
 
 	float3 specularBRDF = D * G * F / max((4.0f * NdotV * NdotL), 1e-7);
 	float specularPDF = D * HdotN / (4.0f * HdotV);
@@ -200,7 +201,7 @@ float3 CalcRayTracedIBL(
 
 	// This would be the equivalent of sampling the irradiance cubemap using convoluted cupemaps as IBL
 	float3 indirectDiffuseIrradiance = albedo;
-	float3 diffuseBRDF = (indirectDiffuseIrradiance* kD * albedo) / PI;
+	float3 diffuseBRDF = (indirectDiffuseIrradiance * kD * albedo) / PI;
 
 	float3 specularContribution = reflection * F * specularBRDF / max(specularPDF, 1e-7);
 	float3 diffuseContribution	= reflection * diffuseBRDF;

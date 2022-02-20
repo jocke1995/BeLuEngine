@@ -274,7 +274,7 @@ void ImGuiHandler::drawSceneHierarchy()
 
 									if (useAlbedoTexture == false)
 									{
-										ImGui::ColorEdit3("useAlbedoTexture Color", &albedoValue.r);
+										ImGui::ColorEdit3("Albedo Color", &albedoValue.r);
 										matData->albedoValue = albedoValue;
 									}
 

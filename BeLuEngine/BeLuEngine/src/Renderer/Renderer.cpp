@@ -949,8 +949,8 @@ void Renderer::initGraphicsPasses()
 	m_MainGraphicsContexts.push_back(tlasTask->GetGraphicsContext());
 	m_MainGraphicsContexts.push_back(depthPrePass->GetGraphicsContext());
 	m_MainGraphicsContexts.push_back(deferredGeometryPass->GetGraphicsContext());
-	m_MainGraphicsContexts.push_back(deferredLightPass->GetGraphicsContext());
 	m_MainGraphicsContexts.push_back(reflectionPassDXR->GetGraphicsContext());
+	m_MainGraphicsContexts.push_back(deferredLightPass->GetGraphicsContext());
 	m_MainGraphicsContexts.push_back(outliningPass->GetGraphicsContext());
 
 	if (DEVELOPERMODE_DRAWBOUNDINGBOX == true)
