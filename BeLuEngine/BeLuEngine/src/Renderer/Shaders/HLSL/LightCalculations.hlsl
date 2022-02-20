@@ -202,7 +202,7 @@ float3 CalcRayTracedIBL(
 	float3 indirectDiffuseIrradiance = albedo;
 	float3 diffuseBRDF = (indirectDiffuseIrradiance* kD * albedo) / PI;
 
-	float3 specularContribution = reflection * F * (specularBRDF / specularPDF);
+	float3 specularContribution = reflection * F * specularBRDF / max(specularPDF, 1e-7);
 	float3 diffuseContribution	= reflection * diffuseBRDF;
 
 	return (diffuseContribution + specularContribution) * NdotL;

@@ -251,23 +251,32 @@ void ImGuiHandler::drawSceneHierarchy()
 									//MaterialData* sharedMatData = mat->GetSharedMaterialData();
 									MaterialData* matData = mc->GetUniqueMaterialDataAt(matIndex);
 
+									bool useAlbedoTexture = matData->hasAlbedoTexture;
 									bool useRoughnessTexture = matData->hasRoughnessTexture;
 									bool useMetallicTexture = matData->hasMetallicTexture;
 									bool useOpacityTexture = matData->hasOpacityTexture;
 									bool useEmissiveTexture = matData->hasEmissiveTexture;
 									bool useNormalTexture = matData->hasNormalTexture;
 
+									float4 albedoValue = matData->albedoValue;
 									float roughnessValue = matData->roughnessValue;
 									float metallicValue = matData->metallicValue;
 									float opacityValue = matData->opacityValue;
 									float4 emissiveValue = matData->emissiveValue;
 
 									bool isPressed = ImGui::Button("Create Unique Material", { 200.0f, 100.0f });
+									ImGui::Checkbox("Use Albedo Texture", &useAlbedoTexture);
 									ImGui::Checkbox("Use Roughness Texture", &useRoughnessTexture);
 									ImGui::Checkbox("Use Metallic Texture", &useMetallicTexture);
 									ImGui::Checkbox("Use Opacity Texture", &useOpacityTexture);
 									ImGui::Checkbox("Use Emissive Texture", &useEmissiveTexture);
 									ImGui::Checkbox("Use Normal Texture", &useNormalTexture);
+
+									if (useAlbedoTexture == false)
+									{
+										ImGui::ColorEdit3("useAlbedoTexture Color", &albedoValue.r);
+										matData->albedoValue = albedoValue;
+									}
 
 									ImGui::DragFloat("Roughness", &roughnessValue, 0.05f, 0.05f, 1.0f);
 									ImGui::DragFloat("Metallic", &metallicValue, 0.05f, 0.0f, 1.0f);
@@ -291,12 +300,14 @@ void ImGuiHandler::drawSceneHierarchy()
 										mc->SetMaterialAt(matIndex, newMat);
 									}
 
+									matData->hasAlbedoTexture = useAlbedoTexture;
 									matData->hasRoughnessTexture = useRoughnessTexture;
 									matData->hasMetallicTexture = useMetallicTexture;
 									matData->hasOpacityTexture = useOpacityTexture;
 									matData->hasEmissiveTexture = useEmissiveTexture;
 									matData->hasNormalTexture = useNormalTexture;
 
+									matData->albedoValue = albedoValue;
 									matData->roughnessValue = roughnessValue;
 									matData->metallicValue = metallicValue;
 									matData->opacityValue = opacityValue;
