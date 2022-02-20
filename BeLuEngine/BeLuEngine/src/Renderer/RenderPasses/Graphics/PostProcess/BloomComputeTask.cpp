@@ -19,7 +19,7 @@ enum E_BLOOM_PIPELINE_STATES
 
 constexpr unsigned int g_NumMips = 6;
 
-BloomComputePass::BloomComputePass(unsigned int screenWidth, unsigned int screenHeight)
+BloomComputePass::BloomComputePass()
 	:GraphicsPass(L"BloomPass")
 {
 #pragma region PipelineStates
@@ -67,32 +67,17 @@ BloomComputePass::BloomComputePass(unsigned int screenWidth, unsigned int screen
 
 #pragma endregion
 
-#pragma region PingPongTextures
-	m_PingPongTextures[0] = IGraphicsTexture::Create();
-	m_PingPongTextures[0]->CreateTexture2D(
-		screenWidth, screenHeight,
-		BL_FORMAT_R16G16B16A16_FLOAT,
-		F_TEXTURE_USAGE::UnorderedAccess | F_TEXTURE_USAGE::ShaderResource,
-		L"PingPongTexture0", g_NumMips);
+	// Create the buffers for the first time, the same function are called upon resizing the resolution
+	onResizeInternalBuffers();
 
+	m_ScreenWidth = m_CommonGraphicsResources->renderWidth;
+	m_ScreenHeight = m_CommonGraphicsResources->renderHeight;
 
-	m_PingPongTextures[1] = IGraphicsTexture::Create();
-	m_PingPongTextures[1]->CreateTexture2D(
-		screenWidth, screenHeight,
-		BL_FORMAT_R16G16B16A16_FLOAT,
-		F_TEXTURE_USAGE::UnorderedAccess | F_TEXTURE_USAGE::ShaderResource,
-		L"PingPongTexture1", g_NumMips);
+	m_HorizontalThreadGroupsX = static_cast<unsigned int>(ceilf(static_cast<float>(m_ScreenWidth) / m_ThreadsPerGroup));
+	m_HorizontalThreadGroupsY = m_ScreenHeight;
 
-#pragma endregion
-
-	m_ScreenWidth = screenWidth;
-	m_ScreenHeight = screenHeight;
-
-	m_HorizontalThreadGroupsX = static_cast<unsigned int>(ceilf(static_cast<float>(screenWidth) / m_ThreadsPerGroup));
-	m_HorizontalThreadGroupsY = screenHeight;
-
-	m_VerticalThreadGroupsX = screenWidth;
-	m_VerticalThreadGroupsY = static_cast<unsigned int>(ceilf(static_cast<float>(screenHeight) / m_ThreadsPerGroup));
+	m_VerticalThreadGroupsX = m_ScreenWidth;
+	m_VerticalThreadGroupsY = static_cast<unsigned int>(ceilf(static_cast<float>(m_ScreenHeight) / m_ThreadsPerGroup));
 }
 
 BloomComputePass::~BloomComputePass()
@@ -132,6 +117,9 @@ void BloomComputePass::Execute()
 		// Filter brightAreas and Downsample
 		{
 			ScopedPixEvent(Filter_Downsample, m_pGraphicsContext);
+
+			// This buffer is used throghout the entire process to fetch the width/height in the shaders
+			m_pGraphicsContext->SetConstantBuffer(RootParam_CBV_B4, m_CommonGraphicsResources->cbPerScene, true);
 
 			// DownsampleSize is the next mip (A.K.A half width and height)
 			unsigned int blurWidth = m_ScreenWidth >> 1;
@@ -265,4 +253,27 @@ void BloomComputePass::Execute()
 		}
 	}
 	m_pGraphicsContext->End();
+}
+
+void BloomComputePass::onResizeInternalBuffers()
+{
+	for (unsigned int i = 0; i < 2; i++)
+	{
+		BL_SAFE_DELETE(m_PingPongTextures[i]);
+	}
+
+	m_PingPongTextures[0] = IGraphicsTexture::Create();
+	m_PingPongTextures[0]->CreateTexture2D(
+		m_CommonGraphicsResources->renderWidth, m_CommonGraphicsResources->renderHeight,
+		BL_FORMAT_R16G16B16A16_FLOAT,
+		F_TEXTURE_USAGE::UnorderedAccess | F_TEXTURE_USAGE::ShaderResource,
+		L"PingPongTexture0", g_NumMips);
+
+
+	m_PingPongTextures[1] = IGraphicsTexture::Create();
+	m_PingPongTextures[1]->CreateTexture2D(
+		m_CommonGraphicsResources->renderWidth, m_CommonGraphicsResources->renderHeight,
+		BL_FORMAT_R16G16B16A16_FLOAT,
+		F_TEXTURE_USAGE::UnorderedAccess | F_TEXTURE_USAGE::ShaderResource,
+		L"PingPongTexture1", g_NumMips);
 }

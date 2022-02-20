@@ -48,9 +48,8 @@ void WireframeRenderTask::Execute()
 		m_pGraphicsContext->SetPrimitiveTopology(BL_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		m_pGraphicsContext->SetPipelineState(m_PipelineStates[0]);
 
-		TODO("Don't hardcode the sizes");
-		m_pGraphicsContext->SetViewPort(1280, 720);
-		m_pGraphicsContext->SetScizzorRect(1280, 720);
+		m_pGraphicsContext->SetViewPort(m_CommonGraphicsResources->renderWidth, m_CommonGraphicsResources->renderHeight);
+		m_pGraphicsContext->SetScizzorRect(m_CommonGraphicsResources->renderWidth, m_CommonGraphicsResources->renderHeight);
 
 		// Draw for every Component
 		for (int i = 0; i < m_ObjectsToDraw.size(); i++)

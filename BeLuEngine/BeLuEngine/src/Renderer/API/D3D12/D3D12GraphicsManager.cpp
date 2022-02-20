@@ -291,7 +291,9 @@ void D3D12GraphicsManager::Init(HWND hwnd, E_RESOLUTION_TYPES resolution, BL_FOR
 		BL_LOG_CRITICAL("Failed to create DXGIFactory for SwapChain\n");
 	}
 
-	Resolution_Width_Height res = GetWidthHeightResolution(resolution);
+	unsigned int resX = 0;
+	unsigned int resY = 0;
+	GetWidthHeightResolution(resX, resY, resolution);
 
 	//HMONITOR hmon = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
 	//MONITORINFO mi = { sizeof(mi) };
@@ -304,8 +306,8 @@ void D3D12GraphicsManager::Init(HWND hwnd, E_RESOLUTION_TYPES resolution, BL_FOR
 
 	//Create descriptor
 	DXGI_SWAP_CHAIN_DESC1 scDesc = {};
-	scDesc.Width = res.width;
-	scDesc.Height = res.height;
+	scDesc.Width = resX;
+	scDesc.Height = resY;
 	scDesc.Format = startFormat;
 	scDesc.Stereo = FALSE;
 	scDesc.SampleDesc.Count = 1;

@@ -74,7 +74,9 @@ Renderer::Renderer()
 {
 	//EventBus::GetInstance().Subscribe(this, &Renderer::toggleFullscreen);
 	m_GraphicsPasses.resize(E_GRAPHICS_PASS_TYPE::NR_OF_GRAPHICS_PASSES);
-	
+	for (GraphicsPass* pass : m_GraphicsPasses)
+		pass = nullptr;
+
 	// Processinfo
 	// Create handle to process
 	DWORD currentProcessID = GetCurrentProcessId();
@@ -736,9 +738,7 @@ void Renderer::onResizedResolution(const E_RESOLUTION_TYPES newResolution)
 	BL_ASSERT(m_CurrentResolutionType != newResolution);
 	m_CurrentResolutionType = newResolution;
 
-	Resolution_Width_Height res = GetWidthHeightResolution(newResolution);
-	m_CurrentRenderingWidth = res.width;
-	m_CurrentRenderingHeight = res.height;
+	GetWidthHeightResolution(m_GraphicsResources.renderWidth, m_GraphicsResources.renderHeight, newResolution);
 
 	// Delete the old buffers if they exist
 	cleanupCommonBuffers();
@@ -746,7 +746,7 @@ void Renderer::onResizedResolution(const E_RESOLUTION_TYPES newResolution)
 	// Main color renderTarget (used until the swapchain RT is drawn to)
 	m_GraphicsResources.finalColorBuffer = IGraphicsTexture::Create();
 	m_GraphicsResources.finalColorBuffer->CreateTexture2D(
-		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
+		m_GraphicsResources.renderWidth, m_GraphicsResources.renderHeight,
 		BL_FORMAT_R16G16B16A16_FLOAT,
 		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget | F_TEXTURE_USAGE::UnorderedAccess,
 		L"FinalColorbuffer");
@@ -755,7 +755,7 @@ void Renderer::onResizedResolution(const E_RESOLUTION_TYPES newResolution)
 	// GBufferAlbedo
 	m_GraphicsResources.gBufferAlbedo = IGraphicsTexture::Create();
 	m_GraphicsResources.gBufferAlbedo->CreateTexture2D(
-		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
+		m_GraphicsResources.renderWidth, m_GraphicsResources.renderHeight,
 		BL_FORMAT_R8G8B8A8_UNORM,
 		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget,
 		L"gBufferAlbedo");
@@ -763,7 +763,7 @@ void Renderer::onResizedResolution(const E_RESOLUTION_TYPES newResolution)
 	// Normal
 	m_GraphicsResources.gBufferNormal = IGraphicsTexture::Create();
 	m_GraphicsResources.gBufferNormal->CreateTexture2D(
-		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
+		m_GraphicsResources.renderWidth, m_GraphicsResources.renderHeight,
 		BL_FORMAT_R16G16B16A16_FLOAT, // TODO: Does it needs to be this high..?
 		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget,
 		L"gBufferNormal");
@@ -771,7 +771,7 @@ void Renderer::onResizedResolution(const E_RESOLUTION_TYPES newResolution)
 	// Material Properties (Roughness, Metallic, glow..
 	m_GraphicsResources.gBufferMaterialProperties = IGraphicsTexture::Create();
 	m_GraphicsResources.gBufferMaterialProperties->CreateTexture2D(
-		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
+		m_GraphicsResources.renderWidth, m_GraphicsResources.renderHeight,
 		BL_FORMAT_R8G8B8A8_UNORM,
 		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget,
 		L"gBufferMaterials");
@@ -779,7 +779,7 @@ void Renderer::onResizedResolution(const E_RESOLUTION_TYPES newResolution)
 	// Emissive Color
 	m_GraphicsResources.gBufferEmissive = IGraphicsTexture::Create();
 	m_GraphicsResources.gBufferEmissive->CreateTexture2D(
-		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
+		m_GraphicsResources.renderWidth, m_GraphicsResources.renderHeight,
 		BL_FORMAT_R16G16B16A16_FLOAT,
 		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget,
 		L"gBufferEmissive");
@@ -787,7 +787,7 @@ void Renderer::onResizedResolution(const E_RESOLUTION_TYPES newResolution)
 	// ReflectionTexture
 	m_GraphicsResources.reflectionTexture = IGraphicsTexture::Create();
 	m_GraphicsResources.reflectionTexture->CreateTexture2D(
-		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
+		m_GraphicsResources.renderWidth, m_GraphicsResources.renderHeight,
 		BL_FORMAT_R16G16B16A16_FLOAT,
 		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::UnorderedAccess,
 		L"ReflectionTexture");
@@ -795,10 +795,16 @@ void Renderer::onResizedResolution(const E_RESOLUTION_TYPES newResolution)
 	// DepthBuffer
 	m_GraphicsResources.mainDepthStencil = IGraphicsTexture::Create();
 	m_GraphicsResources.mainDepthStencil->CreateTexture2D(
-		m_CurrentRenderingWidth, m_CurrentRenderingHeight,
+		m_GraphicsResources.renderWidth, m_GraphicsResources.renderHeight,
 		BL_FORMAT_D24_UNORM_S8_UINT,
 		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::DepthStencil,
 		L"MainDepthStencilBuffer");
+
+	// Resize bloomBuffer
+	// Adding an extra layer of safety because in the future I might wanna remove entire passes from memory depending on if they're active or not
+	BloomComputePass* bloomPass = static_cast<BloomComputePass*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::POSTPROCESS_BLOOM]);
+	if(bloomPass)
+		bloomPass->onResizeInternalBuffers();
 }
 
 void Renderer::createFullScreenQuad()
@@ -893,7 +899,7 @@ void Renderer::initGraphicsPasses()
 	GraphicsPass* tlasTask = new TopLevelRenderTask();
 
 	// DXR
-	GraphicsPass* reflectionPassDXR = new DXRReflectionTask(m_CurrentRenderingWidth, m_CurrentRenderingHeight);
+	GraphicsPass* reflectionPassDXR = new DXRReflectionTask();
 	reflectionPassDXR->AddGraphicsBuffer("rawBufferLights", Light::m_pLightsRawBuffer);
 
 	// DepthPrePass
@@ -914,8 +920,8 @@ void Renderer::initGraphicsPasses()
 	GraphicsPass* wireFramePass = new WireframeRenderTask();
 
 	// Post Processing
-	GraphicsPass* bloomPass = new BloomComputePass(m_CurrentRenderingWidth, m_CurrentRenderingHeight);
-	GraphicsPass* tonemapPass = new TonemapComputeTask(m_CurrentRenderingWidth, m_CurrentRenderingHeight);
+	GraphicsPass* bloomPass = new BloomComputePass();
+	GraphicsPass* tonemapPass = new TonemapComputeTask();
 
 	// Skybox
 	GraphicsPass* skyboxPass = new SkyboxPass();
@@ -924,7 +930,7 @@ void Renderer::initGraphicsPasses()
 	GraphicsPass* copyOnDemandTask = new CopyOnDemandTask();
 
 	// UI
-	GraphicsPass* imGuiPass = new ImGuiRenderTask(m_CurrentRenderingWidth, m_CurrentRenderingHeight);
+	GraphicsPass* imGuiPass = new ImGuiRenderTask();
 
 	// Add the tasks to desired vectors so they can be used in m_pRenderer
 	/* -------------------------------------------------------------- */
@@ -1034,7 +1040,7 @@ void Renderer::submitCbPerSceneData(ITopLevelAS* pTLAS)
 {
 	BL_ASSERT(pTLAS);
 
-	// PerSceneData 
+	// Make sure the indices are correct 
 	m_pCbPerSceneData->rayTracingBVH = pTLAS->GetRayTracingResultBuffer()->GetShaderResourceHeapIndex();
 	m_pCbPerSceneData->gBufferAlbedo = m_GraphicsResources.gBufferAlbedo->GetShaderResourceHeapIndex();
 	m_pCbPerSceneData->gBufferNormal = m_GraphicsResources.gBufferNormal->GetShaderResourceHeapIndex();
@@ -1043,6 +1049,10 @@ void Renderer::submitCbPerSceneData(ITopLevelAS* pTLAS)
 	m_pCbPerSceneData->reflectionTextureSRV = m_GraphicsResources.reflectionTexture->GetShaderResourceHeapIndex();
 	m_pCbPerSceneData->reflectionTextureUAV = m_GraphicsResources.reflectionTexture->GetUnorderedAccessIndex();
 	m_pCbPerSceneData->depth = m_GraphicsResources.mainDepthStencil->GetShaderResourceHeapIndex();
+
+	// Update the rendererWidth and renderingHeight as well in case it was changed
+	m_pCbPerSceneData->renderingWidth = m_GraphicsResources.renderWidth;
+	m_pCbPerSceneData->renderingHeight = m_GraphicsResources.renderHeight;
 
 	CopyOnDemandTask* codt = static_cast<CopyOnDemandTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::COPY_ON_DEMAND]);
 	BL_ASSERT(codt);

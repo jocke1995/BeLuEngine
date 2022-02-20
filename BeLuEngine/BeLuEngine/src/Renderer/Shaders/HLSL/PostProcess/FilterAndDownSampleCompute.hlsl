@@ -8,7 +8,7 @@ void CS_main(uint3 dispatchThreadID : SV_DispatchThreadID, int3 groupThreadID : 
 	unsigned int readIndex = rootConstantUints.index0;
 	unsigned int writeIndex = rootConstantUints.index1;
 
-	float2 screenSize = float2(1280.0f, 720.0f) / 2;
+	float2 screenSize = float2(cbPerScene.renderingWidth, cbPerScene.renderingHeight) / 2;
 	float2 uv = float2(dispatchThreadID.x / screenSize.x, dispatchThreadID.y / screenSize.y);
 	float4 sceneColor = textures[readIndex].SampleLevel(BilinearClamp, uv, 0);
 

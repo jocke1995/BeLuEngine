@@ -19,7 +19,7 @@ enum E_LOCAL_ROOTSIGNATURE_DXR_REFLECTION
 class DXRReflectionTask : public GraphicsPass
 {
 public:
-	DXRReflectionTask(unsigned int dispatchWidth, unsigned int dispatchHeight);
+	DXRReflectionTask();
 	~DXRReflectionTask();
 
 

@@ -11,8 +11,8 @@ void CS_main(uint3 dispatchThreadID : SV_DispatchThreadID, int3 groupThreadID : 
 	unsigned int writeIndex = rootConstantUints.index1;
 	unsigned int mipLevel	= rootConstantUints.index3;
 
-	uint width = 1280 >> mipLevel;
-	uint height = 720 >> mipLevel;
+	uint width = cbPerScene.renderingWidth >> mipLevel;
+	uint height = cbPerScene.renderingHeight >> mipLevel;
 
 	float weights[5] = { 0.227027f, 0.1945946f, 0.1216216f, 0.054054f, 0.016216f };
 	/* -------------------- Clamp out of bound samples -------------------- */

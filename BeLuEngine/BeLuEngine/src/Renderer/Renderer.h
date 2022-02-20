@@ -161,8 +161,6 @@ private:
 	std::vector<IGraphicsContext*> m_ImGuiGraphicsContext;
 
 	E_RESOLUTION_TYPES m_CurrentResolutionType = (E_RESOLUTION_TYPES)-1;
-	unsigned int m_CurrentRenderingWidth = 0;
-	unsigned int m_CurrentRenderingHeight = 0;
 	void cleanupCommonBuffers();
 
 	// Call when resizing the rendering resolution

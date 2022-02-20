@@ -8,10 +8,12 @@ class IGraphicsTexture;
 class BloomComputePass : public GraphicsPass
 {
 public:
-	BloomComputePass(unsigned int screenWidth, unsigned int screenHeight);
+	BloomComputePass();
 	virtual ~BloomComputePass();
 
 	void Execute() override final;
+
+	void onResizeInternalBuffers();
 private:
 	// The compute shader will read and write in a "Ping-Pong"-order to these objects.
 	std::array<IGraphicsTexture*, 2> m_PingPongTextures = {nullptr, nullptr};

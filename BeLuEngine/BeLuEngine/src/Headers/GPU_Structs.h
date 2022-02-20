@@ -98,6 +98,8 @@ struct CB_PER_FRAME_STRUCT
 	// etc ..
 };
 
+//TODO("Think about renaming to like.. CbOnDemand.. cause it's currently submitted whenever stuff in it needs update.. ")
+//TODO("This could be like the skybox gets changed.. the width/height gets changed, or the buffers get resized so we need the new indices")
 struct CB_PER_SCENE_STRUCT
 {
 	unsigned int rayTracingBVH;
@@ -112,8 +114,8 @@ struct CB_PER_SCENE_STRUCT
 
 	unsigned int skybox;
 	unsigned int pad0;
-	unsigned int pad1;
-	unsigned int pad2;
+	unsigned int renderingWidth;
+	unsigned int renderingHeight;
 };
 
 struct LightHeader

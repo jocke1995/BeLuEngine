@@ -5,7 +5,7 @@
 class ImGuiRenderTask : public GraphicsPass
 {
 public:
-	ImGuiRenderTask(unsigned int screenWidth, unsigned int screenHeight);
+	ImGuiRenderTask();
 	virtual ~ImGuiRenderTask();
 
 	void Execute();

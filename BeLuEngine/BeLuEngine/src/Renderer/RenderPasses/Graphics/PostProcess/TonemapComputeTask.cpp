@@ -9,7 +9,7 @@
 
 constexpr unsigned int g_ThreadGroups = 64;
 
-TonemapComputeTask::TonemapComputeTask(unsigned int screenWidth, unsigned int screenHeight)
+TonemapComputeTask::TonemapComputeTask()
 	:GraphicsPass(L"TonemapPass")
 {
 	PSODesc psoDesc = {};
@@ -17,8 +17,8 @@ TonemapComputeTask::TonemapComputeTask(unsigned int screenWidth, unsigned int sc
 	IGraphicsPipelineState* iGraphicsPSO = IGraphicsPipelineState::Create(psoDesc, L"Tonemap_PSO");
 	m_PipelineStates.push_back(iGraphicsPSO);
 
-	m_ScreenWidth = screenWidth;
-	m_ScreenHeight = screenHeight;
+	m_ScreenWidth = m_CommonGraphicsResources->renderWidth;
+	m_ScreenHeight = m_CommonGraphicsResources->renderHeight;
 }
 
 TonemapComputeTask::~TonemapComputeTask()

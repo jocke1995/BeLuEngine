@@ -18,7 +18,7 @@
 #include "../Renderer/API/Interface/IGraphicsTexture.h"
 #include "../Renderer/API/Interface/IGraphicsContext.h"
 
-ImGuiRenderTask::ImGuiRenderTask(unsigned int screenWidth, unsigned int screenHeight)
+ImGuiRenderTask::ImGuiRenderTask()
 	:GraphicsPass(L"ImGuiPass")
 {
 	E_GRAPHICS_API api = IGraphicsManager::GetGraphicsApiType();
@@ -37,8 +37,8 @@ ImGuiRenderTask::ImGuiRenderTask(unsigned int screenWidth, unsigned int screenHe
 		ImGuiIO& io = ImGui::GetIO();
 		io.ConfigFlags = ImGuiConfigFlags_NoMouse;
 
-		io.DisplaySize.x = screenWidth;
-		io.DisplaySize.y = screenHeight;
+		io.DisplaySize.x = m_CommonGraphicsResources->renderWidth;
+		io.DisplaySize.y = m_CommonGraphicsResources->renderHeight;
 
 		unsigned int imGuiTextureIndex = mainHeap->GetNextDescriptorHeapIndex(1);
 

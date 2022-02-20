@@ -10,7 +10,7 @@ void CS_main(uint3 dispatchThreadID : SV_DispatchThreadID, int3 groupThreadID : 
 	unsigned int writeIndex = rootConstantUints.index2;
 	unsigned int mipLevel = rootConstantUints.index3;
 
-	float2 textureSize = float2(1280 >> mipLevel, 720 >> mipLevel);
+	float2 textureSize = float2(cbPerScene.renderingWidth >> mipLevel, cbPerScene.renderingHeight >> mipLevel);
 	// TODO: the "+ 1.0f"-part is kinda hacky...
 	float2 uv = float2((dispatchThreadID.x + 1.0f) / textureSize.x, (dispatchThreadID.y + 1.0) / textureSize.y);
 	//float2 uv = float2(dispatchThreadID.x / screenSize.x, dispatchThreadID.y / screenSize.y);

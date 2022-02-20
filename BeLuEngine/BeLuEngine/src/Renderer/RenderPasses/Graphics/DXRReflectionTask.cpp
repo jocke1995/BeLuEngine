@@ -16,7 +16,7 @@
 #include "../Renderer/API/Interface/RayTracing/IShaderBindingTable.h"
 
 
-DXRReflectionTask::DXRReflectionTask(unsigned int dispatchWidth, unsigned int dispatchHeight)
+DXRReflectionTask::DXRReflectionTask()
 	:GraphicsPass(L"DXR_ReflectionPass")
 {
 	// PipelineState
@@ -58,8 +58,8 @@ DXRReflectionTask::DXRReflectionTask(unsigned int dispatchWidth, unsigned int di
 	m_pShaderBindingTable = IShaderBindingTable::Create(L"DXR_Reflection_ShaderBindingTable");
 
 	// Dispatch Info
-	m_DispatchWidth = dispatchWidth;
-	m_DispatchHeight = dispatchHeight;
+	m_DispatchWidth = m_CommonGraphicsResources->renderWidth;
+	m_DispatchHeight = m_CommonGraphicsResources->renderHeight;
 }
 
 DXRReflectionTask::~DXRReflectionTask()

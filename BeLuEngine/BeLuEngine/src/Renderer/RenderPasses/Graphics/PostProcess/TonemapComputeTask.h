@@ -6,7 +6,7 @@
 class TonemapComputeTask : public GraphicsPass
 {
 public:
-	TonemapComputeTask(unsigned int screenWidth, unsigned int screenHeight);
+	TonemapComputeTask();
 	virtual ~TonemapComputeTask();
 
 	void Execute() override final;

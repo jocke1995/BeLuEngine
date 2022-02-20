@@ -50,7 +50,7 @@ struct Resolution_Width_Height
     unsigned int height = 0;
 };
 
-Resolution_Width_Height GetWidthHeightResolution(const E_RESOLUTION_TYPES resolutionType);
+void GetWidthHeightResolution(unsigned int& width, unsigned int& height, const E_RESOLUTION_TYPES resolutionType);
 
 // Wrapper of common resources (Textures, Buffers etc..) to make it easier to pass these into functions
 struct CommonGraphicsResources
@@ -69,6 +69,10 @@ struct CommonGraphicsResources
     // Buffers
     IGraphicsBuffer* cbPerScene = nullptr;
     IGraphicsBuffer* cbPerFrame = nullptr;
+
+    // CurrentRenderingResolution
+    unsigned int renderWidth = 0;
+    unsigned int renderHeight = 0;
 
     TODO("Think about adding the primaryCamera to this buffer!");
 };
