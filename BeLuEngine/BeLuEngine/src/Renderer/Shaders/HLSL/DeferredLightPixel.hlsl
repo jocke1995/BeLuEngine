@@ -14,15 +14,17 @@ struct PS_OUTPUT
 PS_OUTPUT PS_main(VS_OUT input)
 {
 	// Sample from textures
-	float2 uvScaled = float2(input.uv.x, input.uv.y);
-	float3 albedo   = textures[cbPerScene.gBufferAlbedo].Sample(Anisotropic16_Wrap, uvScaled);
-	float roughness = textures[cbPerScene.gBufferMaterialProperties].Sample(Anisotropic16_Wrap, uvScaled).r;
-	float metallic  = textures[cbPerScene.gBufferMaterialProperties].Sample(Anisotropic16_Wrap, uvScaled).g;
-	float3 normal	= textures[cbPerScene.gBufferNormal].Sample(Anisotropic16_Wrap, uvScaled);
-	float3 emissive = textures[cbPerScene.gBufferEmissive].Sample(Anisotropic16_Wrap, uvScaled);
+	// Todo: no need of anisotropic16 here..
+	float2 uv = float2(input.uv.x, input.uv.y);
+	float3 albedo   = textures[cbPerScene.gBufferAlbedo].Sample(Anisotropic16_Wrap, uv);
+	float roughness = textures[cbPerScene.gBufferMaterialProperties].Sample(Anisotropic16_Wrap, uv).r;
+	float metallic  = textures[cbPerScene.gBufferMaterialProperties].Sample(Anisotropic16_Wrap, uv).g;
+	float3 normal	= textures[cbPerScene.gBufferNormal].Sample(Anisotropic16_Wrap, uv);
+	float3 emissive = textures[cbPerScene.gBufferEmissive].Sample(Anisotropic16_Wrap, uv);
+	float3 reflection = textures[cbPerScene.reflectionTextureSRV].Sample(Anisotropic16_Wrap, uv).rgb;
 
-	float depthVal = textures[cbPerScene.depth].Sample(Anisotropic16_Wrap, uvScaled).r;
-	float4 worldPos = float4(WorldPosFromDepth(depthVal, uvScaled, cbPerFrame.projectionI, cbPerFrame.viewI).xyz, 0.0f);
+	float depthVal = textures[cbPerScene.depth].Sample(Anisotropic16_Wrap, uv).r;
+	float4 worldPos = float4(WorldPosFromDepth(depthVal, uv, cbPerFrame.projectionI, cbPerFrame.viewI).xyz, 0.0f);
 	float3 camPos = cbPerFrame.camPos;
 	float3 finalColor = float3(0.0f, 0.0f, 0.0f);
 	float3 viewDir = normalize(camPos - worldPos.xyz);
@@ -93,11 +95,15 @@ PS_OUTPUT PS_main(VS_OUT input)
 			baseReflectivity);
 	}
 	
+	float3 indirectLight = CalcRayTracedIBL(reflection, camPos, viewDir, metallic, albedo, roughness, normal, baseReflectivity);
+	finalColor += indirectLight; // TODO: Add AmbientOcclusion here
+
 	float3 ambient = 0.03f * albedo;
 	finalColor += ambient;
 
 	PS_OUTPUT output = (PS_OUTPUT)0;
-	output.sceneColor = float4(finalColor.rgb, 1.0f) + float4(emissive.rgb, 1.0f);
+	//output.sceneColor = float4(finalColor.rgb, 1.0f) + float4(emissive.rgb, 1.0f);
+	output.sceneColor = float4(indirectLight.rgb, 1.0f);
 
 	return output;
 }

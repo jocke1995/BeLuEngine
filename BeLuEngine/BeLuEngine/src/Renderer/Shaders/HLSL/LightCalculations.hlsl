@@ -48,15 +48,15 @@ float3 CalcDirLight(
 
 	float3 lightDir = normalize(-dirLight.direction.rgb);
 
-	float3 normalized_bisector = normalize(normalize(viewDir) + lightDir);
+	float3 halfwayVector = normalize(normalize(viewDir) + lightDir);
 
 	float3 radiance = dirLight.baseLight.color.rgb * dirLight.baseLight.intensity;
 
 	// Cook-Torrance BRDF
 	float NdotV = max(dot(normal, viewDir), 0.0000001);
 	float NdotL = max(dot(normal, lightDir), 0.0000001);
-	float HdotV = max(dot(normalized_bisector, viewDir), 0.0f);
-	float HdotN = max(dot(normalized_bisector, normal), 0.0f);
+	float HdotV = max(dot(halfwayVector, viewDir), 0.0f);
+	float HdotN = max(dot(halfwayVector, normal), 0.0f);
 
 	float  D = NormalDistributionGGX(HdotN, roughness);
 	float  G = GeometrySmith(NdotV, NdotL, roughness);
@@ -87,7 +87,7 @@ float3 CalcPointLight(
 	float3 pointLightContribution = float3(0.0f, 0.0f, 0.0f);
 	float3 lightDir = normalize(pointLight.position.xyz - fragPos.xyz);
 
-	float3 normalized_bisector = normalize(viewDir + lightDir);
+	float3 halfwayVector = normalize(viewDir + lightDir);
 
 	// Attenuation
 	float distancePixelToLight = length(pointLight.position.xyz - fragPos.xyz);
@@ -98,8 +98,8 @@ float3 CalcPointLight(
 	// Cook-Torrance BRDF
 	float NdotV = max(dot(normal, viewDir), 0.0f);
 	float NdotL = max(dot(normal, lightDir), 0.0f);
-	float HdotV = max(dot(normalized_bisector, viewDir), 0.0f);
-	float HdotN = max(dot(normalized_bisector, normal), 0.0f);
+	float HdotV = max(dot(halfwayVector, viewDir), 0.0f);
+	float HdotN = max(dot(halfwayVector, normal), 0.0f);
 	
 	float  D = NormalDistributionGGX(HdotN, roughness);
 	float  G = GeometrySmith(NdotV, NdotL, roughness);
@@ -129,7 +129,7 @@ float3 CalcSpotLight(
 	float3 spotLightContribution = float3(0.0f, 0.0f, 0.0f);
 	
 	float3 lightDir = normalize(spotLight.position_cutOff.xyz - fragPos.xyz);
-	float3 normalized_bisector = normalize(normalize(viewDir) + lightDir);
+	float3 halfwayVector = normalize(normalize(viewDir) + lightDir);
 	
 	// Calculate the angle between lightdir and the direction of the light
 	float theta = dot(lightDir, normalize(-spotLight.direction_outerCutoff.xyz));
@@ -147,8 +147,8 @@ float3 CalcSpotLight(
 	// Cook-Torrance BRDF
 	float NdotV = max(dot(normal, viewDir), 0.0000001);
 	float NdotL = max(dot(normal, lightDir), 0.0000001);
-	float HdotV = max(dot(normalized_bisector, viewDir), 0.0f);
-	float HdotN = max(dot(normalized_bisector, normal), 0.0f);
+	float HdotV = max(dot(halfwayVector, viewDir), 0.0f);
+	float HdotN = max(dot(halfwayVector, normal), 0.0f);
 
 	float  D = NormalDistributionGGX(HdotN, roughness);
 	float  G = GeometrySmith(NdotV, NdotL, roughness);
@@ -162,4 +162,45 @@ float3 CalcSpotLight(
 
 	spotLightContribution = ((kD * albedo / PI + specular) * radiance * NdotL) * edgeIntensity;
 	return spotLightContribution;
+}
+
+float3 CalcRayTracedIBL(
+	in float3 reflection,
+	in float3 camPos,
+	in float3 viewDir,
+	in float metallic,
+	in float3 albedo,
+	in float roughness,
+	in float3 normal,
+	in float3 baseReflectivity)
+{
+	// Cook-Torrance BRDF
+
+	// Since the IBL is treating the reflection as the light source, the lightDir is replaced with the reflection dir.
+	float3 refl = reflect(-viewDir, normal);
+
+	// Since the view and reflection directions are perpendicular, the halfwayDirection is equal to the Normal
+	float3 halfwayVector = normal;
+
+	float NdotV = max(dot(normal, viewDir), 0.0000001);
+	float NdotL = max(dot(normal, refl), 0.0000001);
+	float HdotV = max(dot(halfwayVector, viewDir), 0.0f);
+	float HdotN = max(dot(halfwayVector, normal), 0.0f);
+
+	float  D = NormalDistributionGGX(HdotN, roughness);
+	float  G = GeometrySmith_IBL(NdotV, NdotL, roughness);
+	float3 F = CalculateFresnelEffect_Roughness(HdotV, baseReflectivity, roughness);
+
+	float3 specularBRDF = D * G * F / (4.0f * NdotV * NdotL);
+
+	// Energy conservation
+	float3 kD = float3(1.0f, 1.0f, 1.0f) - F;
+	kD *= (1.0f - metallic);
+
+	float3 diffuseBRDF = (kD * albedo) / PI;
+
+	float3 specularContribution = reflection * specularBRDF * F;
+	float3 diffuseContribution	= reflection * diffuseBRDF;
+
+	return (diffuseContribution + specularContribution) * NdotL;
 }

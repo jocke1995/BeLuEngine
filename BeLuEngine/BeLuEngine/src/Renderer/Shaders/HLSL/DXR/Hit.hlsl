@@ -25,7 +25,6 @@ void ClosestHit(inout ReflectionPayload reflectionPayload, in BuiltInTriangleInt
     vertex v2 = meshes[slotInfo.vertexDataIndex][IndexID2]; 
     vertex v3 = meshes[slotInfo.vertexDataIndex][IndexID3]; 
     
-	float4 tmp = mul(float4(v1.pos, 1.0f), localMatricesPerObject.worldMatrix);
     float3 norm = v1.norm * bary.x + v2.norm * bary.y + v3.norm * bary.z; 
     float3 normal = float3(normalize(mul(float4(norm, 0.0f), localMatricesPerObject.worldMatrix)).xyz);
 	
@@ -122,8 +121,10 @@ void ClosestHit(inout ReflectionPayload reflectionPayload, in BuiltInTriangleInt
 		finalColor += float4(lightColor, 1.0f) * shadowFactor;
 	}
 
-	finalColor += float4(0.01f * albedo.rgb, 1.0f);
+	float4 ambient = float4(0.01f * albedo.rgb, 1.0f);
+	finalColor += ambient;
+
 	finalColor += float4(emissive.rgb * emissive.a, 1.0f);
 
-	reflectionPayload.color = (finalColor * (1 - metallic)) + (metallic * albedo * reflectedColor);
+	reflectionPayload.color = finalColor.rgb;
 } 

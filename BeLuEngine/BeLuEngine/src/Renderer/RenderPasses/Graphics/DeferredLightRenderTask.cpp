@@ -69,7 +69,9 @@ void DeferredLightRenderTask::Execute()
 		m_pGraphicsContext->ResourceBarrier(renderTargets[1], BL_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 		m_pGraphicsContext->ResourceBarrier(renderTargets[2], BL_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 		m_pGraphicsContext->ResourceBarrier(renderTargets[3], BL_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
 		m_pGraphicsContext->ResourceBarrier(m_CommonGraphicsResources->mainDepthStencil, BL_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		m_pGraphicsContext->ResourceBarrier(m_CommonGraphicsResources->reflectionTexture, BL_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 		// Draw a fullscreen quad 
 		SlotInfo slotInfo = {};
