@@ -159,7 +159,9 @@ static void ImGui_ImplWin32_UpdateMousePos()
     if (HWND active_window = ::GetForegroundWindow())
         if (active_window == g_hWnd || ::IsChild(active_window, g_hWnd))
             if (::GetCursorPos(&pos) && ::ScreenToClient(g_hWnd, &pos))
-                io.MousePos = ImVec2((float)pos.x, (float)pos.y);
+            {
+                io.MousePos = ImVec2((float)pos.x * io.DisplayFramebufferScale.x, (float)pos.y * io.DisplayFramebufferScale.y);
+            }
 }
 
 // Gamepad navigation mapping
@@ -216,10 +218,11 @@ void    ImGui_ImplWin32_NewFrame()
     ImGuiIO& io = ImGui::GetIO();
     IM_ASSERT(io.Fonts->IsBuilt() && "Font atlas not built! It is generally built by the renderer back-end. Missing call to renderer _NewFrame() function? e.g. ImGui_ImplOpenGL3_NewFrame().");
 
+    TODO("Might need to revive this later when fixing ImGui to be able to handle dynamic resizing during runtime");
     // Setup display size (every frame to accommodate for window resizing)
-    RECT rect;
-    ::GetClientRect(g_hWnd, &rect);
-    io.DisplaySize = ImVec2((float)(rect.right - rect.left), (float)(rect.bottom - rect.top));
+    //RECT rect;
+    //::GetClientRect(g_hWnd, &rect);
+    //io.DisplaySize = ImVec2((float)(rect.right - rect.left), (float)(rect.bottom - rect.top));
 
     // Setup time step
     INT64 current_time;

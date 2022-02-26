@@ -37,8 +37,18 @@ ImGuiRenderTask::ImGuiRenderTask()
 		ImGuiIO& io = ImGui::GetIO();
 		io.ConfigFlags = ImGuiConfigFlags_NoMouse;
 
+		unsigned int wWidth = Window::GetInstance()->GetScreenWidth();
+		unsigned int wHeight = Window::GetInstance()->GetScreenHeight();
 		io.DisplaySize.x = m_CommonGraphicsResources->renderWidth;
 		io.DisplaySize.y = m_CommonGraphicsResources->renderHeight;
+
+		io.DisplayFramebufferScale = { (float)io.DisplaySize.x/ wWidth, (float)io.DisplaySize.y / wHeight };
+
+		TODO("Fix so ImGui can be scaled during runTime and not only during init");
+		// Do some scaling
+		ImFontConfig cfg = {};
+		cfg.SizePixels = floor(13 * io.DisplayFramebufferScale.x);
+		io.Fonts->AddFontDefault(&cfg);
 
 		unsigned int imGuiTextureIndex = mainHeap->GetNextDescriptorHeapIndex(1);
 
