@@ -26,6 +26,9 @@ class IGraphicsTexture;
 
 struct DXILCompilationDesc;
 
+static inline const std::wstring s_FilePathShaders = L"../BeLuEngine/src/Renderer/Shaders/HLSL/";
+static inline const std::wstring s_FilePathDefaultTextures = L"../Vendor/Assets/Textures/Default/";
+
 class AssetLoader
 {
 public:
@@ -67,9 +70,6 @@ private:
     Window* m_pWindow = nullptr;
     
     void loadDefaultMaterial();
-
-    const std::wstring m_FilePathShaders = L"../BeLuEngine/src/Renderer/Shaders/HLSL/";
-    const std::wstring m_FilePathDefaultTextures = L"../Vendor/Assets/Textures/Default/";
 
     // Every model & texture also has a bool which indicates if its data is on the GPU or not
     // name, pair<isOnGpu, Model*>

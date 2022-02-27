@@ -1,6 +1,10 @@
 #include "stdafx.h"
 #include "DXILShaderCompiler.h"
 
+#include <filesystem>
+
+#include "../Misc/AssetLoader.h"
+
 #include "../API/D3D12/D3D12GraphicsManager.h"
 
 DXILShaderCompiler::DXILShaderCompiler()
@@ -12,19 +16,27 @@ DXILShaderCompiler::DXILShaderCompiler()
 
     HRESULT hr = E_FAIL;
 
-    if (SUCCEEDED(hr = pfnDxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&m_Compiler))))
+    if (SUCCEEDED(hr = pfnDxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&m_pCompiler))))
     {
-        if (SUCCEEDED(hr = pfnDxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&m_Utils))))
+        if (SUCCEEDED(hr = pfnDxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&m_pPreProcessCompiler))))
         {
-            BL_LOG_INFO("DXIL Compiler succesfully created!\n");
+            if (SUCCEEDED(hr = pfnDxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&m_pUtils))))
+            {
+                if (SUCCEEDED(m_pUtils->CreateDefaultIncludeHandler(&m_pDefaultIncludeHandler)))
+                {
+                    BL_LOG_INFO("DXIL Compiler succesfully created!\n");
+                }
+            }
         }
     }
 }
 
 DXILShaderCompiler::~DXILShaderCompiler()
 {
-    BL_SAFE_RELEASE(&m_Compiler);
-    BL_SAFE_RELEASE(&m_Utils);
+    BL_SAFE_RELEASE(&m_pCompiler);
+    BL_SAFE_RELEASE(&m_pPreProcessCompiler);
+    BL_SAFE_RELEASE(&m_pUtils);
+    BL_SAFE_RELEASE(&m_pDefaultIncludeHandler);
 
     FreeLibrary(m_DxcCompilerDLL);
     m_DxcCompilerDLL = nullptr;
@@ -37,7 +49,6 @@ DXILShaderCompiler& DXILShaderCompiler::GetInstance()
     return instance;
 }
 
-
 IDxcBlob* DXILShaderCompiler::Compile(DXILCompilationDesc* desc)
 {
     HRESULT hr = E_FAIL;
@@ -48,7 +59,7 @@ IDxcBlob* DXILShaderCompiler::Compile(DXILCompilationDesc* desc)
 #pragma region prepareSourceblob
     IDxcBlobEncoding* blobEncoding = {};
     unsigned int encoding = 0;
-    hr = m_Utils->LoadFile(desc->filePath, &encoding, &blobEncoding);
+    hr = m_pUtils->LoadFile(desc->filePath, &encoding, &blobEncoding);
     
     if (FAILED(hr))
     {
@@ -56,21 +67,17 @@ IDxcBlob* DXILShaderCompiler::Compile(DXILCompilationDesc* desc)
         BL_ASSERT(false);
         return nullptr;
     }
-
-    DxcBuffer sourceBuffer = {};
-    sourceBuffer.Ptr = blobEncoding->GetBufferPointer();
-    sourceBuffer.Size = blobEncoding->GetBufferSize();
-    sourceBuffer.Encoding = 0;
         
 #pragma endregion
 
-    std::vector<LPCWSTR> compileArguments = {};
 #pragma region parseArgumentData
-    // Entry Point (eg vs_6_5)
+    std::vector<LPCWSTR> compileArguments = {};
+
+    // Entry Point (eg vs_main)
     compileArguments.push_back(L"-E");
     compileArguments.push_back(desc->entryPoint);
 
-    // Target (eg vs_main
+    // Target (eg vs_6_5)
     compileArguments.push_back(L"-T");
     compileArguments.push_back(desc->target);
 
@@ -87,7 +94,37 @@ IDxcBlob* DXILShaderCompiler::Compile(DXILCompilationDesc* desc)
         compileArguments.push_back(arg);
     }
 #pragma endregion
-    hr = m_Compiler->Compile(&sourceBuffer, compileArguments.data(), (UINT32)compileArguments.size(), nullptr, IID_PPV_ARGS(&compiledResult));
+
+#pragma region PreProcess
+
+    IDxcOperationResult* opResult = nullptr;
+    hr = m_pPreProcessCompiler->Preprocess(blobEncoding, desc->filePath, desc->arguments.data(), (UINT32)desc->arguments.size(), nullptr, 0, m_pDefaultIncludeHandler, &opResult);
+
+    if (FAILED(hr))
+    {
+        BL_LOG_CRITICAL("Failed to preprocess shader: %S\n", desc->filePath);
+        BL_ASSERT(false);
+        return nullptr;
+    }
+
+    IDxcBlob* preProcessedBlob = nullptr;
+    hr = opResult->GetResult(&preProcessedBlob);
+    if (FAILED(hr))
+    {
+        BL_LOG_CRITICAL("Failed to GetPreprocessed result from shader: %S\n", desc->filePath);
+        BL_ASSERT(false);
+        return nullptr;
+    }
+    BL_SAFE_RELEASE(&blobEncoding);
+    BL_SAFE_RELEASE(&opResult);
+#pragma endregion
+
+    DxcBuffer sourceBuffer = {};
+    sourceBuffer.Ptr = preProcessedBlob->GetBufferPointer();
+    sourceBuffer.Size = preProcessedBlob->GetBufferSize();
+    sourceBuffer.Encoding = 0;
+
+    hr = m_pCompiler->Compile(&sourceBuffer, compileArguments.data(), (UINT32)compileArguments.size(), m_pDefaultIncludeHandler, IID_PPV_ARGS(&compiledResult));
     if (FAILED(hr))
     {
         BL_LOG_CRITICAL("Failed to compile shader: %S\n", desc->filePath);
@@ -105,10 +142,10 @@ IDxcBlob* DXILShaderCompiler::Compile(DXILCompilationDesc* desc)
             const char* errorString = pErrorBuffer->GetStringPointer();
 
             // Print warnings and errors
-            BL_LOG_CRITICAL("Shader Error Outputs: %s\n", errorString);
+            BL_LOG_WARNING("Shader Warning//Error Outputs: %s\n", errorString);
 
             // Add a final warning saying which shader it is that failed
-            BL_LOG_CRITICAL("Failed to compile shader: %S\n", desc->filePath);
+            BL_LOG_WARNING("Failed to compile shader: %S\n", desc->filePath);
         }
     }
     BL_SAFE_RELEASE(&pErrorBuffer);

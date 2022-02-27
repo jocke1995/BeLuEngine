@@ -25,7 +25,7 @@ public:
 		const Args&... args)
 	{
 		std::vector<char> inputBuffer;
-		inputBuffer.resize(4096);
+		inputBuffer.resize(8192);
 		char typeBuffer[100] = {};
 
 		sprintf(inputBuffer.data(), string.c_str(), args...);

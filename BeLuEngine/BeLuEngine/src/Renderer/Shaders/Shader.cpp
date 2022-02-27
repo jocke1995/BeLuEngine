@@ -1,8 +1,7 @@
 #include "stdafx.h"
 #include "Shader.h"
 
-#include "DXC/dxcapi.h"
-
+#include "../Misc/AssetLoader.h"
 #include "DXILShaderCompiler.h"
 
 Shader::Shader(DXILCompilationDesc* desc)
@@ -23,7 +22,7 @@ IDxcBlob* Shader::GetBlob() const
 void Shader::compileShader(DXILCompilationDesc* desc)
 {
 	desc->arguments.push_back(L"-Gis"); // ? floating point accuracy?
-	desc->arguments.push_back(L"-WX"); // DXC_ARG_WARNINGS_ARE_ERRORS
+	//desc->arguments.push_back(L"-WX"); // DXC_ARG_WARNINGS_ARE_ERRORS
 #ifdef DEBUG
 	desc->arguments.push_back(L"/Zi"); // Debug info
 	desc->defines.push_back({ L"DEBUG" });
@@ -32,11 +31,11 @@ void Shader::compileShader(DXILCompilationDesc* desc)
 	desc->defines.push_back({ L"NDEBUG" });
 #endif
 
-	bool overrideEntryPoint = desc->entryPoint == L"" ? false : true;
+	bool useDefaultEntryPoint = desc->entryPoint == L"" ? true : false;
 
 	if (desc->shaderType == E_SHADER_TYPE::VS)
 	{
-		if(overrideEntryPoint == false)
+		if(useDefaultEntryPoint == true)
 			desc->entryPoint = L"VS_main";
 
 		desc->target = L"vs_6_5";
@@ -44,7 +43,7 @@ void Shader::compileShader(DXILCompilationDesc* desc)
 	}
 	else if (desc->shaderType == E_SHADER_TYPE::PS)
 	{
-		if (overrideEntryPoint == false)
+		if (useDefaultEntryPoint == true)
 			desc->entryPoint = L"PS_main";
 
 		desc->target = L"ps_6_5";
@@ -52,7 +51,7 @@ void Shader::compileShader(DXILCompilationDesc* desc)
 	}
 	else if (desc->shaderType == E_SHADER_TYPE::CS)
 	{
-		if (overrideEntryPoint == false)
+		if (useDefaultEntryPoint == true)
 			desc->entryPoint = L"CS_main";
 
 		desc->target = L"cs_6_5";
@@ -60,8 +59,8 @@ void Shader::compileShader(DXILCompilationDesc* desc)
 	}
 	else if (desc->shaderType == E_SHADER_TYPE::DXR)
 	{
-		if (overrideEntryPoint == false)
-			desc->entryPoint = L"";
+		if (useDefaultEntryPoint == true)
+			desc->entryPoint = L"dxr_main";
 
 		desc->target = L"lib_6_5";
 		desc->defines.push_back({ L"DXR_SHADER" });

@@ -92,12 +92,12 @@ void AssetLoader::loadDefaultMaterial()
 {
 	// Load default textures
 	std::map<E_TEXTURE2D_TYPE, IGraphicsTexture*> matTextures;
-	matTextures[E_TEXTURE2D_TYPE::ALBEDO]		= LoadTexture2D(E_TEXTURE2D_TYPE::ALBEDO,	m_FilePathDefaultTextures + L"default_albedo.dds");
-	matTextures[E_TEXTURE2D_TYPE::ROUGHNESS]	= LoadTexture2D(E_TEXTURE2D_TYPE::ROUGHNESS,m_FilePathDefaultTextures + L"default_roughness.dds");
-	matTextures[E_TEXTURE2D_TYPE::METALLIC]	= LoadTexture2D(E_TEXTURE2D_TYPE::METALLIC, m_FilePathDefaultTextures + L"default_metallic.dds");
-	matTextures[E_TEXTURE2D_TYPE::NORMAL]		= LoadTexture2D(E_TEXTURE2D_TYPE::NORMAL,	m_FilePathDefaultTextures + L"default_normal.dds");
-	matTextures[E_TEXTURE2D_TYPE::EMISSIVE]	= LoadTexture2D(E_TEXTURE2D_TYPE::EMISSIVE, m_FilePathDefaultTextures + L"default_emissive.dds");
-	matTextures[E_TEXTURE2D_TYPE::OPACITY]		= LoadTexture2D(E_TEXTURE2D_TYPE::OPACITY,	m_FilePathDefaultTextures + L"default_opacity.dds");
+	matTextures[E_TEXTURE2D_TYPE::ALBEDO]		= LoadTexture2D(E_TEXTURE2D_TYPE::ALBEDO,	s_FilePathDefaultTextures + L"default_albedo.dds");
+	matTextures[E_TEXTURE2D_TYPE::ROUGHNESS]	= LoadTexture2D(E_TEXTURE2D_TYPE::ROUGHNESS,s_FilePathDefaultTextures + L"default_roughness.dds");
+	matTextures[E_TEXTURE2D_TYPE::METALLIC]	= LoadTexture2D(E_TEXTURE2D_TYPE::METALLIC, s_FilePathDefaultTextures + L"default_metallic.dds");
+	matTextures[E_TEXTURE2D_TYPE::NORMAL]		= LoadTexture2D(E_TEXTURE2D_TYPE::NORMAL,	s_FilePathDefaultTextures + L"default_normal.dds");
+	matTextures[E_TEXTURE2D_TYPE::EMISSIVE]	= LoadTexture2D(E_TEXTURE2D_TYPE::EMISSIVE, s_FilePathDefaultTextures + L"default_emissive.dds");
+	matTextures[E_TEXTURE2D_TYPE::OPACITY]		= LoadTexture2D(E_TEXTURE2D_TYPE::OPACITY,	s_FilePathDefaultTextures + L"default_opacity.dds");
 
 	std::wstring matName = L"DefaultMaterial";
 	Material* material = new Material(&matName, &matTextures);
@@ -240,7 +240,7 @@ Shader* AssetLoader::loadShader(DXILCompilationDesc* desc)
 	// else, create a new shader and compile it
 
 	//std::wstring entireFilePath = m_FilePathShaders + desc->filePath;
-	std::wstring entireFilePath = m_FilePathShaders + desc->filePath;
+	std::wstring entireFilePath = s_FilePathShaders + desc->filePath;
 
 	desc->filePath = entireFilePath.c_str();
 	return m_LoadedShaders[desc->filePath] = new Shader(desc);
@@ -415,32 +415,32 @@ IGraphicsTexture* AssetLoader::processTexture(aiMaterial* mat, E_TEXTURE2D_TYPE 
 	{
 	case::E_TEXTURE2D_TYPE::ALBEDO:
 		type = aiTextureType_DIFFUSE;
-		defaultPath = m_FilePathDefaultTextures + L"default_albedo.dds";
+		defaultPath = s_FilePathDefaultTextures + L"default_albedo.dds";
 		warningMessageTextureType = "Albedo";
 		break;
 	case::E_TEXTURE2D_TYPE::ROUGHNESS:
 		type = aiTextureType_SPECULAR;
-		defaultPath = m_FilePathDefaultTextures + L"default_roughness.dds";
+		defaultPath = s_FilePathDefaultTextures + L"default_roughness.dds";
 		warningMessageTextureType = "Roughness";
 		break;
 	case::E_TEXTURE2D_TYPE::METALLIC:
 		type = aiTextureType_AMBIENT;
-		defaultPath = m_FilePathDefaultTextures + L"default_metallic.dds";
+		defaultPath = s_FilePathDefaultTextures + L"default_metallic.dds";
 		warningMessageTextureType = "Metallic";
 		break;
 	case::E_TEXTURE2D_TYPE::NORMAL:
 		type = aiTextureType_NORMALS;
-		defaultPath = m_FilePathDefaultTextures + L"default_normal.dds";
+		defaultPath = s_FilePathDefaultTextures + L"default_normal.dds";
 		warningMessageTextureType = "Normal";
 		break;
 	case::E_TEXTURE2D_TYPE::EMISSIVE:
 		type = aiTextureType_EMISSIVE;
-		defaultPath = m_FilePathDefaultTextures + L"default_emissive.dds";
+		defaultPath = s_FilePathDefaultTextures + L"default_emissive.dds";
 		warningMessageTextureType = "Emissive";
 		break;
 	case::E_TEXTURE2D_TYPE::OPACITY:
 		type = aiTextureType_OPACITY;
-		defaultPath = m_FilePathDefaultTextures + L"default_opacity.dds";
+		defaultPath = s_FilePathDefaultTextures + L"default_opacity.dds";
 		warningMessageTextureType = "Opacity";
 		break;
 	}
