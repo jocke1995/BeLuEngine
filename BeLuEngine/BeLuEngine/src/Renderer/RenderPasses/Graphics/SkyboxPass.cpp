@@ -29,8 +29,18 @@ SkyboxPass::SkyboxPass()
 
 	psoDesc.SetCullMode(BL_CULL_MODE_NONE);
 
-	psoDesc.AddShader(L"SkyboxVertex.hlsl", E_SHADER_TYPE::VS);
-	psoDesc.AddShader(L"SkyboxPixel.hlsl", E_SHADER_TYPE::PS);
+	{
+		DXILCompilationDesc shaderDesc = {};
+		shaderDesc.filePath = L"SkyboxVertex.hlsl";
+		shaderDesc.shaderType = E_SHADER_TYPE::VS;
+		psoDesc.AddShader(shaderDesc);
+	}
+	{
+		DXILCompilationDesc shaderDesc = {};
+		shaderDesc.filePath = L"SkyboxPixel.hlsl";
+		shaderDesc.shaderType = E_SHADER_TYPE::PS;
+		psoDesc.AddShader(shaderDesc);
+	}
 	
 	IGraphicsPipelineState* iGraphicsPSO = IGraphicsPipelineState::Create(psoDesc, L"SkyboxPass");
 	m_PipelineStates.push_back(iGraphicsPSO);

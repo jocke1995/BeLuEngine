@@ -1,149 +1,130 @@
 #include "stdafx.h"
 #include "DXILShaderCompiler.h"
 
+#include "../API/D3D12/D3D12GraphicsManager.h"
+
 DXILShaderCompiler::DXILShaderCompiler()
 {
+    m_DxcCompilerDLL = LoadLibraryA("dxcompiler.dll");
+    BL_ASSERT_MESSAGE(m_DxcCompilerDLL, "dxcompiler.dll is missing");
+
+    DxcCreateInstanceProc pfnDxcCreateInstance = DxcCreateInstanceProc(GetProcAddress(m_DxcCompilerDLL, "DxcCreateInstance"));
+
+    HRESULT hr = E_FAIL;
+
+    if (SUCCEEDED(hr = pfnDxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&m_Compiler))))
+    {
+        if (SUCCEEDED(hr = pfnDxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&m_Utils))))
+        {
+            BL_LOG_INFO("DXIL Compiler succesfully created!\n");
+        }
+    }
 }
 
-DXILShaderCompiler::~DXILShaderCompiler() 
+DXILShaderCompiler::~DXILShaderCompiler()
 {
-	BL_SAFE_RELEASE(&m_pCompiler);
-	BL_SAFE_RELEASE(&m_pLibrary);
-	BL_SAFE_RELEASE(&m_pIncludeHandler);
-	BL_SAFE_RELEASE(&m_pLinker);
+    BL_SAFE_RELEASE(&m_Compiler);
+    BL_SAFE_RELEASE(&m_Utils);
+
+    FreeLibrary(m_DxcCompilerDLL);
+    m_DxcCompilerDLL = nullptr;
 }
 
-DXILShaderCompiler* DXILShaderCompiler::Get()
+DXILShaderCompiler& DXILShaderCompiler::GetInstance()
 {
-	static DXILShaderCompiler instance;
-	
-	return &instance;
+    static DXILShaderCompiler instance;
+
+    return instance;
 }
 
-HRESULT DXILShaderCompiler::Init() 
+
+IDxcBlob* DXILShaderCompiler::Compile(DXILCompilationDesc* desc)
 {
+    HRESULT hr = E_FAIL;
 
-	HMODULE dll = LoadLibraryA("dxcompiler.dll");
-	if (dll == false)
-	{
-		BL_LOG_CRITICAL("dxcompiler.dll is missing");
-	}
+    IDxcResult* compiledResult = nullptr;
+    IDxcBlob* strippedResult = nullptr;
 
-	DxcCreateInstanceProc pfnDxcCreateInstance = DxcCreateInstanceProc(GetProcAddress(dll, "DxcCreateInstance"));
+#pragma region prepareSourceblob
+    IDxcBlobEncoding* blobEncoding = {};
+    unsigned int encoding = 0;
+    hr = m_Utils->LoadFile(desc->filePath, &encoding, &blobEncoding);
+    
+    if (FAILED(hr))
+    {
+        BL_LOG_CRITICAL("Failed to Load shaderSourceFile: %S\n", desc->filePath);
+        BL_ASSERT(false);
+        return nullptr;
+    }
 
-	HRESULT hr = E_FAIL;
+    DxcBuffer sourceBuffer = {};
+    sourceBuffer.Ptr = blobEncoding->GetBufferPointer();
+    sourceBuffer.Size = blobEncoding->GetBufferSize();
+    sourceBuffer.Encoding = 0;
+        
+#pragma endregion
 
-	if (SUCCEEDED(hr = pfnDxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&m_pCompiler))))
-	{
-		if (SUCCEEDED(hr = pfnDxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(&m_pLibrary))))
-		{
-			if (SUCCEEDED(m_pLibrary->CreateIncludeHandler(&m_pIncludeHandler)))
-			{
-				if (SUCCEEDED(hr = pfnDxcCreateInstance(CLSID_DxcLinker, IID_PPV_ARGS(&m_pLinker))))
-				{
-					BL_LOG_INFO("DXIL Compiler succesfully created!\n");
-				}
-			}
-		}
-	}
+    std::vector<LPCWSTR> compileArguments = {};
+#pragma region parseArgumentData
+    // Entry Point (eg vs_6_5)
+    compileArguments.push_back(L"-E");
+    compileArguments.push_back(desc->entryPoint);
 
-	return hr;
-}
+    // Target (eg vs_main
+    compileArguments.push_back(L"-T");
+    compileArguments.push_back(desc->target);
 
-HRESULT DXILShaderCompiler::CompileFromFile(DXILCompilationDesc* desc, IDxcBlob** ppResult) {
-	HRESULT hr = E_FAIL;
+    // Compiler Arguments (eg -Zi, -WX ..)
+    for (const LPCWSTR& arg : desc->arguments)
+    {
+        compileArguments.push_back(arg);
+    }
 
-	if (desc != nullptr)
-	{
-		IDxcBlobEncoding* source = nullptr;
+    // Defines (eg DEBUG, HIGHQUALITY, OTHER_SHADER_SPECIFIC_STUFF ..)
+    for (const LPCWSTR& arg : desc->defines)
+    {
+        compileArguments.push_back(L"-D");
+        compileArguments.push_back(arg);
+    }
+#pragma endregion
+    hr = m_Compiler->Compile(&sourceBuffer, compileArguments.data(), (UINT32)compileArguments.size(), nullptr, IID_PPV_ARGS(&compiledResult));
+    if (FAILED(hr))
+    {
+        BL_LOG_CRITICAL("Failed to compile shader: %S\n", desc->filePath);
+        BL_ASSERT(false);
+        return nullptr;
+    }
 
-		// Compile from file path
-		hr = m_pLibrary->CreateBlobFromFile(desc->filePath, nullptr, &source);
+    IDxcBlobUtf8* pErrorBuffer = nullptr;
+    hr = compiledResult->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&pErrorBuffer), nullptr);
+    if (SUCCEEDED(hr))
+    {
+        // Is the printBlob empty?
+        if (pErrorBuffer && pErrorBuffer->GetStringLength() > 0)
+        {
+            const char* errorString = pErrorBuffer->GetStringPointer();
 
-		if (SUCCEEDED(hr))
-		{
-			IDxcOperationResult* pResult = nullptr;
+            // Print warnings and errors
+            BL_LOG_CRITICAL("Shader Error Outputs: %s\n", errorString);
 
-#ifdef DEBUG
-			IDxcBlob* debugBlob = nullptr;
-			LPWSTR a = L"debugBlobName";
-			hr = m_pCompiler->CompileWithDebug(
-				source,									// program text
-				desc->filePath,							// file name, mostly for error messages
-				desc->entryPoint,						// entry point function
-				desc->targetProfile,					// target profile
-				desc->compileArguments.data(),          // compilation arguments
-				(UINT)desc->compileArguments.size(),	// number of compilation arguments
-				desc->defines.data(),					// define arguments
-				(UINT)desc->defines.size(),				// number of define arguments
-				m_pIncludeHandler,						// handler for #include directives
-				&pResult,
-				&a,										// DebugBlobName
-				&debugBlob);							// DebugBlob
+            // Add a final warning saying which shader it is that failed
+            BL_LOG_CRITICAL("Failed to compile shader: %S\n", desc->filePath);
+        }
+    }
+    BL_SAFE_RELEASE(&pErrorBuffer);
 
-			if (FAILED(hr) && debugBlob != nullptr)
-			{
-				BL_LOG_CRITICAL("Failed to compile shader: %S\n", desc->filePath);
+    // Get a stripped version of the final ShaderBlob
+    if (SUCCEEDED(hr))
+    {
+        hr = compiledResult->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&strippedResult), nullptr);
 
-				const char* errorMsg = static_cast<const char*>(debugBlob->GetBufferPointer());
-				BL_LOG_CRITICAL("%s\n", errorMsg);
-			}
-#else
-			hr = m_pCompiler->Compile(
-				source,									// program text
-				desc->filePath,							// file name, mostly for error messages
-				desc->entryPoint,						// entry point function
-				desc->targetProfile,					// target profile
-				desc->compileArguments.data(),          // compilation arguments
-				(UINT)desc->compileArguments.size(),	// number of compilation arguments
-				desc->defines.data(),					// define arguments
-				(UINT)desc->defines.size(),				// number of define arguments
-				m_pIncludeHandler,						// handler for #include directives
-				&pResult);
-#endif
-			if (SUCCEEDED(hr))
-			{
-				HRESULT hrCompile = E_FAIL;
-				if (SUCCEEDED(hr = pResult->GetStatus(&hrCompile)))
-				{
-					if (SUCCEEDED(hrCompile))
-					{
-						if (ppResult)
-						{
-							pResult->GetResult(ppResult);
-							hr = S_OK;
-						} 
-						else 
-						{
-							hr = E_FAIL;
-						}
-					} 
-					else 
-					{
-						IDxcBlobEncoding* pPrintBlob = nullptr;
-						if (SUCCEEDED(pResult->GetErrorBuffer(&pPrintBlob)))
-						{
-							// We can use the library to get our preferred encoding.
-							IDxcBlobEncoding* pPrintBlob16 = nullptr;
-							m_pLibrary->GetBlobAsUtf16(pPrintBlob, &pPrintBlob16);
+        if (FAILED(hr))
+        {
+            BL_LOG_CRITICAL("Failed to strip shader: %S\n", desc->filePath);
+        }
+    }
 
+    BL_SAFE_RELEASE(&compiledResult);
 
-
-							std::wstring b = (LPCWSTR)pPrintBlob16->GetBufferPointer();
-							std::string a = to_string(b);
-							hr = hrCompile;
-
-							BL_LOG_CRITICAL("%s\n", a.c_str());
-
-
-							BL_SAFE_RELEASE(&pPrintBlob);
-							BL_SAFE_RELEASE(&pPrintBlob16);
-						}
-					}
-					BL_SAFE_RELEASE(&pResult);
-				}
-			}
-		}
-	}
-	return hr;
+    return strippedResult;
 }

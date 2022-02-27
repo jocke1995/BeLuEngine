@@ -89,21 +89,6 @@ enum class E_SHADOW_RESOLUTION
 	UNDEFINED
 };
 
-enum E_SHADER_TYPE
-{
-	VS,
-	PS,
-	DS,
-	HS,
-	GS,
-	CS,
-	AS,
-	MS,
-	DXR,
-	NUM_SHADER_TYPES,
-	UNDEFINED
-};
-
 enum class E_CAMERA_TYPE
 {
 	PERSPECTIVE,

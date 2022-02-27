@@ -21,6 +21,8 @@
 
 #include "EngineMath.h"
 
+#include "../Renderer/Shaders/DXILShaderCompiler.h"
+
 // API
 #include "../Renderer/API/Interface/IGraphicsTexture.h"
 
@@ -228,20 +230,20 @@ IGraphicsTexture* AssetLoader::LoadTextureCube(const std::wstring& path)
 	return texture;
 }
 
-Shader* AssetLoader::loadShader(const std::wstring& fileName, E_SHADER_TYPE type)
+Shader* AssetLoader::loadShader(DXILCompilationDesc* desc)
 {
 	// Check if the shader already exists
-	if (m_LoadedShaders.count(fileName) != 0)
+	if (m_LoadedShaders.count(desc->filePath) != 0)
 	{
-		return m_LoadedShaders[fileName];
+		return m_LoadedShaders[desc->filePath];
 	}
 	// else, create a new shader and compile it
 
-	std::wstring entireFilePath = m_FilePathShaders + fileName;
-	Shader* tempShader = new Shader(entireFilePath.c_str(), type);
+	//std::wstring entireFilePath = m_FilePathShaders + desc->filePath;
+	std::wstring entireFilePath = m_FilePathShaders + desc->filePath;
 
-	m_LoadedShaders[fileName] = tempShader;
-	return m_LoadedShaders[fileName];
+	desc->filePath = entireFilePath.c_str();
+	return m_LoadedShaders[desc->filePath] = new Shader(desc);
 }
 
 void AssetLoader::processModel(const aiScene* assimpScene, std::vector<Mesh*>* meshes, std::vector<Material*>* materials, const std::wstring& filePath)

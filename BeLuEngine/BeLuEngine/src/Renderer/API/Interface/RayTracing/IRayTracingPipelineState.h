@@ -44,7 +44,7 @@ public:
 	virtual ~RayTracingPipelineStateDesc();
 
 	// Example: AddShader(L"myRayGenerationTestShader.hlsl", L"RayGen");
-	bool AddShader(std::wstring shaderFileName, const std::wstring& shaderEntryPointNames);
+	bool AddShader(std::wstring shaderFileName, const std::wstring& shaderEntryPointName);
 
 	// AnyHit and Intersection are optional
 	bool AddHitgroup(const std::wstring hitGroupName, const std::wstring closestHitName, const std::wstring anyHitName = L"", const std::wstring intersectionName = L"");

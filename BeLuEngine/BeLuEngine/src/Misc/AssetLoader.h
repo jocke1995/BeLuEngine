@@ -2,6 +2,8 @@
 #define ASSETLOADER_H
 
 #include "Core.h"
+#include "RenderCore.h"
+
 #include "assimp/matrix4x4.h"
 #include <map>
 
@@ -21,6 +23,8 @@ struct aiMaterial;
 
 // API
 class IGraphicsTexture;
+
+struct DXILCompilationDesc;
 
 class AssetLoader
 {
@@ -92,7 +96,8 @@ private:
     Material* loadMaterial(aiMaterial* mat, const std::wstring& folderPath);
     IGraphicsTexture* processTexture(aiMaterial* mat, E_TEXTURE2D_TYPE texture_type, const std::wstring& filePathWithoutTexture);
    
-    Shader* loadShader(const std::wstring& fileName, E_SHADER_TYPE type);
+    // Loads a shader and appends the entire filePath from the fileName
+    Shader* loadShader(DXILCompilationDesc* desc);
 };
 
 #endif

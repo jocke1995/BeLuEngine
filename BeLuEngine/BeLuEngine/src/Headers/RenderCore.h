@@ -1,6 +1,12 @@
 #ifndef RENDERCORE_H
 #define RENDERCORE_H
 
+/*
+-------------------------------------------------------------------------------------------------
+-------THIS HEADER FILE IS SUPPOSED TO BE LIGHTWEIGHT SO IT CAN BE INCLUDED IN HEADERFILES-------
+-------------------------------------------------------------------------------------------------
+*/
+
 class IGraphicsContext;
 class IGraphicsTexture;
 class IGraphicsBuffer;
@@ -35,6 +41,21 @@ private:
 #else
 	#define ScopedPixEvent(name, commandList);
 #endif
+
+enum E_SHADER_TYPE
+{
+    VS,
+    PS,
+    DS,
+    HS,
+    GS,
+    CS,
+    AS,
+    MS,
+    DXR,
+    NUM_SHADER_TYPES,
+    UNDEFINED
+};
 
 TODO("Add a few more");
 enum E_RESOLUTION_TYPES

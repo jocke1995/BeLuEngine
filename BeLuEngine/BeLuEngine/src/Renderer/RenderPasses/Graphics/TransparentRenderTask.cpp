@@ -32,8 +32,18 @@ TransparentRenderTask::TransparentRenderTask()
 											BL_BLEND_ONE, BL_BLEND_ZERO, BL_BLEND_OP_ADD,					// srcAlpha, destAlpha, OPAlpha
 											BL_COLOR_WRITE_ENABLE_ALL);										// writeMask
 
-		psoDesc.AddShader(L"TransparentTextureVertex.hlsl", E_SHADER_TYPE::VS);
-		psoDesc.AddShader(L"TransparentTexturePixel.hlsl", E_SHADER_TYPE::PS);
+		{
+			DXILCompilationDesc shaderDesc = {};
+			shaderDesc.filePath = L"TransparentTextureVertex.hlsl";
+			shaderDesc.shaderType = E_SHADER_TYPE::VS;
+			psoDesc.AddShader(shaderDesc);
+		}
+		{
+			DXILCompilationDesc shaderDesc = {};
+			shaderDesc.filePath = L"TransparentTexturePixel.hlsl";
+			shaderDesc.shaderType = E_SHADER_TYPE::PS;
+			psoDesc.AddShader(shaderDesc);
+		}
 
 		IGraphicsPipelineState* iGraphicsPSO = IGraphicsPipelineState::Create(psoDesc, L"BlendFrontCull");
 		m_PipelineStates.push_back(iGraphicsPSO);

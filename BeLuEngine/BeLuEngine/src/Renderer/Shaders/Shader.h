@@ -1,22 +1,24 @@
 #ifndef SHADER_H
 #define SHADER_H
 
-#include <dxcapi.h>
+#include "RenderCore.h"
+
+struct IDxcBlob;
+
+struct DXILCompilationDesc;
 
 class Shader
 {
 public:
-	Shader(LPCTSTR path, E_SHADER_TYPE type);
+	Shader(DXILCompilationDesc* desc);
 	virtual ~Shader();
 
 	IDxcBlob* GetBlob() const;
 
 private:
 	IDxcBlob* m_pBlob;
-	E_SHADER_TYPE m_Type;
-	LPCTSTR m_Path;	// Ex: vertexShader1
 
-	void compileShader();
+	void compileShader(DXILCompilationDesc* desc);
 };
 
 #endif

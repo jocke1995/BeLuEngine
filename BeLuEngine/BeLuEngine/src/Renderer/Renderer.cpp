@@ -135,8 +135,6 @@ void Renderer::Init(E_RESOLUTION_TYPES resolution)
 
 	// Picking
 	m_pMousePicker = new MousePicker();
-	
-	DXILShaderCompiler::Get()->Init();
 
 	// FullScreenQuad
 	createFullScreenQuad();

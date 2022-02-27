@@ -13,7 +13,15 @@ TonemapComputeTask::TonemapComputeTask()
 	:GraphicsPass(L"TonemapPass")
 {
 	PSODesc psoDesc = {};
-	psoDesc.AddShader(L"PostProcess/TonemapCompute.hlsl", E_SHADER_TYPE::CS);
+
+	// Add Shader
+	{
+		DXILCompilationDesc shaderDesc = {};
+		shaderDesc.filePath = L"PostProcess/TonemapCompute.hlsl";
+		shaderDesc.shaderType = E_SHADER_TYPE::CS;
+		psoDesc.AddShader(shaderDesc);
+	}
+
 	IGraphicsPipelineState* iGraphicsPSO = IGraphicsPipelineState::Create(psoDesc, L"Tonemap_PSO");
 	m_PipelineStates.push_back(iGraphicsPSO);
 

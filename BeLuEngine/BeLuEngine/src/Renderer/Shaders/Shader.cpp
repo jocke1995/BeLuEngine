@@ -1,14 +1,13 @@
 #include "stdafx.h"
 #include "Shader.h"
 
+#include "DXC/dxcapi.h"
+
 #include "DXILShaderCompiler.h"
 
-Shader::Shader(LPCTSTR path, E_SHADER_TYPE type)
+Shader::Shader(DXILCompilationDesc* desc)
 {
-	m_Path = path;
-	m_Type = type;
-
-	compileShader();
+	compileShader(desc);
 }
 
 Shader::~Shader()
@@ -21,51 +20,58 @@ IDxcBlob* Shader::GetBlob() const
 	return m_pBlob;
 }
 
-void Shader::compileShader()
+void Shader::compileShader(DXILCompilationDesc* desc)
 {
-	DXILShaderCompiler::DXILCompilationDesc shaderCompilerDesc = {};
-
-	shaderCompilerDesc.compileArguments.push_back(L"/Gis"); // ? floating point accuracy?
+	desc->arguments.push_back(L"-Gis"); // ? floating point accuracy?
+	desc->arguments.push_back(L"-WX"); // DXC_ARG_WARNINGS_ARE_ERRORS
 #ifdef DEBUG
-	shaderCompilerDesc.compileArguments.push_back(L"/Zi"); // Debug info
-	shaderCompilerDesc.defines.push_back({ L"DEBUG" });
+	desc->arguments.push_back(L"/Zi"); // Debug info
+	desc->defines.push_back({ L"DEBUG" });
+#else
+	desc->arguments.push_back(L"-O3"); // DXC_ARG_OPTIMIZATION_LEVEL3
+	desc->defines.push_back({ L"NDEBUG" });
 #endif
 
-	shaderCompilerDesc.filePath = m_Path;
-	std::wstring entryPoint;
-	std::wstring shaderModelTarget;
+	bool overrideEntryPoint = desc->entryPoint == L"" ? false : true;
 
-	if (m_Type == E_SHADER_TYPE::VS)
+	if (desc->shaderType == E_SHADER_TYPE::VS)
 	{
-		entryPoint = L"VS_main";
-		shaderModelTarget = L"vs_6_5";
+		if(overrideEntryPoint == false)
+			desc->entryPoint = L"VS_main";
+
+		desc->target = L"vs_6_5";
+		desc->defines.push_back({ L"VERTEX_SHADER" });
 	}
-	else if (m_Type == E_SHADER_TYPE::PS)
+	else if (desc->shaderType == E_SHADER_TYPE::PS)
 	{
-		entryPoint = L"PS_main";
-		shaderModelTarget = L"ps_6_5";
+		if (overrideEntryPoint == false)
+			desc->entryPoint = L"PS_main";
+
+		desc->target = L"ps_6_5";
+		desc->defines.push_back({ L"PIXEL_SHADER" });
 	}
-	else if (m_Type == E_SHADER_TYPE::CS)
+	else if (desc->shaderType == E_SHADER_TYPE::CS)
 	{
-		entryPoint = L"CS_main";
-		shaderModelTarget = L"cs_6_5";
+		if (overrideEntryPoint == false)
+			desc->entryPoint = L"CS_main";
+
+		desc->target = L"cs_6_5";
+		desc->defines.push_back({ L"COMPUTE_SHADER" });
 	}
-	else if (m_Type == E_SHADER_TYPE::DXR)
+	else if (desc->shaderType == E_SHADER_TYPE::DXR)
 	{
-		entryPoint = L"";
-		shaderModelTarget = L"lib_6_5";
+		if (overrideEntryPoint == false)
+			desc->entryPoint = L"";
+
+		desc->target = L"lib_6_5";
+		desc->defines.push_back({ L"DXR_SHADER" });
 	}
 	else
 	{
 		BL_ASSERT_MESSAGE(false, "Shadertype not supported yet... Fix!\n");
 	}
 
-	shaderCompilerDesc.entryPoint = entryPoint.c_str();
-	shaderCompilerDesc.targetProfile = shaderModelTarget.c_str();
+	m_pBlob = DXILShaderCompiler::GetInstance().Compile(desc);
 
-
-	HRESULT hr = DXILShaderCompiler::Get()->CompileFromFile(&shaderCompilerDesc, &m_pBlob);
-
-	BL_ASSERT_MESSAGE(SUCCEEDED(hr), "Could not create shader %S", m_Path)
-	BL_ASSERT_MESSAGE(m_pBlob != nullptr, "blob is nullptr when loading shader with path: %S\n", m_Path)
+	BL_ASSERT_MESSAGE(m_pBlob != nullptr, "blob is nullptr when loading shader with path: %S\n", desc->filePath)
 }

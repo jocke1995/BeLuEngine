@@ -3,6 +3,7 @@
 
 class IGraphicsBuffer;
 
+TODO("This class needs a massive codestandard-revisit... also, may even wanna remove it and put stuff in TransformComponent directly?");
 class Transform
 {
 public:
@@ -60,6 +61,7 @@ private:
 	friend class DXRReflectionTask;
 	friend class DeferredGeometryRenderTask;
 	friend class DeferredLightRenderTask;
+	friend class DebugTexturesPass;
 
 	DirectX::XMMATRIX m_WorldMat;
 	DirectX::XMMATRIX m_WorldMatTransposed;

@@ -22,8 +22,18 @@ WireframeRenderTask::WireframeRenderTask()
 	psoDesc.SetWireframe();
 	psoDesc.SetCullMode(BL_CULL_MODE_NONE);
 
-	psoDesc.AddShader(L"WhiteVertex.hlsl", E_SHADER_TYPE::VS);
-	psoDesc.AddShader(L"WhitePixel.hlsl", E_SHADER_TYPE::PS);
+	{
+		DXILCompilationDesc shaderDesc = {};
+		shaderDesc.filePath = L"WhiteVertex.hlsl";
+		shaderDesc.shaderType = E_SHADER_TYPE::VS;
+		psoDesc.AddShader(shaderDesc);
+	}
+	{
+		DXILCompilationDesc shaderDesc = {};
+		shaderDesc.filePath = L"WhitePixel.hlsl";
+		shaderDesc.shaderType = E_SHADER_TYPE::PS;
+		psoDesc.AddShader(shaderDesc);
+	}
 
 	IGraphicsPipelineState* iGraphicsPSO = IGraphicsPipelineState::Create(psoDesc, L"BoundingBoxRenderPass");
 	m_PipelineStates.push_back(iGraphicsPSO);

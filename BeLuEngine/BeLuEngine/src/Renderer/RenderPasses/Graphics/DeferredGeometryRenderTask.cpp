@@ -31,8 +31,18 @@ DeferredGeometryRenderTask::DeferredGeometryRenderTask()
 
 	//psoDesc.SetWireframe();
 
-	psoDesc.AddShader(L"DeferredGeometryVertex.hlsl", E_SHADER_TYPE::VS);
-	psoDesc.AddShader(L"DeferredGeometryPixel.hlsl", E_SHADER_TYPE::PS);
+	{
+		DXILCompilationDesc shaderDesc = {};
+		shaderDesc.filePath = L"DeferredGeometryVertex.hlsl";
+		shaderDesc.shaderType = E_SHADER_TYPE::VS;
+		psoDesc.AddShader(shaderDesc);
+	}
+	{
+		DXILCompilationDesc shaderDesc = {};
+		shaderDesc.filePath = L"DeferredGeometryPixel.hlsl";
+		shaderDesc.shaderType = E_SHADER_TYPE::PS;
+		psoDesc.AddShader(shaderDesc);
+	}
 	
 	IGraphicsPipelineState* iGraphicsPSO = IGraphicsPipelineState::Create(psoDesc, L"GeometryPass");
 	m_PipelineStates.push_back(iGraphicsPSO);

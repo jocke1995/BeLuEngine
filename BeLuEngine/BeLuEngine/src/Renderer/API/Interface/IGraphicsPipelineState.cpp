@@ -31,13 +31,7 @@ IGraphicsPipelineState* IGraphicsPipelineState::Create(const PSODesc& desc, cons
 
 PSODesc::PSODesc()
 {
-    // Init defaults
-
-    // Shaders
-    for (unsigned int i = 0; i < E_SHADER_TYPE::NUM_SHADER_TYPES; i++)
-    {
-        m_Shaders[i] = L"";
-    }
+    // ------------------------ INIT DEFAULTS ------------------------ //
 
     // RenderTargets
     for (unsigned int i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; i++)
@@ -71,48 +65,21 @@ PSODesc::~PSODesc()
 {
 }
 
-bool PSODesc::AddShader(const std::wstring shaderName, E_SHADER_TYPE shaderType)
+bool PSODesc::AddShader(const DXILCompilationDesc& desc)
 {
-    BL_ASSERT(shaderType != E_SHADER_TYPE::UNDEFINED);
-    BL_ASSERT_MESSAGE(shaderType != E_SHADER_TYPE::DXR, "Cannot create a DXR pipeline state with this class atm!");
+    BL_ASSERT_MESSAGE(desc.shaderType != E_SHADER_TYPE::DXR, "Cannot create a DXR pipeline state with this class atm!");
 
-    switch (shaderType)
+#if DEBUG
+    E_SHADER_TYPE shaderType = desc.shaderType;
+   
+    for (const DXILCompilationDesc& shaderDescs : m_Shaders)
     {
-    case E_SHADER_TYPE::VS:
-        BL_ASSERT_MESSAGE(m_Shaders[shaderType] == L"", "A vertexShader was already added to this PSO!");
-        m_Shaders[shaderType] = shaderName;
-        break;
-    case E_SHADER_TYPE::PS:
-        BL_ASSERT_MESSAGE(m_Shaders[shaderType] == L"", "A PixelShader was already added to this PSO!");
-        m_Shaders[shaderType] = shaderName;
-        break;
-    case E_SHADER_TYPE::DS:
-        BL_ASSERT_MESSAGE(m_Shaders[shaderType] == L"", "A DomainShader was already added to this PSO!");
-        m_Shaders[shaderType] = shaderName;
-        break;
-    case E_SHADER_TYPE::HS:
-        BL_ASSERT_MESSAGE(m_Shaders[shaderType] == L"", "A HullShader was already added to this PSO!");
-        m_Shaders[shaderType] = shaderName;
-        break;
-    case E_SHADER_TYPE::GS:
-        BL_ASSERT_MESSAGE(m_Shaders[shaderType] == L"", "A GeometryShader was already added to this PSO!");
-        m_Shaders[shaderType] = shaderName;
-        break;
-    case E_SHADER_TYPE::CS:
-        BL_ASSERT_MESSAGE(m_Shaders[shaderType] == L"", "A ComputeShader was already added to this PSO!");
-        m_Shaders[shaderType] = shaderName;
-        break;
-    case E_SHADER_TYPE::AS:
-        BL_ASSERT_MESSAGE(m_Shaders[shaderType] == L"", "A AmplificationShader was already added to this PSO!");
-        m_Shaders[shaderType] = shaderName;
-        break;
-    case E_SHADER_TYPE::MS:
-        BL_ASSERT_MESSAGE(m_Shaders[shaderType] == L"", "A MeshShader was already added to this PSO!");
-        m_Shaders[shaderType] = shaderName;
-        break;
-    default:
-        return false;
+        BL_ASSERT_MESSAGE(shaderDescs.shaderType != shaderType, "This shader has already been added to this pipeline!");
     }
+#endif
+
+    m_Shaders.push_back(desc);
+
     return true;
 }
 

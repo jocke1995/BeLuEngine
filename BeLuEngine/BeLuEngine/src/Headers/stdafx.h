@@ -9,12 +9,13 @@
 // DirectX
 #include <d3d12.h>
 #include <dxgi1_6.h>
-#include <D3Dcompiler.h>
+//#include <D3Dcompiler.h>
 #include <DirectXPackedVector.h>
 #include <DirectXColors.h>
 #include <dxgidebug.h>
 #include "EngineMath.h"
 #include "d3dx12.h"
+#include "DXC/dxcapi.h"
 
 // Time
 #include <chrono>

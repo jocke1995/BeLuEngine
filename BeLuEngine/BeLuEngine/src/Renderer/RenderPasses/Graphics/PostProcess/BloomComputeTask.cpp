@@ -28,7 +28,14 @@ BloomComputePass::BloomComputePass()
 	// Filter and Downsample
 	{
 		PSODesc psoDesc = {};
-		psoDesc.AddShader(L"PostProcess/FilterAndDownSampleCompute.hlsl", E_SHADER_TYPE::CS);
+
+		// Add Shader
+		{
+			DXILCompilationDesc shaderDesc = {};
+			shaderDesc.filePath = L"PostProcess/FilterAndDownSampleCompute.hlsl";
+			shaderDesc.shaderType = E_SHADER_TYPE::CS;
+			psoDesc.AddShader(shaderDesc);
+		}
 		IGraphicsPipelineState* iGraphicsPSO = IGraphicsPipelineState::Create(psoDesc, L"Bloom_FilterAndDownSamplePSO");
 		m_PipelineStates[Bloom_FilterAndDownSampleState] = iGraphicsPSO;
 	}
@@ -36,7 +43,14 @@ BloomComputePass::BloomComputePass()
 	// Downsample and Blur horizontal
 	{
 		PSODesc psoDesc = {};
-		psoDesc.AddShader(L"PostProcess/DownSampleAndBlurHorizontalCompute.hlsl", E_SHADER_TYPE::CS);
+
+		// Add Shader
+		{
+			DXILCompilationDesc shaderDesc = {};
+			shaderDesc.filePath = L"PostProcess/DownSampleAndBlurHorizontalCompute.hlsl";
+			shaderDesc.shaderType = E_SHADER_TYPE::CS;
+			psoDesc.AddShader(shaderDesc);
+		}
 		IGraphicsPipelineState* iGraphicsPSO = IGraphicsPipelineState::Create(psoDesc, L"Bloom_DownSampleAndBlurHorizontalPSO");
 		m_PipelineStates[Bloom_DownSampleAndBlurHorizontalState] = iGraphicsPSO;
 	}
@@ -44,7 +58,14 @@ BloomComputePass::BloomComputePass()
 	// Blur vertical
 	{
 		PSODesc psoDesc = {};
-		psoDesc.AddShader(L"PostProcess/BlurVerticalCompute.hlsl", E_SHADER_TYPE::CS);
+
+		// Add Shader
+		{
+			DXILCompilationDesc shaderDesc = {};
+			shaderDesc.filePath = L"PostProcess/BlurVerticalCompute.hlsl";
+			shaderDesc.shaderType = E_SHADER_TYPE::CS;
+			psoDesc.AddShader(shaderDesc);
+		}
 		IGraphicsPipelineState* iGraphicsPSO = IGraphicsPipelineState::Create(psoDesc, L"Bloom_BlurVerticalPSO");
 		m_PipelineStates[Bloom_BlurVerticalState] = iGraphicsPSO;
 	}
@@ -52,7 +73,14 @@ BloomComputePass::BloomComputePass()
 	// UpSample and Combine
 	{
 		PSODesc psoDesc = {};
-		psoDesc.AddShader(L"PostProcess/UpSampleAndCombineCompute.hlsl", E_SHADER_TYPE::CS);
+
+		// Add Shader
+		{
+			DXILCompilationDesc shaderDesc = {};
+			shaderDesc.filePath = L"PostProcess/UpSampleAndCombineCompute.hlsl";
+			shaderDesc.shaderType = E_SHADER_TYPE::CS;
+			psoDesc.AddShader(shaderDesc);
+		}
 		IGraphicsPipelineState* iGraphicsPSO = IGraphicsPipelineState::Create(psoDesc, L"Bloom_UpSampleAndCombinePSO");
 		m_PipelineStates[Bloom_UpSampleAndCombineState] = iGraphicsPSO;
 	}
@@ -60,7 +88,14 @@ BloomComputePass::BloomComputePass()
 	// Composite
 	{
 		PSODesc psoDesc = {};
-		psoDesc.AddShader(L"PostProcess/FinalCompositeCompute.hlsl", E_SHADER_TYPE::CS);
+
+		// Add Shader
+		{
+			DXILCompilationDesc shaderDesc = {};
+			shaderDesc.filePath = L"PostProcess/FinalCompositeCompute.hlsl";
+			shaderDesc.shaderType = E_SHADER_TYPE::CS;
+			psoDesc.AddShader(shaderDesc);
+		}
 		IGraphicsPipelineState* iGraphicsPSO = IGraphicsPipelineState::Create(psoDesc, L"Bloom_FinalCompositePSO");
 		m_PipelineStates[Bloom_CompositeState] = iGraphicsPSO;
 	}

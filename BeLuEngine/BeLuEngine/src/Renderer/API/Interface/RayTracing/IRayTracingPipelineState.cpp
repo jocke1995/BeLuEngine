@@ -8,6 +8,8 @@
 
 #include "../../D3D12/DXR/D3D12RayTracingPipelineState.h"
 
+#include "../Renderer/Shaders/DXILShaderCompiler.h"
+
 IRayTracingPipelineState::~IRayTracingPipelineState()
 {
 }
@@ -44,9 +46,13 @@ RayTracingPipelineStateDesc::~RayTracingPipelineStateDesc()
 {
 }
 
-bool RayTracingPipelineStateDesc::AddShader(std::wstring shaderFileName, const std::wstring& shaderEntryPointNames)
+bool RayTracingPipelineStateDesc::AddShader(std::wstring shaderFileName, const std::wstring& shaderEntryPointName)
 {
-    Shader* shader = AssetLoader::Get()->loadShader(shaderFileName, E_SHADER_TYPE::DXR);
+    DXILCompilationDesc desc = {};
+    desc.filePath = shaderFileName.c_str();
+    desc.entryPoint = shaderEntryPointName.c_str();
+    desc.shaderType = E_SHADER_TYPE::DXR;
+    Shader* shader = AssetLoader::Get()->loadShader(&desc);
 
     if (shader == false)
     {
@@ -54,7 +60,7 @@ bool RayTracingPipelineStateDesc::AddShader(std::wstring shaderFileName, const s
         return false;
     }
 
-    m_RayTracingShaders.emplace_back(RayTracingShader(shader, shaderEntryPointNames));
+    m_RayTracingShaders.emplace_back(RayTracingShader(shader, shaderEntryPointName));
     return true;
 }
 

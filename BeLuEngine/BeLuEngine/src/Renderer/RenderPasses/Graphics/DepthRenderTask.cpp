@@ -21,8 +21,18 @@ DepthRenderTask::DepthRenderTask()
 	psoDesc.SetDepthStencilFormat(BL_FORMAT_D24_UNORM_S8_UINT);
 	psoDesc.SetDepthDesc(BL_DEPTH_WRITE_MASK_ALL, BL_COMPARISON_FUNC_LESS);
 
-	psoDesc.AddShader(L"DepthVertex.hlsl", E_SHADER_TYPE::VS);
-	psoDesc.AddShader(L"DepthPixel.hlsl", E_SHADER_TYPE::PS);
+	{
+		DXILCompilationDesc shaderDesc = {};
+		shaderDesc.filePath = L"DepthVertex.hlsl";
+		shaderDesc.shaderType = E_SHADER_TYPE::VS;
+		psoDesc.AddShader(shaderDesc);
+	}
+	{
+		DXILCompilationDesc shaderDesc = {};
+		shaderDesc.filePath = L"DepthPixel.hlsl";
+		shaderDesc.shaderType = E_SHADER_TYPE::PS;
+		psoDesc.AddShader(shaderDesc);
+	}
 
 	IGraphicsPipelineState* iGraphicsPSO = IGraphicsPipelineState::Create(psoDesc, L"DepthPrePass");
 	m_PipelineStates.push_back(iGraphicsPSO);

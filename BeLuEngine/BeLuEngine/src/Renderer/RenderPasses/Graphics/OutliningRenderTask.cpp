@@ -36,8 +36,18 @@ OutliningRenderTask::OutliningRenderTask()
 	};
 	psoDesc.SetStencilDesc(0xff, 0x00, stencilNotEqual, stencilNotEqual);
 
-	psoDesc.AddShader(L"OutlinedVertex.hlsl", E_SHADER_TYPE::VS);
-	psoDesc.AddShader(L"OutlinedPixel.hlsl", E_SHADER_TYPE::PS);
+	{
+		DXILCompilationDesc shaderDesc = {};
+		shaderDesc.filePath = L"OutlinedVertex.hlsl";
+		shaderDesc.shaderType = E_SHADER_TYPE::VS;
+		psoDesc.AddShader(shaderDesc);
+	}
+	{
+		DXILCompilationDesc shaderDesc = {};
+		shaderDesc.filePath = L"OutlinedPixel.hlsl";
+		shaderDesc.shaderType = E_SHADER_TYPE::PS;
+		psoDesc.AddShader(shaderDesc);
+	}
 
 	IGraphicsPipelineState* iGraphicsPSO = IGraphicsPipelineState::Create(psoDesc, L"OutlinedRenderPass");
 	m_PipelineStates.push_back(iGraphicsPSO);

@@ -3,6 +3,7 @@
 
 #include "../Interface/IGraphicsPipelineState.h"
 
+TODO("Make all of them alignas as void*... this is a bit hacky atm")
 struct alignas(void*) StreamingRasterizerDesc
 {
 private:

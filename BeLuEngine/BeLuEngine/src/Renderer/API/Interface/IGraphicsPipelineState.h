@@ -3,13 +3,15 @@
 
 #include "RenderCore.h"
 
+#include "../Renderer/Shaders/DXILShaderCompiler.h"
+
 class PSODesc
 {
 public:
 	PSODesc();
 	virtual ~PSODesc();
 
-    bool AddShader(const std::wstring shaderName, E_SHADER_TYPE shaderType);
+    bool AddShader(const DXILCompilationDesc& desc);
     bool AddRenderTargetFormat(BL_FORMAT format);
 
     void SetDepthStencilFormat(BL_FORMAT format);
@@ -29,7 +31,7 @@ public:
 private:
     friend class D3D12GraphicsPipelineState;
 
-    std::wstring m_Shaders[E_SHADER_TYPE::NUM_SHADER_TYPES] = { L"" };
+    std::vector<DXILCompilationDesc> m_Shaders = {};
 
     unsigned int m_NumRenderTargets = 0;
     BL_FORMAT m_RenderTargetFormats[D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT];

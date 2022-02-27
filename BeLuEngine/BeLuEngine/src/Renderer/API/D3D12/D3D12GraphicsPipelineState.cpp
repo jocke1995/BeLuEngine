@@ -6,6 +6,8 @@
 #include "D3D12GraphicsManager.h"
 #include "../Misc/AssetLoader.h"
 
+#include "../Renderer/Shaders/DXILShaderCompiler.h"
+
 D3D12GraphicsPipelineState::D3D12GraphicsPipelineState(const PSODesc& desc, const std::wstring& name)
 {
 	std::wstring psoName = name.c_str();
@@ -64,17 +66,14 @@ D3D12GraphicsPipelineState::D3D12GraphicsPipelineState(const PSODesc& desc, cons
 		}
 	};
 
-	for (unsigned int i = 0; i < E_SHADER_TYPE::NUM_SHADER_TYPES; i++)
+	for (DXILCompilationDesc shaderDescs : desc.m_Shaders)
 	{
-		if (desc.m_Shaders[i] != L"")
-		{
-			Shader* shader = AssetLoader::Get()->loadShader(desc.m_Shaders[i], static_cast<E_SHADER_TYPE>(i));
+		Shader* shader = AssetLoader::Get()->loadShader(&shaderDescs);
 
-			setShaderByteCode(shader, static_cast<E_SHADER_TYPE>(i));
+		setShaderByteCode(shader, shaderDescs.shaderType);
 
-			if (static_cast<E_SHADER_TYPE>(i) == E_SHADER_TYPE::CS)
-				isComputeState = true;
-		}
+		if (shaderDescs.shaderType == E_SHADER_TYPE::CS)
+			isComputeState = true;
 	}
 	
 	// Compute states doesn't have any of this
