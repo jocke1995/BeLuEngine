@@ -232,17 +232,16 @@ IGraphicsTexture* AssetLoader::LoadTextureCube(const std::wstring& path)
 
 Shader* AssetLoader::loadShader(DXILCompilationDesc* desc)
 {
+	std::wstring entireFilePath = s_FilePathShaders + desc->filePath;
+	desc->filePath = entireFilePath.c_str();
+
 	// Check if the shader already exists
 	if (m_LoadedShaders.count(desc->filePath) != 0)
 	{
 		return m_LoadedShaders[desc->filePath];
 	}
+
 	// else, create a new shader and compile it
-
-	//std::wstring entireFilePath = m_FilePathShaders + desc->filePath;
-	std::wstring entireFilePath = s_FilePathShaders + desc->filePath;
-
-	desc->filePath = entireFilePath.c_str();
 	return m_LoadedShaders[desc->filePath] = new Shader(desc);
 }
 
