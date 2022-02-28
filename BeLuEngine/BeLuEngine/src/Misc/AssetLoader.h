@@ -6,6 +6,7 @@
 
 #include "assimp/matrix4x4.h"
 #include <map>
+#include <unordered_map>
 
 class Model;
 class Mesh;
@@ -77,7 +78,7 @@ private:
     std::map<std::wstring, std::pair<bool, IGraphicsTexture*>> m_LoadedTextures;
     std::map<std::wstring, Material*> m_LoadedMaterials;
     std::vector<Mesh*> m_LoadedMeshes;
-    std::map<std::wstring, Shader*> m_LoadedShaders;
+    std::unordered_map<unsigned int, Shader*> m_LoadedShaders;
 
     /* --------------- Functions --------------- */
     void processModel(const aiScene* assimpScene,
@@ -98,6 +99,10 @@ private:
    
     // Loads a shader and appends the entire filePath from the fileName
     Shader* loadShader(DXILCompilationDesc* desc);
+
+    // This function generates a hash depending on the: EntrypointName, defines and filepath
+    // This is done so that I can have multiple permutations on the same shaderFile
+    unsigned int generateShaderHash(const DXILCompilationDesc* desc);
 };
 
 #endif

@@ -232,17 +232,42 @@ IGraphicsTexture* AssetLoader::LoadTextureCube(const std::wstring& path)
 
 Shader* AssetLoader::loadShader(DXILCompilationDesc* desc)
 {
+	// Fill out the name with the entire Path
 	std::wstring entireFilePath = s_FilePathShaders + desc->filePath;
 	desc->filePath = entireFilePath.c_str();
 
+	// Generate a name depending on the desc
+	unsigned int shaderHash = generateShaderHash(desc);
+
 	// Check if the shader already exists
-	if (m_LoadedShaders.count(desc->filePath) != 0)
+	if (m_LoadedShaders.count(shaderHash) != 0)
 	{
-		return m_LoadedShaders[desc->filePath];
+		return m_LoadedShaders[shaderHash];
 	}
 
 	// else, create a new shader and compile it
-	return m_LoadedShaders[desc->filePath] = new Shader(desc);
+	return m_LoadedShaders[shaderHash] = new Shader(desc);
+}
+
+unsigned int AssetLoader::generateShaderHash(const DXILCompilationDesc* desc)
+{
+	// Make the string
+	std::wstring finalString = desc->filePath;
+	finalString += L"_ENTRY_";
+	finalString += desc->entryPoint;
+	finalString += L"_DEFINES_";
+
+	for (const LPCWSTR& define : desc->defines)
+	{
+		finalString += define;
+		finalString += L"_";
+	}
+
+	std::hash<std::wstring> hasher;
+
+	unsigned int hashedString = hasher(finalString);
+
+	return hashedString;
 }
 
 void AssetLoader::processModel(const aiScene* assimpScene, std::vector<Mesh*>* meshes, std::vector<Material*>* materials, const std::wstring& filePath)
