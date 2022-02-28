@@ -17,7 +17,7 @@ enum E_BLOOM_PIPELINE_STATES
 	Bloom_NUM_PIPELINE_STATES
 };
 
-constexpr unsigned int g_NumMips = 4;
+constexpr unsigned int g_NumMips = 6;
 
 BloomComputePass::BloomComputePass()
 	:GraphicsPass(L"BloomPass")

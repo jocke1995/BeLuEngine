@@ -166,12 +166,12 @@ Scene* PBRScene(SceneManager* sm)
     mc->SetModel(privateModel);
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
     tc = entity->GetComponent<component::TransformComponent>();
-    tc->GetTransform()->SetScale(7, 7, 7);
+    tc->GetTransform()->SetScale(7.0f, 7.0f, 7.0f);
     tc->GetTransform()->SetPosition(-4.0f, 0.0f, -6.0f);
     tc->GetTransform()->SetRotationY(PI + PI/8);
     /* ---------------------- PrivateObject0 ---------------------- */
 
-        /* ---------------------- PrivateObject1 ---------------------- */
+    /* ---------------------- PrivateObject1 ---------------------- */
     entity = scene->AddEntity("PrivateObject1");
     mc = entity->AddComponent<component::ModelComponent>();
     tc = entity->AddComponent<component::TransformComponent>();
@@ -213,7 +213,7 @@ Scene* PBRScene(SceneManager* sm)
     tc->GetTransform()->SetPosition(30.0f, 3.0f, 0.0f);
     /* ---------------------- RedCar ---------------------- */
 
-        /* ---------------------- WhiteCar ---------------------- */
+    /* ---------------------- WhiteCar ---------------------- */
     entity = scene->AddEntity("WhiteCar");
     mc = entity->AddComponent<component::ModelComponent>();
     tc = entity->AddComponent<component::TransformComponent>();

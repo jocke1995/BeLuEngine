@@ -21,5 +21,4 @@ void CS_main(uint3 dispatchThreadID : SV_DispatchThreadID, int3 groupThreadID : 
 		finalColor = float4(0.0, 0.0, 0.0, 1.0);
 
 	texturesUAV[writeIndex][dispatchThreadID.xy] = finalColor;
-	//texturesUAV[writeIndex][dispatchThreadID.xy] = float4(uv, 0.0f, 1.0f);
 }

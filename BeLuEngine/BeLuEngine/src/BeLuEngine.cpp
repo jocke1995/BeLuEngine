@@ -30,8 +30,8 @@ void BeLuEngine::Init(HINSTANCE hInstance, int nCmdShow)
 {
 	// Window values
 	bool windowedFullscreen = false;
-	int windowWidth = 1920;
-	int windowHeight = 1080;
+	int windowWidth = 1280;
+	int windowHeight = 720;
 
 	// Misc
 	Window::Create(hInstance, nCmdShow, windowedFullscreen, windowWidth, windowHeight);
@@ -53,7 +53,7 @@ void BeLuEngine::Init(HINSTANCE hInstance, int nCmdShow)
 	{
 		// Renderer
 		{
-			E_RESOLUTION_TYPES startResolution = E_RESOLUTION_TYPES::Res_1920_1080;	// TODO: This could be saved to options and be read from file next time game starts...
+			E_RESOLUTION_TYPES startResolution = E_RESOLUTION_TYPES::Res_1280_720;	// TODO: This could be saved to options and be read from file next time game starts...
 
 			IGraphicsManager* graphicsManager = IGraphicsManager::Create(E_GRAPHICS_API::D3D12);
 			graphicsManager->Init(m_pWindow->GetHwnd(), startResolution, BL_FORMAT_R16G16B16A16_FLOAT);
