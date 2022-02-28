@@ -36,5 +36,4 @@ void RayGen()
     reflectionPayload.recursionDepth = 0;
 
     texturesUAV[cbPerScene.reflectionTextureUAV][launchIndex] = float4(TraceRadianceRay(ray, 0, sceneBVH[cbPerScene.rayTracingBVH]).rgb, 1.0f);
-    //finalColor = (textures[readIndex][launchIndex].rgb * (1 - metallic)) + (metallic * albedo * rayTracedColor);
 }

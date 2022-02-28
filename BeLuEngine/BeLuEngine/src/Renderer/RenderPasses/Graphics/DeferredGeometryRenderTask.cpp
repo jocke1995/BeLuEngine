@@ -89,6 +89,7 @@ void DeferredGeometryRenderTask::Execute()
 		
 		m_pGraphicsContext->SetRenderTargets(4, renderTargets, m_CommonGraphicsResources->mainDepthStencil);
 
+		m_pGraphicsContext->SetConstantBuffer(RootParam_CBV_B3, m_CommonGraphicsResources->cbPerFrame, false);
 		m_pGraphicsContext->SetConstantBuffer(RootParam_CBV_B4, m_CommonGraphicsResources->cbPerScene, false);
 
 		// Draw for every Rendercomponent

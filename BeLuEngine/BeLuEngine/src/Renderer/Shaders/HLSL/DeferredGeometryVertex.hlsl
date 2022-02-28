@@ -1,4 +1,5 @@
 #include "DescriptorBindings.hlsl"
+#include "Common.hlsl"
 
 struct VS_OUT
 {
@@ -25,12 +26,9 @@ VS_OUT VS_main(uint vID : SV_VertexID)
 	float3 T = normalize(mul(float4(v.tang, 0.0f), matricesPerObject.worldMatrix)).xyz;
 	float3 N = normalize(mul(float4(v.norm, 0.0f), matricesPerObject.worldMatrix)).xyz;
 
-	// Gram schmidt
-	T = normalize(T - dot(T, N) * N);
+	float3x3 TBN = calculateTBN(T, N);
 
-	float3 B = normalize(cross(N, T));
-
-	output.tbn = float3x3(T, B, N);
+	output.tbn = TBN;
 	output.norm = N;
 
 	return output;

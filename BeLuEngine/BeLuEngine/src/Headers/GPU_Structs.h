@@ -97,6 +97,7 @@ struct CB_PER_FRAME_STRUCT
 	float nearPlane;
 	float farPlane;
 	float2 pad4;
+
 	// deltaTime ..
 	// etc ..
 };

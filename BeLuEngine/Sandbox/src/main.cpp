@@ -44,8 +44,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
     /*------ AssetLoader to load models / textures ------*/
    AssetLoader* al = AssetLoader::Get();
    
-   Scene* scene = SponzaScene(sceneManager);
-   //Scene* scene = PBRScene(sceneManager);
+   //Scene* scene = SponzaScene(sceneManager);
+   Scene* scene = PBRScene(sceneManager);
 
    // Set scene
    sceneManager->SetScene(scene);
@@ -140,7 +140,9 @@ Scene* PBRScene(SceneManager* sm)
     Model* boxModel     = al->LoadModel(L"../Vendor/Assets/Models/CubePBR/cube.obj");
     Model* goldenSphere = al->LoadModel(L"../Vendor/Assets/Models/GoldenSphere/sphere.obj");
     Model* steelSphere  = al->LoadModel(L"../Vendor/Assets/Models/SteelSphere/sphere.obj");
-    Model* funnyModel   = al->LoadModel(L"../Vendor/Assets/Models/Private/FunnyModel/funnyModel.obj");
+    Model* privateModel = al->LoadModel(L"../Vendor/Assets/Models/Private/FunnyModel/funnyModel.obj");
+    Model* redCar       = al->LoadModel(L"../Vendor/Assets/Models/Cars/RedCar.obj");
+    Model* whiteCar     = al->LoadModel(L"../Vendor/Assets/Models/Cars/WhiteCar.obj");
 
     // Load a skybox
     IGraphicsTexture* skyBoxTexture = al->LoadTextureCube(L"../Vendor/Assets/Skyboxes/Skybox_Heaven.dds");
@@ -155,19 +157,75 @@ Scene* PBRScene(SceneManager* sm)
     sbc->SetSkyboxTexture(skyBoxTexture);
     /* ---------------------- Player ---------------------- */
 
-    /* ---------------------- FunnyObject ---------------------- */
-    entity = scene->AddEntity("FunnyObject");
+    /* ---------------------- PrivateObject0 ---------------------- */
+    entity = scene->AddEntity("PrivateObject0");
     mc = entity->AddComponent<component::ModelComponent>();
     tc = entity->AddComponent<component::TransformComponent>();
 
     mc = entity->GetComponent<component::ModelComponent>();
-    mc->SetModel(funnyModel);
+    mc->SetModel(privateModel);
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
     tc = entity->GetComponent<component::TransformComponent>();
     tc->GetTransform()->SetScale(7, 7, 7);
     tc->GetTransform()->SetPosition(-4.0f, 0.0f, -6.0f);
     tc->GetTransform()->SetRotationY(PI + PI/8);
-    /* ---------------------- FunnyObject ---------------------- */
+    /* ---------------------- PrivateObject0 ---------------------- */
+
+        /* ---------------------- PrivateObject1 ---------------------- */
+    entity = scene->AddEntity("PrivateObject1");
+    mc = entity->AddComponent<component::ModelComponent>();
+    tc = entity->AddComponent<component::TransformComponent>();
+
+    mc = entity->GetComponent<component::ModelComponent>();
+    mc->SetModel(privateModel);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
+    tc = entity->GetComponent<component::TransformComponent>();
+    tc->GetTransform()->SetScale(7, 7, 7);
+    tc->GetTransform()->SetPosition(7.0f, 0.0f, 6.0f);
+    tc->GetTransform()->SetRotationY(2 * PI);
+    /* ---------------------- PrivateObject1 ---------------------- */
+
+    /* ---------------------- PrivateObject2 ---------------------- */
+    entity = scene->AddEntity("PrivateObject2");
+    mc = entity->AddComponent<component::ModelComponent>();
+    tc = entity->AddComponent<component::TransformComponent>();
+    
+    mc = entity->GetComponent<component::ModelComponent>();
+    mc->SetModel(privateModel);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
+    tc = entity->GetComponent<component::TransformComponent>();
+    tc->GetTransform()->SetScale(7, 7, 7);
+    tc->GetTransform()->SetPosition(6.5f, 0.0f, -8.0f);
+    tc->GetTransform()->SetRotationY(PI + PI / 2);
+    /* ---------------------- PrivateObject2 ---------------------- */
+
+    /* ---------------------- RedCar ---------------------- */
+    entity = scene->AddEntity("RedCar");
+    mc = entity->AddComponent<component::ModelComponent>();
+    tc = entity->AddComponent<component::TransformComponent>();
+
+    mc = entity->GetComponent<component::ModelComponent>();
+    mc->SetModel(redCar);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE);
+    tc = entity->GetComponent<component::TransformComponent>();
+    tc->GetTransform()->SetScale(4, 4, 4);
+    tc->GetTransform()->SetRotationY(-PI / 2);
+    tc->GetTransform()->SetPosition(30.0f, 3.0f, 0.0f);
+    /* ---------------------- RedCar ---------------------- */
+
+        /* ---------------------- WhiteCar ---------------------- */
+    entity = scene->AddEntity("WhiteCar");
+    mc = entity->AddComponent<component::ModelComponent>();
+    tc = entity->AddComponent<component::TransformComponent>();
+
+    mc = entity->GetComponent<component::ModelComponent>();
+    mc->SetModel(whiteCar);
+    mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE);
+    tc = entity->GetComponent<component::TransformComponent>();
+    tc->GetTransform()->SetScale(4, 4, 4);
+    tc->GetTransform()->SetRotationY(-PI / 2);
+    tc->GetTransform()->SetPosition(30.0f, 3.0f, 15.0f);
+    /* ---------------------- WhiteCar ---------------------- */
 
     /* ---------------------- GoldenSphere ---------------------- */
     entity = scene->AddEntity("GoldenSphere");
@@ -204,7 +262,7 @@ Scene* PBRScene(SceneManager* sm)
     mc->SetModel(floorModel);
     mc->SetDrawFlag(F_DRAW_FLAGS::DRAW_OPAQUE | F_DRAW_FLAGS::GIVE_SHADOW);
     tc = entity->GetComponent<component::TransformComponent>();
-    tc->GetTransform()->SetScale(10, 1, 10);
+    tc->GetTransform()->SetScale(100, 1, 100);
     tc->GetTransform()->SetPosition(0.0f, 0.0f, 0.0f);
     /* ---------------------- Floor ---------------------- */
 

@@ -20,20 +20,37 @@ void ClosestHit(inout ReflectionPayload reflectionPayload, in BuiltInTriangleInt
     unsigned int IndexID2 = indices[slotInfo.indicesDataIndex][vertId + 1];
     unsigned int IndexID3 = indices[slotInfo.indicesDataIndex][vertId + 2];
     
-    // Get the normal 
+    // Get the vertices 
     vertex v1 = meshes[slotInfo.vertexDataIndex][IndexID1];
     vertex v2 = meshes[slotInfo.vertexDataIndex][IndexID2]; 
     vertex v3 = meshes[slotInfo.vertexDataIndex][IndexID3]; 
     
+	// Calculate TBN
     float3 norm = v1.norm * bary.x + v2.norm * bary.y + v3.norm * bary.z; 
-    float3 normal = float3(normalize(mul(float4(norm, 0.0f), localMatricesPerObject.worldMatrix)).xyz);
+    float3 tang = v1.tang * bary.x + v2.tang * bary.y + v3.tang * bary.z;
+    float3 geometricNormal = float3(normalize(mul(float4(norm, 0.0f), localMatricesPerObject.worldMatrix)).xyz);
+    float3 geometricTangent = float3(normalize(mul(float4(tang, 0.0f), localMatricesPerObject.worldMatrix)).xyz);
+	float3x3 TBN = calculateTBN(geometricTangent, geometricNormal);
 	
     float2 uv = v1.uv * bary.x + v2.uv * bary.y + v3.uv * bary.z; 
     
-	float4 albedo	= matData.hasAlbedoTexture		? textures[matData.textureAlbedo].SampleLevel(BilinearWrap, uv, 2) : matData.albedoValue;
-	float roughness	= matData.hasRoughnessTexture	? textures[matData.textureRoughness].SampleLevel(BilinearWrap, uv, 2).r : matData.roughnessValue;
-	float metallic	= matData.hasMetallicTexture	? textures[matData.textureMetallic].SampleLevel(BilinearWrap, uv, 2).g  : matData.metallicValue;
-	float4 emissive	= matData.hasEmissiveTexture	? textures[matData.textureEmissive].SampleLevel(BilinearWrap, uv, 2) : matData.emissiveValue;
+	float4 albedo	= matData.hasAlbedoTexture		? textures[matData.textureAlbedo].SampleLevel(BilinearWrap		, uv, 2) : matData.albedoValue;
+	float roughness	= matData.hasRoughnessTexture	? textures[matData.textureRoughness].SampleLevel(BilinearWrap	, uv, 2).r : matData.roughnessValue;
+	float metallic	= matData.hasMetallicTexture	? textures[matData.textureMetallic].SampleLevel(BilinearWrap	, uv, 2).g  : matData.metallicValue;
+	float4 emissive	= matData.hasEmissiveTexture	? textures[matData.textureEmissive].SampleLevel(BilinearWrap	, uv, 2) : matData.emissiveValue;
+
+	float3 normal = float3(0.0f, 0.0f, 0.0f);
+	if (matData.hasNormalTexture)
+	{
+		// Tangent space to worldSpace
+		normal = textures[matData.textureNormal].SampleLevel(BilinearWrap, uv, 2).xyz;
+		normal = normalize((2.0f * normal) - 1.0f);
+		normal = normalize(mul(normal, TBN));
+	}
+	else
+	{
+		normal = geometricNormal;
+	}
 
 	float3 worldPos = WorldRayOrigin() + RayTCurrent() * WorldRayDirection();
 	float3 camPos = cbPerFrame.camPos;

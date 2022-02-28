@@ -22,6 +22,22 @@ float linearizeDepth(double nearZ, double farZ, float depth)
     return (2.0 * nearZ * farZ) / (farZ + nearZ - z * (farZ - nearZ));
 }
 
+float3x3 calculateTBN(float3 T, float3 N)
+{
+    // Gram schmidt
+    T = normalize(T - dot(T, N) * N);
+
+    float3 B = normalize(cross(N, T));
+
+    // Negate the tangent if this vertex is mirrored
+    if (dot(cross(N, T), B) < 0.0)
+    {
+        T = T * -1.0;
+    }
+    
+    return float3x3(T, B, N);
+}
+
 
 // Generates a seed for a random number generator from 2 inputs plus a backoff
 uint initRand(uint val0, uint val1, uint backoff = 16) {

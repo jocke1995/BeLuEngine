@@ -1,0 +1,21 @@
+# Blender MTL File: '6Pack - of CyberCars.blend'
+# Material Count: 3
+
+newmtl BRT_Tire
+map_Kn Textures/Tires/BRT_Tire_Normal.dds
+map_Kd Textures/Tires/BRT_Tire_BaseColor.dds
+map_Ks Textures/Tires/BRT_Tire_Roughness.dds
+map_Ka Textures/Tires/BRT_Tire_Metallic.dds
+
+newmtl BRT_Wheel
+map_Kn Textures/Wheels/BRT_Wheel_Normal.dds
+map_Kd Textures/Wheels/BRT_Wheel_BaseColor.dds
+map_Ks Textures/Wheels/BRT_Wheel_Roughness.dds
+map_Ka Textures/Wheels/BRT_Wheel_Metallic.dds
+
+newmtl White_Race_Touring
+map_Kn Textures/Main/BRT_Normal.dds
+map_Kd Textures/Main/BRT_WhitePaint_BaseColor.dds
+map_Ke Textures/Main/BRT_Emissive.dds
+map_Ks Textures/Main/BRT_Roughness.dds
+map_Ka Textures/Main/BRT_Metallic.dds
