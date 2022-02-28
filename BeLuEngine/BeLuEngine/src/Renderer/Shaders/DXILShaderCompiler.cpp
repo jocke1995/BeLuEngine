@@ -97,8 +97,17 @@ IDxcBlob* DXILShaderCompiler::Compile(DXILCompilationDesc* desc)
 
 #pragma region PreProcess
 
+    std::vector<DxcDefine> dxcDefines;
+
+    // Defines (eg DEBUG, HIGHQUALITY, OTHER_SHADER_SPECIFIC_STUFF ..)
+    for (const LPCWSTR& arg : desc->defines)
+    {
+        DxcDefine dxcDefine = {};
+        dxcDefine.Name = arg;
+        dxcDefines.push_back(dxcDefine);
+    }
     IDxcOperationResult* opResult = nullptr;
-    hr = m_pPreProcessCompiler->Preprocess(blobEncoding, desc->filePath, desc->arguments.data(), (UINT32)desc->arguments.size(), nullptr, 0, m_pDefaultIncludeHandler, &opResult);
+    hr = m_pPreProcessCompiler->Preprocess(blobEncoding, desc->filePath, desc->arguments.data(), (UINT32)desc->arguments.size(), dxcDefines.data(), dxcDefines.size(), m_pDefaultIncludeHandler, &opResult);
 
     if (FAILED(hr))
     {

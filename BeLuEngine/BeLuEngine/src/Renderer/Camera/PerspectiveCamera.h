@@ -12,7 +12,7 @@ public:
         double fov = 60.0f,
         double aspectRatio = 16.0f / 9.0f,
         double nearZ = 0.1f,
-        double farZ = 3000.0f,
+        double farZ = 500.0f,
         bool isPrimary = false);
 
 	virtual ~PerspectiveCamera();
@@ -22,6 +22,9 @@ public:
     const DirectX::XMMATRIX* GetProjMatrixInverse() const;
     const DirectX::XMMATRIX* GetViewProjection() const override;
     const DirectX::XMMATRIX* GetViewProjectionTranposed() const override;
+
+    const float GetNearPlane() const override;
+    const float GetFarPlane() const override;
 
     // Sets on projection
     void SetFov(float fov);

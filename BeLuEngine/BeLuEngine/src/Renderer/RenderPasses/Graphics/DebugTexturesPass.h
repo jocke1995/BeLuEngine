@@ -15,7 +15,6 @@ enum E_DEBUG_TEXTURE_VISUALIZATION
 	E_DEBUG_TEXTURE_VISUALIZATION_EMISSIVE,
 	E_DEBUG_TEXTURE_VISUALIZATION_REFLECTION,
 	E_DEBUG_TEXTURE_VISUALIZATION_DEPTH,
-	E_DEBUG_TEXTURE_VISUALIZATION_STENCIL,
 	E_DEBUG_TEXTURE_VISUALIZATION_FINALCOLOR,
 	NUM_TEXTURES_TO_VISUALIZE
 };
@@ -39,7 +38,7 @@ private:
 	unsigned int m_CurrentTextureToVisualize = E_DEBUG_TEXTURE_VISUALIZATION_FINALCOLOR;
 
 	void drawRenderComponent(component::ModelComponent* mc, component::TransformComponent* tc, IGraphicsContext* graphicsContext);
-	void createStatePermutation(const E_DEBUG_TEXTURE_VISUALIZATION psoIndex, const std::vector<LPCWSTR> defines);
+	void createStatePermutation(const E_DEBUG_TEXTURE_VISUALIZATION psoIndex, const LPCWSTR& define);
 };
 
 #endif

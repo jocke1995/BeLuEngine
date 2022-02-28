@@ -23,11 +23,19 @@ DebugTexturesPass::DebugTexturesPass(Mesh* fullScreenQuad)
 {
 	m_pFullScreenQuad = fullScreenQuad;
 
-	m_PipelineStates.resize(E_DEBUG_TEXTURE_VISUALIZATION::NUM_TEXTURES_TO_VISUALIZE);
+	m_PipelineStates.resize(E_DEBUG_TEXTURE_VISUALIZATION::NUM_TEXTURES_TO_VISUALIZE - 1);
 
-	std::vector<LPCWSTR> defines = {};
-	defines.push_back(L"TEST");
-	createStatePermutation(E_DEBUG_TEXTURE_VISUALIZATION_ALBEDO, defines);
+	// Init
+	for (IGraphicsPipelineState* pso : m_PipelineStates)
+		pso = nullptr;
+
+	createStatePermutation(E_DEBUG_TEXTURE_VISUALIZATION_ALBEDO, L"ALBEDO");
+	createStatePermutation(E_DEBUG_TEXTURE_VISUALIZATION_NORMAL, L"NORMAL");
+	createStatePermutation(E_DEBUG_TEXTURE_VISUALIZATION_ROUGHNESS, L"ROUGHNESS");
+	createStatePermutation(E_DEBUG_TEXTURE_VISUALIZATION_METALLIC, L"METALLIC");
+	createStatePermutation(E_DEBUG_TEXTURE_VISUALIZATION_EMISSIVE, L"EMISSIVE");
+	createStatePermutation(E_DEBUG_TEXTURE_VISUALIZATION_REFLECTION, L"REFLECTION");
+	createStatePermutation(E_DEBUG_TEXTURE_VISUALIZATION_DEPTH, L"DEPTH");
 }
 
 DebugTexturesPass::~DebugTexturesPass()
@@ -52,7 +60,7 @@ void DebugTexturesPass::Execute()
 			m_pGraphicsContext->ResourceBarrier(m_CommonGraphicsResources->gBufferEmissive, BL_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 		else if (debugTexture == E_DEBUG_TEXTURE_VISUALIZATION_REFLECTION)
 			m_pGraphicsContext->ResourceBarrier(m_CommonGraphicsResources->reflectionTexture, BL_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-		else if (debugTexture == E_DEBUG_TEXTURE_VISUALIZATION_DEPTH || debugTexture == E_DEBUG_TEXTURE_VISUALIZATION_STENCIL)
+		else if (debugTexture == E_DEBUG_TEXTURE_VISUALIZATION_DEPTH)
 			m_pGraphicsContext->ResourceBarrier(m_CommonGraphicsResources->mainDepthStencil, BL_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	};
 
@@ -121,31 +129,21 @@ void DebugTexturesPass::drawRenderComponent(component::ModelComponent* mc, compo
 	}
 }
 
-void DebugTexturesPass::createStatePermutation(const E_DEBUG_TEXTURE_VISUALIZATION psoIndex, const std::vector<LPCWSTR> defines)
+void DebugTexturesPass::createStatePermutation(const E_DEBUG_TEXTURE_VISUALIZATION psoIndex, const LPCWSTR& define)
 {
 	PSODesc psoDesc = {};
 	psoDesc.AddRenderTargetFormat(BL_FORMAT_R16G16B16A16_FLOAT);	// sceneColor (HDR-range)
 
-	// The defines is the part that can change depending on permutation
-	DXILCompilationDesc shaderDesc = {};
-	auto addDefines = [&](const std::vector<LPCWSTR> defines)
 	{
-		for (const LPCWSTR& define : defines)
-		{
-			shaderDesc.defines.push_back(define);
-		}
-	};
-
-	{
-		shaderDesc = {};
-		addDefines(defines);
+		DXILCompilationDesc shaderDesc = {};
+		shaderDesc.defines.push_back(define);
 		shaderDesc.filePath = L"DebugTexturePassVertex.hlsl";
 		shaderDesc.shaderType = E_SHADER_TYPE::VS;
 		psoDesc.AddShader(shaderDesc);
 	}
 	{
-		shaderDesc = {};
-		addDefines(defines);
+		DXILCompilationDesc shaderDesc = {};
+		shaderDesc.defines.push_back(define);
 		shaderDesc.filePath = L"DebugTexturePassPixel.hlsl";
 		shaderDesc.shaderType = E_SHADER_TYPE::PS;
 		psoDesc.AddShader(shaderDesc);

@@ -182,6 +182,9 @@ void Renderer::Update(double dt)
 	m_pCbPerFrameData->camUp = up;
 	m_pCbPerFrameData->camForward = forward;
 
+	m_pCbPerFrameData->nearPlane = m_pScenePrimaryCamera->GetNearPlane();
+	m_pCbPerFrameData->farPlane = m_pScenePrimaryCamera->GetFarPlane();
+
 	m_pCbPerFrameData->projection	= *m_pScenePrimaryCamera->GetProjMatrix();
 	m_pCbPerFrameData->projectionI	= *m_pScenePrimaryCamera->GetProjMatrixInverse();
 	m_pCbPerFrameData->view			= *m_pScenePrimaryCamera->GetViewMatrix();

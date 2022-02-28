@@ -44,8 +44,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
     /*------ AssetLoader to load models / textures ------*/
    AssetLoader* al = AssetLoader::Get();
    
-   //Scene* scene = SponzaScene(sceneManager);
-   Scene* scene = PBRScene(sceneManager);
+   Scene* scene = SponzaScene(sceneManager);
+   //Scene* scene = PBRScene(sceneManager);
 
    // Set scene
    sceneManager->SetScene(scene);

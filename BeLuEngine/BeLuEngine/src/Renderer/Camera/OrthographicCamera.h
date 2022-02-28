@@ -23,7 +23,7 @@ public:
     const DirectX::XMMATRIX* GetProjMatrixInverse() const override;
     const DirectX::XMMATRIX* GetViewProjection() const override;
     const DirectX::XMMATRIX* GetViewProjectionTranposed() const override;
-    
+
     const float GetLeft() const;
     const float GetRight() const;
     const float GetBot() const;

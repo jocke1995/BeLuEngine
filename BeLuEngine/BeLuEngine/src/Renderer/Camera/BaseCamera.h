@@ -22,6 +22,9 @@ public:
 	DirectX::XMFLOAT3 GetUpVector() const;
 	DirectX::XMFLOAT3 GetRightVector() const;
 
+	virtual const float GetNearPlane() const;
+	virtual const float GetFarPlane() const;
+
 	// Matrices
 	const DirectX::XMMATRIX* GetViewMatrix() const;
 	const DirectX::XMMATRIX* GetViewMatrixInverse() const;

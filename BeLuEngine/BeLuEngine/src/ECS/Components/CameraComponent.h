@@ -35,7 +35,7 @@ namespace component
 			double fov = 60.0f,
 			double aspectRatio = 16.0f / 9.0f,
 			double zNear = 0.1f,
-			double zFar = 3000.0f);
+			double zFar = 500.0f);
 
 		BaseCamera* createOrthographic(
 			DirectX::XMVECTOR position = { 0.0, 4.0, -10.0 },

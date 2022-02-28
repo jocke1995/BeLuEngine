@@ -43,6 +43,16 @@ const DirectX::XMMATRIX* PerspectiveCamera::GetViewProjectionTranposed() const
 	return &m_ViewProjTranposedMatrix;
 }
 
+const float PerspectiveCamera::GetNearPlane() const
+{
+	return m_NearZ;
+}
+
+const float PerspectiveCamera::GetFarPlane() const
+{
+	return m_FarZ;
+}
+
 void PerspectiveCamera::SetFov(float fov)
 {
 	m_Fov = fov * DirectX::XM_PI / 180.0f;

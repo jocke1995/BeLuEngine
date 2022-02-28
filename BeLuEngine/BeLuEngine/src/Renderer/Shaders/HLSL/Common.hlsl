@@ -16,10 +16,12 @@ float3 WorldPosFromDepth(float depth, float2 TexCoord, float4x4 projectionInvers
 }
 
 // Based on near & far-plane
-float linearizeDepth(double nearZ, double farZ, float d)
+float linearizeDepth(double nearZ, double farZ, float depth)
 {
-    return nearZ * farZ / (farZ + d * (nearZ - farZ));
+    float z = depth * 2.0 - 1.0; // back to NDC 
+    return (2.0 * nearZ * farZ) / (farZ + nearZ - z * (farZ - nearZ));
 }
+
 
 // Generates a seed for a random number generator from 2 inputs plus a backoff
 uint initRand(uint val0, uint val1, uint backoff = 16) {

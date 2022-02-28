@@ -80,6 +80,16 @@ DirectX::XMFLOAT3 BaseCamera::GetRightVector() const
 	return DXfloat3;
 }
 
+const float BaseCamera::GetNearPlane() const
+{
+	return 0.0f;
+}
+
+const float BaseCamera::GetFarPlane() const
+{
+	return 0.0f;
+}
+
 const DirectX::XMMATRIX* BaseCamera::GetViewMatrix() const
 {
 	return &m_ViewMatrix;

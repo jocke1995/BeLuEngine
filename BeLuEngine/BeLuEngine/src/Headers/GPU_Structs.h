@@ -94,6 +94,9 @@ struct CB_PER_FRAME_STRUCT
 	float4x4 viewI;
 	float4x4 projectionI;
 
+	float nearPlane;
+	float farPlane;
+	float2 pad4;
 	// deltaTime ..
 	// etc ..
 };
