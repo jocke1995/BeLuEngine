@@ -15,30 +15,19 @@
 // Generic API
 #include "../Renderer/API/Interface/IGraphicsManager.h"
 #include "../Renderer/API/Interface/IGraphicsContext.h"
+#include "../Renderer/API/Interface/IGraphicsBuffer.h"
 #include "../Renderer/API/Interface/IGraphicsPipelineState.h"
 
-DebugTexturesPass::DebugTexturesPass()
+DebugTexturesPass::DebugTexturesPass(Mesh* fullScreenQuad)
 	: GraphicsPass(L"DebugTexturesPass")
 {
-	PSODesc psoDesc = {};
-	psoDesc.SetDepthStencilFormat(BL_FORMAT_D24_UNORM_S8_UINT);
-	psoDesc.SetDepthDesc(BL_DEPTH_WRITE_MASK_ALL, BL_COMPARISON_FUNC_LESS);
+	m_pFullScreenQuad = fullScreenQuad;
 
-	{
-		DXILCompilationDesc shaderDesc = {};
-		shaderDesc.filePath = L"DebugTexturePassVertex.hlsl";
-		shaderDesc.shaderType = E_SHADER_TYPE::VS;
-		psoDesc.AddShader(shaderDesc);
-	}
-	{
-		DXILCompilationDesc shaderDesc = {};
-		shaderDesc.filePath = L"DebugTexturePassPixel.hlsl";
-		shaderDesc.shaderType = E_SHADER_TYPE::PS;
-		psoDesc.AddShader(shaderDesc);
-	}
+	m_PipelineStates.resize(E_DEBUG_TEXTURE_VISUALIZATION::NUM_TEXTURES_TO_VISUALIZE);
 
-	IGraphicsPipelineState* iGraphicsPSO = IGraphicsPipelineState::Create(psoDesc, L"DebugTexturesPass");
-	m_PipelineStates.push_back(iGraphicsPSO);
+	std::vector<LPCWSTR> defines = {};
+	defines.push_back(L"TEST");
+	createStatePermutation(E_DEBUG_TEXTURE_VISUALIZATION_ALBEDO, defines);
 }
 
 DebugTexturesPass::~DebugTexturesPass()
@@ -47,31 +36,57 @@ DebugTexturesPass::~DebugTexturesPass()
 
 void DebugTexturesPass::Execute()
 {
+	// If we're not visualizing anything, just return
+	if (m_CurrentTextureToVisualize == E_DEBUG_TEXTURE_VISUALIZATION_FINALCOLOR)
+		return;
+
+	auto ResourceBarrierTextureToVisualize = [this](const E_DEBUG_TEXTURE_VISUALIZATION debugTexture)
+	{
+		if (debugTexture == E_DEBUG_TEXTURE_VISUALIZATION_ALBEDO)
+			m_pGraphicsContext->ResourceBarrier(m_CommonGraphicsResources->gBufferAlbedo, BL_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		else if (debugTexture == E_DEBUG_TEXTURE_VISUALIZATION_NORMAL)
+			m_pGraphicsContext->ResourceBarrier(m_CommonGraphicsResources->gBufferNormal, BL_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		else if (debugTexture == E_DEBUG_TEXTURE_VISUALIZATION_ROUGHNESS || debugTexture == E_DEBUG_TEXTURE_VISUALIZATION_METALLIC)
+			m_pGraphicsContext->ResourceBarrier(m_CommonGraphicsResources->gBufferMaterialProperties, BL_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		else if (debugTexture == E_DEBUG_TEXTURE_VISUALIZATION_EMISSIVE)
+			m_pGraphicsContext->ResourceBarrier(m_CommonGraphicsResources->gBufferEmissive, BL_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		else if (debugTexture == E_DEBUG_TEXTURE_VISUALIZATION_REFLECTION)
+			m_pGraphicsContext->ResourceBarrier(m_CommonGraphicsResources->reflectionTexture, BL_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		else if (debugTexture == E_DEBUG_TEXTURE_VISUALIZATION_DEPTH || debugTexture == E_DEBUG_TEXTURE_VISUALIZATION_STENCIL)
+			m_pGraphicsContext->ResourceBarrier(m_CommonGraphicsResources->mainDepthStencil, BL_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	};
+
 	m_pGraphicsContext->Begin();
 	{
-		ScopedPixEvent(DebugTextures, m_pGraphicsContext);
+		ScopedPixEvent(DebugPass, m_pGraphicsContext);
 
 		m_pGraphicsContext->SetupBindings(false);
 
-		m_pGraphicsContext->SetPipelineState(m_PipelineStates[0]);
+		m_pGraphicsContext->SetPipelineState(m_PipelineStates[m_CurrentTextureToVisualize]);
 		m_pGraphicsContext->SetPrimitiveTopology(BL_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		m_pGraphicsContext->SetViewPort(m_CommonGraphicsResources->renderWidth, m_CommonGraphicsResources->renderHeight);
 		m_pGraphicsContext->SetScizzorRect(m_CommonGraphicsResources->renderWidth, m_CommonGraphicsResources->renderHeight);
 
-		m_pGraphicsContext->ResourceBarrier(m_CommonGraphicsResources->mainDepthStencil, BL_RESOURCE_STATE_DEPTH_WRITE);
-		m_pGraphicsContext->ClearDepthTexture(m_CommonGraphicsResources->mainDepthStencil, true, 1.0f, true, 0);
-		m_pGraphicsContext->SetRenderTargets(0, nullptr, m_CommonGraphicsResources->mainDepthStencil);
+		// Just overwrite this texture with the debugTextureData
+		m_pGraphicsContext->ResourceBarrier(m_CommonGraphicsResources->finalColorBuffer, BL_RESOURCE_STATE_RENDER_TARGET);
+		m_pGraphicsContext->SetRenderTargets(1, &m_CommonGraphicsResources->finalColorBuffer, nullptr);
 
-		// Draw for every Rendercomponent
-		for (int i = 0; i < m_RenderComponents.size(); i++)
-		{
-			component::ModelComponent* mc = m_RenderComponents.at(i).mc;
-			component::TransformComponent* tc = m_RenderComponents.at(i).tc;
+		// Set cbvs
+		m_pGraphicsContext->SetConstantBuffer(RootParam_CBV_B3, m_CommonGraphicsResources->cbPerFrame, false);
+		m_pGraphicsContext->SetConstantBuffer(RootParam_CBV_B4, m_CommonGraphicsResources->cbPerScene, false);
 
-			// Draws all entities with ModelComponent + TransformComponent
-			drawRenderComponent(mc, tc, m_pGraphicsContext);
-		}
+		ResourceBarrierTextureToVisualize((E_DEBUG_TEXTURE_VISUALIZATION)m_CurrentTextureToVisualize);
+
+		// Draw a fullscreen quad 
+		SlotInfo slotInfo = {};
+		slotInfo.vertexDataIndex = m_pFullScreenQuad->GetVertexBuffer()->GetShaderResourceHeapIndex();
+		m_pGraphicsContext->Set32BitConstants(Constants_SlotInfo_B0, sizeof(SlotInfo) / 4, &slotInfo, 0, false);
+
+		m_pGraphicsContext->SetIndexBuffer(m_pFullScreenQuad->GetIndexBuffer(), m_pFullScreenQuad->GetSizeOfIndices());
+
+		m_pGraphicsContext->DrawIndexedInstanced(m_pFullScreenQuad->GetNumIndices(), 1, 0, 0, 0);
+
 	}
 	m_pGraphicsContext->End();
 }
@@ -79,6 +94,13 @@ void DebugTexturesPass::Execute()
 void DebugTexturesPass::SetRenderComponents(const std::vector<RenderComponent>& renderComponents)
 {
 	m_RenderComponents = renderComponents;
+}
+
+void DebugTexturesPass::AdvanceTextureToVisualize()
+{
+	m_CurrentTextureToVisualize +=(E_DEBUG_TEXTURE_VISUALIZATION)1;
+
+	m_CurrentTextureToVisualize %= NUM_TEXTURES_TO_VISUALIZE;
 }
 
 void DebugTexturesPass::drawRenderComponent(component::ModelComponent* mc, component::TransformComponent* tc, IGraphicsContext* graphicsContext)
@@ -97,4 +119,38 @@ void DebugTexturesPass::drawRenderComponent(component::ModelComponent* mc, compo
 		graphicsContext->SetIndexBuffer(m->GetIndexBuffer(), m->GetSizeOfIndices());
 		graphicsContext->DrawIndexedInstanced(m->GetNumIndices(), 1, 0, 0, 0);
 	}
+}
+
+void DebugTexturesPass::createStatePermutation(const E_DEBUG_TEXTURE_VISUALIZATION psoIndex, const std::vector<LPCWSTR> defines)
+{
+	PSODesc psoDesc = {};
+	psoDesc.AddRenderTargetFormat(BL_FORMAT_R16G16B16A16_FLOAT);	// sceneColor (HDR-range)
+
+	// The defines is the part that can change depending on permutation
+	DXILCompilationDesc shaderDesc = {};
+	auto addDefines = [&](const std::vector<LPCWSTR> defines)
+	{
+		for (const LPCWSTR& define : defines)
+		{
+			shaderDesc.defines.push_back(define);
+		}
+	};
+
+	{
+		shaderDesc = {};
+		addDefines(defines);
+		shaderDesc.filePath = L"DebugTexturePassVertex.hlsl";
+		shaderDesc.shaderType = E_SHADER_TYPE::VS;
+		psoDesc.AddShader(shaderDesc);
+	}
+	{
+		shaderDesc = {};
+		addDefines(defines);
+		shaderDesc.filePath = L"DebugTexturePassPixel.hlsl";
+		shaderDesc.shaderType = E_SHADER_TYPE::PS;
+		psoDesc.AddShader(shaderDesc);
+	}
+
+	IGraphicsPipelineState* iGraphicsPSO = IGraphicsPipelineState::Create(psoDesc, L"DebugTexturesPass");
+	m_PipelineStates[psoIndex] = iGraphicsPSO;
 }

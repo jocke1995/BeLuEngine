@@ -807,6 +807,13 @@ void D3D12GraphicsManager::ExecuteGraphicsContexts(const std::vector<IGraphicsCo
 	for (IGraphicsContext* graphicsContext : graphicsContexts)
 	{
 		D3D12GraphicsContext* currentContext = static_cast<D3D12GraphicsContext*>(graphicsContext);
+
+		// Continue if this context wasn't used this frame
+		if (currentContext->m_IsActiveThisFrame == false)
+			continue;
+		else
+			currentContext->m_IsActiveThisFrame = false; // Reset for next frame
+
 		// Resolve transitionBarriers
 		bool needTransitionCList = currentContext->resolvePendingTransitionBarriers();
 

@@ -122,6 +122,9 @@ D3D12GraphicsContext::~D3D12GraphicsContext()
 
 void D3D12GraphicsContext::Begin()
 {
+	// Indication to the D3D12GraphicsManager that this context was used this frame
+	m_IsActiveThisFrame = true;
+
 	D3D12GraphicsManager* graphicsManager = D3D12GraphicsManager::GetInstance();
 	unsigned int index = graphicsManager->GetCommandInterfaceIndex();
 

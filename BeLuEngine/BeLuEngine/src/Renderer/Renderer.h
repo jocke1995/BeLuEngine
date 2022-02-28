@@ -169,7 +169,6 @@ private:
 	/* ------------------------------ Events ------------------------------ */
 	// Advances through the buffers to visualize on pressing g-key
 	void advanceTextureToVisualize(VisualizeTexture* event);
-	IGraphicsTexture* m_CurrentTextureToVisualize = nullptr;
 };
 
 #endif

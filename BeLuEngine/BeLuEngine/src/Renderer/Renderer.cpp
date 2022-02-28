@@ -50,6 +50,7 @@
 #include "RenderPasses/Graphics/TransparentRenderTask.h"
 #include "RenderPasses/Graphics/CopyOnDemandTask.h"
 #include "RenderPasses/Graphics/SkyboxPass.h"
+#include "RenderPasses/Graphics/DebugTexturesPass.h"
 
 // Ray tracing
 #include "RenderPasses/Graphics/BottomLevelRenderTask.h"
@@ -364,6 +365,10 @@ void Renderer::Execute()
 	// Skybox 
 	executeGraphicsPassLambda(E_GRAPHICS_PASS_TYPE::SKYBOX);
 	
+	TODO("Don't do this in dist-builds")
+	// DebugTextureVisualize 
+	executeGraphicsPassLambda(E_GRAPHICS_PASS_TYPE::DEBUG_VISUALIZE);
+
 	TODO("This will be moved into an editor-Mode only")
 	/* ----------------------------- DEVELOPERMODE CommandLists ----------------------------- */
 	if (DEVELOPERMODE_DRAWBOUNDINGBOX == true)
@@ -386,7 +391,7 @@ void Renderer::Execute()
 
 	/*------------------- Present -------------------*/
 	TODO("This overrides the editorStuff.. this texture should be copied to the finalColorTexture instead before we draw the editor, so it isn't removed");
-	graphicsManager->SyncAndPresent(m_CurrentTextureToVisualize);
+	graphicsManager->SyncAndPresent(m_GraphicsResources.finalColorBuffer);
 
 	graphicsManager->End();
 }
@@ -748,7 +753,6 @@ void Renderer::onResizedResolution(const E_RESOLUTION_TYPES newResolution)
 		BL_FORMAT_R16G16B16A16_FLOAT,
 		F_TEXTURE_USAGE::ShaderResource | F_TEXTURE_USAGE::RenderTarget | F_TEXTURE_USAGE::UnorderedAccess,
 		L"FinalColorbuffer");
-	m_CurrentTextureToVisualize = m_GraphicsResources.finalColorBuffer;
 
 	// GBufferAlbedo
 	m_GraphicsResources.gBufferAlbedo = IGraphicsTexture::Create();
@@ -924,6 +928,9 @@ void Renderer::initGraphicsPasses()
 	// Skybox
 	GraphicsPass* skyboxPass = new SkyboxPass();
 
+	// DebugTexturesPass
+	GraphicsPass* debugVisualizePass = new DebugTexturesPass(m_pFullScreenQuad);
+
 	// LazyCopy
 	GraphicsPass* copyOnDemandTask = new CopyOnDemandTask();
 
@@ -947,6 +954,7 @@ void Renderer::initGraphicsPasses()
 	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::POSTPROCESS_BLOOM] = bloomPass;
 	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::POSTPROCESS_TONEMAP] = tonemapPass;
 	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::SKYBOX] = skyboxPass;
+	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DEBUG_VISUALIZE] = debugVisualizePass;
 	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::IMGUI] = imGuiPass;
 
 	// Pushback in the order of execution
@@ -971,6 +979,7 @@ void Renderer::initGraphicsPasses()
 
 	// Skybox
 	m_MainGraphicsContexts.push_back(skyboxPass->GetGraphicsContext());
+	m_MainGraphicsContexts.push_back(debugVisualizePass->GetGraphicsContext());
 	
 	// -------------------------------------- GUI -------------------------------------------------
 	// Debug/ImGui
@@ -999,6 +1008,7 @@ void Renderer::setDataForRendering()
 	static_cast<DepthRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DEPTH_PRE_PASS])->SetRenderComponents(m_RenderComponents[F_DRAW_FLAGS::NO_DEPTH]);
 	static_cast<DeferredGeometryRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DEFERRED_GEOMETRY])->SetRenderComponents(m_RenderComponents[F_DRAW_FLAGS::DRAW_OPAQUE]);
 	static_cast<TransparentRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::OPACITY])->SetRenderComponents(m_RenderComponents[F_DRAW_FLAGS::DRAW_TRANSPARENT]);
+	static_cast<DebugTexturesPass*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DEBUG_VISUALIZE])->SetRenderComponents(m_RayTracedRenderComponents);
 
 	// DXR
 	static_cast<TopLevelRenderTask*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::TLAS])->SetRenderComponents(m_RayTracedRenderComponents);
@@ -1071,38 +1081,5 @@ void Renderer::cleanupCommonBuffers()
 
 void Renderer::advanceTextureToVisualize(VisualizeTexture* event)
 {
-	static unsigned int moduloCounter = 0;
-
-	switch (moduloCounter)
-	{
-		TODO("This won't work anymore because they are not the same format.. need to do a separate pass to visualize these!");
-		//case -1:
-		//	m_CurrentTextureToVisualize = m_GraphicsResources.gBufferAlbedo;
-		//	break;
-		//case -1:
-		//	m_CurrentTextureToVisualize = m_GraphicsResources.gBufferMaterialProperties;
-		//	break;
-		//case -1:
-		//	m_CurrentTextureToVisualize = m_GraphicsResources.depth...;
-		//	break;
-		//case -1:
-		//	m_CurrentTextureToVisualize = m_GraphicsResources.motionVectors;
-		//	break;
-
-		case 0:
-			m_CurrentTextureToVisualize = m_GraphicsResources.gBufferNormal;
-			break;
-		case 1:
-			m_CurrentTextureToVisualize = m_GraphicsResources.reflectionTexture;
-			break;
-		case 2:
-			m_CurrentTextureToVisualize = m_GraphicsResources.gBufferEmissive;
-			break;
-		case 3:
-			m_CurrentTextureToVisualize = m_GraphicsResources.finalColorBuffer;
-			break;
-	}
-
-	moduloCounter++;
-	moduloCounter %= 4;
+	static_cast<DebugTexturesPass*>(m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::DEBUG_VISUALIZE])->AdvanceTextureToVisualize();
 }

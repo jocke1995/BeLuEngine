@@ -76,6 +76,10 @@ private:
     friend class D3D12LocalStateTracker;
     friend class ScopedPIXEvent;
 
+    // An indicator to the GraphicsManager if this context is to be executed this frame or not.
+    // It is reset to false by the graphicsManager when it executes this context
+    bool m_IsActiveThisFrame = false;
+
 	ID3D12GraphicsCommandList5* m_pCommandList{ nullptr };
 	ID3D12CommandAllocator* m_pCommandAllocators[NUM_SWAP_BUFFERS]{ nullptr };
 
