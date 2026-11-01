@@ -17,7 +17,7 @@ project "BeLuEngine"
     staticruntime "On"
     
     filter { "files:**.hlsl" }
-        flags "ExcludeFromBuild"
+        excludefrombuild "On"
     
     filter "configurations:*"
         cppdialect "C++17"
@@ -62,7 +62,7 @@ project "Game"
     staticruntime "On"
 
     filter { "files:**.hlsl" }
-        flags "ExcludeFromBuild"
+        excludefrombuild "On"
     
     filter "configurations:*"
         cppdialect "C++17"
@@ -96,7 +96,7 @@ project "Sandbox"
     vpaths {["Gamefiles"] = {"*.cpp", "*.h"}}
 
     filter { "files:**.hlsl" }
-        flags "ExcludeFromBuild"
+        excludefrombuild "On"
     
     filter "configurations:*"
         cppdialect "C++17"

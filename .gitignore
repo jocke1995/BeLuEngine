@@ -5,6 +5,7 @@ BeLuEngine/bin/
 BeLuEngine/Vendor/Assets/Models/Private
 
 **.sln
+**.slnx
 **.vcxproj
 **.user
 **.filters
