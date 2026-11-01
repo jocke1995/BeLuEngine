@@ -160,7 +160,7 @@ Model* AssetLoader::LoadModel(const std::wstring& path)
 	}
 
 	// Else load the model
-	const std::string filePath(path.begin(), path.end());
+	const std::string filePath = to_string(path);
 
 	Assimp::Importer importer;
 	importer.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, true);
@@ -265,7 +265,7 @@ unsigned int AssetLoader::generateShaderHash(const DXILCompilationDesc* desc)
 
 	std::hash<std::wstring> hasher;
 
-	unsigned int hashedString = hasher(finalString);
+	unsigned int hashedString = static_cast<unsigned int>(hasher(finalString));
 
 	return hashedString;
 }
@@ -489,7 +489,7 @@ IGraphicsTexture* AssetLoader::processTexture(aiMaterial* mat, E_TEXTURE2D_TYPE 
 		}
 		else
 		{
-			std::string tempString = std::string(filePathWithoutTexture.begin(), filePathWithoutTexture.end());
+			std::string tempString = to_string(filePathWithoutTexture);
 			// No texture, warn and apply default Texture
 			BL_LOG_WARNING("Applying default texture: " + warningMessageTextureType +
 				" on mesh with path: \'%s\'\n", tempString.c_str());

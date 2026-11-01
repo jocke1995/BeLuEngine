@@ -81,7 +81,7 @@ void TransparentRenderTask::Execute()
 		m_pGraphicsContext->SetShaderResourceView(RootParam_SRV_T0, m_GraphicBuffers["rawBufferLights"], false);
 
 		// Draw from opposite order from the sorted array
-		for (int i = m_RenderComponents.size() - 1; i >= 0; i--)
+		for (int i = static_cast<int>(m_RenderComponents.size()) - 1; i >= 0; i--)
 		{
 			component::ModelComponent* mc = m_RenderComponents.at(i).mc;
 			component::TransformComponent* tc = m_RenderComponents.at(i).tc;

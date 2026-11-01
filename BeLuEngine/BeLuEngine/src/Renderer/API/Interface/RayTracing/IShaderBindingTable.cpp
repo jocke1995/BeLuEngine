@@ -102,7 +102,7 @@ ShaderRecord::ShaderRecord(const std::wstring entryPointName, const std::vector<
 {
     m_EntryPointName = entryPointName;
 
-    unsigned int numInputDatas = inputData.size();
+    unsigned int numInputDatas = static_cast<unsigned int>(inputData.size());
     if (numInputDatas > 0)
     {
         m_InputData.resize(numInputDatas);

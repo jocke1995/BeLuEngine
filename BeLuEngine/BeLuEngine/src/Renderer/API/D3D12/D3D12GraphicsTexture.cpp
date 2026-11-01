@@ -73,7 +73,7 @@ bool D3D12GraphicsTexture::LoadTexture2D_DDS(E_TEXTURE2D_TYPE textureType, const
 
 	// Set resource desc created in LoadDDSTextureFromFile
 	D3D12_RESOURCE_DESC resourceDesc = m_pResource->GetDesc();
-	unsigned int rowPitch = m_Subresources[0].RowPitch;
+	unsigned int rowPitch = static_cast<unsigned int>(m_Subresources[0].RowPitch);
 
 	m_NumMipLevels = resourceDesc.MipLevels;
 
@@ -146,7 +146,7 @@ bool D3D12GraphicsTexture::LoadTextureCube_DDS(const std::wstring& filePath)
 
 	// Set resource desc created in LoadDDSTextureFromFile
 	D3D12_RESOURCE_DESC resourceDesc = m_pResource->GetDesc();
-	unsigned int rowPitch = m_Subresources[0].RowPitch;
+	unsigned int rowPitch = static_cast<unsigned int>(m_Subresources[0].RowPitch);
 
 	m_NumMipLevels = resourceDesc.MipLevels;
 
@@ -380,26 +380,26 @@ bool D3D12GraphicsTexture::CreateTexture2D(unsigned int width, unsigned int heig
 unsigned int D3D12GraphicsTexture::GetShaderResourceHeapIndex(unsigned int mipLevel) const
 {
 	BL_ASSERT(mipLevel >= 0 && mipLevel < g_MAX_TEXTURE_MIPS);
-	BL_ASSERT(m_ShaderResourceDescriptorHeapIndices[mipLevel] != -1);
+	BL_ASSERT(m_ShaderResourceDescriptorHeapIndices[mipLevel] != UINT32_MAX);
 	return m_ShaderResourceDescriptorHeapIndices[mipLevel];
 }
 
 unsigned int D3D12GraphicsTexture::GetUnorderedAccessIndex(unsigned int mipLevel) const
 {
 	BL_ASSERT(mipLevel >= 0 && mipLevel < g_MAX_TEXTURE_MIPS);
-	BL_ASSERT(m_UnorderedAccessDescriptorHeapIndices[mipLevel] != -1);
+	BL_ASSERT(m_UnorderedAccessDescriptorHeapIndices[mipLevel] != UINT32_MAX);
 	return m_UnorderedAccessDescriptorHeapIndices[mipLevel];
 }
 
 unsigned int D3D12GraphicsTexture::GetRenderTargetHeapIndex() const
 {
-	BL_ASSERT(m_RenderTargetDescriptorHeapIndex != -1);
+	BL_ASSERT(m_RenderTargetDescriptorHeapIndex != UINT32_MAX);
 	return m_RenderTargetDescriptorHeapIndex;
 }
 
 unsigned int D3D12GraphicsTexture::GetDepthStencilIndex() const
 {
-	BL_ASSERT(m_DepthStencilDescriptorHeapIndex != -1);
+	BL_ASSERT(m_DepthStencilDescriptorHeapIndex != UINT32_MAX);
 	return m_DepthStencilDescriptorHeapIndex;
 }
 

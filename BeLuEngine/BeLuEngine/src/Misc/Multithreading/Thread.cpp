@@ -16,7 +16,7 @@ unsigned int __stdcall Thread::threadFunc(void* threadParam)
 
 		std::stringstream ss;
 		ss << std::this_thread::get_id();
-		t->m_pStatistics->m_Id = std::stoull(ss.str());
+		t->m_pStatistics->m_Id = static_cast<unsigned int>(std::stoull(ss.str()));
 	}
 	
 #endif

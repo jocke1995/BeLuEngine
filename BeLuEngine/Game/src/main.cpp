@@ -3,7 +3,7 @@
 Scene* TestScene(SceneManager* sm);
 void TestUpdateScene(SceneManager* sm, double dt);
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
+int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int nCmdShow)
 {
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
@@ -14,7 +14,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
     /*  ------ Get references from engine  ------ */
     Window* const window = engine.GetWindow();
     Timer* const timer = engine.GetTimer();
-    ThreadPool* const threadPool = engine.GetThreadPool();
+    ThreadPool& threadPool = ThreadPool::GetInstance();
     SceneManager* const sceneManager = engine.GetSceneHandler();
     Renderer* const renderer = engine.GetRenderer();
 

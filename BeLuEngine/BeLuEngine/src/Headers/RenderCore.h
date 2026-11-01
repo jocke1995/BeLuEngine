@@ -354,8 +354,8 @@ struct BL_DEPTH_STENCIL_DESC
     unsigned int depthWriteMask;    // BL_DEPTH_WRITE_MASK
     BL_COMPARISON_FUNC depthComparisonFunc;
     bool enableStencil;
-    char stencilReadMask;
-    char stencilWriteMask;
+    unsigned char stencilReadMask;
+    unsigned char stencilWriteMask;
     BL_DEPTH_STENCILOP_DESC frontFace;
     BL_DEPTH_STENCILOP_DESC backFace;
 };

@@ -107,7 +107,7 @@ IDxcBlob* DXILShaderCompiler::Compile(DXILCompilationDesc* desc)
         dxcDefines.push_back(dxcDefine);
     }
     IDxcOperationResult* opResult = nullptr;
-    hr = m_pPreProcessCompiler->Preprocess(blobEncoding, desc->filePath, desc->arguments.data(), (UINT32)desc->arguments.size(), dxcDefines.data(), dxcDefines.size(), m_pDefaultIncludeHandler, &opResult);
+    hr = m_pPreProcessCompiler->Preprocess(blobEncoding, desc->filePath, desc->arguments.data(), (UINT32)desc->arguments.size(), dxcDefines.data(), static_cast<UINT32>(dxcDefines.size()), m_pDefaultIncludeHandler, &opResult);
 
     if (FAILED(hr))
     {

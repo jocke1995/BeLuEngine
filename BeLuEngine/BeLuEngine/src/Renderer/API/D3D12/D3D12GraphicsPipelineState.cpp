@@ -64,6 +64,8 @@ D3D12GraphicsPipelineState::D3D12GraphicsPipelineState(const PSODesc& desc, cons
 		default:
 			return false;
 		}
+
+		return true;
 	};
 
 	for (DXILCompilationDesc shaderDescs : desc.m_Shaders)

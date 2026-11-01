@@ -4,19 +4,35 @@
 #include <string>
 #include <filesystem>
 
-#include <locale>
-#include <codecvt>
 #include <vector>
 #include <Windows.h>
 
-static std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> strconverter;
-inline std::string to_string(std::wstring wstr)
+// UTF-16 (wstring) <-> UTF-8 (string) conversion using the Win32 API.
+// Replaces std::wstring_convert/<codecvt>, which are deprecated since C++17 (and weren't thread-safe as a shared static).
+inline std::string to_string(const std::wstring& wstr)
 {
-	return strconverter.to_bytes(wstr);
+	if (wstr.empty())
+	{
+		return std::string();
+	}
+
+	const int size = WideCharToMultiByte(CP_UTF8, 0, wstr.data(), static_cast<int>(wstr.size()), nullptr, 0, nullptr, nullptr);
+	std::string result(size, '\0');
+	WideCharToMultiByte(CP_UTF8, 0, wstr.data(), static_cast<int>(wstr.size()), result.data(), size, nullptr, nullptr);
+	return result;
 }
-inline std::wstring to_wstring(std::string str)
+
+inline std::wstring to_wstring(const std::string& str)
 {
-	return strconverter.from_bytes(str);
+	if (str.empty())
+	{
+		return std::wstring();
+	}
+
+	const int size = MultiByteToWideChar(CP_UTF8, 0, str.data(), static_cast<int>(str.size()), nullptr, 0);
+	std::wstring result(size, L'\0');
+	MultiByteToWideChar(CP_UTF8, 0, str.data(), static_cast<int>(str.size()), result.data(), size);
+	return result;
 }
 
 
@@ -125,7 +141,7 @@ enum class E_CAMERA_TYPE
 	}							\
 }
 
-#define TODO() //DebugBreak();
+#define TODO(...) // Marks code that should be revisited. Expands to nothing.
 
 // Debug
 constexpr bool SINGLE_THREADED_RENDERER = false;

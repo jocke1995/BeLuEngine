@@ -21,7 +21,7 @@ D3D12RayTracingPipelineState::D3D12RayTracingPipelineState(const RayTracingPipel
 
 	D3D12_STATE_SUBOBJECT* dxilSubObject = nullptr;
 	// Add all the DXIL libraries
-	unsigned int numShaders = desc.m_RayTracingShaders.size();
+	unsigned int numShaders = static_cast<unsigned int>(desc.m_RayTracingShaders.size());
 	std::vector<D3D12_DXIL_LIBRARY_DESC> dxilLibDescs(numShaders);
 	std::vector<D3D12_EXPORT_DESC> exportDescs(numShaders);	// Currently only supporting 1 entryPoint per shaderFile.. this is something that could be expanded..
 
@@ -46,7 +46,7 @@ D3D12RayTracingPipelineState::D3D12RayTracingPipelineState(const RayTracingPipel
 
 #pragma region HitGroups
 	D3D12_STATE_SUBOBJECT* hitGroupSubObject = nullptr;
-	unsigned int numHitGroups = desc.m_HitGroups.size();
+	unsigned int numHitGroups = static_cast<unsigned int>(desc.m_HitGroups.size());
 	std::vector<D3D12_HIT_GROUP_DESC> hitGroupDescs(numHitGroups);
 	for (unsigned int i = 0; i < numHitGroups; i++)
 	{
@@ -76,7 +76,7 @@ D3D12RayTracingPipelineState::D3D12RayTracingPipelineState(const RayTracingPipel
 	// Setup exports/Names. 
 	// This part stores the name of each Raygen, Miss and/or Hitgroups
 	// These names are the same names that will be associated with their corresponding rootSignatures
-	unsigned int numExports = desc.m_RootSignatureAssociations.size();
+	unsigned int numExports = static_cast<unsigned int>(desc.m_RootSignatureAssociations.size());
 	std::vector<const wchar_t*> exportNames(numExports);
 	for (unsigned int i = 0; i < numExports; i++)
 	{
@@ -98,7 +98,7 @@ D3D12RayTracingPipelineState::D3D12RayTracingPipelineState(const RayTracingPipel
 	D3D12_STATE_SUBOBJECT* rootSigObject = nullptr;
 	D3D12_STATE_SUBOBJECT* rootSigAssociationObject = nullptr;
 
-	unsigned int numRootSignatureAssociations = desc.m_RootSignatureAssociations.size();
+	unsigned int numRootSignatureAssociations = static_cast<unsigned int>(desc.m_RootSignatureAssociations.size());
 	std::vector<D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION> rootSigAssociation(numRootSignatureAssociations);
 	std::vector<LPCWSTR> shaderExportsVec(numRootSignatureAssociations);
 	std::vector<ID3D12RootSignature*> rootSigs(numRootSignatureAssociations);
@@ -233,7 +233,7 @@ ID3D12RootSignature* D3D12RayTracingPipelineState::createLocalRootSignature(cons
 		return createLocalRootSig(rootDesc);
 
 	// Note: Only RootParams are supported atm, no 32BitConstants or DescriptorTables
-	unsigned int numRootParams = rootSigParams.size();
+	unsigned int numRootParams = static_cast<unsigned int>(rootSigParams.size());
 	std::vector<D3D12_ROOT_PARAMETER> rootParams(numRootParams);
 	for (unsigned int i = 0; i < numRootParams; i++)
 	{

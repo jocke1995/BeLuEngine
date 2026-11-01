@@ -108,11 +108,11 @@ BloomComputePass::BloomComputePass()
 	m_ScreenWidth = m_CommonGraphicsResources->renderWidth;
 	m_ScreenHeight = m_CommonGraphicsResources->renderHeight;
 
-	m_HorizontalThreadGroupsX = static_cast<unsigned int>(ceilf(static_cast<float>(m_ScreenWidth) / m_ThreadsPerGroup));
+	m_HorizontalThreadGroupsX = static_cast<unsigned int>(ceilf(static_cast<float>(m_ScreenWidth) / static_cast<float>(m_ThreadsPerGroup)));
 	m_HorizontalThreadGroupsY = m_ScreenHeight;
 
 	m_VerticalThreadGroupsX = m_ScreenWidth;
-	m_VerticalThreadGroupsY = static_cast<unsigned int>(ceilf(static_cast<float>(m_ScreenHeight) / m_ThreadsPerGroup));
+	m_VerticalThreadGroupsY = static_cast<unsigned int>(ceilf(static_cast<float>(m_ScreenHeight) / static_cast<float>(m_ThreadsPerGroup)));
 }
 
 BloomComputePass::~BloomComputePass()
@@ -170,7 +170,7 @@ void BloomComputePass::Execute()
 			m_pGraphicsContext->SetPipelineState(m_PipelineStates[Bloom_FilterAndDownSampleState]);
 			m_pGraphicsContext->Set32BitConstants(Constants_DH_Indices_B1, sizeof(RootConstantUints) / 4, &rootConstantUints, 0, true);
 
-			unsigned int threadGroupsX = static_cast<unsigned int>(ceilf(static_cast<float>(blurWidth) / m_ThreadsPerGroup));
+			unsigned int threadGroupsX = static_cast<unsigned int>(ceilf(static_cast<float>(blurWidth) / static_cast<float>(m_ThreadsPerGroup)));
 			unsigned int threadGroupsY = blurHeight;
 			m_pGraphicsContext->Dispatch(threadGroupsX, threadGroupsY, 1);
 
@@ -203,7 +203,7 @@ void BloomComputePass::Execute()
 				m_pGraphicsContext->SetPipelineState(m_PipelineStates[Bloom_DownSampleAndBlurHorizontalState]);
 				m_pGraphicsContext->Set32BitConstants(Constants_DH_Indices_B1, sizeof(RootConstantUints) / 4, &rootConstantUints, 0, true);
 
-				unsigned int threadGroupsX = static_cast<unsigned int>(ceilf(static_cast<float>(blurWidth) / m_ThreadsPerGroup));
+				unsigned int threadGroupsX = static_cast<unsigned int>(ceilf(static_cast<float>(blurWidth) / static_cast<float>(m_ThreadsPerGroup)));
 				unsigned int threadGroupsY = blurHeight;
 				m_pGraphicsContext->Dispatch(threadGroupsX, threadGroupsY, 1);
 
@@ -228,7 +228,7 @@ void BloomComputePass::Execute()
 				m_pGraphicsContext->Set32BitConstants(Constants_DH_Indices_B1, sizeof(RootConstantUints) / 4, &rootConstantUints, 0, true);
 
 				unsigned int threadGroupsX = blurWidth;
-				unsigned int threadGroupsY = static_cast<unsigned int>(ceilf(static_cast<float>(blurHeight) / m_ThreadsPerGroup));
+				unsigned int threadGroupsY = static_cast<unsigned int>(ceilf(static_cast<float>(blurHeight) / static_cast<float>(m_ThreadsPerGroup)));
 				m_pGraphicsContext->Dispatch(threadGroupsX, threadGroupsY, 1);
 				m_pGraphicsContext->UAVBarrier(m_PingPongTextures[0]);
 			}
@@ -245,7 +245,7 @@ void BloomComputePass::Execute()
 			unsigned int textureWidth = m_ScreenWidth >> mipToWriteTo;
 			unsigned int textureHeight = m_ScreenHeight >> mipToWriteTo;
 
-			unsigned int threadGroupsX = static_cast<unsigned int>(ceilf(static_cast<float>(textureWidth) / m_ThreadsPerGroup));
+			unsigned int threadGroupsX = static_cast<unsigned int>(ceilf(static_cast<float>(textureWidth) / static_cast<float>(m_ThreadsPerGroup)));
 			unsigned int threadGroupsY = textureHeight;
 
 			RootConstantUints rootConstantUints1 = {};

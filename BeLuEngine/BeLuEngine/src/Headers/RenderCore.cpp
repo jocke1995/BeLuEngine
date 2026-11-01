@@ -404,6 +404,9 @@ D3D12_PRIMITIVE_TOPOLOGY_TYPE ConvertBLPrimTopPipelineStateToD3D12PrimTopPipelin
     {
         return D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH;
     }
+
+    BL_ASSERT_MESSAGE(false, "Unknown primitive topology!\n");
+    return D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
 }
 
 D3D12_ROOT_PARAMETER_TYPE ConvertBLRootParameterTypeToD3D12RootParameterType(BL_ROOT_PARAMETER_TYPE rootParamType)
@@ -419,6 +422,7 @@ D3D12_ROOT_PARAMETER_TYPE ConvertBLRootParameterTypeToD3D12RootParameterType(BL_
     }
 
     BL_ASSERT_MESSAGE(false, "This should never happen!\n");
+    return D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 }
 
 D3D12_RESOURCE_STATES Convert_BLResourceState_To_D3D12ResourceState(BL_RESOURCE_STATES resourceState)
@@ -445,4 +449,5 @@ D3D12_RESOURCE_STATES Convert_BLResourceState_To_D3D12ResourceState(BL_RESOURCE_
     }
 
     BL_ASSERT_MESSAGE(false, "This should never happen!\n");
+    return D3D12_RESOURCE_STATE_COMMON;
 }

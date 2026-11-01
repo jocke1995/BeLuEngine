@@ -39,10 +39,10 @@ ImGuiRenderTask::ImGuiRenderTask()
 
 		unsigned int wWidth = Window::GetInstance()->GetScreenWidth();
 		unsigned int wHeight = Window::GetInstance()->GetScreenHeight();
-		io.DisplaySize.x = m_CommonGraphicsResources->renderWidth;
-		io.DisplaySize.y = m_CommonGraphicsResources->renderHeight;
+		io.DisplaySize.x = static_cast<float>(m_CommonGraphicsResources->renderWidth);
+		io.DisplaySize.y = static_cast<float>(m_CommonGraphicsResources->renderHeight);
 
-		io.DisplayFramebufferScale = { (float)io.DisplaySize.x/ wWidth, (float)io.DisplaySize.y / wHeight };
+		io.DisplayFramebufferScale = { io.DisplaySize.x / static_cast<float>(wWidth), io.DisplaySize.y / static_cast<float>(wHeight) };
 
 		TODO("Fix so ImGui can be scaled during runTime and not only during init");
 		// Do some scaling

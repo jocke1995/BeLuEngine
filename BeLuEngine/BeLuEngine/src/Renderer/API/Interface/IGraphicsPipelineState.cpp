@@ -109,7 +109,7 @@ void PSODesc::SetDepthDesc(char depthWriteMask, BL_COMPARISON_FUNC depthComparis
     m_DepthStencilDesc.depthComparisonFunc = depthComparisonFunc;
 }
 
-void PSODesc::SetStencilDesc(char stencilReadMask, char stencilWriteMask, BL_DEPTH_STENCILOP_DESC frontFace, BL_DEPTH_STENCILOP_DESC backFace)
+void PSODesc::SetStencilDesc(unsigned char stencilReadMask, unsigned char stencilWriteMask, BL_DEPTH_STENCILOP_DESC frontFace, BL_DEPTH_STENCILOP_DESC backFace)
 {
     m_DepthStencilDesc.enableStencil = true;
     m_DepthStencilDesc.stencilReadMask = stencilReadMask;

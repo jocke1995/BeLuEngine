@@ -97,7 +97,7 @@ RayTracingShader::RayTracingShader(Shader* shader, const std::wstring& shaderEnt
 {
     m_Shader = shader;
 
-    unsigned int numShaderEntryPointNames = shaderEntryPointNames.size();
+    unsigned int numShaderEntryPointNames = static_cast<unsigned int>(shaderEntryPointNames.size());
     m_ShaderEntryPointNames.resize(numShaderEntryPointNames);
     for (unsigned int i = 0; i < numShaderEntryPointNames; i++)
         m_ShaderEntryPointNames[i] = shaderEntryPointNames[i];
@@ -113,7 +113,7 @@ RayTracingHitGroup::RayTracingHitGroup(const std::wstring hitGroupName, const st
 
 RayTracingRootSignatureAssociation::RayTracingRootSignatureAssociation(const std::vector<IRayTracingRootSignatureParams>& rootSigParams, std::wstring entryPointNameOrHitGroupName, std::wstring rootSigDebugName)
 {
-    unsigned int numRootSigParams = rootSigParams.size();
+    unsigned int numRootSigParams = static_cast<unsigned int>(rootSigParams.size());
     m_RootSigParams.resize(numRootSigParams);
     for (unsigned int i = 0; i < numRootSigParams; i++)
         m_RootSigParams[i] = rootSigParams[i];

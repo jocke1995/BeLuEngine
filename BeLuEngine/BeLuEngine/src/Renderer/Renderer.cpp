@@ -384,13 +384,13 @@ void Renderer::Execute()
 	// Waits for context-Threads to complete if we're using multithreaded recording of contexts
 	waitForCompletionLambda(F_THREAD_FLAGS::GRAPHICS);
 
-	graphicsManager->ExecuteGraphicsContexts(m_MainGraphicsContexts, m_MainGraphicsContexts.size());
+	graphicsManager->ExecuteGraphicsContexts(m_MainGraphicsContexts, static_cast<unsigned int>(m_MainGraphicsContexts.size()));
 	/* --------------------------------------------------------------- */
 
 	TODO("Wrap this in an editor-Mode only. This task has to be run on the mainthread!");
 	m_GraphicsPasses[E_GRAPHICS_PASS_TYPE::IMGUI]->Execute();
 
-	graphicsManager->ExecuteGraphicsContexts(m_ImGuiGraphicsContext, m_ImGuiGraphicsContext.size());
+	graphicsManager->ExecuteGraphicsContexts(m_ImGuiGraphicsContext, static_cast<unsigned int>(m_ImGuiGraphicsContext.size()));
 
 	/*------------------- Present -------------------*/
 	TODO("This overrides the editorStuff.. this texture should be copied to the finalColorTexture instead before we draw the editor, so it isn't removed");
@@ -585,7 +585,7 @@ void Renderer::UnInitModelComponent(component::ModelComponent* mc)
 	for (auto& renderComponent : m_RenderComponents)
 	{
 		std::vector<RenderComponent>& rcVec = renderComponent.second;
-		for (int i = 0; i < rcVec.size(); i++)
+		for (unsigned int i = 0; i < rcVec.size(); i++)
 		{
 			// Remove from all renderComponent-vectors if they are there
 			component::ModelComponent* comp = nullptr;

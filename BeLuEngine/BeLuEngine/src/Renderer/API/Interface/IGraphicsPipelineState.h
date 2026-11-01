@@ -16,7 +16,7 @@ public:
 
     void SetDepthStencilFormat(BL_FORMAT format);
     void SetDepthDesc(char depthWriteMask, BL_COMPARISON_FUNC depthComparisonFunc); // use BL_DEPTH_WRITE_MASK for the depthWriteMask
-    void SetStencilDesc(char stencilReadMask, char stencilWriteMask, BL_DEPTH_STENCILOP_DESC frontFace, BL_DEPTH_STENCILOP_DESC backFace);
+    void SetStencilDesc(unsigned char stencilReadMask, unsigned char stencilWriteMask, BL_DEPTH_STENCILOP_DESC frontFace, BL_DEPTH_STENCILOP_DESC backFace);
 
     void AddRenderTargetBlendDesc(  BL_BLEND srcBlend, BL_BLEND destBlend,
                                 BL_BLEND_OP blendOP,

@@ -57,7 +57,7 @@ void D3D12BottomLevelAS::GenerateBuffers()
 	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS prebuildDesc;
 	prebuildDesc.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
 	prebuildDesc.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
-	prebuildDesc.NumDescs = m_GeometryBuffers.size();
+	prebuildDesc.NumDescs = static_cast<UINT>(m_GeometryBuffers.size());
 	prebuildDesc.pGeometryDescs = m_GeometryBuffers.data();
 	prebuildDesc.Flags = flags;
 
@@ -67,8 +67,8 @@ void D3D12BottomLevelAS::GenerateBuffers()
 	device5->GetRaytracingAccelerationStructurePrebuildInfo(&prebuildDesc, &info);
 
 	// Buffer sizes need to be 256-byte-aligned
-	unsigned int scratchSizeInBytes = (info.ScratchDataSizeInBytes   + 255) & ~255;
-	unsigned int resultSizeInBytes  = (info.ResultDataMaxSizeInBytes + 255) & ~255;
+	unsigned int scratchSizeInBytes = static_cast<unsigned int>((info.ScratchDataSizeInBytes   + 255) & ~255);
+	unsigned int resultSizeInBytes  = static_cast<unsigned int>((info.ResultDataMaxSizeInBytes + 255) & ~255);
 
 	static unsigned int idCounter = 0;
 	m_pScratchBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::UnorderedAccessBuffer, scratchSizeInBytes, 1, BL_FORMAT_UNKNOWN, L"SCRATCHBUFFER_BLAS");

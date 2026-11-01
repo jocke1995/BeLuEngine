@@ -45,12 +45,12 @@ const DirectX::XMMATRIX* PerspectiveCamera::GetViewProjectionTranposed() const
 
 const float PerspectiveCamera::GetNearPlane() const
 {
-	return m_NearZ;
+	return static_cast<float>(m_NearZ);
 }
 
 const float PerspectiveCamera::GetFarPlane() const
 {
-	return m_FarZ;
+	return static_cast<float>(m_FarZ);
 }
 
 void PerspectiveCamera::SetFov(float fov)
@@ -80,8 +80,8 @@ void PerspectiveCamera::SetFarZ(float farPlaneDistance)
 void PerspectiveCamera::RotateCamera(int yaw, int pitch)
 {
 	static const float rotationSpeed = 0.001f;
-	m_Yaw += yaw * rotationSpeed;
-	m_Pitch += pitch * rotationSpeed;
+	m_Yaw += static_cast<float>(yaw) * rotationSpeed;
+	m_Pitch += static_cast<float>(pitch) * rotationSpeed;
 }
 
 void PerspectiveCamera::UpdateMovement(int3 newMovement)
@@ -93,7 +93,11 @@ void PerspectiveCamera::UpdateMovement(int3 newMovement)
 
 void PerspectiveCamera::updateProjectionMatrix()
 {
-	m_ProjMatrix = DirectX::XMMatrixPerspectiveFovLH(m_Fov, m_AspectRatio, m_NearZ, m_FarZ);
+	m_ProjMatrix = DirectX::XMMatrixPerspectiveFovLH(
+		static_cast<float>(m_Fov),
+		static_cast<float>(m_AspectRatio),
+		static_cast<float>(m_NearZ),
+		static_cast<float>(m_FarZ));
 
 	m_ProjMatrixInverse = DirectX::XMMatrixInverse(nullptr, m_ProjMatrix);
 }
@@ -130,7 +134,7 @@ void PerspectiveCamera::updateCameraMovement(double dt)
 	m_UpVector = DirectX::XMVector3Normalize(m_UpVector);
 
 	static int ms = 20;
-	m_EyeVector = DirectX::XMVectorAdd(m_EyeVector, DirectX::operator*((m_MoveLeftRight		  * ms)	* dt, m_RightVector));
-	m_EyeVector = DirectX::XMVectorAdd(m_EyeVector, DirectX::operator*((m_MoveForwardBackward * ms) * dt, m_DirectionVector));
-	m_EyeVector = DirectX::XMVectorAdd(m_EyeVector, DirectX::operator*((m_MoveUpDown		  * ms)	* dt, s_DefaultUpVector));
+	m_EyeVector = DirectX::XMVectorAdd(m_EyeVector, DirectX::operator*(static_cast<float>((m_MoveLeftRight		  * ms)	* dt), m_RightVector));
+	m_EyeVector = DirectX::XMVectorAdd(m_EyeVector, DirectX::operator*(static_cast<float>((m_MoveForwardBackward * ms) * dt), m_DirectionVector));
+	m_EyeVector = DirectX::XMVectorAdd(m_EyeVector, DirectX::operator*(static_cast<float>((m_MoveUpDown		  * ms)	* dt), s_DefaultUpVector));
 }

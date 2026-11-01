@@ -23,7 +23,7 @@ D3D12GlobalStateTracker::~D3D12GlobalStateTracker()
 
 void D3D12GlobalStateTracker::SetState(D3D12_RESOURCE_STATES resourceState, unsigned int subResource)
 {
-	unsigned int numSubResources = m_ResourceStates.size();
+	unsigned int numSubResources = static_cast<unsigned int>(m_ResourceStates.size());
 
 	if (subResource == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES)
 	{
@@ -89,7 +89,7 @@ D3D12_RESOURCE_STATES D3D12LocalStateTracker::GetState(unsigned int subResource)
 
 void D3D12LocalStateTracker::ResolveLocalResourceState(D3D12_RESOURCE_STATES desiredState, unsigned int subResource)
 {
-	unsigned int numSubResources = m_ResourceStates.size();
+	unsigned int numSubResources = static_cast<unsigned int>(m_ResourceStates.size());
 
 	// Maximum number of transitionBarriers that can be done in 1 batch.
 	// This would be numMips, which would not likely go over 12 (which would be a 4k texture)

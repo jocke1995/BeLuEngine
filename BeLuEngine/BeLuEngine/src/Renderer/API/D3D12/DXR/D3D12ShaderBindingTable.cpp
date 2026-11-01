@@ -84,10 +84,10 @@ unsigned int D3D12ShaderBindingTable::calculateShaderBindingTableSize()
 	mMaxHitGroupSize		= calculateMaxShaderRecordSize(m_HitGroupRecords);
 
 	// The total SBT size is the sum of the entries for ray generation, miss and hit groups
-	unsigned int sbtSizeUnPadded =
+	unsigned int sbtSizeUnPadded = static_cast<unsigned int>(
 		mMaxRayGenerationSize * m_RayGenerationRecords.size() +	// Raygen Sizes
 		mMaxMissRecordSize * m_MissRecords.size() +				// Miss Sizes
-		mMaxHitGroupSize * m_HitGroupRecords.size();			// Hitgroup Sizes
+		mMaxHitGroupSize * m_HitGroupRecords.size());			// Hitgroup Sizes
 
 	unsigned int sbtSizePadded = (sbtSizeUnPadded + D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT) & ~D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT;
 

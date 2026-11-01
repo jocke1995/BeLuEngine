@@ -26,31 +26,30 @@ public:
 	{
 		std::vector<char> inputBuffer;
 		inputBuffer.resize(8192);
-		char typeBuffer[100] = {};
 
-		sprintf(inputBuffer.data(), string.c_str(), args...);
+		formatString(inputBuffer, string, args...);
 
+		std::string prefix = std::filesystem::path(fileName).filename().string() + ": Line " + lineNumber;
 		switch (type)
 		{
 		case Severity::INFO:
-			sprintf(typeBuffer, (std::filesystem::path(fileName).filename().string() + ": Line " + lineNumber + ": INFO: ").c_str());
+			prefix += ": INFO: ";
 			break;
 
 		case Severity::WARNING:
-			sprintf(typeBuffer, (std::filesystem::path(fileName).filename().string() + ": Line " + lineNumber + ": WARNING: ").c_str());
+			prefix += ": WARNING: ";
 			break;
 
 		case Severity::CRITICAL:
-			sprintf(typeBuffer, (std::filesystem::path(fileName).filename().string() + ": Line " + lineNumber + ": CRITICAL ERROR: ").c_str());
+			prefix += ": CRITICAL ERROR: ";
 			break;
 
 		default:
-			sprintf(typeBuffer, "");
+			prefix = "";
 			break;
 		}
 
-		std::string finalBuffer = std::string(typeBuffer) + inputBuffer.data();
-		std::string finalBufferNewline = finalBuffer + "\n";
+		std::string finalBufferNewline = prefix + inputBuffer.data() + "\n";
 
 		OutputDebugStringA(finalBufferNewline.c_str());
 	}
@@ -61,7 +60,7 @@ public:
 		std::vector<char> inputBuffer;
 		inputBuffer.resize(4096);
 
-		sprintf(inputBuffer.data(), string.c_str(), args...);
+		formatString(inputBuffer, string, args...);
 
 		std::string finalBuffer = std::string(inputBuffer.data()) + "\n";
 
@@ -69,6 +68,21 @@ public:
 	}
 private:
 	Log();
+
+	// Writes the formatted message into buffer (truncated if it doesn't fit)
+	template <typename... Args>
+	static void formatString(std::vector<char>& buffer, const std::string& format, const Args&... args)
+	{
+		if constexpr (sizeof...(Args) == 0)
+		{
+			// No arguments: copy the message as-is, so a '%' in it can't be misinterpreted as a format specifier
+			snprintf(buffer.data(), buffer.size(), "%s", format.c_str());
+		}
+		else
+		{
+			snprintf(buffer.data(), buffer.size(), format.c_str(), args...);
+		}
+	}
 };
 
 #ifdef DEBUG

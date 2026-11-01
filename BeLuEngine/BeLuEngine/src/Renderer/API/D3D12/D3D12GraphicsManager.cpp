@@ -77,7 +77,7 @@ void D3D12GraphicsManager::Init(HWND hwnd, E_RESOLUTION_TYPES resolution, BL_FOR
 #pragma region CreateDevice
 	bool deviceCreated = false;
 
-#ifdef DEBUG && !defined(USE_NSIGHT_AFTERMATH)
+#if defined(DEBUG) && !defined(USE_NSIGHT_AFTERMATH)
 
 	//Enable the D3D12 debug layer.
 	ID3D12Debug3* debugController = nullptr;
@@ -411,7 +411,7 @@ void D3D12GraphicsManager::Init(HWND hwnd, E_RESOLUTION_TYPES resolution, BL_FOR
 	}
 
 	D3D12_ROOT_DESCRIPTOR_TABLE dtSRV = {};
-	dtSRV.NumDescriptorRanges = dtRangesSRV.size();
+	dtSRV.NumDescriptorRanges = static_cast<UINT>(dtRangesSRV.size());
 	dtSRV.pDescriptorRanges = dtRangesSRV.data();
 
 #pragma endregion SRVTABLE
@@ -433,7 +433,7 @@ void D3D12GraphicsManager::Init(HWND hwnd, E_RESOLUTION_TYPES resolution, BL_FOR
 	}
 
 	D3D12_ROOT_DESCRIPTOR_TABLE dtCBV = {};
-	dtCBV.NumDescriptorRanges = dtRangesCBV.size();
+	dtCBV.NumDescriptorRanges = static_cast<UINT>(dtRangesCBV.size());
 	dtCBV.pDescriptorRanges = dtRangesCBV.data();
 
 #pragma endregion CBVTABLE	
@@ -455,7 +455,7 @@ void D3D12GraphicsManager::Init(HWND hwnd, E_RESOLUTION_TYPES resolution, BL_FOR
 	}
 
 	D3D12_ROOT_DESCRIPTOR_TABLE dtUAV = {};
-	dtUAV.NumDescriptorRanges = dtRangesUAV.size();
+	dtUAV.NumDescriptorRanges = static_cast<UINT>(dtRangesUAV.size());
 	dtUAV.pDescriptorRanges = dtRangesUAV.data();
 
 #pragma endregion UAVTABLE
@@ -945,7 +945,7 @@ DynamicDataParams D3D12GraphicsManager::SetDynamicData(unsigned int size, const 
 	// Makes this function threadsafe
 	long offset = InterlockedAdd(&m_pIntermediateUploadHeapAtomicCurrentOffset, sizeAligned);
 
-	if (offset > m_IntermediateUploadHeapSize)
+	if (static_cast<unsigned int>(offset) > m_IntermediateUploadHeapSize)
 	{
 		BL_LOG_CRITICAL("IntermediateUploadHeap to small");
 		__debugbreak();

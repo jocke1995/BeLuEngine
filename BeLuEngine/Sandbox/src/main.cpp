@@ -26,7 +26,7 @@ public:
     }
 };
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
+int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int nCmdShow)
 {
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
@@ -267,8 +267,8 @@ Scene* PBRScene(SceneManager* sm)
        {
           for (unsigned int roughness = 0; roughness < length; roughness++)
           {
-             float metallicFloat = (float)metallic / (length - 1);
-             float roughnessFloat = max(min((float)roughness / (length - 1), 1.0f), 0.05f);
+             float metallicFloat = static_cast<float>(metallic) / static_cast<float>(length - 1);
+             float roughnessFloat = max(min(static_cast<float>(roughness) / static_cast<float>(length - 1), 1.0f), 0.05f);
 
              std::string name = "Sphere_";
              name.append("M: " + std::to_string(metallicFloat));
@@ -296,7 +296,7 @@ Scene* PBRScene(SceneManager* sm)
     /* ---------------------- Spheres ---------------------- */
 
     /* ---------------------- PointLights ---------------------- */
-    unsigned int lightIntensity = 50.0f;
+    float lightIntensity = 50.0f;
     entity = scene->AddEntity("pl1");
     tc = entity->AddComponent<component::TransformComponent>();
     plc = entity->AddComponent<component::PointLightComponent>(F_LIGHT_FLAGS::USE_TRANSFORM_POSITION);
@@ -546,8 +546,8 @@ void SponzaUpdateScene(SceneManager* sm, double dt)
     tBlue->SetPosition(movedZPosBlueSphere, currPosBlue.y, currPosBlue.z);
 
     // Animate
-    zPosGreenSphere += 0.5f * dt;
-    yPosGreenSphere += 1.9f * dt;
-    zPosRedSphere   += 0.2f * dt;
-    zPosBlueSphere  += 1.0f * dt;
+    zPosGreenSphere += 0.5f * static_cast<float>(dt);
+    yPosGreenSphere += 1.9f * static_cast<float>(dt);
+    zPosRedSphere   += 0.2f * static_cast<float>(dt);
+    zPosBlueSphere  += 1.0f * static_cast<float>(dt);
 }

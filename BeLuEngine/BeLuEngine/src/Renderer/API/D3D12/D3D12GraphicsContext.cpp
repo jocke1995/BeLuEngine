@@ -179,7 +179,7 @@ void D3D12GraphicsContext::End()
 
 void D3D12GraphicsContext::UploadTexture(IGraphicsTexture* graphicsTexture)
 {
-	IGraphicsBuffer* tempUploadBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::CPUBuffer, graphicsTexture->GetSize(), 1, BL_FORMAT_UNKNOWN, L"TempUploadResource");
+	IGraphicsBuffer* tempUploadBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::CPUBuffer, static_cast<unsigned int>(graphicsTexture->GetSize()), 1, BL_FORMAT_UNKNOWN, L"TempUploadResource");
 	ID3D12Resource* uploadHeap = static_cast<D3D12GraphicsBuffer*>(tempUploadBuffer)->m_pResource;
 
 	D3D12GraphicsTexture* d3d12GraphicsTexture = static_cast<D3D12GraphicsTexture*>(graphicsTexture);
@@ -188,7 +188,7 @@ void D3D12GraphicsContext::UploadTexture(IGraphicsTexture* graphicsTexture)
 	// Transfer the data
 	UpdateSubresources(m_pCommandList,
 		defaultHeap, uploadHeap,
-		0, 0, d3d12GraphicsTexture->GetTempSubresources()->size(),
+		0, 0, static_cast<UINT>(d3d12GraphicsTexture->GetTempSubresources()->size()),
 		d3d12GraphicsTexture->GetTempSubresources()->data());
 	BL_EDITOR_MODE_APPEND(m_D3D12Stats.m_NumCopyTextureRegion, d3d12GraphicsTexture->m_NumMipLevels);
 
@@ -205,7 +205,7 @@ void D3D12GraphicsContext::UploadBuffer(IGraphicsBuffer* graphicsBuffer, const v
 	ID3D12Resource* defaultHeap = d3d12Buffer->m_pResource;
 
 	// Set the data in the perFrameImmediate buffer
-	DynamicDataParams dynamicDataParams = D3D12GraphicsManager::GetInstance()->SetDynamicData(sizeInBytes, data);
+	DynamicDataParams dynamicDataParams = D3D12GraphicsManager::GetInstance()->SetDynamicData(static_cast<unsigned int>(sizeInBytes), data);
 
 	//BL_LOG_INFO("%d\n", dynamicDataParams.offsetFromStart);
 	m_pCommandList->CopyBufferRegion(defaultHeap, 0, dynamicDataParams.uploadResource, dynamicDataParams.offsetFromStart, sizeInBytes);
@@ -315,8 +315,8 @@ void D3D12GraphicsContext::UAVBarrier(IGraphicsBuffer* graphicsBuffer)
 void D3D12GraphicsContext::SetViewPort(unsigned int width, unsigned int height, float topLeftX, float topLeftY, float minDepth, float maxDepth)
 {
 	D3D12_VIEWPORT viewPort = {};
-	viewPort.Width = width;
-	viewPort.Height = height;
+	viewPort.Width = static_cast<FLOAT>(width);
+	viewPort.Height = static_cast<FLOAT>(height);
 	viewPort.TopLeftX = topLeftX;
 	viewPort.TopLeftY = topLeftY;
 	viewPort.MinDepth = minDepth;
@@ -331,7 +331,7 @@ void D3D12GraphicsContext::SetScizzorRect(unsigned int right, unsigned int botto
 	D3D12_RECT rect = {};
 	rect.right = right;
 	rect.bottom = bottom;
-	rect.left = left;
+	rect.left = static_cast<LONG>(left);
 	rect.top = top;
 
 	m_pCommandList->RSSetScissorRects(1, &rect);
@@ -663,7 +663,7 @@ bool D3D12GraphicsContext::resolvePendingTransitionBarriers()
 {
 	// This function has to be called on mainThread
 
-	unsigned int maxNumResourceBarriers = m_PendingResourceBarriers.size();
+	unsigned int maxNumResourceBarriers = static_cast<unsigned int>(m_PendingResourceBarriers.size());
 	if (maxNumResourceBarriers == 0)
 		return false;
 

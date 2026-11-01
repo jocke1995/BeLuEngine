@@ -34,8 +34,8 @@ void Mesh::Init()
 	modelPathName = modelPathName.substr(modelPathName.find_last_of("/\\") + 1);
 
 	// create vertices resource
-	m_pVertexBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::VertexBuffer, sizeof(Vertex), m_Vertices.size(), BL_FORMAT_UNKNOWN, to_wstring(modelPathName) + L"_VERTEXBUFFER");
-	m_pIndexBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::IndexBuffer, sizeof(unsigned int), m_Indices.size(), BL_FORMAT_UNKNOWN, to_wstring(modelPathName) + L"_INDEXBUFFER");
+	m_pVertexBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::VertexBuffer, sizeof(Vertex), static_cast<unsigned int>(m_Vertices.size()), BL_FORMAT_UNKNOWN, to_wstring(modelPathName) + L"_VERTEXBUFFER");
+	m_pIndexBuffer = IGraphicsBuffer::Create(E_GRAPHICSBUFFER_TYPE::IndexBuffer, sizeof(unsigned int), static_cast<unsigned int>(m_Indices.size()), BL_FORMAT_UNKNOWN, to_wstring(modelPathName) + L"_INDEXBUFFER");
 }
 
 const std::vector<Vertex>* Mesh::GetVertices() const
@@ -45,12 +45,12 @@ const std::vector<Vertex>* Mesh::GetVertices() const
 
 const unsigned int Mesh::GetSizeOfVertices() const
 {
-	return m_Vertices.size() * sizeof(Vertex);
+	return static_cast<unsigned int>(m_Vertices.size() * sizeof(Vertex));
 }
 
 const unsigned int Mesh::GetNumVertices() const
 {
-	return m_Vertices.size();
+	return static_cast<unsigned int>(m_Vertices.size());
 }
 
 const std::vector<unsigned int>* Mesh::GetIndices() const
@@ -60,12 +60,12 @@ const std::vector<unsigned int>* Mesh::GetIndices() const
 
 const unsigned int Mesh::GetSizeOfIndices() const
 {
-	return m_Indices.size() * sizeof(unsigned int);
+	return static_cast<unsigned int>(m_Indices.size() * sizeof(unsigned int));
 }
 
 const unsigned int Mesh::GetNumIndices() const
 {
-	return m_Indices.size();
+	return static_cast<unsigned int>(m_Indices.size());
 }
 
 const std::wstring& Mesh::GetPath() const

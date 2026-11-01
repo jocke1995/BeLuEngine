@@ -37,7 +37,7 @@ bool D3D12TopLevelAS::CreateResultBuffer()
 		ID3D12Device5* device5 = manager->GetDevice();
 
 		D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE;
-		m_ResultBufferMaxNumberOfInstances = m_Instances.size();
+		m_ResultBufferMaxNumberOfInstances = static_cast<unsigned int>(m_Instances.size());
 
 		// Describe the work being requested, in this case the construction of a
 		D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS prebuildDesc = {};
@@ -51,8 +51,8 @@ bool D3D12TopLevelAS::CreateResultBuffer()
 		device5->GetRaytracingAccelerationStructurePrebuildInfo(&prebuildDesc, &info);
 
 		// Buffer sizes need to be 256-byte-aligned
-		unsigned int scratchSizeInBytes = (info.ScratchDataSizeInBytes + 255) & ~255;
-		unsigned int resultSizeInBytes = (info.ResultDataMaxSizeInBytes + 255) & ~255;
+		unsigned int scratchSizeInBytes = static_cast<unsigned int>((info.ScratchDataSizeInBytes + 255) & ~255);
+		unsigned int resultSizeInBytes = static_cast<unsigned int>((info.ResultDataMaxSizeInBytes + 255) & ~255);
 
 		BL_SAFE_DELETE(m_pScratchBuffer);
 		BL_SAFE_DELETE(m_pResultBuffer);
@@ -103,7 +103,7 @@ void D3D12TopLevelAS::MapResultBuffer()
 
 	D3D12GraphicsManager* manager = D3D12GraphicsManager::GetInstance();
 
-	unsigned int numInstances = m_Instances.size();
+	unsigned int numInstances = static_cast<unsigned int>(m_Instances.size());
 
 	unsigned int maxSizeInBytes = numInstances * sizeof(D3D12_RAYTRACING_INSTANCE_DESC);
 	unsigned int alignedMaxSizeInBytes = (maxSizeInBytes + 255) & ~255; // Align with 256 bytes
