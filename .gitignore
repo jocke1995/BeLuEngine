@@ -4,6 +4,7 @@ BeLuEngine/build/
 BeLuEngine/bin/
 
 **.sln
+**.slnx
 **.vcxproj
 **.user
 **.filters
