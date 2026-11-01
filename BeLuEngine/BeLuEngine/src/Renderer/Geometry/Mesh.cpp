@@ -129,12 +129,12 @@ const std::vector<Vertex>* Mesh::GetVertices() const
 
 const unsigned int Mesh::GetSizeOfVertices() const
 {
-	return m_Vertices.size() * sizeof(Vertex);
+	return static_cast<unsigned int>(m_Vertices.size() * sizeof(Vertex));
 }
 
 const unsigned int Mesh::GetNumVertices() const
 {
-	return m_Vertices.size();
+	return static_cast<unsigned int>(m_Vertices.size());
 }
 
 Resource* Mesh::GetDefaultResourceIndices() const
@@ -149,12 +149,12 @@ const std::vector<unsigned int>* Mesh::GetIndices() const
 
 const unsigned int Mesh::GetSizeOfIndices() const
 {
-	return m_Indices.size() * sizeof(unsigned int);
+	return static_cast<unsigned int>(m_Indices.size() * sizeof(unsigned int));
 }
 
 const unsigned int Mesh::GetNumIndices() const
 {
-	return m_Indices.size();
+	return static_cast<unsigned int>(m_Indices.size());
 }
 
 const D3D12_INDEX_BUFFER_VIEW* Mesh::GetIndexBufferView() const

@@ -49,9 +49,9 @@ void TopLevelAccelerationStructure::GenerateBuffers(ID3D12Device5* pDevice, Desc
 	pDevice->GetRaytracingAccelerationStructurePrebuildInfo(&prebuildDesc, &info);
 
 	// Buffer sizes need to be 256-byte-aligned
-	unsigned int scratchSizeInBytes = (info.ScratchDataSizeInBytes + 255) & ~255;
-	unsigned int resultSizeInBytes = (info.ResultDataMaxSizeInBytes + 255) & ~255;
-	m_InstanceDescsSizeInBytes = (sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * static_cast<UINT64>(m_Instances.size() + 255)) & ~255;
+	unsigned int scratchSizeInBytes = static_cast<unsigned int>((info.ScratchDataSizeInBytes + 255) & ~255);
+	unsigned int resultSizeInBytes = static_cast<unsigned int>((info.ResultDataMaxSizeInBytes + 255) & ~255);
+	m_InstanceDescsSizeInBytes = static_cast<unsigned int>((sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * static_cast<UINT64>(m_Instances.size() + 255)) & ~255);
 
 	// Create buffers for scratch, result and instance
 	BL_SAFE_DELETE(m_pScratch);
@@ -112,7 +112,7 @@ void TopLevelAccelerationStructure::SetupAccelerationStructureForBuilding(ID3D12
 		ZeroMemory(instanceDescs, m_InstanceDescsSizeInBytes);
 	//}
 
-	unsigned int numInstances = m_Instances.size();
+	unsigned int numInstances = static_cast<unsigned int>(m_Instances.size());
 	// Create the description for each instance
 	for (unsigned int i = 0; i < numInstances; i++)
 	{

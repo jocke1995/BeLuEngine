@@ -91,7 +91,7 @@ Resource::~Resource()
 
 unsigned int Resource::GetSize() const
 {
-	return m_EntrySize;
+	return static_cast<unsigned int>(m_EntrySize);
 }
 
 ID3D12Resource1* Resource::GetID3D12Resource1() const

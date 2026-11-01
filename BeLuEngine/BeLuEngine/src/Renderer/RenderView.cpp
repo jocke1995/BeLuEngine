@@ -28,8 +28,8 @@ void RenderView::createViewport()
 {
 	m_Viewport.TopLeftX = 0.0f;
 	m_Viewport.TopLeftY = 0.0f;
-	m_Viewport.Width = m_Width;
-	m_Viewport.Height = m_Height;
+	m_Viewport.Width = static_cast<FLOAT>(m_Width);
+	m_Viewport.Height = static_cast<FLOAT>(m_Height);
 	m_Viewport.MinDepth = 0.0f;
 	m_Viewport.MaxDepth = 1.0f;
 }

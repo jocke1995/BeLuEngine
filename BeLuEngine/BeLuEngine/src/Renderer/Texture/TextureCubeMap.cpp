@@ -42,7 +42,7 @@ bool TextureCubeMap::Init(ID3D12Device5* device, DescriptorHeap* descriptorHeap)
 
 	// Set resource desc created in LoadDDSTextureFromFile
 	m_ResourceDescription = m_pDefaultResource->GetID3D12Resource1()->GetDesc();
-	m_ImageBytesPerRow = m_SubresourceData[0].RowPitch;
+	m_ImageBytesPerRow = static_cast<int>(m_SubresourceData[0].RowPitch);
 	// copy m_DdsData to our BYTE* format
 	m_pImageData = static_cast<BYTE*>(m_DdsData.get());
 	m_DdsData.release(); // lose the pointer, let m_pImageData delete the data.

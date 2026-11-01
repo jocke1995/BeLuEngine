@@ -81,7 +81,7 @@ inline T* Entity::AddComponent(Args... args)
 template<class T>
 inline T* Entity::GetComponent() const
 {
-	for (int i = 0; i < m_Components.size(); i++)
+	for (unsigned int i = 0; i < m_Components.size(); i++)
 	{
 		T* component = dynamic_cast<T*>(m_Components[i]);
 
@@ -96,7 +96,7 @@ inline T* Entity::GetComponent() const
 template<class T>
 inline bool Entity::HasComponent() const
 {
-	for (int i = 0; i < m_Components.size(); i++)
+	for (unsigned int i = 0; i < m_Components.size(); i++)
 	{
 		T* component = dynamic_cast<T*>(m_Components[i]);
 

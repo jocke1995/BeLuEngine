@@ -69,7 +69,7 @@ void DepthRenderTask::Execute()
 		commandList->OMSetRenderTargets(0, nullptr, false, &dsh);
 
 		// Draw for every Rendercomponent
-		for (int i = 0; i < m_RenderComponents.size(); i++)
+		for (unsigned int i = 0; i < m_RenderComponents.size(); i++)
 		{
 			component::ModelComponent* mc = m_RenderComponents.at(i).mc;
 			component::TransformComponent* tc = m_RenderComponents.at(i).tc;

@@ -55,7 +55,7 @@ void BottomLevelAccelerationStructure::GenerateBuffers(ID3D12Device5* pDevice, D
 	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS prebuildDesc;
 	prebuildDesc.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
 	prebuildDesc.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
-	prebuildDesc.NumDescs = m_vertexBuffers.size();
+	prebuildDesc.NumDescs = static_cast<UINT>(m_vertexBuffers.size());
 	prebuildDesc.pGeometryDescs = m_vertexBuffers.data();
 	prebuildDesc.Flags = flags;
 
@@ -65,8 +65,8 @@ void BottomLevelAccelerationStructure::GenerateBuffers(ID3D12Device5* pDevice, D
 	pDevice->GetRaytracingAccelerationStructurePrebuildInfo(&prebuildDesc, &info);
 
 	// Buffer sizes need to be 256-byte-aligned
-	unsigned int scratchSizeInBytes = (info.ScratchDataSizeInBytes   + 255) & ~255;
-	unsigned int resultSizeInBytes  = (info.ResultDataMaxSizeInBytes + 255) & ~255;
+	unsigned int scratchSizeInBytes = static_cast<unsigned int>((info.ScratchDataSizeInBytes   + 255) & ~255);
+	unsigned int resultSizeInBytes  = static_cast<unsigned int>((info.ResultDataMaxSizeInBytes + 255) & ~255);
 
 	static unsigned int idCounter = 0;
 	// Create buffers for scratch and result

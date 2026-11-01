@@ -8,7 +8,7 @@ ThreadPool::ThreadPool(unsigned int nrOfThreads)
 	m_NrOfThreads = nrOfThreads;
 	
 	// Create Threads
-	for (int i = 0; i < m_NrOfThreads; i++)
+	for (unsigned int i = 0; i < m_NrOfThreads; i++)
 	{
 		m_Threads.push_back(new Thread(
 								&m_JobQueue, &m_Mutex,

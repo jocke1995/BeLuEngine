@@ -94,9 +94,9 @@ void WireframeRenderTask::Execute()
 		const DirectX::XMMATRIX* viewProjMatTrans = m_pCamera->GetViewProjectionTranposed();
 
 		// Draw for every mesh
-		for (int i = 0; i < m_ObjectsToDraw.size(); i++)
+		for (unsigned int i = 0; i < m_ObjectsToDraw.size(); i++)
 		{
-			for (int j = 0; j < m_ObjectsToDraw[i]->GetNumBoundingBoxes(); j++)
+			for (unsigned int j = 0; j < m_ObjectsToDraw[i]->GetNumBoundingBoxes(); j++)
 			{
 				const Mesh* m = m_ObjectsToDraw[i]->GetMeshAt(j);
 				Transform* t = m_ObjectsToDraw[i]->GetTransformAt(j);

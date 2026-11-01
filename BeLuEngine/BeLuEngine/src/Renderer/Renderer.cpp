@@ -387,8 +387,8 @@ void Renderer::InitD3D12(Window* window, HINSTANCE hInstance, ThreadPool* thread
 	ImGuiIO& io = ImGui::GetIO();
 	io.ConfigFlags = ImGuiConfigFlags_NoMouse;
 
-	io.DisplaySize.x = m_pWindow->GetScreenWidth();
-	io.DisplaySize.y = m_pWindow->GetScreenHeight();
+	io.DisplaySize.x = static_cast<float>(m_pWindow->GetScreenWidth());
+	io.DisplaySize.y = static_cast<float>(m_pWindow->GetScreenHeight());
 
 	unsigned int imGuiTextureIndex = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV]->GetNextDescriptorHeapIndex(1);
 
@@ -602,7 +602,7 @@ void Renderer::ExecuteMT()
 	m_pThreadPool->WaitForThreads(F_THREAD_FLAGS::RENDER);
 
 	m_CommandQueues[E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->ExecuteCommandLists(
-		m_DirectCommandLists[commandInterfaceIndex].size(), 
+		static_cast<UINT>(m_DirectCommandLists[commandInterfaceIndex].size()), 
 		m_DirectCommandLists[commandInterfaceIndex].data());
 
 	/* --------------------------------------------------------------- */
@@ -619,7 +619,7 @@ void Renderer::ExecuteMT()
 	renderTask->Execute();
 
 	m_CommandQueues[E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->ExecuteCommandLists(
-		m_ImGuiCommandLists[commandInterfaceIndex].size(),
+		static_cast<UINT>(m_ImGuiCommandLists[commandInterfaceIndex].size()),
 		m_ImGuiCommandLists[commandInterfaceIndex].data());
 #endif
 
@@ -736,7 +736,7 @@ void Renderer::ExecuteST()
 
 	/* ----------------------------- DEVELOPERMODE CommandLists ----------------------------- */
 	m_CommandQueues[E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->ExecuteCommandLists(
-		m_DirectCommandLists[commandInterfaceIndex].size(),
+		static_cast<UINT>(m_DirectCommandLists[commandInterfaceIndex].size()),
 		m_DirectCommandLists[commandInterfaceIndex].data());
 
 	/* --------------------------------------------------------------- */
@@ -754,7 +754,7 @@ void Renderer::ExecuteST()
 	renderTask->Execute();
 
 	m_CommandQueues[E_COMMAND_INTERFACE_TYPE::DIRECT_TYPE]->ExecuteCommandLists(
-		m_ImGuiCommandLists[commandInterfaceIndex].size(),
+		static_cast<UINT>(m_ImGuiCommandLists[commandInterfaceIndex].size()),
 		m_ImGuiCommandLists[commandInterfaceIndex].data());
 #endif
 
@@ -937,7 +937,7 @@ void Renderer::UnInitModelComponent(component::ModelComponent* mc)
 	for (auto& renderComponent : m_RenderComponents)
 	{
 		std::vector<RenderComponent>& rcVec = renderComponent.second;
-		for (int i = 0; i < rcVec.size(); i++)
+		for (unsigned int i = 0; i < rcVec.size(); i++)
 		{
 			// Remove from all renderComponent-vectors if they are there
 			component::ModelComponent* comp = nullptr;
@@ -1395,7 +1395,7 @@ void Renderer::createRootSignature()
 	}
 
 	D3D12_ROOT_DESCRIPTOR_TABLE dtSRV = {};
-	dtSRV.NumDescriptorRanges = dtRangesSRV.size();
+	dtSRV.NumDescriptorRanges = static_cast<UINT>(dtRangesSRV.size());
 	dtSRV.pDescriptorRanges = dtRangesSRV.data();
 
 #pragma endregion SRVTABLE
@@ -1417,7 +1417,7 @@ void Renderer::createRootSignature()
 	}
 
 	D3D12_ROOT_DESCRIPTOR_TABLE dtCBV = {};
-	dtCBV.NumDescriptorRanges = dtRangesCBV.size();
+	dtCBV.NumDescriptorRanges = static_cast<UINT>(dtRangesCBV.size());
 	dtCBV.pDescriptorRanges = dtRangesCBV.data();
 
 #pragma endregion CBVTABLE	
@@ -1439,7 +1439,7 @@ void Renderer::createRootSignature()
 	}
 
 	D3D12_ROOT_DESCRIPTOR_TABLE dtUAV = {};
-	dtUAV.NumDescriptorRanges = dtRangesUAV.size();
+	dtUAV.NumDescriptorRanges = static_cast<UINT>(dtRangesUAV.size());
 	dtUAV.pDescriptorRanges = dtRangesUAV.data();
 
 #pragma endregion UAVTABLE

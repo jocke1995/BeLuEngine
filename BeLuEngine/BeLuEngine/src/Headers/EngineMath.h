@@ -4,6 +4,7 @@
 #include <DirectXMath.h>
 #include <DirectXCollision.h>
 #include <algorithm>
+#include <cmath>
 
 #define PI           3.14159265358979323846f
 #define EPSILON		  0.000001
@@ -61,7 +62,7 @@ typedef union float3
 
 	float length() const
 	{
-		return sqrt(x * x + y * y + z * z);
+		return std::sqrt(x * x + y * y + z * z);
 	};
 
 	void normalize()

@@ -82,7 +82,7 @@ void OutliningRenderTask::Execute()
 		const DirectX::XMMATRIX* viewProjMatTrans = m_pCamera->GetViewProjectionTranposed();
 
 		// Draw for every m_pMesh
-		for (int i = 0; i < m_ObjectToOutline.first->GetNrOfMeshes(); i++)
+		for (unsigned int i = 0; i < m_ObjectToOutline.first->GetNrOfMeshes(); i++)
 		{
 			Mesh* m = m_ObjectToOutline.first->GetMeshAt(i);
 			Transform* t = m_ObjectToOutline.second->GetTransform();

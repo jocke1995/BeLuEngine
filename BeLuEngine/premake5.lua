@@ -1,3 +1,16 @@
+-- External libraries the engine depends on.
+-- These are linked by the executables (Game/Sandbox) instead of the BeLuEngine static library,
+-- otherwise lib.exe bundles them into BeLuEngine.lib and the linker warns about duplicate symbols (LNK4006).
+EngineDependencies = {
+    "d3d12",
+    "dxgi",
+    "dxcompiler",
+    "dxguid",
+    "assimp-vc142-mt",
+    "GFSDK_Aftermath_Lib.x64",
+    "WinPixEventRuntime",
+}
+
 workspace "BeLuEngineProject"
     architecture "x64"
     configurations { "Debug", "Release", "Dist" }
@@ -23,16 +36,6 @@ project "BeLuEngine"
         cppdialect "C++17"
         includedirs {"Vendor/Include/", "%{prj.location}/src/Headers/"}
         libdirs { "Vendor/Lib/**" }
-
-    links {
-        "d3d12",
-        "dxgi",
-        "dxcompiler",
-        "dxguid",
-        "assimp-vc142-mt",
-        "GFSDK_Aftermath_Lib.x64",
-        "WinPixEventRuntime",
-    }
 
     postbuildcommands
     {
@@ -70,7 +73,8 @@ project "Game"
     includedirs {"Vendor/Include/", "BeLuEngine/src/", "BeLuEngine/src/Headers/"}
     libdirs { "Vendor/Lib/**" }
     links {
-        "BeLuEngine"
+        "BeLuEngine",
+        EngineDependencies
     }
     
     filter "configurations:Debug"
@@ -104,7 +108,8 @@ project "Sandbox"
     includedirs {"Vendor/Include/", "BeLuEngine/src/", "BeLuEngine/src/Headers/", "Game/src/Gamefiles/" }
     libdirs { "Vendor/Lib/**" }
     links {
-        "BeLuEngine"
+        "BeLuEngine",
+        EngineDependencies
     }
     
     filter "configurations:Debug"

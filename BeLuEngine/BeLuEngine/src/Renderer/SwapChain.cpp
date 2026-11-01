@@ -234,8 +234,8 @@ const void SwapChain::lookForSupportedResolutions(unsigned int* width, unsigned 
 		}
 
 		Log::Print("Supported resolutions:\n");
-		int latestWidth = 0;
-		int latestHeight = 0;
+		UINT latestWidth = 0;
+		UINT latestHeight = 0;
 		for (unsigned int i = 0; i < m_NumberOfSupportedModes; i++)
 		{
 			// We don't care about other attributes, only the resolution

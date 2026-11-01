@@ -36,8 +36,8 @@ void MousePicker::UpdateRay()
 	// Cursor pos relative to the window instead of the screen
 	ScreenToClient(*w->GetHwnd(), &screenSpacePos);
 
-	float mousex = screenSpacePos.x;
-	float mousey = screenSpacePos.y;
+	float mousex = static_cast<float>(screenSpacePos.x);
+	float mousey = static_cast<float>(screenSpacePos.y);
 
 	m_RayInWorldSpacePos = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 

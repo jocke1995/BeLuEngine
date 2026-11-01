@@ -452,7 +452,7 @@ Texture* AssetLoader::processTexture(aiMaterial* mat, E_TEXTURE2D_TYPE texture_t
 		}
 		else
 		{
-			std::string tempString = std::string(filePathWithoutTexture.begin(), filePathWithoutTexture.end());
+			std::string tempString = to_string(filePathWithoutTexture);
 			// No texture, warn and apply default Texture
 			BL_LOG_WARNING("Applying default texture: " + warningMessageTextureType +
 				" on mesh with path: \'%s\'\n", tempString.c_str());

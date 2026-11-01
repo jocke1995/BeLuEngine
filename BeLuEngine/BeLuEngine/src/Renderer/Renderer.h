@@ -64,8 +64,8 @@ class ComputeTask;
 // DXR
 class DXRTask;
 class ShaderBindingTableGenerator;
-class ID3D12StateObject;
-class ID3D12StateObjectProperties;
+struct ID3D12StateObject;
+struct ID3D12StateObjectProperties;
 
 // DX12 Forward Declarations
 struct ID3D12CommandQueue;

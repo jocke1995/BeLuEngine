@@ -69,7 +69,7 @@ void ImGuiHandler::UpdateFrame()
 	IM_MemoryStats& mStats = EngineStatistics::GetIM_MemoryStats();
 	std::vector<IM_ThreadStats*>& tStats = EngineStatistics::GetIM_ThreadStats();
 
-	cStats.m_TotalFPS = ImGui::GetIO().Framerate;
+	cStats.m_TotalFPS = static_cast<unsigned int>(ImGui::GetIO().Framerate);
 	cStats.m_TotalMS = 1000.0f / ImGui::GetIO().Framerate;
 	
 
@@ -191,7 +191,7 @@ void ImGuiHandler::drawSceneHierarchy()
 									ImGui::InputInt("Mesh Index", &matIndex);
 
 									// Out of bounds check
-									if (matIndex > (mc->GetNrOfMeshes() - 1) || matIndex < 0)
+									if (matIndex < 0 || matIndex > static_cast<int>(mc->GetNrOfMeshes()) - 1)
 									{
 										matIndex = mc->GetNrOfMeshes() - 1;
 									}
@@ -367,9 +367,9 @@ void ImGuiHandler::updateMemoryInfo()
 		memInfo.dwLength = sizeof(MEMORYSTATUSEX);
 		GlobalMemoryStatusEx(&memInfo);
 
-		mStats.m_TotalRam = memInfo.ullTotalPhys / DIV / DIV;
-		mStats.m_TotalRamUsage = (memInfo.ullTotalPhys - memInfo.ullAvailPhys) / DIV / DIV;
-		mStats.m_ProcessRamUsage = (pmc.WorkingSetSize / DIV / DIV);
+		mStats.m_TotalRam = static_cast<unsigned int>(memInfo.ullTotalPhys / DIV / DIV);
+		mStats.m_TotalRamUsage = static_cast<unsigned int>((memInfo.ullTotalPhys - memInfo.ullAvailPhys) / DIV / DIV);
+		mStats.m_ProcessRamUsage = static_cast<unsigned int>(pmc.WorkingSetSize / DIV / DIV);
 	}
 
 	// Vram usage
@@ -379,8 +379,8 @@ void ImGuiHandler::updateMemoryInfo()
 		DXGI_ADAPTER_DESC3 aDesc = {};
 		r.m_pAdapter4->GetDesc3(&aDesc);
 
-		mStats.m_ProcessVramUsage = info.CurrentUsage / DIV / DIV;
-		mStats.m_TotalVram = aDesc.DedicatedVideoMemory / DIV / DIV;
+		mStats.m_ProcessVramUsage = static_cast<unsigned int>(info.CurrentUsage / DIV / DIV);
+		mStats.m_TotalVram = static_cast<unsigned int>(aDesc.DedicatedVideoMemory / DIV / DIV);
 	};
 }
 

@@ -209,7 +209,7 @@ uint32_t ShaderBindingTableGenerator::CopyShaderData(
     {
       std::wstring errMsg(std::wstring(L"Unknown shader identifier used in the SBT: ") +
                           shader.m_entryPoint);
-      throw std::logic_error(std::string(errMsg.begin(), errMsg.end()));
+      throw std::logic_error(to_string(errMsg));
     }
     // Copy the shader identifier
     memcpy(pData, id, m_progIdSize);

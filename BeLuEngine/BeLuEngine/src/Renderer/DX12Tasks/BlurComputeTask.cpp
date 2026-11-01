@@ -30,11 +30,11 @@ BlurComputeTask::BlurComputeTask(
 	m_PingPongResources[0] = Bloom0_RESOURCE;
 	m_PingPongResources[1] = Bloom1_RESOURCE;
 
-	m_HorizontalThreadGroupsX = static_cast<unsigned int>(ceilf(static_cast<float>(screenWidth) / m_ThreadsPerGroup));
+	m_HorizontalThreadGroupsX = static_cast<unsigned int>(ceilf(static_cast<float>(screenWidth) / static_cast<float>(m_ThreadsPerGroup)));
 	m_HorizontalThreadGroupsY = screenHeight;
 
 	m_VerticalThreadGroupsX = screenWidth;
-	m_VerticalThreadGroupsY = static_cast<unsigned int>(ceilf(static_cast<float>(screenHeight) / m_ThreadsPerGroup));
+	m_VerticalThreadGroupsY = static_cast<unsigned int>(ceilf(static_cast<float>(screenHeight) / static_cast<float>(m_ThreadsPerGroup)));
 }
 
 BlurComputeTask::~BlurComputeTask()
@@ -56,8 +56,7 @@ void BlurComputeTask::Execute()
 		DescriptorHeap* descriptorHeap_CBV_UAV_SRV = m_DescriptorHeaps[E_DESCRIPTOR_HEAP_TYPE::CBV_UAV_SRV];
 		ID3D12DescriptorHeap* d3d12DescriptorHeap = descriptorHeap_CBV_UAV_SRV->GetID3D12DescriptorHeap();
 		commandList->SetDescriptorHeaps(1, &d3d12DescriptorHeap);
-		
-		E_GLOBAL_ROOTSIGNATURE;
+
 		commandList->SetComputeRootDescriptorTable(dtSRV, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
 		commandList->SetComputeRootDescriptorTable(dtUAV, descriptorHeap_CBV_UAV_SRV->GetGPUHeapAt(0));
 

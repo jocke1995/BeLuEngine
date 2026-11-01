@@ -18,7 +18,7 @@ Model::Model(
 	ID3D12Device5* pdevice)
 {
 	m_Path = *path;
-	m_Size = (*meshes).size();
+	m_Size = static_cast<unsigned int>((*meshes).size());
 
 	m_Meshes = (*meshes);
 	m_OriginalMaterial = *materials;

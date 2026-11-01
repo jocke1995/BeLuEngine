@@ -56,7 +56,7 @@ BYTE* Texture::GetData() const
 
 unsigned int Texture::GetWidth() const
 {
-	return m_ResourceDescription.Width;
+	return static_cast<unsigned int>(m_ResourceDescription.Width);
 }
 
 unsigned int Texture::GetHeight() const
