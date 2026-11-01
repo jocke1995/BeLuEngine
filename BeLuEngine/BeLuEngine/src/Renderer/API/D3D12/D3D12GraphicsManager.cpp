@@ -128,6 +128,9 @@ void D3D12GraphicsManager::Init(HWND hwnd, E_RESOLUTION_TYPES resolution, BL_FOR
 	IDXGIAdapter1* adapter = nullptr;
 	hr = CreateDXGIFactory(IID_PPV_ARGS(&factory));
 
+	// Used for the error message if no adapter supports the required raytracing tier
+	std::wstring rejectedAdapters = L"";
+
 	if (SUCCEEDED(hr))
 	{
 		for (unsigned int adapterIndex = 0;; ++adapterIndex)
@@ -136,6 +139,16 @@ void D3D12GraphicsManager::Init(HWND hwnd, E_RESOLUTION_TYPES resolution, BL_FOR
 			if (DXGI_ERROR_NOT_FOUND == factory->EnumAdapters1(adapterIndex, &adapter))
 			{
 				break; // No more adapters
+			}
+
+			// Skip software adapters (e.g. "Microsoft Basic Render Driver"/WARP).
+			// WARP supports ray tracing too, so without this check the engine can end up rendering on the CPU.
+			DXGI_ADAPTER_DESC1 adapterDesc1 = {};
+			adapter->GetDesc1(&adapterDesc1);
+			if (adapterDesc1.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
+			{
+				BL_SAFE_RELEASE(&adapter);
+				continue;
 			}
 
 			// Check to see if the adapter supports Direct3D 12, but don't create the actual device yet.
@@ -155,18 +168,46 @@ void D3D12GraphicsManager::Init(HWND hwnd, E_RESOLUTION_TYPES resolution, BL_FOR
 
 				if (SUCCEEDED(hr))
 				{
-					if (features5.RaytracingTier == D3D12_RAYTRACING_TIER_1_1)
+					if (features5.RaytracingTier >= D3D12_RAYTRACING_TIER_1_1)
 					{
-						BL_LOG_INFO("Raytracing tier 1.1 supported!\n");
+						BL_LOG_INFO("Using adapter: %S (raytracing tier 1.1 or higher supported)\n", adapterDesc.Description);
 						break; // found one!
 					}
 				}
+
+				// Remember why this adapter was rejected
+				const bool rtSupported = features5.RaytracingTier != D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
+				rejectedAdapters += L"  - " + std::wstring(adapterDesc.Description) + L" (raytracing tier: " +
+					(rtSupported ? L"1.0" : L"not supported") + L")\n";
 			}
 
 			BL_SAFE_RELEASE(&adapter);
 		}
 	}
 	
+
+	if (adapter == nullptr)
+	{
+		std::wstring errorMessage =
+			L"BeLuEngine requires a GPU with DirectX 12 and raytracing tier 1.1 or higher.\n\n";
+		errorMessage += rejectedAdapters.empty() ? L"No DirectX 12 capable GPU was found." : L"Found GPUs:\n" + rejectedAdapters;
+		errorMessage += L"\nUpdating the graphics driver may help.";
+
+		// Assert: log the error and break if a debugger is attached (Debug/Release builds).
+		// Not using BL_ASSERT_MESSAGE here, since its DebugBreak() crashes the process when no debugger is attached,
+		// and then the user would never see the message box below.
+		BL_LOG_CRITICAL("Unsupported GPU!\n%S\n", errorMessage.c_str());
+#ifdef DEBUG
+		if (IsDebuggerPresent())
+		{
+			DebugBreak();
+		}
+#endif
+
+		// Then tell the user and exit cleanly
+		MessageBoxW(nullptr, errorMessage.c_str(), L"BeLuEngine - Unsupported GPU", MB_OK | MB_ICONERROR);
+		ExitProcess(EXIT_FAILURE);
+	}
 
 	if (FAILED(adapter->QueryInterface(__uuidof(IDXGIAdapter4), reinterpret_cast<void**>(&m_pAdapter4))))
 	{
@@ -206,13 +247,7 @@ void D3D12GraphicsManager::Init(HWND hwnd, E_RESOLUTION_TYPES resolution, BL_FOR
 
 		BL_SAFE_RELEASE(&adapter);
 	}
-	else
-	{
-		BL_LOG_INFO("Did not find GPU, using WARP device");
-		//Create warp m_pDevice if no adapter was found.
-		factory->EnumWarpAdapter(IID_PPV_ARGS(&adapter));
-		D3D12CreateDevice(adapter, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&m_pDevice5));
-	}
+	// No WARP (software) fallback: the engine requires hardware raytracing, see the check above
 
 	BL_SAFE_RELEASE(&factory);
 #pragma endregion
