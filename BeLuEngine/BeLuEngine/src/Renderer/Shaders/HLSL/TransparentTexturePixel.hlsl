@@ -26,11 +26,11 @@ float4 PS_main(VS_OUT input) : SV_TARGET0
 	{
 		normal = textures[matData.textureNormal].Sample(Anisotropic16_Wrap, uvScaled).xyz;
 		normal = normalize((2.0f * normal) - 1.0f);
-		normal = float4(normalize(mul(normal.xyz, input.tbn)), 0.0f);
+		normal = normalize(mul(normal.xyz, input.tbn));
 	}
 	else
 	{
-		normal = float4(input.norm.xyz, 0.0f);
+		normal = input.norm.xyz;
 	}
 
 	float3 camPos = cbPerFrame.camPos;
@@ -66,9 +66,9 @@ float4 PS_main(VS_OUT input) : SV_TARGET0
 	}
 
 	// PointLight contributions
-	for (unsigned int i = 0; i < lHeader.numPointLights; i++)
+	for (unsigned int p = 0; p < lHeader.numPointLights; p++)
 	{
-		PointLight pointLight = rawBufferLights.Load<PointLight>(sizeof(LightHeader) + DIR_LIGHT_MAXOFFSET + i * sizeof(PointLight));
+		PointLight pointLight = rawBufferLights.Load<PointLight>(sizeof(LightHeader) + DIR_LIGHT_MAXOFFSET + p * sizeof(PointLight));
 
 		float3 lightColor = CalcPointLight(
 			pointLight,
@@ -88,9 +88,9 @@ float4 PS_main(VS_OUT input) : SV_TARGET0
 	}
 
 	// SpotLight  contributions
-	for (unsigned int i = 0; i < lHeader.numSpotLights; i++)
+	for (unsigned int s = 0; s < lHeader.numSpotLights; s++)
 	{
-		SpotLight spotLight = rawBufferLights.Load<SpotLight>(sizeof(LightHeader) + DIR_LIGHT_MAXOFFSET + POINT_LIGHT_MAXOFFSET + i * sizeof(SpotLight));
+		SpotLight spotLight = rawBufferLights.Load<SpotLight>(sizeof(LightHeader) + DIR_LIGHT_MAXOFFSET + POINT_LIGHT_MAXOFFSET + s * sizeof(SpotLight));
 
 		finalColor += CalcSpotLight(
 			spotLight,
@@ -104,7 +104,7 @@ float4 PS_main(VS_OUT input) : SV_TARGET0
 			baseReflectivity);
 	}
 
-	float3 ambient = float3(0.03f, 0.03f, 0.03f) * albedo;
+	float3 ambient = float3(0.03f, 0.03f, 0.03f) * albedo.rgb;
 	finalColor += ambient;
 
 	finalColor += emissive.rgb;

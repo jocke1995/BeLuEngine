@@ -16,11 +16,11 @@ PS_OUTPUT PS_main(VS_OUT input)
 	// Sample from textures
 	// Todo: no need of anisotropic16 here..
 	float2 uv = float2(input.uv.x, input.uv.y);
-	float3 albedo   = textures[cbPerScene.gBufferAlbedo].Sample(Anisotropic16_Wrap, uv);
+	float3 albedo   = textures[cbPerScene.gBufferAlbedo].Sample(Anisotropic16_Wrap, uv).rgb;
 	float roughness = textures[cbPerScene.gBufferMaterialProperties].Sample(Anisotropic16_Wrap, uv).r;
 	float metallic  = textures[cbPerScene.gBufferMaterialProperties].Sample(Anisotropic16_Wrap, uv).g;
-	float3 normal	= textures[cbPerScene.gBufferNormal].Sample(Anisotropic16_Wrap, uv);
-	float3 emissive = textures[cbPerScene.gBufferEmissive].Sample(Anisotropic16_Wrap, uv);
+	float3 normal	= textures[cbPerScene.gBufferNormal].Sample(Anisotropic16_Wrap, uv).rgb;
+	float3 emissive = textures[cbPerScene.gBufferEmissive].Sample(Anisotropic16_Wrap, uv).rgb;
 	float3 reflection = textures[cbPerScene.reflectionTextureSRV].Sample(Anisotropic16_Wrap, uv).rgb;
 
 	float depthVal = textures[cbPerScene.depth].Sample(Anisotropic16_Wrap, uv).r;
@@ -59,9 +59,9 @@ PS_OUTPUT PS_main(VS_OUT input)
 	}
 	
 	// PointLight contributions
-	for (unsigned int i = 0; i < lHeader.numPointLights; i++)
+	for (unsigned int p = 0; p < lHeader.numPointLights; p++)
 	{
-		PointLight pointLight = rawBufferLights.Load<PointLight>(sizeof(LightHeader) + DIR_LIGHT_MAXOFFSET + i * sizeof(PointLight));
+		PointLight pointLight = rawBufferLights.Load<PointLight>(sizeof(LightHeader) + DIR_LIGHT_MAXOFFSET + p * sizeof(PointLight));
 		
 		float3 lightColor = CalcPointLight(
 			pointLight,
@@ -81,9 +81,9 @@ PS_OUTPUT PS_main(VS_OUT input)
 	}
 	
 	// SpotLight  contributions
-	for (unsigned int i = 0; i < lHeader.numSpotLights; i++)
+	for (unsigned int s = 0; s < lHeader.numSpotLights; s++)
 	{
-		SpotLight spotLight = rawBufferLights.Load<SpotLight>(sizeof(LightHeader) + DIR_LIGHT_MAXOFFSET + POINT_LIGHT_MAXOFFSET + i * sizeof(SpotLight));
+		SpotLight spotLight = rawBufferLights.Load<SpotLight>(sizeof(LightHeader) + DIR_LIGHT_MAXOFFSET + POINT_LIGHT_MAXOFFSET + s * sizeof(SpotLight));
 	
 		finalColor += CalcSpotLight(
 			spotLight,

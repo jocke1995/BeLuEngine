@@ -585,6 +585,11 @@ void D3D12GraphicsManager::Init(HWND hwnd, E_RESOLUTION_TYPES resolution, BL_FOR
 	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV_U5].Descriptor.ShaderRegister = 5;
 	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV_U5].Descriptor.RegisterSpace = 0;
 	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV_U5].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV_U6].ParameterType = D3D12_ROOT_PARAMETER_TYPE_UAV;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV_U6].Descriptor.ShaderRegister = 6;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV_U6].Descriptor.RegisterSpace = 0;
+	rootParam[E_GLOBAL_ROOTSIGNATURE::RootParam_UAV_U6].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 #pragma endregion
 
 #pragma region StaticSamplers

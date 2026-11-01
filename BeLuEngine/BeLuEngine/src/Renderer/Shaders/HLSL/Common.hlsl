@@ -16,10 +16,10 @@ float3 WorldPosFromDepth(float depth, float2 TexCoord, float4x4 projectionInvers
 }
 
 // Based on near & far-plane
-float linearizeDepth(double nearZ, double farZ, float depth)
+float linearizeDepth(float nearZ, float farZ, float depth)
 {
-    float z = depth * 2.0 - 1.0; // back to NDC 
-    return (2.0 * nearZ * farZ) / (farZ + nearZ - z * (farZ - nearZ));
+    float z = depth * 2.0f - 1.0f; // back to NDC 
+    return (2.0f * nearZ * farZ) / (farZ + nearZ - z * (farZ - nearZ));
 }
 
 float3x3 calculateTBN(float3 T, float3 N)

@@ -63,7 +63,7 @@ void ClosestHit(inout ReflectionPayload reflectionPayload, in BuiltInTriangleInt
 	//if (metallic > 0.9f)
 	//{
 		RayDesc ray;
-		ray.Origin = float4(worldPos, 1.0f) + float4(normal.xyz, 0.0f) * 0.5f;
+		ray.Origin = worldPos + normal.xyz * 0.5f;
 		ray.Direction = normalize(reflect(WorldRayDirection(), float3(normal.xyz)));
 		ray.TMin = 0.1f;
 		ray.TMax = 10000;
@@ -109,9 +109,9 @@ void ClosestHit(inout ReflectionPayload reflectionPayload, in BuiltInTriangleInt
 	}
 	
 	// PointLight contributions
-	for (unsigned int i = 0; i < lHeader.numPointLights; i++)
+	for (unsigned int p = 0; p < lHeader.numPointLights; p++)
 	{
-		PointLight pointLight = rawBufferLights.Load<PointLight>(sizeof(LightHeader) + DIR_LIGHT_MAXOFFSET + i * sizeof(PointLight));
+		PointLight pointLight = rawBufferLights.Load<PointLight>(sizeof(LightHeader) + DIR_LIGHT_MAXOFFSET + p * sizeof(PointLight));
 
 		float3 lightColor = CalcPointLight(
 			pointLight,

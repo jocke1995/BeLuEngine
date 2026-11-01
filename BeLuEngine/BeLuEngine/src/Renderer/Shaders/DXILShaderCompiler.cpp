@@ -141,6 +141,10 @@ IDxcBlob* DXILShaderCompiler::Compile(DXILCompilationDesc* desc)
         return nullptr;
     }
 
+    // The compile status tells if the shader actually failed. The error buffer can contain warnings even when it succeeded.
+    HRESULT compileStatus = S_OK;
+    compiledResult->GetStatus(&compileStatus);
+
     IDxcBlobUtf8* pErrorBuffer = nullptr;
     hr = compiledResult->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&pErrorBuffer), nullptr);
     if (SUCCEEDED(hr))
@@ -150,14 +154,24 @@ IDxcBlob* DXILShaderCompiler::Compile(DXILCompilationDesc* desc)
         {
             const char* errorString = pErrorBuffer->GetStringPointer();
 
-            // Print warnings and errors
-            BL_LOG_WARNING("Shader Warning//Error Outputs: %s\n", errorString);
-
-            // Add a final warning saying which shader it is that failed
-            BL_LOG_WARNING("Failed to compile shader: %S\n", desc->filePath);
+            if (FAILED(compileStatus))
+            {
+                BL_LOG_CRITICAL("Shader errors in %S:\n%s\n", desc->filePath, errorString);
+            }
+            else
+            {
+                BL_LOG_WARNING("Shader warnings in %S:\n%s\n", desc->filePath, errorString);
+            }
         }
     }
     BL_SAFE_RELEASE(&pErrorBuffer);
+
+    if (FAILED(compileStatus))
+    {
+        BL_LOG_CRITICAL("Failed to compile shader: %S\n", desc->filePath);
+        BL_SAFE_RELEASE(&compiledResult);
+        return nullptr;
+    }
 
     // Get a stripped version of the final ShaderBlob
     if (SUCCEEDED(hr))

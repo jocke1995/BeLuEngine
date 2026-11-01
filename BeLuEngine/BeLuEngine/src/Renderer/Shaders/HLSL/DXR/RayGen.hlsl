@@ -7,7 +7,7 @@ void RayGen()
 {
 	// Get the location within the dispatched 2D grid of work items
 	// (often maps to pixels, so this could represent a pixel coordinate).
-	uint2 launchIndex = DispatchRaysIndex();
+	uint2 launchIndex = DispatchRaysIndex().xy;
 	
 	float2 dims = float2(DispatchRaysDimensions().xy);
 
@@ -25,7 +25,7 @@ void RayGen()
     float3 cameraDir = normalize(worldPos - cbPerFrame.camPos);
 
     RayDesc ray;
-    ray.Origin = float4(worldPos.xyz, 1.0f) + float4(normal.xyz, 0.0f) * 0.01f;
+    ray.Origin = worldPos.xyz + normal.xyz * 0.01f;
     ray.Direction = normalize(reflect(cameraDir, float3(normal.xyz)));
     ray.TMin = 0.01f;
     ray.TMax = 10000;

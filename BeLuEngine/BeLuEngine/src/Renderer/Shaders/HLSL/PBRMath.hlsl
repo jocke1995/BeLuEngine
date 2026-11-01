@@ -14,7 +14,7 @@ float3 CalculateFresnelEffect_Roughness(float NdotV, float3 F0, float roughness)
 {
 	float3 iVec = float3(1.0f, 1.0f, 1.0f);
 
-	float temp = float3(1.0f, 1.0f, 1.0f) - float3(roughness, roughness, roughness);
+	float3 temp = float3(1.0f, 1.0f, 1.0f) - float3(roughness, roughness, roughness);
 	return F0 + (max(temp, F0) - F0) * max(pow(saturate(iVec - NdotV), 5.0f), 1e-7);
 }
 
